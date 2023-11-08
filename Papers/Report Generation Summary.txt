@@ -1,0 +1,16 @@
+4.Automated Generation of Accurate & Fluent Medical X-ray Reports ==> pipline (multi model[many images + history ]+ classifier+ interpriter)
+15.Clinically Accurate Chest X-Ray Report Generation ==> report generation ( RNN-CNN + Reinforcement learning )
+======================== merge the two parts above
+6.IIHT_Medical_Report_Generation_with_Image-to-Indic ==> all model but NO code available
+========================   
+8.Chest X-Ray Report Generation from Chest-X Ray ==> template approch, pre-trained( generation ) model approch, database approch
+========================
+11.Replace and Report NLP Assisted Radiology Report Generation ==> normal and upnormal cases each one alone (to reports)
+========================
+
+
+
+Q: Does roug-l is accurate for calculate accuracy or we need another way ?
+
+
+
