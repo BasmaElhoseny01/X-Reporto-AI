@@ -1,0 +1,18 @@
+List Features [As a user]
+1.Object Detection= localizatoion+ Classification
+2.Report Generation  [Template Based - Generated Based]  
+
+3.Image Denoising (Generated with GANS - Classical)
+4.Bone Subression
+
+
+Tutrials
+---------------------------------------------------------------------------------------------
+Later
+- Data Base
+- 3D OF Organ
+
+To DO
+1.Digaram
+2.Videos
+3.Classical Problems X-ray

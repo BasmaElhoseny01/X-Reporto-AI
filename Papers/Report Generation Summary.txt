@@ -7,7 +7,5 @@
 8.Chest X-Ray Report Generation from Chest-X Ray ==> template approch, pre-trained( generation ) model approch, database approch
 ========================
 
-Q: Does roug-l is accurate for calculate accuracy or we need another way ? ( train on dataset and test on another )
-
-
-
+Q: Does roug-l is accurate for calculate accuracy or we need another way ?
+Q: Train on dataset and test on another
