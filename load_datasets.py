@@ -1,8 +1,10 @@
 import os
 import shutil
 from paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg
+import subprocess
 # create folders in paths if they don't exist
 def create_folders(paths):
+    print("start")
     for path in paths:
         if not os.path.exists(path):
             os.makedirs(path)
@@ -11,13 +13,17 @@ def create_folders(paths):
 create_folders([path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg])
 
 # unzip the mimic-cxr-jpg dataset
-!unzip "/content/drive/MyDrive/MIMIC/p11_subset1.zip" -d "datasets/mimic-cxr-jpg"
+# !unzip "/content/drive/MyDrive/MIMIC/p11_subset1.zip" -d "datasets/mimic-cxr-jpg"
+subprocess.run(["unzip", "/content/drive/MyDrive/MIMIC/p11_subset1.zip" , "-d", path_mimic_cxr_jpg], check=True, shell=True)
 print("unzipped mimic_cxr_jpg")
-!unzip "/content/drive/MyDrive/MIMIC/chest-imagenome-dataset-1.0.0.zip" -d "datasets/chest-imagenome-dataset"
+# !unzip "/content/drive/MyDrive/MIMIC/chest-imagenome-dataset-1.0.0.zip" -d "datasets/chest-imagenome-dataset"
+subprocess.run(["unzip", "/content/drive/MyDrive/MIMIC/chest-imagenome-dataset-1.0.0.zip" , "-d", path_chest_imagenome], check=True, shell=True)
 print("unzipped chest imagnome")
-!unzip "datasets/chest-imagenome-dataset/silver_dataset/scene_graph.zip" -d "datasets/chest-imagenome-dataset/silver_dataset/
+# !unzip "datasets/chest-imagenome-dataset/silver_dataset/scene_graph.zip" -d "datasets/chest-imagenome-dataset/silver_dataset/
+subprocess.run(["unzip", "datasets/chest-imagenome-dataset/silver_dataset/scene_graph.zip" , "-d", "datasets/chest-imagenome-dataset/silver_dataset/"], check=True, shell=True)
 print("unzipped scene_graph")
-!unzip "/content/drive/MyDrive/MIMIC/mimic-cxr-reports.zip" -d "datasets/mimic-cxr"
+# !unzip "/content/drive/MyDrive/MIMIC/mimic-cxr-reports.zip" -d "datasets/mimic-cxr"
+subprocess.run(["unzip","/content/drive/MyDrive/MIMIC/mimic-cxr-reports.zip" , "-d", path_mimic_cxr], check=True, shell=True)
 
 # in folder mimic-cxr-jpg, move subfolder directly under mimic-cxr-jpg
 
