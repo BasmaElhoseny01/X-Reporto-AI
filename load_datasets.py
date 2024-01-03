@@ -31,7 +31,12 @@ def move_subfolder_to_parent_folder(subfolder_path, parent_folder_path):
     # move subfolder directly under parent folder as cut and paste
     shutil.move(subfolder_path, parent_folder_path)
     
-move_subfolder_to_parent_folder(path_mimic_cxr_jpg + "/physionet.org/files/mimic-cxr-jpg/files", path_mimic_cxr_jpg)
+# wait for unzip subprocess to finish
+for i in range(100000000):
+    if i % 10000000 == 0:
+        print(i/10000000 *10 , "%")
+    pass
+move_subfolder_to_parent_folder(path_mimic_cxr_jpg + "/physionet.org/files/mimic-cxr-jpg/2.0.0/files", path_mimic_cxr_jpg)
 
 
 
