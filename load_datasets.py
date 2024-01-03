@@ -40,4 +40,5 @@ move_subfolder_to_parent_folder(path_mimic_cxr_jpg + "/physionet.org/files/mimic
 
 
 
-
+# rename mimic-cxr-jpg to mimic-cxr-jpg-2.0.0
+os.rename(path_mimic_cxr_jpg + "/files", path_mimic_cxr_jpg + "/2.0.0")

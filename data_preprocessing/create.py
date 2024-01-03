@@ -41,11 +41,11 @@ class DataPreprocessing:
             self.csv_files_dict = self.get_train_files()
         else:
             self.csv_files_dict = self.get_train_val_test_csv_files()
-    def get_train_files():
+    def get_train_files(self):
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(path_chest_imagenome, "silver_dataset", "splits")
         return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["train"]}
-    def get_train_val_files():
+    def get_train_val_files(self):
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(path_chest_imagenome, "silver_dataset", "splits")
         return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["train", "valid"]}
