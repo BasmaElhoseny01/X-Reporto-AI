@@ -5,6 +5,7 @@ import os
 import cv2
 import random
 import pandas as pd 
+from torchvision.transforms import v2
 
 class F_RCNNDataset(Dataset):
     def __init__(self, dataset_path: str, transform =None):
@@ -40,14 +41,18 @@ class F_RCNNDataset(Dataset):
         bboxes = torch.as_tensor(bboxes, dtype=torch.float32)
         labels = torch.as_tensor(labels, dtype=torch.int64)
 
+
+
+        if self.transform:
+            transform_dict = self.transform(img,bboxes,labels)
+            img = transform_dict['image']
+            bboxes = transform_dict['bboxes']
+            labels = transform_dict['labels']
+
         # define the bounding box
         target = {}
         target["boxes"] = bboxes
         target["labels"] = labels
-
-        if self.transform:
-            img = self.transform(img)
-
         return img, target
     def resize(self, img, bboxes, size):
         # resize the image
@@ -67,13 +72,31 @@ class Augmentation(object):
         self.noise_std = noise_std
         self.rotate_angle = rotate_angle
 
-    def __call__(self, img):
-        # add gaussian noise
-        img = img + torch.randn(img.size()) * self.noise_std
+        self.transform = v2.Compose([
+            v2.ToTensor(),
+            v2.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # normalize with imagenet mean and std
+        ])
 
-        # random rotation
-        angle = random.randint(-self.rotate_angle, self.rotate_angle)
-        img = img.rotate(angle)
+        self.transforms = v2.Compose([
+            # resize the image to 512x512 with same aspect ratio and pad the image with zeros if necessary
+            v2.Resize((512, 512)),
 
-        return img
+            # randomly rotate the image
+            v2.RandomRotation(self.rotate_angle),
+
+            # add gaussian noise to the image
+            v2.GaussianNoise(self.noise_std),
+
+            # convert the image to tensor and normalize with imagenet mean and std
+            v2.ToTensor(),
+            v2.Normalize(0.485, 0.229) # normalize with imagenet mean and std
+        ],
+        # resize the bounding boxes accordingly
+        bbox_params=v2.BboxParams(format='pascal_voc', label_fields=['labels'])
+        )
+
+    def __call__(self, img,bboxes,labels):
+        
+        # apply the transforms to the image and the bounding boxes
+        return self.transforms(image=img, bboxes=bboxes,class_labels=labels)
 
