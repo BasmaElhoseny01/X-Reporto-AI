@@ -6,7 +6,7 @@ import cv2
 import random
 import pandas as pd 
 
-class F-RCNNDataset(Dataset):
+class F_RCNNDataset(Dataset):
     def __init__(self, dataset_path: str, transform =None):
         self.dataset_path = dataset_path # path to csv file
         self.transform = transform
@@ -30,6 +30,9 @@ class F-RCNNDataset(Dataset):
         # get the bounding boxes
         bboxes = self.data_info.iloc[idx, 4]
 
+        # resize the image with the bounding boxes accordingly to 512x512
+        img, bboxes = self.resize(img, bboxes, (512, 512))
+
         # get the labels
         labels = self.data_info.iloc[idx, 5]
 
@@ -46,6 +49,16 @@ class F-RCNNDataset(Dataset):
             img = self.transform(img)
 
         return img, target
+    def resize(self, img, bboxes, size):
+        # resize the image
+        img = cv2.resize(img, size)
+
+        # resize the bounding boxes
+        height, width, _ = img.shape
+        bboxes[:, [0, 2]] = bboxes[:, [0, 2]] * (size[0] / width)
+        bboxes[:, [1, 3]] = bboxes[:, [1, 3]] * (size[1] / height)
+
+        return img, bboxes
 
 # implement transforms as augmentation with gaussian noise, random rotation
 

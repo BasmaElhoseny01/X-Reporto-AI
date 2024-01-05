@@ -71,6 +71,7 @@ class Trainer:
 
             # forward + backward + optimize
             loss_dict = self.model(images, targets)
+            
 
             losses = sum(loss for loss in loss_dict.values())
             losses.backward()
