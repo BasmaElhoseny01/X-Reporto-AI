@@ -39,7 +39,7 @@ class F_RCNNDataset(Dataset):
 
         # convert everything into a torch.Tensor
         bboxes = torch.as_tensor(bboxes, dtype=torch.float32)
-        labels = torch.as_tensor(labels, dtype=torch.int64)
+        labels = torch.as_tensor(labels, dtype=torch.int32)
 
 
 
@@ -85,7 +85,7 @@ class Augmentation(object):
             v2.RandomRotation(self.rotate_angle),
 
             # add gaussian noise to the image
-            v2.GaussianNoise(self.noise_std),
+            # v2.GaussianNoise(self.noise_std),
 
             # convert the image to tensor and normalize with imagenet mean and std
             v2.ToTensor(),
