@@ -12,9 +12,10 @@ import random
 import pandas as pd
 from PIL import Image
 from data_loader import F_RCNNDataset, Augmentation
+from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights
 
 class Trainer:
-    def __init__(self,debug=False,training_csv_path='datasets/train.csv',validation_csv_path='datasets/val.csv',
+    def __init__(self,debug=False,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
                  model_path='model.pth',load_model=False,batch_size=4,epochs=10, learning_rate=0.001):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -25,12 +26,14 @@ class Trainer:
         self.learning_rate = learning_rate
 
 
+
+
         # create model object detector
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
         
         num_classes = 30 # 29 class (abnormal) + background
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-        self.model.roi_heads.box_predictor = nn.Linear(in_features, num_classes)
+        self.model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
         self.bestloss=100000
 
         self.model.to(self.device)
@@ -46,17 +49,17 @@ class Trainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1)
 
         # create loss function for classification and regression
-        self.criterion_cls = nn.CrossEntropyLoss()
-        self.criterion_reg = nn.MSELoss()
+        # caluclated in the model and returned as a dictionary
+        # self.criterion_cls = nn.CrossEntropyLoss()
+        # self.criterion_reg = nn.MSELoss()
 
         # create dataset
-        self.dataset_train = F_RCNNDataset(dataset_path= training_csv_path, transform=Augmentation())
-        self.dataset_val = F_RCNNDataset(dataset_path= validation_csv_path, transform=Augmentation())
+        self.dataset_train = F_RCNNDataset(dataset_path= training_csv_path)
+        self.dataset_val = F_RCNNDataset(dataset_path= validation_csv_path)
         
         # create data loader
         self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=self.batch_size, shuffle=True, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=self.batch_size, shuffle=False, num_workers=4)
-
         
 
     def train(self):
@@ -73,21 +76,29 @@ class Trainer:
             # torch.save(self.model.state_dict(), 'model.pth')
     def train_one_epoch(self):
         self.model.train()
-        train_loss_list=[]
+        # train_loss_list=[]
         for batch_idx, (images, targets) in enumerate(self.data_loader_train):
+            # add new dimension to images after batch size
+            images = images.unsqueeze(1)
             images = list(image.to(self.device) for image in images)
-            targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
-
+            targetdata=[]
+            # correct => targets (list[Dict[str, Tensor]]): ground-truth boxes present in the image
+            # what i get => targets return as dic with keys: boxes, labels Only
+            for i in range(len(images)):
+                newdic={}
+                newdic['boxes']=targets['boxes'][i]
+                newdic['labels']=targets['labels'][i]
+                targetdata.append(newdic)
             # zero the parameter gradients
             self.optimizer.zero_grad()
 
             # forward + backward + optimize
-            loss_dict = self.model(images, targets)
-            
+            loss_dict = self.model(images, targetdata)    
 
             losses = sum(loss for loss in loss_dict.values())
+
             loss_value = losses.item()
-            train_loss_list.append(loss_value)
+            # train_loss_list.append(loss_value)
 
             # save the best model
             if(loss_value<self.bestloss):
@@ -104,7 +115,7 @@ class Trainer:
     
     def evaluate_one_epoch(self):
         self.model.eval()
-        val_loss_list=[]
+        # val_loss_list=[]
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             images = list(image.to(self.device) for image in images)
             targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
@@ -114,7 +125,7 @@ class Trainer:
                 loss_dict = self.model(images, targets)
             losses = sum(loss for loss in loss_dict.values())
             loss_value = losses.item()
-            val_loss_list.append(loss_value)
+            # val_loss_list.append(loss_value)
             # print statistics
             if self.debug:
                 print(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} Loss: {losses.item():.4f}')

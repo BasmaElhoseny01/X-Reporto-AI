@@ -57,12 +57,26 @@ class F_RCNNDataset(Dataset):
         else:
             img = torch.as_tensor(img, dtype=torch.float32)
             bboxes = torch.as_tensor(bboxes, dtype=torch.float32)
-            labels = torch.as_tensor(labels, dtype=torch.int32)
+            labels = torch.as_tensor(labels, dtype=torch.int64)
+        # convert everything into a torch.Tensor
+        # bboxes = np.array(eval(bboxes))
+        # labels = np.array(eval(labels))
+
+        # bboxes = torch.as_tensor(bboxes, dtype=torch.float64)
+        # labels = torch.as_tensor(labels, dtype=torch.int64)
+        # img=torch.as_tensor(img,dtype=torch.float32)
+
+        # if self.transform:
+        #     transform_dict = self.transform(img,bboxes,labels)
+        #     img = transform_dict['image']
+        #     bboxes = transform_dict['bboxes']
+        #     labels = transform_dict['labels']
 
         # define the bounding box
         target = {}
         target["boxes"] = bboxes
         target["labels"] = labels
+
         return img, target
 
 # implement transforms as augmentation with gaussian noise, random rotation
