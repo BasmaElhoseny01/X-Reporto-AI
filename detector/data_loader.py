@@ -29,7 +29,9 @@ class F_RCNNDataset(Dataset):
         img_path = self.data_info.iloc[idx, 3]
 
         # read the image with parent path of current folder + image path
-        img = cv2.imread("../" + img_path)
+        img_path = os.path.join(os.getcwd(), img_path)
+        img = cv2.imread(img_path,0)
+        assert img is not None
         
         # get the bounding boxes
         bboxes = self.data_info.iloc[idx, 4]
@@ -108,7 +110,7 @@ class ResizeAndPad(object):
 
     def __call__(self, image, boxes=None):
         # Resize the  image while maintaining aspect ratio
-        width, height = image.size
+        width, height = image.shape[0],image.shape[1]
         aspect_ratio = width / height
         long_side = max(self.target_size)
         short_side = min(self.target_size)
@@ -122,14 +124,14 @@ class ResizeAndPad(object):
             new_height = long_side
             new_width = int(new_height * aspect_ratio)
 
-        resized_image = image.resize((new_width, new_height), Image.BILINEAR)
-
+        resized_image = cv2.resize(image, (new_width, new_height))
         # Create a new black grayscale image with the desired size
         new_image = np.zeros(self.target_size, dtype=np.float32)
         # add the resized image to top left corner of the new image
         new_image[:new_height, :new_width] = resized_image
         # change the bounding boxes accordingly
         if boxes is not None:
+            boxes = np.array(boxes)
             boxes[:, [0, 2]] = boxes[:, [0, 2]] * (new_width / width)
             boxes[:, [1, 3]] = boxes[:, [1, 3]] * (new_height / height)
-        return resized_image, boxes
+        return new_image, boxes
