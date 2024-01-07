@@ -15,8 +15,8 @@ from data_loader import F_RCNNDataset, Augmentation
 from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights
 
 class Trainer:
-    def __init__(self,debug=False,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
-                 model_path='model.pth',load_model=False,batch_size=4,epochs=10, learning_rate=0.001):
+    def __init__(self,debug=False,training_csv_path='datasets/overfitting.csv',validation_csv_path='datasets/overfitting.csv',
+                 model_path='model.pth',load_model=False,batch_size=1,epochs=10, learning_rate=0.0001):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.debug = debug
@@ -29,7 +29,8 @@ class Trainer:
 
 
         # create model object detector
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
+        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
         
         num_classes = 30 # 29 class (abnormal) + background
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
@@ -58,7 +59,7 @@ class Trainer:
         self.dataset_val = F_RCNNDataset(dataset_path= validation_csv_path)
         
         # create data loader
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=self.batch_size, shuffle=True, num_workers=4)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=self.batch_size, shuffle=False, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=self.batch_size, shuffle=False, num_workers=4)
         
 
@@ -68,9 +69,7 @@ class Trainer:
             self.train_one_epoch()
             self.lr_scheduler.step()
             
-        for epoch in range(self.epochs):
-            self.evaluate_one_epoch()
-            self.lr_scheduler.step()
+        self.evaluate_one_epoch()
 
             # save the model
             # torch.save(self.model.state_dict(), 'model.pth')
@@ -101,9 +100,10 @@ class Trainer:
             # train_loss_list.append(loss_value)
 
             # save the best model
-            if(loss_value<self.bestloss):
-                self.bestloss=loss_value
-                torch.save(self.model.state_dict(), 'bestmodel.pth')
+            # comment for now ##########################################
+            # if(loss_value<self.bestloss):
+            #     self.bestloss=loss_value
+            #     torch.save(self.model.state_dict(), 'bestmodel.pth')
 
             losses.backward()
             self.optimizer.step()
@@ -112,23 +112,42 @@ class Trainer:
             if self.debug:
                 print(f'Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {losses.item():.4f}')
                 print(loss_value)
+            break
     
     def evaluate_one_epoch(self):
         self.model.eval()
         # val_loss_list=[]
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
+            images = images.unsqueeze(1)
             images = list(image.to(self.device) for image in images)
-            targets = [{k: v.to(self.device) for k, v in t.items()} for t in targets]
-
+            targetdata=[]
+            # correct => targets (list[Dict[str, Tensor]]): ground-truth boxes present in the image
+            # what i get => targets return as dic with keys: boxes, labels Only
+            for i in range(len(images)):
+                newdic={}
+                newdic['boxes']=targets['boxes'][i]
+                newdic['labels']=targets['labels'][i]
+                targetdata.append(newdic)
             # forward
             with torch.no_grad():
-                loss_dict = self.model(images, targets)
-            losses = sum(loss for loss in loss_dict.values())
-            loss_value = losses.item()
-            # val_loss_list.append(loss_value)
-            # print statistics
-            if self.debug:
-                print(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} Loss: {losses.item():.4f}')
+                # loss_dict = self.model(images, targetdata)
+                # # During testing, it returns list[BoxList] contains additional fields
+                # # like `scores`, `labels` and `mask` (for Mask R-CNN models).
+                # losses = sum(loss for loss in loss_dict.values())
+                # loss_value = losses.item()
+
+                prediction = self.model(images)[0]
+                scores = prediction["scores"].tolist()
+                boxes = prediction["boxes"].tolist()
+                labels = prediction["labels"].tolist()
+                # val_loss_list.append(loss_value)
+                # print statistics
+                if self.debug:
+                    # print labels , scores , boxes
+                    print("labels : ",labels)
+                    print("scores : ",scores)
+                    print("boxes : ",boxes)
+                break
 
 if __name__ == '__main__':
     trainer = Trainer(debug=True)
