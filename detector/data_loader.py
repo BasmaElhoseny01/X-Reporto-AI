@@ -19,7 +19,6 @@ class F_RCNNDataset(Dataset):
 
         # read the csv file
         self.data_info = pd.read_csv(dataset_path, header=None)
-        ###############################    Check Sabry      #########################################
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
 
@@ -54,7 +53,7 @@ class F_RCNNDataset(Dataset):
         labels = self.data_info.iloc[idx, 5]
 
         # convert the string representation of labels into list
-        labels = eval(labels)
+        labels = np.array(eval(labels))
 
         if self.transform:
             transform_dict = self.transform(img,bboxes,labels)
