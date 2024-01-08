@@ -14,9 +14,15 @@ from PIL import Image
 from data_loader import F_RCNNDataset, Augmentation
 from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights
 
+
+from matplotlib import patches
+from torchvision.io.image import read_image
+from torchvision.utils import draw_bounding_boxes
+from torchvision.transforms.functional import to_pil_image
+
 class Trainer:
     def __init__(self,debug=False,training_csv_path='datasets/overfitting.csv',validation_csv_path='datasets/overfitting.csv',
-                 model_path='model.pth',load_model=False,batch_size=1,epochs=10, learning_rate=0.0001):
+                 model_path='model.pth',load_model=False,batch_size=1,epochs=1, learning_rate=0.0001):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.debug = debug
@@ -25,12 +31,9 @@ class Trainer:
         self.epochs = epochs
         self.learning_rate = learning_rate
 
-
-
-
         # create model object detector
-        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
+        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
         
         num_classes = 30 # 29 class (abnormal) + background
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
@@ -114,6 +117,19 @@ class Trainer:
                 print(loss_value)
             break
     
+
+    def showImg(self,prediction,labels,img):
+        # conver image to unit8
+        img=img.unit8()
+        box = draw_bounding_boxes(img, boxes=prediction["boxes"],
+                                            labels=labels,
+                                            colors="red",
+                                            width=4, font_size=30)
+        im = to_pil_image(box.detach())
+        im.show()
+    import matplotlib.patches as patches
+
+
     def evaluate_one_epoch(self):
         self.model.eval()
         # val_loss_list=[]
@@ -135,12 +151,29 @@ class Trainer:
                 # # like `scores`, `labels` and `mask` (for Mask R-CNN models).
                 # losses = sum(loss for loss in loss_dict.values())
                 # loss_value = losses.item()
-
                 prediction = self.model(images)[0]
+                # apply NMS to prediction on boxes with score > 0.5
+                prediction = self.model(images)[0]
+                keep = torchvision.ops.nms(prediction["boxes"], prediction["scores"], 0.3)
+                prediction["boxes"] = prediction["boxes"][keep]
+                prediction["scores"] = prediction["scores"][keep]
+                prediction["labels"] = prediction["labels"][keep]
+                # get the scores, boxes and labels
                 scores = prediction["scores"].tolist()
                 boxes = prediction["boxes"].tolist()
                 labels = prediction["labels"].tolist()
+                targetBoxes=targets["boxes"].tolist()
+                # print(type(targetBoxes),len(targetBoxes),targetBoxes)
+                # print(type(boxes),len(boxes),boxes)
+                # compare the labels with targetdata labels 
+
+                # self.showImg(prediction,labels,images[0])
+                print(len(targetBoxes[0]))
+                print(len(boxes))
+                plot_image(images[0], targetBoxes[0])
+                plot_image(images[0], boxes)
                 # val_loss_list.append(loss_value)
+    
                 # print statistics
                 if self.debug:
                     # print labels , scores , boxes
@@ -149,6 +182,34 @@ class Trainer:
                     print("boxes : ",boxes)
                 break
 
+def plot_image(img, boxes):
+    '''
+    Function that draws the BBoxes on the image.
+
+    inputs:
+        img: input-image as numpy.array (shape: [H, W, C])
+        boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+    '''
+    cmap = plt.get_cmap("tab20b")
+    height, width = img.shape[1:]
+    # Create figure and axes
+    fig, ax = plt.subplots(1, figsize=(16, 8))
+    # Display the image
+    ax.imshow(img[0])
+    for i, box in enumerate(boxes):
+        width = box[2] - box[0]
+        height = box[3] - box[1]
+        rect = patches.Rectangle(
+            (box[0], box[1]),
+            width,
+            height,
+            linewidth=1,  # Increase linewidth
+            edgecolor="white",  # Set the box border color
+            facecolor="none",  # Set facecolor to none
+        )
+        # Add the patch to the Axes
+        ax.add_patch(rect)
+    plt.show()
 if __name__ == '__main__':
     trainer = Trainer(debug=True)
     trainer.train()
