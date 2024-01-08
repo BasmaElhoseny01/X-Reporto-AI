@@ -141,13 +141,12 @@ class ResizeAndPad(object):
         if width > height:
             new_width = long_side
             new_height = int(new_width / aspect_ratio)
-            print(new_width,new_height)
+
         else:
             new_height = long_side
             new_width = int(new_height * aspect_ratio)
-            print(new_width,new_height)
         resized_image = cv2.resize(image, (new_height, new_width))
-        print(resized_image.shape)
+
         # Create a new black grayscale image with the desired size
         new_image = np.zeros(self.target_size, dtype=np.float32)
         # add the resized image to top left corner of the new image
