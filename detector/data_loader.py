@@ -131,7 +131,6 @@ class ResizeAndPad(object):
     def __call__(self, image, boxes=None):
         # Resize the  image while maintaining aspect ratio
         width, height = image.shape[0],image.shape[1]
-        print(width,height)
         aspect_ratio = width / height
         long_side = max(self.target_size)
         short_side = min(self.target_size)
