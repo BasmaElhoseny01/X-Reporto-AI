@@ -29,8 +29,8 @@ class Trainer:
 
 
         # create model object detector
-        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
+        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
         
         num_classes = 30 # 29 class (abnormal) + background
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
@@ -88,6 +88,7 @@ class Trainer:
                 newdic['boxes']=targets['boxes'][i]
                 newdic['labels']=targets['labels'][i]
                 targetdata.append(newdic)
+            
             # zero the parameter gradients
             self.optimizer.zero_grad()
 

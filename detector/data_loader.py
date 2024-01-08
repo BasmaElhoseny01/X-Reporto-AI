@@ -9,6 +9,8 @@ from torchvision.transforms import functional as F
 import random
 import pandas as pd 
 from torchvision.transforms import v2
+import matplotlib.pyplot as plt
+# from .utils import plot_example_with_boxes
 
 class F_RCNNDataset(Dataset):
     def __init__(self, dataset_path: str, transform =None):
@@ -130,6 +132,7 @@ class ResizeAndPad(object):
     def __call__(self, image, boxes=None):
         # Resize the  image while maintaining aspect ratio
         width, height = image.shape[0],image.shape[1]
+        print(width,height)
         aspect_ratio = width / height
         long_side = max(self.target_size)
         short_side = min(self.target_size)
@@ -139,18 +142,71 @@ class ResizeAndPad(object):
         if width > height:
             new_width = long_side
             new_height = int(new_width / aspect_ratio)
+            print(new_width,new_height)
         else:
             new_height = long_side
             new_width = int(new_height * aspect_ratio)
-
-        resized_image = cv2.resize(image, (new_width, new_height))
+            print(new_width,new_height)
+        resized_image = cv2.resize(image, (new_height, new_width))
+        print(resized_image.shape)
         # Create a new black grayscale image with the desired size
         new_image = np.zeros(self.target_size, dtype=np.float32)
         # add the resized image to top left corner of the new image
-        new_image[:new_height, :new_width] = resized_image
+        new_image[:new_width, :new_height] = resized_image
         # change the bounding boxes accordingly
         if boxes is not None:
             boxes = np.array(boxes)
             boxes[:, [0, 2]] = boxes[:, [0, 2]] * (new_width / width)
             boxes[:, [1, 3]] = boxes[:, [1, 3]] * (new_height / height)
         return new_image, boxes
+
+def plot_example_with_boxes(img,boxes,name = "test.jpg"):
+    """
+    img: numpy array of shape (H,W)
+    boxes: list of lists of shape (4,)
+    """
+    img = img.copy()
+    for box in boxes:
+        x1,y1,x2,y2 = box
+        cv2.rectangle(img,(int(x1),int(y1)),(int(x2),int(y2)),(0,255,0),2)
+
+    # show the image with the bounding boxes using cv2
+    cv2.imshow("image", img)
+    cv2.waitKey(0)
+
+    # save the image
+    cv2.imwrite(name, img)
+
+
+
+if __name__ == '__main__':
+    # load the csv file
+    data = pd.read_csv('datasets/train-200.csv', header=None)
+    img_path = data.iloc[1, 3]
+
+    # read the image with parent path of current folder + image path
+    img_path = os.path.join(os.getcwd(), img_path)
+    img = cv2.imread(img_path,0)
+    assert img is not None, f"Image at {img_path} is None"
+    # get the bounding boxes
+    bboxes = data.iloc[1, 4]
+
+    # convert the string representation of bounding boxes into list of list
+    bboxes = eval(bboxes)
+
+    # plot the image with the bounding boxes
+    plot_example_with_boxes(img, bboxes,name = "before.jpg")
+    
+    # create the dataset
+    dataset = F_RCNNDataset(dataset_path= 'datasets/train-200.csv')
+
+    # get the image and the target
+    img, target = dataset[0]
+    img = img.numpy()
+    bboxes = target['boxes'].numpy()
+    print(bboxes)
+    # convert image to uint8
+    img = img.astype(np.uint8)
+    # plot the image with the bounding boxes
+    plot_example_with_boxes(img, bboxes,name = "after.jpg")
+
