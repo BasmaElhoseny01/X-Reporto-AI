@@ -10,6 +10,11 @@ import random
 import pandas as pd 
 from torchvision.transforms import v2
 from torchvision import tv_tensors  # we'll describe this a bit later, bare with us
+import matplotlib.patches as patches
+
+
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
 import matplotlib.pyplot as plt
 # from .utils import plot_example_with_boxes
@@ -27,7 +32,25 @@ class F_RCNNDataset(Dataset):
 
         # row contains (subject_id,	study_id, image_id, mimic_image_file_path, bbox_coordinates list of list, bbox_labels list,
         #               bbox_phrases list of str, bbox_phrase_exists list of booleans, bbox_is_abnormal list of booleans)
-
+        self.train_transforms = A.Compose(
+        [
+            # we want the long edge of the image to be resized to IMAGE_INPUT_SIZE, and the short edge of the image to be padded to IMAGE_INPUT_SIZE on both sides,
+            # such that the aspect ratio of the images are kept, while getting images of uniform size (IMAGE_INPUT_SIZE x IMAGE_INPUT_SIZE)
+            # LongestMaxSize: resizes the longer edge to IMAGE_INPUT_SIZE while maintaining the aspect ratio
+            # INTER_AREA works best for shrinking images
+            A.LongestMaxSize(max_size=512, interpolation=cv2.INTER_AREA),
+            # A.ColorJitter(hue=0.0),
+            # A.GaussNoise(),
+            # randomly (by default prob=0.5) translate and rotate image
+            # mode and cval specify that black pixels are used to fill in newly created pixels
+            # translate between -2% and 2% of the image height/width, rotate between -2 and 2 degrees
+            # A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, translate_percent=(-0.02, 0.02), rotate=(-2, 2)),
+            # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
+            A.PadIfNeeded(min_height=512, min_width=512, border_mode=cv2.BORDER_CONSTANT),
+            A.Normalize(mean=0.499, std=0.291),
+            ToTensorV2()
+        ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=['class_labels'])
+    )
 
     def __len__(self):
         return len(self.data_info)
@@ -38,7 +61,7 @@ class F_RCNNDataset(Dataset):
 
         # read the image with parent path of current folder + image path
         img_path = os.path.join(os.getcwd(), img_path)
-        img = cv2.imread(img_path,0)
+        img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
         assert img is not None, f"Image at {img_path} is None"
         
         # get the bounding boxes
@@ -54,25 +77,33 @@ class F_RCNNDataset(Dataset):
         labels = np.array(eval(labels))
 
         # resize the image with the bounding boxes accordingly to 512x512
-        img,bboxes = ResizeAndPad((512,512))(img,bboxes)
+        # img,bboxes = ResizeAndPad((512,512))(img,bboxes)
 
 
 
-        if self.transform:
-            bboxes = tv_tensors.BoundingBoxes(
-                bboxes,
-                format="XYXY", canvas_size=(512, 512))
-            img, bboxes = self.transform(img, bboxes)
-            # print size of image
-            print(img.size())
+        # if self.transform:
+        #     bboxes = tv_tensors.BoundingBoxes(
+        #         bboxes,
+        #         format="XYXY", canvas_size=(512, 512))
+        #     img, bboxes = self.transform(img, bboxes)
+        # else:
+        #     img = Image.fromarray(img)
+        #     img = v2.ToTensor()(img)
+        #     bboxes = torch.as_tensor(bboxes, dtype=torch.float32)
+        # labels = torch.as_tensor(labels, dtype=torch.int64)
+        transformed = self.train_transforms(image=img, bboxes=bboxes, class_labels=labels)
 
-            # p
-        else:
-            img = Image.fromarray(img)
-            img = v2.ToTensor()(img)
-            bboxes = torch.as_tensor(bboxes, dtype=torch.float32)
-        labels = torch.as_tensor(labels, dtype=torch.int64)
+        transformed_image = transformed["image"]
+        transformed_bboxes = transformed["bboxes"]
+        transformed_bbox_labels = transformed["class_labels"]
 
+        # convert the bounding boxes to tensor
+        transformed_bboxes = torch.as_tensor(transformed_bboxes, dtype=torch.float32)
+        transformed_bbox_labels = torch.as_tensor(transformed_bbox_labels, dtype=torch.int64)
+        target = {}
+        target["boxes"] = transformed_bboxes
+        target["labels"] = transformed_bbox_labels
+        return transformed_image,target
         # define the bounding box
         target = {}
         target["boxes"] = bboxes
@@ -111,17 +142,22 @@ class Augmentation(object):
 
 # Define a custom transform to add Gaussian noise
 class AddGaussianNoise(object):
-    def __init__(self, mean=0, std=1):
+    def __init__(self, mean=0, std=0.0001):
         self.mean = mean
         self.std = std
 
     def __call__(self, img):
         # Add Gaussian noise to the PIL image
         img = np.array(img)
-        img = img.astype(np.float32)
+        img = img.astype(np.float32)/255
         noise = np.random.normal(self.mean, self.std, img.shape)
+        # print("noise",noise)
+        
+        # print("img",img[:,100:200])
         img = img + noise
-        img = np.clip(img, 0, 255).astype(np.uint8)
+        
+        img = np.clip(img, 0,1)
+        # print("img",img[:,100:200])
         return img
 
 
@@ -196,18 +232,44 @@ def plot_example_with_boxes(img,boxes,name = "test.jpg"):
     boxes: list of lists of shape (4,)
     """
     img = img.copy()
+    # add the bounding boxes to the image using matplotlib
     for box in boxes:
-        x1,y1,x2,y2 = box
-        cv2.rectangle(img,(int(x1),int(y1)),(int(x2),int(y2)),(0,255,0),1)
-
-    # show the image with the bounding boxes using cv2
-    cv2.imshow("image", img)
-    cv2.waitKey(0)
-
-    # save the image
-    cv2.imwrite(name, img)
+        plt.Rectangle((box[0], box[1]), box[2]-box[0], box[3]-box[1], fill=False, color='red')
+    # show the image in grayscale using matplotlib
+    plt.imshow(img, cmap='gray')
+    plt.savefig(name)
+    plt.show()
 
 
+def plot_image(img, boxes):
+    '''
+    Function that draws the BBoxes on the image.
+
+    inputs:
+        img: input-image as numpy.array (shape: [H, W, C])
+        boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+    '''
+    cmap = plt.get_cmap("tab20b")
+    height, width = img.shape[:2]
+    # Create figure and axes
+    fig, ax = plt.subplots(1, figsize=(16, 8))
+    # Display the image
+    ax.imshow(img, cmap="gray"  )
+    for i, box in enumerate(boxes):
+        width = box[2] - box[0]
+        height = box[3] - box[1]
+        rect = patches.Rectangle(
+            (box[0], box[1]),
+            width,
+            height,
+            linewidth=1,  # Increase linewidth
+            edgecolor="red",  # Set the box border color
+            facecolor="none",  # Set facecolor to none
+        )
+        # Add the patch to the Axes
+        ax.add_patch(rect)
+    
+    plt.show()
 
 if __name__ == '__main__':
     # load the csv file
@@ -232,17 +294,24 @@ if __name__ == '__main__':
 
     # get the image and the target
 
-    for i in range(20):
+    for i in range(1):
         img, target = dataset[i]
-        img = img.numpy()[0]
-        bboxes = target['boxes'].numpy()
+        # img = img.numpy()[0]
+        img = img.numpy().transpose(1, 2, 0)
+        # convert img to uint8
+        # img = img*255
+        # img = img.astype(np.uint8)
+        bboxes = target['boxes']
         # convert image to uint8
-        img = img*255
-        img = img.astype(np.uint8)
+        # img = img*255
+        # img = img.astype(np.uint8)
         # convert imafe to numpy array
         img = np.array(img)
         # plot the image with the bounding boxes
-        plot_example_with_boxes(img, bboxes,name = "after.jpg")
+        print("bboxes",bboxes)
+        print("img",img)
+        # plot_example_with_boxes(img, bboxes,name = "after.jpg")
+        plot_image(img, bboxes)
 
     # # apply the augmentation
     # transform = Augmentation()

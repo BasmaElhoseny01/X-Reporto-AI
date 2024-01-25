@@ -24,7 +24,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 class Trainer:
     def __init__(self,debug=False,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
-                 model_path='model.pth',load_model=False,batch_size=1,epochs=10, learning_rate=0.001):
+                 model_path='model.pth',load_model=False,batch_size=1,epochs=10, learning_rate=0.0005):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.debug = debug
@@ -39,6 +39,7 @@ class Trainer:
         
         num_classes = 30 # 29 class (abnormal) + background
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
+        print("in_features",in_features)
         self.model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
         self.bestloss=100000
 
@@ -52,16 +53,17 @@ class Trainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr= self.learning_rate)
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=2, gamma=0.5)
 
         # create loss function for classification and regression
         # caluclated in the model and returned as a dictionary
         # self.criterion_cls = nn.CrossEntropyLoss()
         # self.criterion_reg = nn.MSELoss()
-
+        # create transform
+        
         # create dataset
-        self.dataset_train = F_RCNNDataset(dataset_path= training_csv_path)
-        self.dataset_val = F_RCNNDataset(dataset_path= validation_csv_path)
+        self.dataset_train = F_RCNNDataset(dataset_path= training_csv_path,transform=Augmentation())
+        self.dataset_val = F_RCNNDataset(dataset_path= validation_csv_path,transform=Augmentation())
         
         # create data loader
         self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=self.batch_size, shuffle=False, num_workers=4)
@@ -83,7 +85,7 @@ class Trainer:
         # train_loss_list=[]
         for batch_idx, (images, targets) in enumerate(self.data_loader_train):
             # add new dimension to images after batch size
-            images = images.unsqueeze(1)
+            # images = images.unsqueeze(1)
             images = list(image.to(self.device) for image in images)
             targetdata=[]
             # correct => targets (list[Dict[str, Tensor]]): ground-truth boxes present in the image
@@ -136,7 +138,7 @@ class Trainer:
         self.model.eval()
         # val_loss_list=[]
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
-            images = images.unsqueeze(1)
+            # images = images.unsqueeze(1)
             images = list(image.to(self.device) for image in images)
             targetdata=[]
             # correct => targets (list[Dict[str, Tensor]]): ground-truth boxes present in the image
@@ -157,7 +159,9 @@ class Trainer:
                 # apply NMS to prediction on boxes with score > 0.5
                 prediction = self.model(images)[0]
                 # keep = torchvision.ops.nms(prediction["boxes"], prediction["scores"], 0.3)
-                keep = prediction["scores"] >0.5
+                print("scores",prediction["scores"])
+                print("classes",prediction)
+                keep = prediction["scores"] > -0.1
                 prediction["boxes"] = prediction["boxes"][keep]
                 prediction["scores"] = prediction["scores"][keep]
                 prediction["labels"] = prediction["labels"][keep]
@@ -171,7 +175,7 @@ class Trainer:
                 # compare the labels with targetdata labels 
 
                 # self.showImg(prediction,labels,images[0])
-                plot_image(images[0], targetBoxes[0])
+                # plot_image(images[0], targetBoxes[0])
                 plot_image(images[0], boxes)
                 # val_loss_list.append(loss_value)
     
