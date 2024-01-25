@@ -98,7 +98,7 @@ class Augmentation(object):
         self.normalize_transforms = v2.Compose([
             # randomly rotate the image
             AddGaussianNoise(0,self.noise_std),
-            v2.Normalize([0.499], [0.291]), # normalize with imagenet mean and std
+            v2.Normalize([0.499,0.499], [0.291,0.291]), # normalize with imagenet mean and std
             ]
         )
 
