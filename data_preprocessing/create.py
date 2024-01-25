@@ -4,7 +4,8 @@ import json
 import logging
 import os
 import re
-
+import cv2
+import numpy as np
 import imagesize
 import spacy
 import torch
@@ -12,7 +13,7 @@ from tqdm import tqdm
 
 from data_preprocessing.constants import ANATOMICAL_REGIONS, IMAGE_IDS_TO_IGNORE, SUBSTRINGS_TO_REMOVE
 import data_preprocessing.section_parser as sp
-from paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg, path_full_dataset
+from paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg, path_full_dataset,path_dataset,path_dataset_csv
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -423,3 +424,45 @@ class DataPreprocessing:
                 csv_writer.writerow(header)
                 csv_writer.writerows(csv_rows_less_than_29_regions)
 
+    def get_mean_std(self,image_paths) -> tuple([float, float]):
+        mean = 0.0
+        std = 0.0
+        for num_image, image_path in enumerate(image_paths, start=1):
+            # image is a np array of shape (h, w) with pixel (integer) values between [0, 255]
+            # note that there is no channel dimension, because images are grayscales and cv2.IMREAD_UNCHANGED is specified
+            image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+
+            # pixel values have to be normalized to between [0.0, 1.0], since we need mean and std values in the range [0.0, 1.0]
+            # this is because the transforms.Normalize class applies normalization by the formula: img = (img - mean * max_pixel_value) / (std * max_pixel_value)
+            # with max_pixel_value=255.0
+            image = image / 255.
+
+            mean += image.mean()
+            std += image.std()
+
+        return mean / num_image, std / num_image
+
+    def get_total_num_rows(self,path_csv_file: str) -> int:
+        with open(path_csv_file) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",")
+            # skip the first line (i.e. the header line)
+            next(csv_reader)
+            return sum(1 for row in csv_reader)
+            
+    def get_image_paths_mimic(self) -> list:
+        """
+        Returns a list of all file paths to mimic-cxr images.
+        """
+        image_paths = []
+        # path_mimic_cxr_jpg = "datasets1"
+        # path_csv_file="train-10.csv"
+        total_num_rows = self.get_total_num_rows(path_dataset_csv)
+        with open(path_dataset_csv) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",")
+            # skip the first line (i.e. the header line)
+            next(csv_reader)
+            for row in tqdm(csv_reader, total=total_num_rows):
+                mimic_image_file_path = os.path.join(path_dataset, row[3])
+                image_paths.append(mimic_image_file_path)
+
+        return image_paths

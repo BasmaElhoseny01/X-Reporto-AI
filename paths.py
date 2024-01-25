@@ -1,5 +1,7 @@
 path_chest_imagenome = "datasets/chest-imagenome-dataset"
 path_mimic_cxr = "datasets/mimic-cxr"
+path_dataset = "datasets"
+path_dataset_csv = "datasets/train-10.csv"
 path_mimic_cxr_jpg = "datasets/mimic-cxr-jpg"
 path_full_dataset = "datasets/dataset-with-reference-reports"
 # path_chexbert_weights = "/u/home/tanida/region-guided-chest-x-ray-report-generation/src/CheXbert/src/models/chexbert.pth"
