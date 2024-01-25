@@ -19,10 +19,12 @@ from matplotlib import patches
 from torchvision.io.image import read_image
 from torchvision.utils import draw_bounding_boxes
 from torchvision.transforms.functional import to_pil_image
+import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 class Trainer:
-    def __init__(self,debug=False,training_csv_path='datasets/overfitting.csv',validation_csv_path='datasets/overfitting.csv',
-                 model_path='model.pth',load_model=False,batch_size=1,epochs=1, learning_rate=0.0001):
+    def __init__(self,debug=False,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
+                 model_path='model.pth',load_model=False,batch_size=1,epochs=10, learning_rate=0.001):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.debug = debug
@@ -32,7 +34,7 @@ class Trainer:
         self.learning_rate = learning_rate
 
         # create model object detector
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
         # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
         
         num_classes = 30 # 29 class (abnormal) + background
@@ -115,7 +117,6 @@ class Trainer:
             # print statistics
             if self.debug:
                 print(f'Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {losses.item():.4f}')
-                print(loss_value)
             break
     
 
@@ -155,10 +156,13 @@ class Trainer:
                 prediction = self.model(images)[0]
                 # apply NMS to prediction on boxes with score > 0.5
                 prediction = self.model(images)[0]
-                keep = torchvision.ops.nms(prediction["boxes"], prediction["scores"], 0.3)
-                prediction["boxes"] = prediction["boxes"][keep]
-                prediction["scores"] = prediction["scores"][keep]
-                prediction["labels"] = prediction["labels"][keep]
+                # get max score of each class of boxes that has same label
+
+                # keep = torchvision.ops.nms(prediction["boxes"], prediction["scores"], 0.2)
+                # keep = prediction["scores"] > 0.5
+                # prediction["boxes"] = prediction["boxes"][keep]
+                # prediction["scores"] = prediction["scores"][keep]
+                # prediction["labels"] = prediction["labels"][keep]
                 # get the scores, boxes and labels
                 scores = prediction["scores"].tolist()
                 boxes = prediction["boxes"].tolist()
