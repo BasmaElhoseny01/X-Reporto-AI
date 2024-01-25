@@ -52,7 +52,7 @@ class Trainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr= self.learning_rate)
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
 
         # create loss function for classification and regression
         # caluclated in the model and returned as a dictionary
@@ -153,16 +153,14 @@ class Trainer:
                 # # like `scores`, `labels` and `mask` (for Mask R-CNN models).
                 # losses = sum(loss for loss in loss_dict.values())
                 # loss_value = losses.item()
-                prediction = self.model(images)[0]
+                # prediction = self.model(images)[0]
                 # apply NMS to prediction on boxes with score > 0.5
                 prediction = self.model(images)[0]
-                # get max score of each class of boxes that has same label
-
-                # keep = torchvision.ops.nms(prediction["boxes"], prediction["scores"], 0.2)
-                # keep = prediction["scores"] > 0.5
-                # prediction["boxes"] = prediction["boxes"][keep]
-                # prediction["scores"] = prediction["scores"][keep]
-                # prediction["labels"] = prediction["labels"][keep]
+                # keep = torchvision.ops.nms(prediction["boxes"], prediction["scores"], 0.3)
+                keep = prediction["scores"] >0.5
+                prediction["boxes"] = prediction["boxes"][keep]
+                prediction["scores"] = prediction["scores"][keep]
+                prediction["labels"] = prediction["labels"][keep]
                 # get the scores, boxes and labels
                 scores = prediction["scores"].tolist()
                 boxes = prediction["boxes"].tolist()
@@ -173,14 +171,12 @@ class Trainer:
                 # compare the labels with targetdata labels 
 
                 # self.showImg(prediction,labels,images[0])
-                print(len(targetBoxes[0]))
-                print(len(boxes))
                 plot_image(images[0], targetBoxes[0])
                 plot_image(images[0], boxes)
                 # val_loss_list.append(loss_value)
     
                 # print statistics
-                if self.debug:
+                if self.debug ==False:
                     # print labels , scores , boxes
                     print("labels : ",labels)
                     print("scores : ",scores)
