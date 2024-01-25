@@ -19,7 +19,7 @@ from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 # from .utils import plot_example_with_boxes
 
-class F_RCNNDataset(Dataset):
+class CustomDataset(Dataset):
     def __init__(self, dataset_path: str, transform =None):
         self.dataset_path = dataset_path # path to csv file
         self.transform = transform
@@ -29,28 +29,8 @@ class F_RCNNDataset(Dataset):
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
 
-
         # row contains (subject_id,	study_id, image_id, mimic_image_file_path, bbox_coordinates list of list, bbox_labels list,
         #               bbox_phrases list of str, bbox_phrase_exists list of booleans, bbox_is_abnormal list of booleans)
-        self.train_transforms = A.Compose(
-        [
-            # we want the long edge of the image to be resized to IMAGE_INPUT_SIZE, and the short edge of the image to be padded to IMAGE_INPUT_SIZE on both sides,
-            # such that the aspect ratio of the images are kept, while getting images of uniform size (IMAGE_INPUT_SIZE x IMAGE_INPUT_SIZE)
-            # LongestMaxSize: resizes the longer edge to IMAGE_INPUT_SIZE while maintaining the aspect ratio
-            # INTER_AREA works best for shrinking images
-            A.LongestMaxSize(max_size=512, interpolation=cv2.INTER_AREA),
-            # A.ColorJitter(hue=0.0),
-            # A.GaussNoise(),
-            # randomly (by default prob=0.5) translate and rotate image
-            # mode and cval specify that black pixels are used to fill in newly created pixels
-            # translate between -2% and 2% of the image height/width, rotate between -2 and 2 degrees
-            # A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, translate_percent=(-0.02, 0.02), rotate=(-2, 2)),
-            # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
-            A.PadIfNeeded(min_height=512, min_width=512, border_mode=cv2.BORDER_CONSTANT),
-            A.Normalize(mean=0.499, std=0.291),
-            ToTensorV2()
-        ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=['class_labels'])
-    )
 
     def __len__(self):
         return len(self.data_info)
@@ -77,33 +57,19 @@ class F_RCNNDataset(Dataset):
         labels = np.array(eval(labels))
 
         # resize the image with the bounding boxes accordingly to 512x512
-        # img,bboxes = ResizeAndPad((512,512))(img,bboxes)
+        img,bboxes = ResizeAndPad((512,512))(img,bboxes)
 
-
-
-        # if self.transform:
-        #     bboxes = tv_tensors.BoundingBoxes(
-        #         bboxes,
-        #         format="XYXY", canvas_size=(512, 512))
-        #     img, bboxes = self.transform(img, bboxes)
-        # else:
-        #     img = Image.fromarray(img)
-        #     img = v2.ToTensor()(img)
-        #     bboxes = torch.as_tensor(bboxes, dtype=torch.float32)
-        # labels = torch.as_tensor(labels, dtype=torch.int64)
-        transformed = self.train_transforms(image=img, bboxes=bboxes, class_labels=labels)
-
-        transformed_image = transformed["image"]
-        transformed_bboxes = transformed["bboxes"]
-        transformed_bbox_labels = transformed["class_labels"]
-
-        # convert the bounding boxes to tensor
-        transformed_bboxes = torch.as_tensor(transformed_bboxes, dtype=torch.float32)
-        transformed_bbox_labels = torch.as_tensor(transformed_bbox_labels, dtype=torch.int64)
-        target = {}
-        target["boxes"] = transformed_bboxes
-        target["labels"] = transformed_bbox_labels
-        return transformed_image,target
+        if self.transform:
+            bboxes = tv_tensors.BoundingBoxes(
+                bboxes,
+                format="XYXY", canvas_size=(512, 512))
+            img, bboxes = self.transform(img, bboxes)
+        else:
+            img = Image.fromarray(img)
+            img = v2.ToTensor()(img)
+            bboxes = torch.as_tensor(bboxes, dtype=torch.float32)
+        labels = torch.as_tensor(labels, dtype=torch.int64)
+        
         # define the bounding box
         target = {}
         target["boxes"] = bboxes
@@ -117,7 +83,6 @@ class Augmentation(object):
     def __init__(self, noise_std=0.1, rotate_angle=2):
         self.noise_std = noise_std
         self.rotate_angle = rotate_angle
-
         self.rotation_transforms = v2.Compose([
             # randomly rotate the image
             # v2.RandomRotation(self.rotate_angle),
@@ -128,8 +93,8 @@ class Augmentation(object):
         )
         self.normalize_transforms = v2.Compose([
             # randomly rotate the image
-            AddGaussianNoise(0,self.noise_std),
-            v2.Normalize([0.499,0.499], [0.291,0.291]), # normalize with imagenet mean and std
+            GaussianNoise(0,self.noise_std),
+            Normalize(0.499,0.291), # normalize with imagenet mean and std
             ]
         )
 
@@ -141,25 +106,47 @@ class Augmentation(object):
 
 
 # Define a custom transform to add Gaussian noise
-class AddGaussianNoise(object):
+class GaussianNoise(object):
     def __init__(self, mean=0, std=0.0001):
         self.mean = mean
         self.std = std
 
     def __call__(self, img):
-        # Add Gaussian noise to the PIL image
-        img = np.array(img)
-        img = img.astype(np.float32)/255
-        noise = np.random.normal(self.mean, self.std, img.shape)
-        # print("noise",noise)
+        # check if image type is uint8
+        if img.dtype == np.uint8:
+            img = np.array(img)
+            noise = np.random.normal(self.mean, self.std, img.shape)
+            img = img + noise
+            img = np.clip(img, 0,255)
+            img = img.astype(np.uint8)
+            return img
+        else:
+            noise = np.random.normal(self.mean, self.std, img.shape)
+            img = img + noise
+            return img
         
-        # print("img",img[:,100:200])
-        img = img + noise
-        
-        img = np.clip(img, 0,1)
-        # print("img",img[:,100:200])
-        return img
+class Normalize(object):
+    def __init__(self, mean=0, std=0.0001):
+        self.mean = mean
+        self.std = std
 
+    def __call__(self, img):
+        # check if image type is uint8
+        if img.dtype == np.uint8:
+            img = np.array(img)
+            # img = img/255
+            # # subtract mean
+            # img = img - self.mean
+            # # divide by std
+            # img = img/self.std
+            return img
+        else:
+            img = np.array(img)
+            # subtract mean
+            img = img - self.mean
+            # divide by std
+            img = img/self.std
+            return img
 
 # Define a custom transform to resize and pad the image and update bounding boxes
 class ResizeAndPad(object):
@@ -223,6 +210,8 @@ class ResizeAndPad(object):
                 boxes[:, [0, 2]] = boxes[:, [0, 2]] * (new_height / height)
                 boxes[:, [1, 3]] = boxes[:, [1, 3]] * (new_width / width) + start
 
+        # convert the image to uint8
+        new_image = new_image.astype(np.uint8)
         return new_image, boxes
 
 
@@ -290,7 +279,7 @@ if __name__ == '__main__':
     # plot_example_with_boxes(img, bboxes,name = "before.jpg")
     
     # create the dataset
-    dataset = F_RCNNDataset(dataset_path= 'datasets/train-200.csv', transform = Augmentation())
+    dataset = CustomDataset(dataset_path= 'datasets/train-200.csv', transform = Augmentation())
 
     # get the image and the target
 

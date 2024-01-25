@@ -11,7 +11,7 @@ import cv2
 import random
 import pandas as pd
 from PIL import Image
-from data_loader import F_RCNNDataset, Augmentation
+from data_loader import CustomDataset, Augmentation
 from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights
 
 
@@ -24,7 +24,7 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 class Trainer:
     def __init__(self,debug=False,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
-                 model_path='model.pth',load_model=False,batch_size=1,epochs=10, learning_rate=0.0005):
+                 model_path='model.pth',load_model=False,batch_size=1,epochs=20, learning_rate=0.0005):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.debug = debug
@@ -34,8 +34,9 @@ class Trainer:
         self.learning_rate = learning_rate
 
         # create model object detector
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
-        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights = None)
+        # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights, pretrained=True,
+        #                                                                   trainable_backbone_layers=5, min_size=512, max_size=512)
         
         num_classes = 30 # 29 class (abnormal) + background
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
@@ -44,7 +45,7 @@ class Trainer:
         self.bestloss=100000
 
         self.model.to(self.device)
-
+        print("model",self.model)
         # load model if specified
         if load_model:
             self.model.load_state_dict(torch.load(model_path))
@@ -53,7 +54,7 @@ class Trainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr= self.learning_rate)
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=2, gamma=0.5)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=4, gamma=0.8)
 
         # create loss function for classification and regression
         # caluclated in the model and returned as a dictionary
@@ -62,8 +63,8 @@ class Trainer:
         # create transform
         
         # create dataset
-        self.dataset_train = F_RCNNDataset(dataset_path= training_csv_path,transform=Augmentation())
-        self.dataset_val = F_RCNNDataset(dataset_path= validation_csv_path,transform=Augmentation())
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path,transform=Augmentation())
+        self.dataset_val = CustomDataset(dataset_path= validation_csv_path,transform=Augmentation())
         
         # create data loader
         self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=self.batch_size, shuffle=False, num_workers=4)
