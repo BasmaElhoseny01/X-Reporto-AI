@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import cv2
+from matplotlib import pyplot as plt
 import numpy as np
 import imagesize
 import spacy
@@ -466,3 +467,10 @@ class DataPreprocessing:
                 image_paths.append(mimic_image_file_path)
 
         return image_paths
+    # function take mean ,std and image path and return normalized image
+    def normalize_image(self,image_path: str, mean: float, std: float) -> np.array:
+        image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+        image = image / 255.
+        image = (image - mean) / std
+        return image
+   
