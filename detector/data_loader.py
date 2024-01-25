@@ -11,17 +11,16 @@ import pandas as pd
 from torchvision.transforms import v2
 import matplotlib.pyplot as plt
 # from .utils import plot_example_with_boxes
-
+import sys
 class F_RCNNDataset(Dataset):
     def __init__(self, dataset_path: str, transform =None):
         self.dataset_path = dataset_path # path to csv file
         self.transform = transform
 
         # read the csv file
-        self.data_info = pd.read_csv(dataset_path, header=None)
-        # remove the first row (column names)
-        self.data_info = self.data_info.iloc[1:]
-
+        self.data_info = pd.read_csv(dataset_path, header=None,skiprows=1)
+        # Drop None Rows
+        self.data_info=self.data_info.dropna(how='all')
 
         # row contains (subject_id,	study_id, image_id, mimic_image_file_path, bbox_coordinates list of list, bbox_labels list,
         #               bbox_phrases list of str, bbox_phrase_exists list of booleans, bbox_is_abnormal list of booleans)
@@ -157,19 +156,22 @@ class ResizeAndPad(object):
             boxes[:, [1, 3]] = boxes[:, [1, 3]] * (new_height / height)
         return new_image, boxes
 
-def plot_example_with_boxes(img,boxes,name = "test.jpg"):
+def plot_example_with_boxes(img_original,boxes,name = "test.jpg"):
     """
     img: numpy array of shape (H,W)
     boxes: list of lists of shape (4,)
     """
-    img = img.copy()
+    img = img_original.copy()
+    # Convert to RGB to draw
+    img=cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+
     for box in boxes:
         x1,y1,x2,y2 = box
-        cv2.rectangle(img,(int(x1),int(y1)),(int(x2),int(y2)),(0,255,0),2)
+        cv2.rectangle(img,(int(x1),int(y1)),(int(x2),int(y2)),color=(255,0,0),thickness=2)
 
     # show the image with the bounding boxes using cv2
-    cv2.imshow("image", img)
-    cv2.waitKey(0)
+    plt.imshow(img)
+    plt.show()
 
     # save the image
     cv2.imwrite(name, img)
@@ -183,16 +185,25 @@ if __name__ == '__main__':
 
     # read the image with parent path of current folder + image path
     img_path = os.path.join(os.getcwd(), img_path)
-    img = cv2.imread(img_path,0)
+    img = cv2.imread(img_path,cv2.IMREAD_GRAYSCALE)
+
+    # print(img)
+    # plt.imshow(img,cmap='gray')
+    # plt.show()
+
     assert img is not None, f"Image at {img_path} is None"
     # get the bounding boxes
     bboxes = data.iloc[1, 4]
 
+
     # convert the string representation of bounding boxes into list of list
     bboxes = eval(bboxes)
 
+    # print("bboxes",bboxes)
+    # print(len(bboxes))
+
     # plot the image with the bounding boxes
-    plot_example_with_boxes(img, bboxes,name = "before.jpg")
+    plot_example_with_boxes(img, bboxes,name = "gold.jpg")
     
     # create the dataset
     dataset = F_RCNNDataset(dataset_path= 'datasets/train-200.csv')
@@ -201,7 +212,7 @@ if __name__ == '__main__':
     img, target = dataset[0]
     img = img.numpy()
     bboxes = target['boxes'].numpy()
-    print(bboxes)
+    # print(bboxes)
     # convert image to uint8
     img = img.astype(np.uint8)
     # plot the image with the bounding boxes
