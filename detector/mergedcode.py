@@ -27,7 +27,7 @@ import torch.nn as nn
 
 class Trainer(nn.Module):
     def __init__(self,traindata,validdata ,debug=False,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
-                 model_path='model.pth',load_model=False,batch_size=1,epochs=20, learning_rate=0.0001):
+                 model_path='model.pth',load_model=False,batch_size=1,epochs=1, learning_rate=0.0001):
 
         super().__init__()
         print(torch.cuda.is_available()) 
@@ -214,7 +214,10 @@ class Trainer(nn.Module):
                 b=b[0].tolist()
                 listboxes.append(b)
             print("top_k_scores_for_label: ",top_k_scores_for_label)
-        return listboxes,unique_labels.tolist()
+            if len(unique_labels)!=0:
+                return listboxes,unique_labels.tolist()
+        return listboxes,[]
+  
     def evaluate_one_epoch(self):
         self.model.eval()
         # val_loss_list=[]
@@ -296,235 +299,238 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
 
 
     region_colors = ["b", "g", "r", "c", "m", "y"]
+    for j in range(0,5):
+        for i in range(j*6+1,j*6+7):
+            if i in labels:
+                index = labels.index(i)
+                box = boxes[index]
+                width = box[2] - box[0]
+                height = box[3] - box[1]
+                rect = patches.Rectangle(
+                    (box[0], box[1]),
+                    width,
+                    height,
+                    linewidth=1,  # Increase linewidth
+                    # make the box color correspond to the label color
+                    edgecolor=region_colors[((i-j*6-1)%7)-1],
+                    # edgecolor="white",  # Set the box border color
+                    facecolor="none",  # Set facecolor to none
+                    linestyle="dashed",
 
-    for i in range(1,7):
-        if i in labels:
-            index = labels.index(i)
-            box = boxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color
-                edgecolor=region_colors[(i%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                linestyle="dashed",
+                )
+                # Add the patch to the Axes
+                ax.add_patch(rect)
+            if i in prdictedLabels:
+                index = prdictedLabels.index(i)
+                box = prdictedBoxes[index]
+                width = box[2] - box[0]
+                height = box[3] - box[1]
+                rect = patches.Rectangle(
+                    (box[0], box[1]),
+                    width,
+                    height,
+                    linewidth=1,  # Increase linewidth
+                    # make the box color correspond to the label color
+                    edgecolor=region_colors[(i-j*6-1%7)-1],
+                    # edgecolor="white",  # Set the box border color
+                    facecolor="none",  # Set facecolor to none
+                    linestyle="solid",
 
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-        if i in prdictedLabels:
-            index = prdictedLabels.index(i)
-            box = prdictedBoxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color
-                edgecolor=region_colors[(i%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                linestyle="solid",
+                )
+                # Add the patch to the Axes
+                ax.add_patch(rect)
+        plt.show()
+        cmap = plt.get_cmap("tab20b")
+        height, width = img.shape[1:]
+        # Create figure and axes
+        fig, ax = plt.subplots(1, figsize=(16, 8))
+        # Display the image
+        ax.imshow(img[0])
 
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-    plt.show()
-    cmap = plt.get_cmap("tab20b")
-    height, width = img.shape[1:]
-    # Create figure and axes
-    fig, ax = plt.subplots(1, figsize=(16, 8))
-    # Display the image
-    ax.imshow(img[0])
-    for i in range(7,13):
-        if i in labels:
-            index = labels.index(i)
-            box = boxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color
-                edgecolor=region_colors[((i-6)%7) -1 ],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                # make it dashed
-                linestyle="dashed",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-        if i in prdictedLabels:
-            index = prdictedLabels.index(i)
-            box = prdictedBoxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color
-                edgecolor=region_colors[((i-6)%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                linestyle="solid",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-    plt.show()
-    cmap = plt.get_cmap("tab20b")
-    height, width = img.shape[1:]
-    # Create figure and axes
-    fig, ax = plt.subplots(1, figsize=(16, 8))
-    # Display the image
-    ax.imshow(img[0])
-    for i in range(13,19):
-        if i in labels:
-            index = labels.index(i)
-            box = boxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color and make i
-                edgecolor=region_colors[((i-12)%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                # make it dashed
-                linestyle="dashed",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-        if i in prdictedLabels:
-            index = prdictedLabels.index(i)
-            box = prdictedBoxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color
-                edgecolor=region_colors[((i-12)%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                linestyle="solid",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-    plt.show()
-    cmap = plt.get_cmap("tab20b")
-    height, width = img.shape[1:]
-    # Create figure and axes
-    fig, ax = plt.subplots(1, figsize=(16, 8))
-    # Display the image
-    ax.imshow(img[0])
-    for i in range(19,25):
-        if i in labels:
-            index = labels.index(i)
-            box = boxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color and make i
-                edgecolor=region_colors[((i-18)%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                # make it dashed
-                linestyle="dashed",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-        if i in prdictedLabels:
-            index = prdictedLabels.index(i)
-            box = prdictedBoxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color
-                edgecolor=region_colors[((i-18)%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                linestyle="solid",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-    plt.show()
-    cmap = plt.get_cmap("tab20b")
-    height, width = img.shape[1:]
-    # Create figure and axes
-    fig, ax = plt.subplots(1, figsize=(16, 8))
-    # Display the image
-    ax.imshow(img[0])
-    plt.show()
-    for i in range(25,31):
-        if i in labels:
-            index = labels.index(i)
-            box = boxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color and make i
-                edgecolor=region_colors[((i-24)%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                # make it dashed
-                linestyle="dashed",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-        if i in prdictedLabels:
-            index = prdictedLabels.index(i)
-            box = prdictedBoxes[index]
-            width = box[2] - box[0]
-            height = box[3] - box[1]
-            rect = patches.Rectangle(
-                (box[0], box[1]),
-                width,
-                height,
-                linewidth=1,  # Increase linewidth
-                # make the box color correspond to the label color
-                edgecolor=region_colors[((i-24)%7)-1],
-                # edgecolor="white",  # Set the box border color
-                facecolor="none",  # Set facecolor to none
-                linestyle="solid",
-            )
-            # Add the patch to the Axes
-            ax.add_patch(rect)
-    plt.show()
-    cmap = plt.get_cmap("tab20b")
-    height, width = img.shape[1:]
-    # Create figure and axes
-    fig, ax = plt.subplots(1, figsize=(16, 8))
-    # Display the image
-    ax.imshow(img[0])
-    plt.show()
+
+
+    # for i in range(7,13):
+    #     if i in labels:
+    #         index = labels.index(i)
+    #         box = boxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color
+    #             edgecolor=region_colors[((i-6)%7) -1 ],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             # make it dashed
+    #             linestyle="dashed",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    #     if i in prdictedLabels:
+    #         index = prdictedLabels.index(i)
+    #         box = prdictedBoxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color
+    #             edgecolor=region_colors[((i-6)%7)-1],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             linestyle="solid",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    # plt.show()
+    # cmap = plt.get_cmap("tab20b")
+    # height, width = img.shape[1:]
+    # # Create figure and axes
+    # fig, ax = plt.subplots(1, figsize=(16, 8))
+    # # Display the image
+    # ax.imshow(img[0])
+    # for i in range(13,19):
+    #     if i in labels:
+    #         index = labels.index(i)
+    #         box = boxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color and make i
+    #             edgecolor=region_colors[((i-12)%7)-1],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             # make it dashed
+    #             linestyle="dashed",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    #     if i in prdictedLabels:
+    #         index = prdictedLabels.index(i)
+    #         box = prdictedBoxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color
+    #             edgecolor=region_colors[((i-12)%7)-1],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             linestyle="solid",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    # plt.show()
+    # cmap = plt.get_cmap("tab20b")
+    # height, width = img.shape[1:]
+    # # Create figure and axes
+    # fig, ax = plt.subplots(1, figsize=(16, 8))
+    # # Display the image
+    # ax.imshow(img[0])
+    # for i in range(19,25):
+    #     if i in labels:
+    #         index = labels.index(i)
+    #         box = boxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color and make i
+    #             edgecolor=region_colors[((i-18)%7)-1],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             # make it dashed
+    #             linestyle="dashed",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    #     if i in prdictedLabels:
+    #         index = prdictedLabels.index(i)
+    #         box = prdictedBoxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color
+    #             edgecolor=region_colors[((i-18)%7)-1],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             linestyle="solid",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    # plt.show()
+    # cmap = plt.get_cmap("tab20b")
+    # height, width = img.shape[1:]
+    # # Create figure and axes
+    # fig, ax = plt.subplots(1, figsize=(16, 8))
+    # # Display the image
+    # ax.imshow(img[0])
+    # plt.show()
+    # for i in range(25,31):
+    #     if i in labels:
+    #         index = labels.index(i)
+    #         box = boxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color and make i
+    #             edgecolor=region_colors[((i-24)%7)-1],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             # make it dashed
+    #             linestyle="dashed",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    #     if i in prdictedLabels:
+    #         index = prdictedLabels.index(i)
+    #         box = prdictedBoxes[index]
+    #         width = box[2] - box[0]
+    #         height = box[3] - box[1]
+    #         rect = patches.Rectangle(
+    #             (box[0], box[1]),
+    #             width,
+    #             height,
+    #             linewidth=1,  # Increase linewidth
+    #             # make the box color correspond to the label color
+    #             edgecolor=region_colors[((i-24)%7)-1],
+    #             # edgecolor="white",  # Set the box border color
+    #             facecolor="none",  # Set facecolor to none
+    #             linestyle="solid",
+    #         )
+    #         # Add the patch to the Axes
+    #         ax.add_patch(rect)
+    # plt.show()
+    # cmap = plt.get_cmap("tab20b")
+    # height, width = img.shape[1:]
+    # # Create figure and axes
+    # fig, ax = plt.subplots(1, figsize=(16, 8))
+    # # Display the image
+    # ax.imshow(img[0])
+    # plt.show()
 
 
 
