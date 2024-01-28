@@ -7,9 +7,12 @@ import torch.nn as nn
 
 from src.object_detector.models.frccn_object_detector_v1 import FrcnnObjectDetectorV1
 
-class ObjectDetector(nn.Module):
+class ObjectDetector():
     def __init__(self):
-        self.model=FrcnnObjectDetectorV1()
+        pass
+    
+    def create_model(self) -> FrcnnObjectDetectorV1:
+        return FrcnnObjectDetectorV1()
 
-    def forward(self,images: Tensor ,targets: Optional[List[Dict[str, Tensor]]] = None):
-        self.model(images ,targets)
+# model=ObjectDetector().create_model()
+# print(model)
