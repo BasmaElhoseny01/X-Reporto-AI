@@ -156,8 +156,9 @@ class FrcnnObjectDetectorV1(nn.Module):
 
 # model=FrcnnObjectDetectorV1()
 
-# # # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# # # model.to(device, non_blocking=True)
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# model.to(device, non_blocking=True)
+
 
 # from torchvision import transforms
 # import numpy as np
@@ -191,12 +192,18 @@ class FrcnnObjectDetectorV1(nn.Module):
 
 #     # Create a dictionary for each batch element
 #     target_dict = {"boxes": boxes, "labels": labels}
+
     
 #     # Append the dictionary to the targets list
 #     targets.append(target_dict)
 
+# # Move all tensors in targets to GPU
+# for target_dict in targets:
+#     for key, value in target_dict.items():
+#         if isinstance(value, torch.Tensor):
+#             target_dict[key] = value.to(device)
+
+# input_image=input_image.to(device)
 # model.eval()
 # print(model(input_image,targets))
-# # print(f)
-# print("Basma")
-# Print or access the main layers
+# # Print or access the main layers

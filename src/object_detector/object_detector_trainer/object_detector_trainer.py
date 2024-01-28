@@ -332,7 +332,7 @@ if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
     
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
-    trainer = Object_detector_trainer()
+    trainer = Object_detector_trainer(model=object_detector_model)
     trainer.train()
     trainer.evaluate()
     trainer.pridicte_and_display()
