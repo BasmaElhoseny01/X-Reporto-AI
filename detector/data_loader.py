@@ -56,6 +56,19 @@ class CustomDataset(Dataset):
         # convert the string representation of labels into list
         labels = np.array(eval(labels))
 
+        #--------------------- to be removed ---------------------
+        # apply transformations to image, bboxes and label
+        transformed = self.transform(image=img, bboxes=bboxes, class_labels=labels)
+
+        transformed_image = transformed["image"]
+        transformed_bboxes = transformed["bboxes"]
+        transformed_bbox_labels = transformed["class_labels"]
+        target = {}
+        target["boxes"] =  torch.as_tensor(transformed_bboxes, dtype=torch.float32)
+        target["labels"] = torch.as_tensor(transformed_bbox_labels, dtype=torch.int64)
+        return transformed_image, target
+    
+        #--------------------- to be removed ---------------------
         # resize the image with the bounding boxes accordingly to 512x512
         img,bboxes = ResizeAndPad((512,512))(img,bboxes)
 
@@ -75,6 +88,7 @@ class CustomDataset(Dataset):
         target["boxes"] = bboxes
         target["labels"] = labels
 
+        # print("target",target)ٍ
         return img, target
 
 # implement transforms as augmentation with gaussian noise, random rotation
@@ -87,7 +101,7 @@ class Augmentation(object):
             # randomly rotate the image
             # v2.RandomRotation(self.rotate_angle),
             
-            v2.RandomRotation(degrees=(-self.rotate_angle, self.rotate_angle)),
+            # v2.RandomRotation(degrees=(-self.rotate_angle, self.rotate_angle)),
             v2.ToTensor(),
             ]
         )
@@ -100,7 +114,7 @@ class Augmentation(object):
 
     def __call__(self, img,bboxes):
         # apply the transforms to the image and the bounding boxes
-        img = self.normalize_transforms(img)
+        # img = self.normalize_transforms(img)
         img = Image.fromarray(img)
         return self.rotation_transforms(img,bboxes)
 
