@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from ..data_loader.custom_dataset import CustomDataset
 from matplotlib import patches
 
+from src.object_detector.models.object_detector_factory import ObjectDetector
+
 # constants
 EPOCHS=10
 LEARNING_RATE=0.0001
@@ -327,6 +329,8 @@ def plot_single_image(img, boxes):
     plt.show()
 
 if __name__ == '__main__':
+    object_detector_model=ObjectDetector().create_model()
+    
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
     trainer = Object_detector_trainer()
     trainer.train()
