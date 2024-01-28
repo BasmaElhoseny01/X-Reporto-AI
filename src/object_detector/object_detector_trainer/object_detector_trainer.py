@@ -9,15 +9,15 @@ from matplotlib import patches
 
 # constants
 EPOCHS=10
-LEARNING_RATE=0.000001
-BATCH_SIZE=1
+LEARNING_RATE=0.0001
+BATCH_SIZE=2
 SCHEDULAR_STEP_SIZE=1
-SCHEDULAR_GAMMA=0.1
+SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
 
 class Object_detector_trainer:
     
-    def __init__(self,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
+    def __init__(self,training_csv_path='datasets/train.csv',validation_csv_path='datasets/train.csv',
                  model=None):
         '''
         inputs:
@@ -29,8 +29,12 @@ class Object_detector_trainer:
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         if model==None:
             # load the model from bestmodel.path
-            self.model=torch.load('bestmodel.pth')
-        self.model = model
+            self.model=torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30)
+            state_dict=torch.load('bestmodel.pth')
+            self.model.load_state_dict(state_dict)
+
+        else:
+            self.model = model
         self.model.to(self.device)
 
         # create adam optimizer
@@ -40,11 +44,11 @@ class Object_detector_trainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val')
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         
         # create data loader
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         
         # initialize the best loss to a large value
@@ -91,7 +95,6 @@ class Object_detector_trainer:
         
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
-                    #########################################################
                     break
             self.lr_scheduler.step()
 
@@ -180,7 +183,6 @@ class Object_detector_trainer:
     
             if DEBUG :
                 print(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} in eval Loss: {loss_value:.4f}')
-                #########################################################
                 break
         self.lr_scheduler.step()
                
@@ -325,7 +327,8 @@ def plot_single_image(img, boxes):
     plt.show()
 
 if __name__ == '__main__':
-    trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
+    # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
+    trainer = Object_detector_trainer()
     trainer.train()
     trainer.evaluate()
     trainer.pridicte_and_display()
