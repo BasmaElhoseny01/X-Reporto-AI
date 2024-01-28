@@ -11,7 +11,7 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from torchvision.transforms import v2
-from custom_augmentation import CustomAugmentation
+from src.object_detector.data_loader.custom_augmentation import CustomAugmentation
 
 class CustomDataset(Dataset):
     def __init__(self, dataset_path: str, transform_type:str ='train'):
@@ -111,7 +111,7 @@ def plot_image(img, boxes):
 
 if __name__ == '__main__':
     # load the csv file
-    data = pd.read_csv('E:/Graduation Project/Graduation-Project-Repo/datasets/train-200.csv', header=None)
+    data = pd.read_csv(os.getcwd()+'/datasets/train-200.csv', header=None)
     img_path = data.iloc[1, 3]
 
     # read the image with parent path of current folder + image path
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     # plot_example_with_boxes(img, bboxes,name = "before.jpg")
     
     # create the dataset
-    dataset = CustomDataset(dataset_path= 'E:/Graduation Project/Graduation-Project-Repo/datasets/train-200.csv', transform_type = 'train')
+    dataset = CustomDataset(dataset_path=os.getcwd()+'/datasets/train-200.csv', transform_type = 'train')
 
     # get the image and the target
 

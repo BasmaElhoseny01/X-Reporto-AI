@@ -4,11 +4,11 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import  DataLoader
 import matplotlib.pyplot as plt
-from data_loader import F_RCNNDataset
+from ..data_loader.custom_dataset import CustomDataset
 from matplotlib import patches
 
 # constants
-EPOCHS=1
+EPOCHS=10
 LEARNING_RATE=0.000001
 BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=1
@@ -27,6 +27,9 @@ class Object_detector_trainer:
         '''
         # connect to gpu if available
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        if model==None:
+            # load the model from bestmodel.path
+            self.model=torch.load('bestmodel.pth')
         self.model = model
         self.model.to(self.device)
 
@@ -37,11 +40,11 @@ class Object_detector_trainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
-        self.dataset_train = F_RCNNDataset(dataset_path= training_csv_path)
-        self.dataset_val = F_RCNNDataset(dataset_path= validation_csv_path)
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
+        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         
         # create data loader
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         
         # initialize the best loss to a large value
@@ -57,7 +60,7 @@ class Object_detector_trainer:
         for epoch in range(EPOCHS):
             for batch_idx, (images, targets) in enumerate(self.data_loader_train):
                 # add new dimension to images after batch size
-                images = images.unsqueeze(1)
+                # images = images.unsqueeze(1)
                 images = list(image.to(self.device) for image in images)
                 # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
                 targetdata=[]
@@ -88,7 +91,8 @@ class Object_detector_trainer:
         
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
-            
+                    #########################################################
+                    break
             self.lr_scheduler.step()
 
     def get_top_k_boxes_for_labels(self, boxes, labels, scores, k=1):
@@ -145,7 +149,7 @@ class Object_detector_trainer:
         self.model.train()
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             # add new dimension to images after batch size
-            images = images.unsqueeze(1)
+            # images = images.unsqueeze(1)
             images = list(image.to(self.device) for image in images)
             # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
             targetdata=[]
@@ -176,10 +180,11 @@ class Object_detector_trainer:
     
             if DEBUG :
                 print(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} in eval Loss: {loss_value:.4f}')
-        
+                #########################################################
+                break
         self.lr_scheduler.step()
                
-    def pridicte_and_display(self,predicte_path_csv):
+    def pridicte_and_display(self,predicte_path_csv=None):
         '''
         Function to prdict the output and display it with golden output 
         each image displaied in 5 subimage 6 labels displaied in each subimage 
@@ -193,14 +198,14 @@ class Object_detector_trainer:
             prdicted_dataloader=self.data_loader_val
         else:
             # create dataset
-            prdicted_data = F_RCNNDataset(dataset_path= predicte_path_csv)
+            prdicted_data = CustomDataset(dataset_path= predicte_path_csv, transform_type='val')
             
             # create data loader
             prdicted_dataloader = DataLoader(dataset=prdicted_data, batch_size=1, shuffle=False, num_workers=4)
         # make model in evaluation mode
         self.model.eval()
         for batch_idx, (images, targets) in enumerate(prdicted_dataloader):
-            images = images.unsqueeze(1)
+            # images = images.unsqueeze(1)
             images = list(image.to(self.device) for image in images)
             # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
             targetdata=[]
@@ -221,6 +226,7 @@ class Object_detector_trainer:
                 
                 boxes,labels=self.get_top_k_boxes_for_labels(prediction["boxes"], prediction["labels"], prediction["scores"], k=1)
                 plot_image(images[0], targetdata[0]["labels"].tolist(),targetdata[0]["boxes"].tolist(),labels,boxes)
+            break
                 
 # display the image with the bounding boxes
 # pridected boxes are solid and the true boxes are dashed
@@ -322,4 +328,4 @@ if __name__ == '__main__':
     trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
     trainer.train()
     trainer.evaluate()
-    # trainer.pridicte_and_display()
+    trainer.pridicte_and_display()

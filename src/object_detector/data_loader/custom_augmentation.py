@@ -31,7 +31,7 @@ class CustomAugmentation(object):
             self.transform=CustomTransform(transform_type)
 
     def __call__(self,image,bboxes,class_labels):
-        print("CustomAugmentation called")
+        # #print("CustomAugmentation called")
         return self.transform(image=image, bboxes=bboxes, class_labels=class_labels)
 
 # implement transforms as augmentation with gaussian noise, random rotation
@@ -40,7 +40,7 @@ class TransformLibrary(object):
     
     def __init__(self, transform_type:str ='train'):
         if (transform_type == 'train'):
-            print("TransformLibrary called in init train")
+            #print("TransformLibrary called in init train")
             self.transform =A.Compose(
                 [
                     # we want the long edge of the image to be resized to IMAGE_INPUT_SIZE, and the short edge of the image to be padded to IMAGE_INPUT_SIZE on both sides,
@@ -69,7 +69,7 @@ class TransformLibrary(object):
                         ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=['class_labels'])
                     )
     def __call__(self,image,bboxes,class_labels):
-        print("TransformLibrary called in call")
+        #print("TransformLibrary called in call")
         return self.transform(image=image, bboxes=bboxes, class_labels=class_labels)
 # Custom function to add Gaussian noise to an image
 def add_gaussian_noise(img, mean=0, std=25):
@@ -104,7 +104,7 @@ class CustomTransform(object):
             transforms.Lambda(lambda x: add_gaussian_noise(x))  # Add Gaussian noise
         ])
     def __call__(self,image,bboxes,class_labels):
-        print("CustomTransform called in call")
+        #print("CustomTransform called in call")
         image = self.transform(image)
         transformed_bbox = apply_transform_to_bbox(bboxes, self.transform, image.size)
 
@@ -113,7 +113,7 @@ class CustomTransform(object):
 # class CustomTransform(object):
     
 #     def __init__(self, transform_type:str ='train'):
-#         print("CustomTransform called in init")
+#         #print("CustomTransform called in init")
 #         self .resize_padding=ResizeAndPad()
 #         self.rotation_transforms = v2.Compose([
 #             v2.RandomRotation(degrees=(-ANGLE, ANGLE)),
@@ -128,10 +128,10 @@ class CustomTransform(object):
 #             ]
 #         )
 #     def __call__(self,image,bboxes,class_labels):
-#         print("CustomTransform called in call")
+#         #print("CustomTransform called in call")
 #         # img = self.normalize_transforms(image) 
 #         x=self.rotation_transforms(Image.fromarray(image),bboxes,class_labels)
-#         print(x)
+#         #print(x)
 #         return {'image':x[0],'bboxes':x[1],'class_labels':x[2]}
 # # Define a custom transform to add Gaussian noise
 # class GaussianNoise(object):
