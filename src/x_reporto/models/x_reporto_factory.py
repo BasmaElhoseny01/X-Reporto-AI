@@ -4,7 +4,7 @@ class XReporto():
     def __init__(self):
         pass
     
-    def create_model(self) -> XReporto:
+    def create_model(self) -> XReportoV1:
         return XReportoV1()
 
 model=XReporto().create_model()
