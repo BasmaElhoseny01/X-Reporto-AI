@@ -148,10 +148,10 @@ class Object_detector_trainer:
         '''
 
         # make the model in evaluation mode
-        self.model.eval()
+        # self.model.eval()
         # in evaluation mode the model will not return losses just predicted boxes so we cant calculate loss
         # until we implement customize roi and rpn to calculate loss
-        # self.model.train()
+        self.model.train()
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             # add new dimension to images after batch size
             # images = images.unsqueeze(1)
@@ -334,5 +334,5 @@ if __name__ == '__main__':
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
     trainer = Object_detector_trainer(model=object_detector_model)
     trainer.train()
-    trainer.evaluate()
+    # trainer.evaluate()
     trainer.pridicte_and_display()
