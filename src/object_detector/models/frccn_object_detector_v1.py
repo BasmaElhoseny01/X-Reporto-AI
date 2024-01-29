@@ -15,7 +15,6 @@ from torchvision.models.detection.roi_heads import RoIHeads
 from torchvision.models.detection.faster_rcnn import TwoMLPHead, FastRCNNPredictor
 
 
-import sys
 
 '''
 image is grey scale 1*512*512 [Grey Scale 512*512]  
