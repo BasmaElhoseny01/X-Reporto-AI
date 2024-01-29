@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from ..data_loader.custom_dataset import CustomDataset
 from matplotlib import patches
 import numpy as np
-
+import sys
 from src.object_detector.models.object_detector_factory import ObjectDetector
 # constants
 EPOCHS=1
@@ -50,6 +50,7 @@ class Object_detector_trainer:
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         
         # create data loader
+        # TODO @Ahmed Hosny suffle Training Loaders
         self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         
@@ -147,10 +148,10 @@ class Object_detector_trainer:
         '''
 
         # make the model in evaluation mode
-        # self.model.eval()
+        self.model.eval()
         # in evaluation mode the model will not return losses just predicted boxes so we cant calculate loss
         # until we implement customize roi and rpn to calculate loss
-        self.model.train()
+        # self.model.train()
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             # add new dimension to images after batch size
             # images = images.unsqueeze(1)

@@ -14,6 +14,9 @@ from torchvision.models.detection.rpn import AnchorGenerator,RPNHead,RegionPropo
 from torchvision.models.detection.roi_heads import RoIHeads
 from torchvision.models.detection.faster_rcnn import TwoMLPHead, FastRCNNPredictor
 
+
+import sys
+
 '''
 image is grey scale 1*512*512 [Grey Scale 512*512]  
 (with feature maps of size 16x16) of 2048 channels [2048*16*16] 
@@ -137,7 +140,11 @@ class FrcnnObjectDetectorV1(nn.Module):
         proposals, proposal_losses = self.rpn(images, features_maps, targets)
 
         detections, detector_losses  = self.roi_heads(features_maps, proposals, images.image_sizes, targets)
-        # detections = self.transform.postprocess(detections, images.image_sizes, original_image_sizes)  # type: ignore[operator]
+        # print("detections",detections)
+        # sys.exit()
+        # print("proposals",proposals)
+        # print("targets",targets)
+        # print("")
 
 
         # Losses for RPN Network and ROI Network
