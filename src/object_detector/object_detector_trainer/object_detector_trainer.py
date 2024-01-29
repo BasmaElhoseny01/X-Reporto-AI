@@ -6,11 +6,11 @@ from torch.utils.data import  DataLoader
 import matplotlib.pyplot as plt
 from ..data_loader.custom_dataset import CustomDataset
 from matplotlib import patches
+import numpy as np
 
 from src.object_detector.models.object_detector_factory import ObjectDetector
-
 # constants
-EPOCHS=10
+EPOCHS=1
 LEARNING_RATE=0.0001
 BATCH_SIZE=2
 SCHEDULAR_STEP_SIZE=1
@@ -31,7 +31,7 @@ class Object_detector_trainer:
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         if model==None:
             # load the model from bestmodel.path
-            self.model=torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30)
+            self.model=ObjectDetector().create_model()
             state_dict=torch.load('bestmodel.pth')
             self.model.load_state_dict(state_dict)
 
@@ -66,8 +66,7 @@ class Object_detector_trainer:
         for epoch in range(EPOCHS):
             for batch_idx, (images, targets) in enumerate(self.data_loader_train):
                 # add new dimension to images after batch size
-                # images = images.unsqueeze(1)
-                images = list(image.to(self.device) for image in images)
+                images = torch.stack([image.to(self.device) for image in images])
                 # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
                 targetdata=[]
                 for i in range(len(images)):
@@ -98,7 +97,7 @@ class Object_detector_trainer:
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
                     break
-            self.lr_scheduler.step()
+            # self.lr_scheduler.step()
 
     def get_top_k_boxes_for_labels(self, boxes, labels, scores, k=1):
         '''
@@ -155,7 +154,7 @@ class Object_detector_trainer:
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             # add new dimension to images after batch size
             # images = images.unsqueeze(1)
-            images = list(image.to(self.device) for image in images)
+            images = torch.stack([image.to(self.device) for image in images])
             # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
             targetdata=[]
             for i in range(len(images)):
@@ -186,7 +185,7 @@ class Object_detector_trainer:
             if DEBUG :
                 print(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} in eval Loss: {loss_value:.4f}')
                 break
-        self.lr_scheduler.step()
+        # self.lr_scheduler.step()
                
     def pridicte_and_display(self,predicte_path_csv=None):
         '''
@@ -210,7 +209,7 @@ class Object_detector_trainer:
         self.model.eval()
         for batch_idx, (images, targets) in enumerate(prdicted_dataloader):
             # images = images.unsqueeze(1)
-            images = list(image.to(self.device) for image in images)
+            images = torch.stack([image.to(self.device) for image in images])
             # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
             targetdata=[]
             for i in range(len(images)):
@@ -220,16 +219,16 @@ class Object_detector_trainer:
                 targetdata.append(newdic)
             # forward
             with torch.no_grad():
-                prediction = self.model(images)[0]
-                # move the prediction to cpu
-                prediction = {k: v.to(torch.device('cpu')) for k, v in prediction.items()}
+                prediction = self.model(images)[1]
                 # move image to cpu
                 images = list(image.to(torch.device('cpu')) for image in images)
-                # move target to cpu
-                targetdata = [{k: v.to(torch.device('cpu')) for k, v in t.items()} for t in targetdata]
-                
-                boxes,labels=self.get_top_k_boxes_for_labels(prediction["boxes"], prediction["labels"], prediction["scores"], k=1)
-                plot_image(images[0], targetdata[0]["labels"].tolist(),targetdata[0]["boxes"].tolist(),labels,boxes)
+                for pred,targ,img in zip(prediction,targetdata,images):
+                    # move the prediction to cpu
+                    pred = {k: v.to(torch.device('cpu')) for k, v in pred.items()}
+                    # move target to cpu
+                    targ = {k: v.to(torch.device('cpu')) for k, v in targ.items()} 
+                    boxes,labels=self.get_top_k_boxes_for_labels(pred["boxes"], pred["labels"], pred["scores"], k=1)
+                    plot_image(img, targ["labels"].tolist(),targ["boxes"].tolist(),labels,boxes)
             break
                 
 # display the image with the bounding boxes

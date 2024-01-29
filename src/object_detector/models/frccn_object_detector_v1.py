@@ -136,11 +136,8 @@ class FrcnnObjectDetectorV1(nn.Module):
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
         proposals, proposal_losses = self.rpn(images, features_maps, targets)
 
-        roi_heads_output = self.roi_heads(features_maps, proposals, images.image_sizes, targets)
-        # Loss for the ROI which is loss for classification & Regression dictionary as {loss_classifier,loss_box_reg}  else it is {}
-        detector_losses = roi_heads_output[1]
-        # Detections {}
-        detections = roi_heads_output[0]
+        detections, detector_losses  = self.roi_heads(features_maps, proposals, images.image_sizes, targets)
+        # detections = self.transform.postprocess(detections, images.image_sizes, original_image_sizes)  # type: ignore[operator]
 
 
         # Losses for RPN Network and ROI Network
