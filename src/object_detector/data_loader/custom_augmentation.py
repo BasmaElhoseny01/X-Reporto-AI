@@ -31,7 +31,6 @@ class CustomAugmentation(object):
             self.transform=CustomTransform(transform_type)
 
     def __call__(self,image,bboxes,class_labels):
-        # #print("CustomAugmentation called")
         return self.transform(image=image, bboxes=bboxes, class_labels=class_labels)
 
 # implement transforms as augmentation with gaussian noise, random rotation
@@ -59,7 +58,7 @@ class TransformLibrary(object):
                     ToTensorV2()
                 ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=['class_labels'])
                 )
-        elif (transform_type == 'val'):
+        else:
             self.transform = A.Compose(
                         [
                             A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
@@ -80,34 +79,45 @@ def apply_transform_to_bbox(bbox, transform, image_size):
     # Convert bounding box to relative coordinates (0 to 1)
     bbox_normalized = [bbox[i] / image_size[i % 2] for i in range(4)]
 
-    # Convert to PyTorch tensor
-    bbox_tensor = torch.tensor(bbox_normalized)
+    # Convert to NumPy array
+    bbox_np = np.array(bbox_normalized)
 
     # Apply the same transformation to the bounding box
-    bbox_transformed = torch.tensor(transform(bbox_tensor).numpy())
+    bbox_transformed_np = transform(bbox_np)
 
     # Convert back to absolute coordinates
-    bbox_transformed *= image_size
+    bbox_transformed = (bbox_transformed_np * image_size).astype(int).tolist()
 
-    return bbox_transformed.int().tolist()
+    return bbox_transformed
 
 class CustomTransform(object):
     
-    def __init__(self, transform_type:str ='train'):
+    def __init__(self, transform_type:str ='custom_train'):
        # Define a composite transform
-        self.transform = transforms.Compose([
-            transforms.Resize((IMAGE_INPUT_SIZE, IMAGE_INPUT_SIZE),interpolation=cv2.INTER_AREA),                # Resize the image
-            transforms.Pad(IMAGE_INPUT_SIZE),   # Pad the image with reflection padding
-            transforms.RandomRotation(ANGLE),                 # Rotate the image randomly by up to 10 degrees
-            transforms.ToTensor(),                        # Convert to PyTorch tensor
-            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),  # Normalize the pixel values
-            transforms.Lambda(lambda x: add_gaussian_noise(x))  # Add Gaussian noise
-        ])
+        if(transform_type == 'custom_train'):
+            self.transform = transforms.Compose([
+                transforms.Resize((IMAGE_INPUT_SIZE, IMAGE_INPUT_SIZE),interpolation=cv2.INTER_AREA),                # Resize the image
+                transforms.Pad(IMAGE_INPUT_SIZE),   # Pad the image with reflection padding
+                transforms.RandomRotation(ANGLE),                 # Rotate the image randomly by up to 10 degrees
+                transforms.ToTensor(),                        # Convert to PyTorch tensor
+                transforms.Normalize(mean=[MEAN], std=[STD]),  # Normalize the pixel values
+                transforms.Lambda(lambda x: add_gaussian_noise(x) if x.ndim == 3 else x)  # Add Gaussian noise (only for 3D tensors)
+            ])
+        else:
+            self.transform = transforms.Compose([
+                transforms.Pad(IMAGE_INPUT_SIZE),   # Pad the image with reflection padding
+                transforms.Resize((IMAGE_INPUT_SIZE, IMAGE_INPUT_SIZE),interpolation=cv2.INTER_AREA),                # Resize the image
+                transforms.ToTensor(),                        # Convert to PyTorch tensor
+                transforms.Normalize(mean=[MEAN], std=[STD]),  # Normalize the pixel values
+            ])
     def __call__(self,image,bboxes,class_labels):
-        #print("CustomTransform called in call")
-        image = self.transform(image)
-        transformed_bbox = apply_transform_to_bbox(bboxes, self.transform, image.size)
+        print("CustomTransform called in call")
 
+        image = self.transform(Image.fromarray(image))
+        #print size of image
+        print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image.size()[1])
+        print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image)
+        transformed_bbox=[apply_transform_to_bbox(bboxes[i], self.transform.transforms[-3], image.size())for i in range(len(bboxes))] 
         return {'image':image,'bboxes':transformed_bbox,'class_labels':class_labels}
 
 # class CustomTransform(object):

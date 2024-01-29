@@ -129,7 +129,7 @@ if __name__ == '__main__':
     # plot_example_with_boxes(img, bboxes,name = "before.jpg")
     
     # create the dataset
-    dataset = CustomDataset(dataset_path=os.getcwd()+'/datasets/train-200.csv', transform_type = 'train')
+    dataset = CustomDataset(dataset_path=os.getcwd()+'/datasets/train-200.csv', transform_type = 'custom_train')
 
     # get the image and the target
 
