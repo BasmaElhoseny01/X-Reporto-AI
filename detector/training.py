@@ -19,12 +19,11 @@ from matplotlib import patches
 from torchvision.io.image import read_image
 from torchvision.utils import draw_bounding_boxes
 from torchvision.transforms.functional import to_pil_image
-import os
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 
 class Trainer:
     def __init__(self,debug=False,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/train-200.csv',
-                 model_path='model.pth',load_model=False,batch_size=1,epochs=10, learning_rate=0.001):
+                 model_path='model.pth',load_model=False,batch_size=1,epochs=40, learning_rate=0.001):
 
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.debug = debug
@@ -34,7 +33,7 @@ class Trainer:
         self.learning_rate = learning_rate
 
         # create model object detector
-        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+        self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
         # self.model = torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None)
         
         num_classes = 30 # 29 class (abnormal) + background
@@ -70,56 +69,60 @@ class Trainer:
 
     def train(self):
         # train the model
+        self.model.train()
         for epoch in range(self.epochs):
-            self.train_one_epoch()
-            self.lr_scheduler.step()
+            # train_loss_list=[]
+            for batch_idx, (images, targets) in enumerate(self.data_loader_train):
+                # add new dimension to images after batch size
+                images = images.unsqueeze(1)
+                images = list(image.to(self.device) for image in images)
+                targetdata=[]
+                # correct => targets (list[Dict[str, Tensor]]): ground-truth boxes present in the image
+                # what i get => targets return as dic with keys: boxes, labels Only
+                for i in range(len(images)):
+                    newdic={}
+                    newdic['boxes']=targets['boxes'][i].to(self.device)
+                    newdic['labels']=targets['labels'][i].to(self.device)
+                    targetdata.append(newdic)
+
+                
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
+
+                # forward + backward + optimize
+                loss_dict = self.model(images, targetdata)   
+                # print("loss_dict",loss_dict) 
+
+                losses = sum(loss for loss in loss_dict.values())
+                # print("losses",losses) 
+
+
+                loss_value = losses.item()
+                # train_loss_list.append(loss_value)
+
+                # save the best model
+                # comment for now ##########################################
+                # if(loss_value<self.bestloss):
+                #     self.bestloss=loss_value
+                #     torch.save(self.model.state_dict(), 'bestmodel.pth')
+
+
+                # BackWard
+                losses.backward()
+
+                # Update
+                self.optimizer.step()
+        
+
+                if self.debug and (epoch+1)%2==0:
+                    print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
             
-        self.evaluate_one_epoch()
+            # self.lr_scheduler.step()
+            # self.evaluate_one_epoch()
 
             # save the model
             # torch.save(self.model.state_dict(), 'model.pth')
-    def train_one_epoch(self):
-        self.model.train()
-        # train_loss_list=[]
-        for batch_idx, (images, targets) in enumerate(self.data_loader_train):
-            # add new dimension to images after batch size
-            images = images.unsqueeze(1)
-            images = list(image.to(self.device) for image in images)
-            targetdata=[]
-            # correct => targets (list[Dict[str, Tensor]]): ground-truth boxes present in the image
-            # what i get => targets return as dic with keys: boxes, labels Only
-            for i in range(len(images)):
-                newdic={}
-                newdic['boxes']=targets['boxes'][i]
-                newdic['labels']=targets['labels'][i]
-                targetdata.append(newdic)
-            
-            # zero the parameter gradients
-            self.optimizer.zero_grad()
-
-            # forward + backward + optimize
-            loss_dict = self.model(images, targetdata)    
-
-            losses = sum(loss for loss in loss_dict.values())
-
-            loss_value = losses.item()
-            # train_loss_list.append(loss_value)
-
-            # save the best model
-            # comment for now ##########################################
-            # if(loss_value<self.bestloss):
-            #     self.bestloss=loss_value
-            #     torch.save(self.model.state_dict(), 'bestmodel.pth')
-
-            losses.backward()
-            self.optimizer.step()
-
-            # print statistics
-            if self.debug:
-                print(f'Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {losses.item():.4f}')
-            break
-    
-
+        
     def showImg(self,prediction,labels,img):
         # conver image to unit8
         img=img.unit8()
@@ -143,8 +146,8 @@ class Trainer:
             # what i get => targets return as dic with keys: boxes, labels Only
             for i in range(len(images)):
                 newdic={}
-                newdic['boxes']=targets['boxes'][i]
-                newdic['labels']=targets['labels'][i]
+                newdic['boxes']=targets['boxes'][i].to(self.device)
+                newdic['labels']=targets['labels'][i].to(self.device)
                 targetdata.append(newdic)
             # forward
             with torch.no_grad():
