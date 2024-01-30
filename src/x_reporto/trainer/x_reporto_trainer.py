@@ -82,7 +82,7 @@ class XReportoTrainer():
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
                 # Check GPU memory usage
-                print(torch.cuda.memory_allocated())
+                # print(torch.cuda.memory_allocated())
                 # Moving Object Detector Targets to Device
                 object_detector_targets=[]
                 for i in range(len(images)):
@@ -125,14 +125,14 @@ class XReportoTrainer():
                 self.optimizer.zero_grad()
 
                 # Forward Pass
-                print(torch.cuda.memory_allocated())
+                # print(torch.cuda.memory_allocated())
                 object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
                 # del images
                 # del object_detector_targets
                 # del selection_classifier_targets
                 # del abnormal_classifier_targets
                 # Check GPU memory usage
-                print(torch.cuda.memory_allocated())
+                # print(torch.cuda.memory_allocated())
                 # torch.cuda.empty_cache()
                 # print(gc.collect() )  
                 # # Check GPU memory usage
@@ -152,8 +152,8 @@ class XReportoTrainer():
 
                 if DEBUG :
                      # save the best model
-                    if(Total_loss<self.bestloss):
-                        self.bestloss=Total_loss
+                    if(Total_loss<self.best_loss):
+                        self.best_loss=Total_loss
                         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                             self.save_model('object_detector',epoch)
                         elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
