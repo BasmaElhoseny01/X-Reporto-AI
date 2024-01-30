@@ -20,6 +20,7 @@ class ObjectDetectorWrapper(nn.Module):
             object_detector_losses, object_detector_features, object_detector_labels=self.object_detector(images,targets)
             object_detector_detected_classes=copy.deepcopy(object_detector_labels)
             if(isinstance(self.object_detector, FrcnnObjectDetectorV1)):
+                # from indices to true/false
                 object_detector_detected_classes = [torch.zeros(self.object_detector.num_classes-1,dtype=torch.bool) for _ in object_detector_labels]
                 for i in range(len(object_detector_detected_classes)):
                     object_detector_detected_classes[i][object_detector_labels[i] - 1] = True
@@ -30,7 +31,6 @@ class ObjectDetectorWrapper(nn.Module):
             object_detector_losses=None
             if(isinstance(self.object_detector, ObjectDetectorOriginal)):
                 object_detector_boxes=object_detector_boxes['top_region_boxes']
-                # Get indices where the values are True (labels are 1-indexed)
                 object_detector_detected_classes = [[idx.item() + 1 for idx in torch.nonzero(row)] for row in object_detector_detected_classes]
         return object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features
 

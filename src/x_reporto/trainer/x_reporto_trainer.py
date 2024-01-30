@@ -10,7 +10,7 @@ from config import ModelStage,MODEL_STAGE,DEVICE
 import gc
 import sys
 # constants
-EPOCHS=200
+EPOCHS=1
 LEARNING_RATE=0.0001
 BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=1
@@ -249,4 +249,4 @@ if __name__ == '__main__':
     trainer = XReportoTrainer(model= x_reporto_model)
     trainer.train()
     # trainer.evaluate()
-    # trainer.pridicte_and_display()
+    trainer.predict_and_display()
