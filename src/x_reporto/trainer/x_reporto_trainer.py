@@ -5,7 +5,7 @@ from torch.utils.data import  DataLoader
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 from src.x_reporto.models.x_reporto_factory import XReporto
-from utils import plot_image
+from src.utils import plot_image
 from config import ModelStage,MODEL_STAGE,DEVICE
 import gc
 import sys
@@ -149,17 +149,17 @@ class XReportoTrainer():
                 self.optimizer.step()
 
                 if DEBUG :
-                     # save the best model
-                    if(Total_loss<self.best_loss and (epoch%49==0)):
-                        self.best_loss=Total_loss
-                        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                            self.save_model('object_detector',epoch)
-                        elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                            self.save_model('object_detector_classifier',epoch)
-                        elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                            self.save_model('LM',epoch)
+                    #  # save the best model
+                    # if(Total_loss<self.best_loss and (epoch%49==0)):
+                    #     self.best_loss=Total_loss
+                    #     if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                    #         self.save_model('object_detector',epoch)
+                    #     elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                    #         self.save_model('object_detector_classifier',epoch)
+                    #     elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                    #         self.save_model('LM',epoch)
                         
-                    print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation.item():.4f} selection_classifier_Loss: {selection_classifier_losses.item():.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses.item():.4f} total_Loss: {Total_loss.item():.4f}')
+                    # print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation.item():.4f} selection_classifier_Loss: {selection_classifier_losses.item():.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses.item():.4f} total_Loss: {Total_loss.item():.4f}')
                     break
             # # update the learning rate
             # self.lr_scheduler.step()
