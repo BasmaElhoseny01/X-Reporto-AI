@@ -10,8 +10,8 @@ import numpy as np
 import sys
 from src.object_detector.models.object_detector_factory import ObjectDetector
 # constants
-EPOCHS=1
-LEARNING_RATE=0.0001
+EPOCHS=30
+LEARNING_RATE=0.000000000001
 BATCH_SIZE=2
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
@@ -82,6 +82,8 @@ class Object_detector_trainer:
                 # forward + backward + optimize
                 loss_dict = self.model(images, targetdata)   
                 losses = sum(loss for loss in loss_dict.values())
+                # sum rpn losses
+                # losses = loss_dict['loss_objectness'] + loss_dict['loss_rpn_box_reg']
                 loss_value = losses.item()
 
                 # save the best model
@@ -98,7 +100,8 @@ class Object_detector_trainer:
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
                     break
-            # self.lr_scheduler.step()
+            self.lr_scheduler.step()
+
 
     def get_top_k_boxes_for_labels(self, boxes, labels, scores, k=1):
         '''
@@ -221,6 +224,7 @@ class Object_detector_trainer:
             # forward
             with torch.no_grad():
                 prediction = self.model(images)[1]
+                print("scores",prediction[0]["scores"])
                 # move image to cpu
                 images = list(image.to(torch.device('cpu')) for image in images)
                 for pred,targ,img in zip(prediction,targetdata,images):
@@ -332,7 +336,8 @@ if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
     
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
-    trainer = Object_detector_trainer(model=object_detector_model)
+    # trainer = Object_detector_trainer(model=object_detector_model)
+    trainer = Object_detector_trainer()
     trainer.train()
     # trainer.evaluate()
     trainer.pridicte_and_display()

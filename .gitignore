@@ -2,5 +2,6 @@ __pycache__/
 
 All datasets
 datasets
-
+test_detector
 .env
+*.pth

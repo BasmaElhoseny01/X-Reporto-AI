@@ -124,6 +124,7 @@ class FrcnnObjectDetectorV1(nn.Module):
                     - labels
                     - scores
         """
+        
         # Features extracted from backbone feature map is 16*16 depth is 2048 [batch_size x 2048 x 16 x 16]
         features_maps=self.backbone(images)
 
@@ -138,7 +139,6 @@ class FrcnnObjectDetectorV1(nn.Module):
         # Getting Proposals of RPN Bounding Boxes
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
         proposals, proposal_losses = self.rpn(images, features_maps, targets)
-
         detections, detector_losses  = self.roi_heads(features_maps, proposals, images.image_sizes, targets)
         # print("detections",detections)
         # sys.exit()
