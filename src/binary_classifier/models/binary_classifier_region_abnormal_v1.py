@@ -22,10 +22,11 @@ class BinaryClassifierRegionAbnormalV1(nn.Module):
         region_is_abnormal  # ground truth boolean tensor of shape [batch_size x 29], indicates if a region is abnormal (True) or not (False)
     ):
         # logits of shape [batch_size x 29]
-        logits = self.classifier(top_region_features).squeeze(dim=-1)
+        logits = self.binary_classifier(top_region_features).squeeze(dim=-1)
 
         # only compute loss for logits that correspond to a class that was detected
         detected_logits = logits[class_detected]
+        
         detected_region_is_abnormal = region_is_abnormal[class_detected]
 
         loss = self.loss_fn(detected_logits, detected_region_is_abnormal.type(torch.float32))

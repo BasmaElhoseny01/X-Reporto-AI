@@ -87,7 +87,7 @@ class CustomDataset(Dataset):
 
         # Convert the Python list to a PyTorch tensor
         bbox_is_abnormal = torch.tensor(bbox_is_abnormal, dtype=torch.bool)
-        
+         
         abnormal_classifier_sample= {}
         abnormal_classifier_sample["bbox_is_abnormal"]=bbox_is_abnormal
 

@@ -33,7 +33,7 @@ class XReportoV1(nn.Module):
     
         
 
-    def forward(self,images: Tensor , object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Optional[List[Dict[str, Tensor]]] = None):
+    def forward(self,images: Tensor , object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None):
         '''
         Args:
             - images (Tensor): images_tensor [batch_size x 1 x 512 x 512] (grey-scaled images) [Normalized 0-1]
@@ -48,29 +48,18 @@ class XReportoV1(nn.Module):
         '''
         if self.training:
             # Training
-            print("1")
             # Stage(1) Object Detector
-            object_detector_losses,_,object_detector_labels,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
-            sys.exit()
+            object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
 
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
-                return object_detector_losses,object_detector_boxes,object_detector_labels,object_detector_features
-            print("2")
-            
+                return object_detector_losses,0,0
+
             # Stage(2) Binary Classifier
-            # Boolean array that is True for the classes that were detected
-            object_detector_detected_classes = [torch.zeros(self.num_classes-1,dtype=torch.bool) for _ in object_detector_labels]
-
-
-            for i in range(len(object_detector_detected_classes)):
-                object_detector_detected_classes[i][object_detector_labels[i] - 1] = True
-            object_detector_detected_classes=torch.stack(object_detector_detected_classes).to(DEVICE)
-
-
-            selection_classifier_losses=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,True,selection_classifier_targets)
-            print(selection_classifier_losses)
-            sys.exit()
-
+            object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
+            selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+            abnormal_binary_classifier_losses,_=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
+            if MODEL_STAGE == ModelStage.CLASSIFIER.value:
+                return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses
         else:
             # Evaluation
 

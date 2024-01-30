@@ -172,9 +172,9 @@ class FrcnnObjectDetectorV1(nn.Module):
         losses.update(detector_losses)
 
         if self.training:
-            return losses,detected_labels,detected_features
+            return losses,detected_features,detected_labels
         else:
-            return losses,detected_boxes,detected_labels,detected_features
+            return losses,detected_boxes,detected_features,detected_labels
 
     def get_top_k_boxes_for_labels(self, boxes, labels, scores, k=1):
         '''

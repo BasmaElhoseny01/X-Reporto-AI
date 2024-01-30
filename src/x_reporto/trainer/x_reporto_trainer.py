@@ -7,12 +7,13 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 from src.x_reporto.models.x_reporto_factory import XReporto
 
 from config import ModelStage,MODEL_STAGE,DEVICE
+import gc
 
 import sys
 # constants
 EPOCHS=1
 LEARNING_RATE=0.0001
-BATCH_SIZE=2
+BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
@@ -35,14 +36,11 @@ class XReportoTrainer():
 
             # TODO Fix Paths
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                state_dict=torch.load('bestmodel.pth')
+                self.load_model('object_detector',EPOCHS)
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                state_dict=torch.load('bestmodel.pth')
+                self.load_model('object_detector_classifier',EPOCHS)
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                state_dict=torch.load('bestmodel.pth')
-
-            self.model.load_state_dict(state_dict)
-
+                self.load_model('LM',EPOCHS)
         else:
             self.model = model
          
@@ -76,22 +74,23 @@ class XReportoTrainer():
         self.model.train()
 
         for epoch in range(EPOCHS):
-            for batch_idx,batch in enumerate(self.data_loader_train):
-                images=batch[0]['image']
+            for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):
+                # Check GPU memory usage
+                print(torch.cuda.memory_allocated())
+                images=object_detector_batch['image']
 
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
-
-
+                # Check GPU memory usage
+                print(torch.cuda.memory_allocated())
                 # Moving Object Detector Targets to Device
                 object_detector_targets=[]
                 for i in range(len(images)):
                     new_dict={}
-                    new_dict['boxes']=batch[0]['bboxes'][i].to(DEVICE)
-                    new_dict['labels']=batch[0]['bbox_labels'][i].to(DEVICE)
+                    new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
+                    new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
                     object_detector_targets.append(new_dict)
-
-                # del batch[0]
+                # del object_detector_batch
                     
                 selection_classifier_targets=None
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value :
@@ -99,27 +98,83 @@ class XReportoTrainer():
                     # Moving Object Detector Targets to Device
                     selection_classifier_targets=[]
                     for i in range(len(images)):
-                        phrase_exist=batch[1]['bbox_phrase_exists'][i]
+                        phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
                         selection_classifier_targets.append(phrase_exist)
                     selection_classifier_targets=torch.stack(selection_classifier_targets).to(DEVICE)
+                    # del selection_classifier_batch
 
-                    # UpNormal
-
-                # del batch[1]
-                
+                    # Abnormal
+                abnormal_classifier_targets=None
+                if MODEL_STAGE==ModelStage.CLASSIFIER.value :
+                    # Selection
+                    # Moving Object Detector Targets to Device
+                    abnormal_classifier_targets=[]
+                    for i in range(len(images)):
+                        bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
+                        abnormal_classifier_targets.append(bbox_is_abnormal)
+                    abnormal_classifier_targets=torch.stack(abnormal_classifier_targets).to(DEVICE)
+                #     del abnormal_classifier_batch
+                # # Check GPU memory usage
+                # print(torch.cuda.memory_allocated())
+                # torch.cuda.empty_cache()
+                # print(gc.collect() )  
+                # # Check GPU memory usage
+                # print(torch.cuda.memory_allocated())
+                # sys.exit()
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
 
                 # Forward Pass
-                x= self.model(images, object_detector_targets ,selection_classifier_targets)   
-                print(x)
-                sys.exit()
+                print(torch.cuda.memory_allocated())
+                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
+                # del images
+                # del object_detector_targets
+                # del selection_classifier_targets
+                # del abnormal_classifier_targets
+                # Check GPU memory usage
+                print(torch.cuda.memory_allocated())
+                # torch.cuda.empty_cache()
+                # print(gc.collect() )  
+                # # Check GPU memory usage
+                # print(torch.cuda.memory_allocated())
 
+                #backward pass
+                Total_loss=None
+                object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
+                Total_loss=object_detector_losses_summation
+                if MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                    Total_loss+=selection_classifier_losses
+                    Total_loss+=abnormal_binary_classifier_losses
+                Total_loss.backward()
+
+                # update the parameters
+                self.optimizer.step()
+
+                if DEBUG :
+                     # save the best model
+                    if(Total_loss<self.bestloss):
+                        self.bestloss=Total_loss
+                        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                            self.save_model('object_detector',epoch)
+                        elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                            self.save_model('object_detector_classifier',epoch)
+                        elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                            self.save_model('LM',epoch)
+                        
+                    print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation.item():.4f} selection_classifier_Loss: {selection_classifier_losses.item():.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses.item():.4f} total_Loss: {Total_loss.item():.4f}')
+                    break
+            # # update the learning rate
+            # self.lr_scheduler.step()
                 
                 
                 # print(images)
                 # print(images.shape)
                 # sys.exit()
+    def save_model(self,name,epoch):
+        torch.save(self.model.state_dict(), "models/"+name+str(epoch)+".pth")
+    def load_model(self,name,epoch):
+        self.model.load_state_dict(torch.load("models/"+name+str(epoch)+".pth"))
+
 
 
 
