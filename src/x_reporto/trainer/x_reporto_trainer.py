@@ -10,13 +10,12 @@ from config import ModelStage,MODEL_STAGE,DEVICE
 import gc
 import sys
 # constants
-EPOCHS=1
+EPOCHS=200
 LEARNING_RATE=0.0001
 BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
-
 
 class XReportoTrainer():
     def __init__(self,training_csv_path: str='datasets/train.csv',validation_csv_path:str ='datasets/train.csv',
@@ -151,7 +150,7 @@ class XReportoTrainer():
 
                 if DEBUG :
                      # save the best model
-                    if(Total_loss<self.best_loss):
+                    if(Total_loss<self.best_loss and (epoch%49==0)):
                         self.best_loss=Total_loss
                         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                             self.save_model('object_detector',epoch)
