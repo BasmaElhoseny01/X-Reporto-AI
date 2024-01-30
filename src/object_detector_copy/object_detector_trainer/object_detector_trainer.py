@@ -198,9 +198,15 @@ class Object_detector_trainer:
         output:
             diplay images 
         '''
-        if predicte_path_csv==None:
-            prdicted_dataloader=self.data_loader_val
-        else:
+        '''
+        Function to prdict the output and display it with golden output 
+        each image displaied in 5 subimage 6 labels displaied in each subimage 
+        the golden output is dashed and the predicted is solid
+        input:
+            predicte_path_csv: string => path to data csv to predict
+        output:
+            diplay images 
+        '''
             # create dataset
             prdicted_data = CustomDataset(dataset_path= predicte_path_csv, transform_type='val')
             

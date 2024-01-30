@@ -5,7 +5,7 @@ from torch.utils.data import  DataLoader
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 from src.x_reporto.models.x_reporto_factory import XReporto
-
+from utils import plot_image
 from config import ModelStage,MODEL_STAGE,DEVICE
 import gc
 import sys
@@ -164,10 +164,64 @@ class XReportoTrainer():
             # # update the learning rate
             # self.lr_scheduler.step()
                 
+    def predict_and_display(self,predict_path_csv=None):
+        '''
+        Function to prdict the output and display it with golden output 
+        each image displaied in 5 subimage 6 labels displaied in each subimage 
+        the golden output is dashed and the predicted is solid
+        input:
+            predicte_path_csv: string => path to data csv to predict
+        output:
+            diplay images 
+        '''
+        if predict_path_csv==None:
+                prdicted_dataloader=self.data_loader_val
+        else:
+                predicted_data = CustomDataset(dataset_path= predict_path_csv, transform_type='val')
+                # create data loader
+                predicted_dataloader = DataLoader(dataset=predicted_data, batch_size=1, shuffle=False, num_workers=4)
+        # make model in evaluation mode
+        self.model.eval()
+        for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):
+            
+            images=object_detector_batch['image']
+
+            # Move images to Device
+            images = torch.stack([image.to(DEVICE) for image in images])
+            
+            object_detector_targets=[]
+            for i in range(len(images)):
+                new_dict={}
+                new_dict['boxes']=object_detector_batch['bboxes'][i]
+                new_dict['labels']=object_detector_batch['bbox_labels'][i]
+                object_detector_targets.append(new_dict)
                 
-                # print(images)
-                # print(images.shape)
-                # sys.exit()
+            selection_classifier_targets=None
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value :
+                selection_classifier_targets=[]
+                for i in range(len(images)):
+                    phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
+                    selection_classifier_targets.append(phrase_exist)
+                selection_classifier_targets=torch.stack(selection_classifier_targets)
+
+            abnormal_classifier_targets=None
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value :
+                abnormal_classifier_targets=[]
+                for i in range(len(images)):
+                    bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
+                    abnormal_classifier_targets.append(bbox_is_abnormal)
+                abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
+            with torch.no_grad():
+                object_detector_boxes,object_detector_detected_classes= self.model(images)   
+                images = list(image.to(torch.device('cpu')) for image in images)
+                for boxes,labels,target,img in zip(object_detector_boxes,object_detector_detected_classes,object_detector_targets,images):
+                    boxes=boxes.to(torch.device('cpu'))
+                    plot_image(img, target["labels"].tolist(),target["boxes"].tolist(),labels,boxes)
+            break
+
+
+
+    # make model in evaluation mode
     def save_model(self,name,epoch):
         torch.save(self.model.state_dict(), "models/"+name+str(epoch)+".pth")
     def load_model(self,name,epoch):

@@ -13,7 +13,7 @@ from torchvision.models.detection.rpn import AnchorGenerator,RPNHead,RegionPropo
 
 from torchvision.models.detection.roi_heads import RoIHeads
 from torchvision.models.detection.faster_rcnn import TwoMLPHead, FastRCNNPredictor
-
+from src.utils import get_top_k_boxes_for_labels
 from config import DEVICE
 import sys
 
@@ -156,7 +156,7 @@ class FrcnnObjectDetectorV1(nn.Module):
 
         for pred in detections:
             # For each Image
-            boxes,labels=self.get_top_k_boxes_for_labels(pred["boxes"], pred["labels"], pred["scores"], k=1)
+            boxes,labels=get_top_k_boxes_for_labels(pred["boxes"], pred["labels"], pred["scores"], k=1)
             detected_boxes.append(boxes)
             detected_labels.append(labels)
 
@@ -176,47 +176,7 @@ class FrcnnObjectDetectorV1(nn.Module):
         else:
             return losses,detected_boxes,detected_features,detected_labels
 
-    def get_top_k_boxes_for_labels(self, boxes, labels, scores, k=1):
-        '''
-        Function that returns the top k boxes for each label.
-
-        inputs:
-            boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-            labels: list of labels (Format [N] => N times label)
-            scores: list of scores (Format [N] => N times score)
-            k: number of boxes to return for each label
-        outputs:
-            listboxes: list of boxes maxlength 29 one box for each region
-            labels: list of integers from 1 to 30 label for each box in listboxes
-        '''
-        # create a dict that stores the top k boxes for each label
-        top_k_boxes_for_labels = {}
-        # get the unique labels
-        unique_labels = torch.unique(labels)
-        # for each unique label
-        for label in unique_labels:
-            # get the indices of the boxes that have that label
-            indices = torch.where(labels == label)[0]
-            # get the scores of the boxes that have that label
-            scores_for_label = scores[indices]
-            # get the boxes that have that label
-            boxes_for_label = boxes[indices]
-            # sort the scores for that label in descending order
-            sorted_scores_for_label, sorted_indices = torch.sort(scores_for_label, descending=True)
-            # get the top k scores for that label
-            top_k_scores_for_label = sorted_scores_for_label[:k]
-            # get the top k boxes for that label
-            top_k_boxes_for_label = boxes_for_label[sorted_indices[:k]]
-            # store the top k boxes for that label
-            top_k_boxes_for_labels[label] = top_k_boxes_for_label
-            #convert boxes to list
-        listboxes=[]
-        for b in top_k_boxes_for_labels.values():
-            b=b[0].tolist()
-            listboxes.append(b)
-        if len(unique_labels)!=0:
-            return listboxes,unique_labels.tolist()
-        return listboxes,[]
+    
 
 
 

@@ -53,7 +53,6 @@ class XReportoV1(nn.Module):
 
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,0,0
-
             # Stage(2) Binary Classifier
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
             selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
@@ -61,13 +60,14 @@ class XReportoV1(nn.Module):
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses
         else:
-            # Evaluation
-
+            # Test
             # Stage(1) Object Detector
-            object_detector_detections= self.object_detector(images=images, targets=object_detector_targets)
-
+            _,object_detector_boxes,object_detector_detected_classes,_ = self.object_detector(images=images)
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
-                return object_detector_detections
-
-            # Stage(2) Binary Classifier
+                return object_detector_boxes,object_detector_detected_classes
+            
+            object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
+            selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes)
+            if MODEL_STAGE == ModelStage.CLASSIFIER.value:
+                return selected_regions,object_detector_boxes,object_detector_detected_classes
             

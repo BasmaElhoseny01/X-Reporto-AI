@@ -17,8 +17,8 @@ class BinaryClassifierSelectionRegionWrapper(nn.Module):
                     selected_regions=None
                     selected_region_features=None
         else:
-            pass
-
+            selected_regions, selected_region_features=self.selection_binary_classifier(object_detector_features,object_detector_detected_classes)
+            classifier_losses=None
         return classifier_losses,selected_regions,selected_region_features
 class BinaryClassifierSelectionRegion():
     def __init__(self):
