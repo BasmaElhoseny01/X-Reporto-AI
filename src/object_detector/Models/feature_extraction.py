@@ -38,5 +38,3 @@ class FeatureNetwork(nn.Module):
     
     def __call__(self, x):
         return self.feature_extractor(x)
-
-

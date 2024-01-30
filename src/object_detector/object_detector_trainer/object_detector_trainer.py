@@ -9,6 +9,7 @@ from matplotlib import patches
 import numpy as np
 import sys
 from src.object_detector.models.object_detector_factory import ObjectDetector
+import os
 # constants
 EPOCHS=50
 LEARNING_RATE=0.0001
@@ -182,14 +183,14 @@ class Object_detector_trainer:
             # forward
             with torch.no_grad():
                 loses,prediction = self.model(images)
+                boxes=prediction["detections"]["top_region_boxes"][0].tolist()
+                labels=prediction["class_detected"][0].tolist()
                 # move image to cpu
                 images = list(image.to(torch.device('cpu')) for image in images)
-                for pred,targ,img in zip(prediction,targetdata,images):
+                for targ,img in zip(targetdata,images):
                     # move the prediction to cpu
-                    pred = {k: v.to(torch.device('cpu')) for k, v in pred.items()}
                     # move target to cpu
                     targ = {k: v.to(torch.device('cpu')) for k, v in targ.items()} 
-                    boxes,labels=pred["boxes"], pred["labels"]
                     plot_image(img, targ["labels"].tolist(),targ["boxes"].tolist(),labels,boxes)
             break
                 
@@ -368,9 +369,9 @@ if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
     
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
-    trainer = Object_detector_trainer(model=object_detector_model)
-    # trainer = Object_detector_trainer()
-    trainer.train(rpn_only=True)
-    trainer.train()
+    # trainer = Object_detector_trainer(model=object_detector_model)
+    trainer = Object_detector_trainer()
+    # trainer.train(rpn_only=True)
+    # trainer.train()
     # trainer.evaluate()
     trainer.pridicte_and_display()
