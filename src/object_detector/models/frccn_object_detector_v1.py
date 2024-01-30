@@ -40,16 +40,16 @@ class FrcnnObjectDetectorV1(nn.Module):
         # No of Classes 29 Anatomical Region + Back Ground
         self.num_classes = 30
 
-        # Loading pre-trained resnet50
-        resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
-        # Modifying first Conv Layer to take Grey Scale image instead of rgb
-        resnet.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        # Removing Last 2 layers (avgpool,fc) for the Resnet to use as feature extractor without classification
-        self.backbone=nn.Sequential(*list(resnet.children())[:-2])
-        # # Defining the out_channel for the backbone = out for the last conv layer in Layer(4) (2048)
-        self.backbone.out_channels=resnet.layer4[-1].conv3.out_channels
+        # # Loading pre-trained resnet50
+        # resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
+        # # Modifying first Conv Layer to take Grey Scale image instead of rgb
+        # resnet.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        # # Removing Last 2 layers (avgpool,fc) for the Resnet to use as feature extractor without classification
+        # self.backbone=nn.Sequential(*list(resnet.children())[:-2])
+        # # # Defining the out_channel for the backbone = out for the last conv layer in Layer(4) (2048)
+        # self.backbone.out_channels=resnet.layer4[-1].conv3.out_channels
 
-        # self.backbone = FeatureNetwork("resnet50")
+        self.backbone = FeatureNetwork("resnet50")
         # Anchor Aspect Ratios and Size since the input image size is 512 x 512, we choose the sizes accordingly
         # Suiting 29 Anatomical Region
         
