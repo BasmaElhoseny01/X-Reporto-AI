@@ -182,7 +182,7 @@ class XReportoTrainer():
                 predicted_dataloader = DataLoader(dataset=predicted_data, batch_size=1, shuffle=False, num_workers=4)
         # make model in evaluation mode
         self.model.eval()
-        for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):
+        for batch_idx,(object_detector_batch,selection_classifier_batch,_,LM_batch) in enumerate(self.data_loader_train):
             
             images=object_detector_batch['image']
 
@@ -202,21 +202,30 @@ class XReportoTrainer():
                 for i in range(len(images)):
                     phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
                     selection_classifier_targets.append(phrase_exist)
-                selection_classifier_targets=torch.stack(selection_classifier_targets)
+                # selection_classifier_targets=torch.stack(selection_classifier_targets)
 
-            abnormal_classifier_targets=None
-            if MODEL_STAGE==ModelStage.CLASSIFIER.value :
-                abnormal_classifier_targets=[]
-                for i in range(len(images)):
-                    bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
-                    abnormal_classifier_targets.append(bbox_is_abnormal)
-                abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
             with torch.no_grad():
-                object_detector_boxes,object_detector_detected_classes= self.model(images)   
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                    object_detector_boxes,object_detector_detected_classes= self.model(images)   
+
+
+                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                    selected_regions,object_detector_boxes,object_detector_detected_classes= self.model(images)
+
+
+
                 images = list(image.to(torch.device('cpu')) for image in images)
+
                 for boxes,labels,target,img in zip(object_detector_boxes,object_detector_detected_classes,object_detector_targets,images):
                     boxes=boxes.to(torch.device('cpu'))
                     plot_image(img, target["labels"].tolist(),target["boxes"].tolist(),labels,boxes)
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value : continue
+                for boxes,labels,target,img in zip(object_detector_boxes,selected_regions,selection_classifier_targets,images):
+                    print("================Display region================")
+                    boxes=boxes.to(torch.device('cpu'))
+                    selected_boxes=boxes[target] 
+                    target=[idx.item() + 1 for idx in torch.nonzero(target)]
+                    plot_image(img,target,selected_boxes,labels,boxes)
             break
 
 
