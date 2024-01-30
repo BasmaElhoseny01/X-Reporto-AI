@@ -8,7 +8,6 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 
 from config import ModelStage,MODEL_STAGE,DEVICE
 import gc
-
 import sys
 # constants
 EPOCHS=1
@@ -76,7 +75,7 @@ class XReportoTrainer():
         for epoch in range(EPOCHS):
             for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):
                 # Check GPU memory usage
-                print(torch.cuda.memory_allocated())
+                # print(torch.cuda.memory_allocated())
                 images=object_detector_batch['image']
 
                 # Move images to Device
@@ -141,7 +140,7 @@ class XReportoTrainer():
                 #backward pass
                 Total_loss=None
                 object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-                Total_loss=object_detector_losses_summation
+                Total_loss=object_detector_losses_summation.clone()
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value:
                     Total_loss+=selection_classifier_losses
                     Total_loss+=abnormal_binary_classifier_losses
