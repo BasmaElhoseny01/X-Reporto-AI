@@ -332,6 +332,53 @@ def plot_single_image(img, boxes):
         ax.add_patch(rect)
     plt.show()
 
+def compute_IOU(pred_box, target_box):
+    '''
+    Function to compute the Intersection over Union (IOU) of two boxes.
+
+    inputs:
+
+        pred_box: predicted box (Format [xmin, ymin, xmax, ymax])
+        target_box: target box (Format [xmin, ymin, xmax, ymax])
+    '''
+    if pred_box is None or target_box is None:
+        return 0
+
+    # compute the intersection area
+    x1 = max(pred_box[0], target_box[0])
+    y1 = max(pred_box[1], target_box[1])
+    x2 = min(pred_box[2], target_box[2])
+    y2 = min(pred_box[3], target_box[3])
+    intersection_area = max(0, x2 - x1) * max(0, y2 - y1)
+
+    # compute the union area
+    pred_box_area = (pred_box[2] - pred_box[0]) * (pred_box[3] - pred_box[1])
+    target_box_area = (target_box[2] - target_box[0]) * (target_box[3] - target_box[1])
+    union_area = pred_box_area + target_box_area - intersection_area
+
+    # compute the IOU 0 (no overlap) -> 1 totally overlap
+    iou = intersection_area / union_area
+    return iou
+
+def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
+    '''
+    Function to compute the precision.
+
+    inputs:
+        pred_boxes: list of predicted boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+        pred_labels: list of predicted labels (Format [N] => N times label)
+        target_boxes: list of target boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+        target_labels: list of target labels (Format [N] => N times label)
+        iou_threshold: threshold to consider a prediction to be correct
+    '''
+    # compute the number of predicted boxes
+    num_pred_boxes = len(pred_boxes)
+    # compute the number of target boxes
+    num_target_boxes = len(target_boxes)
+    # compute the number of true positive detections
+
+    
+
 if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
     
