@@ -92,7 +92,8 @@ class XReportoTrainer():
                     object_detector_targets.append(new_dict)
 
                 # del batch[0]
-                
+                    
+                selection_classifier_targets=None
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value :
                     # Selection
                     # Moving Object Detector Targets to Device
@@ -104,7 +105,7 @@ class XReportoTrainer():
 
                     # UpNormal
 
-                # del batch[0]
+                # del batch[1]
                 
                 # zero the parameter gradients
                 self.optimizer.zero_grad()

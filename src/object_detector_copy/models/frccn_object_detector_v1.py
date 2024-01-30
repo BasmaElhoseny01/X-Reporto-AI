@@ -163,7 +163,6 @@ class FrcnnObjectDetectorV1(nn.Module):
             # TODO REMOVE THAT
             features= torch.randn(batch_size, 29, 1024)
             detected_features.append(features)
-        # detected_features= torch.tensor([x.to(DEVICE) for x in detected_features]).to(DEVICE)
         
 
 
@@ -173,7 +172,7 @@ class FrcnnObjectDetectorV1(nn.Module):
         losses.update(detector_losses)
 
         if self.training:
-            return losses,None,detected_labels,detected_features
+            return losses,detected_labels,detected_features
         else:
             return losses,detected_boxes,detected_labels,detected_features
 

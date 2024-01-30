@@ -50,7 +50,8 @@ class XReportoV1(nn.Module):
             # Training
             print("1")
             # Stage(1) Object Detector
-            object_detector_losses,object_detector_boxes,object_detector_labels,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+            object_detector_losses,_,object_detector_labels,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+            sys.exit()
 
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,object_detector_boxes,object_detector_labels,object_detector_features
