@@ -11,6 +11,8 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from torchvision.transforms import v2
+import ast
+
 from src.object_detector.data_loader.custom_augmentation import CustomAugmentation
 
 class CustomDataset(Dataset):
@@ -66,16 +68,31 @@ class CustomDataset(Dataset):
         #object_detector_targets
         object_detector_sample = {}
         object_detector_sample["image"]=transformed_image
-        object_detector_sample["boxes"] = transformed_bboxes
+        object_detector_sample["bboxes"] = transformed_bboxes
         object_detector_sample["bbox_labels"] = transformed_bbox_labels
 
         #classifier_targets
-        classifier_sample= dict(object_detector_sample)
-        classifier_sample["bbox_phrase_exists"]=bbox_phrase_exists
-        classifier_sample["bbox_is_abnormal"]=bbox_is_abnormal
+        # Safely evaluate the string and convert it to a Python list
+        bbox_phrase_exists = ast.literal_eval(bbox_phrase_exists)
+
+        # Convert the Python list to a PyTorch tensor
+        bbox_phrase_exists = torch.tensor(bbox_phrase_exists, dtype=torch.bool)
+
+        selection_classifier_sample= {}
+        selection_classifier_sample["bbox_phrase_exists"]=bbox_phrase_exists
+
+        #classifier_targets
+        # Safely evaluate the string and convert it to a Python list
+        bbox_is_abnormal = ast.literal_eval(bbox_is_abnormal)
+
+        # Convert the Python list to a PyTorch tensor
+        bbox_is_abnormal = torch.tensor(bbox_is_abnormal, dtype=torch.bool)
+        
+        abnormal_classifier_sample= {}
+        abnormal_classifier_sample["bbox_is_abnormal"]=bbox_is_abnormal
 
         #language_model_targets
-        language_model_sample=dict(classifier_sample)
+        language_model_sample={}
         language_model_sample["bbox_phrases"]=bbox_phrases
 
-        return object_detector_sample,classifier_sample,language_model_sample
+        return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample

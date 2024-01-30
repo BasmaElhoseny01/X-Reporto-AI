@@ -7,5 +7,5 @@ class XReporto():
     def create_model(self) -> XReportoV1:
         return XReportoV1()
 
-model=XReporto().create_model()
-print(model)
+# model=XReporto().create_model()
+# print(model)
