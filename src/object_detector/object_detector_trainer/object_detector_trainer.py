@@ -10,9 +10,9 @@ import numpy as np
 import sys
 from src.object_detector.models.object_detector_factory import ObjectDetector
 # constants
-EPOCHS=30
-LEARNING_RATE=0.000000000001
-BATCH_SIZE=2
+EPOCHS=50
+LEARNING_RATE=0.0001
+BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
@@ -58,7 +58,7 @@ class Object_detector_trainer:
         self.bestloss=10000000
         self.evalbestloss=10000000
     
-    def train(self):
+    def train(self,rpn_only=False):
         '''
         Function to train the object detector on training dataset
         '''
@@ -83,7 +83,8 @@ class Object_detector_trainer:
                 loss_dict = self.model(images, targetdata)   
                 losses = sum(loss for loss in loss_dict.values())
                 # sum rpn losses
-                # losses = loss_dict['loss_objectness'] + loss_dict['loss_rpn_box_reg']
+                if rpn_only:
+                    losses = loss_dict['loss_objectness'] + loss_dict['loss_rpn_box_reg']
                 loss_value = losses.item()
 
                 # save the best model
@@ -102,49 +103,6 @@ class Object_detector_trainer:
                     break
             self.lr_scheduler.step()
 
-
-    def get_top_k_boxes_for_labels(self, boxes, labels, scores, k=1):
-        '''
-        Function that returns the top k boxes for each label.
-
-        inputs:
-            boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-            labels: list of labels (Format [N] => N times label)
-            scores: list of scores (Format [N] => N times score)
-            k: number of boxes to return for each label
-        outputs:
-            listboxes: list of boxes maxlength 29 one box for each region
-            labels: list of integers from 1 to 30 label for each box in listboxes
-        '''
-        # create a dict that stores the top k boxes for each label
-        top_k_boxes_for_labels = {}
-        # get the unique labels
-        unique_labels = torch.unique(labels)
-        # for each unique label
-        for label in unique_labels:
-            # get the indices of the boxes that have that label
-            indices = torch.where(labels == label)[0]
-            # get the scores of the boxes that have that label
-            scores_for_label = scores[indices]
-            # get the boxes that have that label
-            boxes_for_label = boxes[indices]
-            # sort the scores for that label in descending order
-            sorted_scores_for_label, sorted_indices = torch.sort(scores_for_label, descending=True)
-            # get the top k scores for that label
-            top_k_scores_for_label = sorted_scores_for_label[:k]
-            # get the top k boxes for that label
-            top_k_boxes_for_label = boxes_for_label[sorted_indices[:k]]
-            # store the top k boxes for that label
-            top_k_boxes_for_labels[label] = top_k_boxes_for_label
-            #convert boxes to list
-        listboxes=[]
-        for b in top_k_boxes_for_labels.values():
-            b=b[0].tolist()
-            listboxes.append(b)
-        if len(unique_labels)!=0:
-            return listboxes,unique_labels.tolist()
-        return listboxes,[]
-  
     def evaluate(self):
         '''
         Function to evaluate the object detector on evaluation dataset
@@ -206,7 +164,6 @@ class Object_detector_trainer:
         else:
             # create dataset
             prdicted_data = CustomDataset(dataset_path= predicte_path_csv, transform_type='val')
-            
             # create data loader
             prdicted_dataloader = DataLoader(dataset=prdicted_data, batch_size=1, shuffle=False, num_workers=4)
         # make model in evaluation mode
@@ -232,7 +189,7 @@ class Object_detector_trainer:
                     pred = {k: v.to(torch.device('cpu')) for k, v in pred.items()}
                     # move target to cpu
                     targ = {k: v.to(torch.device('cpu')) for k, v in targ.items()} 
-                    boxes,labels=self.get_top_k_boxes_for_labels(pred["boxes"], pred["labels"], pred["scores"], k=1)
+                    boxes,labels=pred["boxes"], pred["labels"]
                     plot_image(img, targ["labels"].tolist(),targ["boxes"].tolist(),labels,boxes)
             break
                 
@@ -258,9 +215,8 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
     region_colors = ["b", "g", "r", "c", "m", "y"]
     for j in range(0,5):
         for i in range(j*6+1,j*6+7):
-            if i in labels:
-                index = labels.index(i)
-                box = boxes[index]
+            if labels[i]:
+                box = boxes[i]
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -276,9 +232,8 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
                 )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-            if i in prdictedLabels:
-                index = prdictedLabels.index(i)
-                box = prdictedBoxes[index]
+            if prdictedLabels[i]:
+                box = prdictedBoxes[i]
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -336,8 +291,9 @@ if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
     
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
-    # trainer = Object_detector_trainer(model=object_detector_model)
-    trainer = Object_detector_trainer()
+    trainer = Object_detector_trainer(model=object_detector_model)
+    # trainer = Object_detector_trainer()
+    trainer.train(rpn_only=True)
     trainer.train()
     # trainer.evaluate()
     trainer.pridicte_and_display()
