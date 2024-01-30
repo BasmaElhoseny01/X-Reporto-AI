@@ -8,7 +8,6 @@ from ..data_loader.custom_dataset import CustomDataset
 from matplotlib import patches
 import numpy as np
 import sys
-import os
 from src.object_detector.models.object_detector_factory import ObjectDetector
 # constants
 EPOCHS=50
@@ -30,7 +29,6 @@ class Object_detector_trainer:
         '''
         # connect to gpu if available
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        print("device: ",self.device)
         if model==None:
             # load the model from bestmodel.path
             self.model=ObjectDetector().create_model()
@@ -183,8 +181,7 @@ class Object_detector_trainer:
                 targetdata.append(newdic)
             # forward
             with torch.no_grad():
-                prediction = self.model(images)[1]
-                print("scores",prediction[0]["scores"])
+                loses,prediction = self.model(images)
                 # move image to cpu
                 images = list(image.to(torch.device('cpu')) for image in images)
                 for pred,targ,img in zip(prediction,targetdata,images):
