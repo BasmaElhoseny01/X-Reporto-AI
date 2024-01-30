@@ -13,7 +13,7 @@ from torchvision.models.detection.rpn import AnchorGenerator,RPNHead,RegionPropo
 
 from torchvision.models.detection.roi_heads import RoIHeads
 from torchvision.models.detection.faster_rcnn import TwoMLPHead, FastRCNNPredictor
-from feature_extraction import FeatureNetwork
+from src.object_detector.models.feature_extraction import FeatureNetwork
 
 import sys
 
