@@ -32,8 +32,9 @@ class Object_detector_trainer:
         if model==None:
             # load the model from bestmodel.path
             self.model=ObjectDetector().create_model()
-            state_dict=torch.load('bestmodel.pth')
-            self.model.load_state_dict(state_dict)
+            if os.path.exists('bestmodel.pth'):
+                state_dict=torch.load('bestmodel.pth')
+                self.model.load_state_dict(state_dict)
 
         else:
             self.model = model
@@ -286,6 +287,83 @@ def plot_single_image(img, boxes):
         # Add the patch to the Axes
         ax.add_patch(rect)
     plt.show()
+
+def compute_IOU(pred_box, target_box):
+    '''
+    Function to compute the Intersection over Union (IOU) of two boxes.
+
+    inputs:
+
+        pred_box: predicted box (Format [xmin, ymin, xmax, ymax])
+        target_box: target box (Format [xmin, ymin, xmax, ymax])
+    '''
+    if pred_box is None or target_box is None:
+        return 0
+
+    # compute the intersection area
+    x1 = max(pred_box[0], target_box[0])
+    y1 = max(pred_box[1], target_box[1])
+    x2 = min(pred_box[2], target_box[2])
+    y2 = min(pred_box[3], target_box[3])
+    intersection_area = max(0, x2 - x1) * max(0, y2 - y1)
+
+    # compute the union area
+    pred_box_area = (pred_box[2] - pred_box[0]) * (pred_box[3] - pred_box[1])
+    target_box_area = (target_box[2] - target_box[0]) * (target_box[3] - target_box[1])
+    union_area = pred_box_area + target_box_area - intersection_area
+
+    # compute the IOU 0 (no overlap) -> 1 totally overlap
+    iou = intersection_area / union_area
+    return iou
+
+def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
+    '''
+    Function to compute the precision.
+
+    inputs:
+        pred_boxes: list of predicted boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+        pred_labels: list of predicted labels (Format [N] => N times label)
+        target_boxes: list of target boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+        target_labels: list of target labels (Format [N] => N times label)
+        iou_threshold: threshold to consider a prediction to be correct
+    '''
+    # compute the number of predicted boxes
+    num_pred_boxes = len(pred_boxes)
+    # compute the number of target boxes
+    num_target_boxes = len(target_boxes)
+    # compute the number of true positive detections
+    num_true_positive = 0
+    num_false_positive = 0
+    num_false_negative = 0
+    index = 1
+    # for each predicted box
+    for pred_box, pred_label in zip(pred_boxes, pred_labels):
+        # for each target box
+        for target_box, target_label in zip(target_boxes, target_labels):
+            # if the labels match
+            if index == target_label and pred_label != 0:
+                # if the IOU is greater than the threshold
+                if compute_IOU(pred_box, target_box) > iou_threshold:
+                    # increment the number of true positive detections
+                    num_true_positive += 1
+                    # stop looking for target boxes
+                break
+            elif index == target_label and pred_label == 0:
+                num_false_negative += 1
+            elif pred_label != 0:
+                num_false_positive += 1
+        
+        # increment the index
+        index += 1
+    # compute the precision
+    precision = num_true_positive / (num_true_positive+num_false_positive)
+
+    # compute the recall
+    recall = num_true_positive / (num_true_positive+num_false_negative)
+
+    # return the precision and recall
+    return precision, recall
+
 
 if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
