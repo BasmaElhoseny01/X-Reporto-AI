@@ -376,6 +376,23 @@ def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_th
     # compute the number of target boxes
     num_target_boxes = len(target_boxes)
     # compute the number of true positive detections
+    num_true_positive = 0
+    # for each predicted box
+    for pred_box, pred_label in zip(pred_boxes, pred_labels):
+        # for each target box
+        for target_box, target_label in zip(target_boxes, target_labels):
+            # if the labels match
+            if pred_label == target_label:
+                # if the IOU is greater than the threshold
+                if compute_IOU(pred_box, target_box) > iou_threshold:
+                    # increment the number of true positive detections
+                    num_true_positive += 1
+                    # stop looking for target boxes
+                break
+    # compute the precision
+    precision = num_true_positive / num_pred_boxes
+    return precision
+
 
     
 
