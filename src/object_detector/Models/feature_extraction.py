@@ -31,9 +31,9 @@ class FeatureNetwork(nn.Module):
         elif model_type == "resnet50":
             self.feature_extractor = resnet50(weights=ResNet50_Weights.DEFAULT)
             self.feature_extractor.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+            self.out_channels = self.feature_extractor.layer4[-1].conv3.out_channels
             self.feature_extractor = nn.Sequential(*list(self.feature_extractor.children())[:-2])
-            self.feature_extractor.out_channels = self.model.layer4[-1].conv3.out_channels
-            self.out_channels = self.feature_extractor.out_channels
+            # self.feature_extractor.out_channels = self.feature_extractor.layer4[-1].conv3.out_channels
             self.image_size = 512
     
     def __call__(self, x):
