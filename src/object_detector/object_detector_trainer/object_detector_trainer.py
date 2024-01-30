@@ -32,8 +32,9 @@ class Object_detector_trainer:
         if model==None:
             # load the model from bestmodel.path
             self.model=ObjectDetector().create_model()
-            state_dict=torch.load('bestmodel.pth')
-            self.model.load_state_dict(state_dict)
+            if os.path.exists('bestmodel.pth'):
+                state_dict=torch.load('bestmodel.pth')
+                self.model.load_state_dict(state_dict)
 
         else:
             self.model = model
@@ -392,9 +393,9 @@ def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_th
                     num_true_positive += 1
                     # stop looking for target boxes
                 break
-            else if index == target_label and pred_label == 0:
+            elif index == target_label and pred_label == 0:
                 num_false_negative += 1
-            else if pred_label != 0:
+            elif pred_label != 0:
                 num_false_positive += 1
         
         # increment the index
@@ -408,8 +409,6 @@ def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_th
     # return the precision and recall
     return precision, recall
 
-
-    
 
 if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
