@@ -382,7 +382,7 @@ def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_th
         # for each target box
         for target_box, target_label in zip(target_boxes, target_labels):
             # if the labels match
-            if pred_label == target_label:
+            if pred_label == target_label and target_label != 0:
                 # if the IOU is greater than the threshold
                 if compute_IOU(pred_box, target_box) > iou_threshold:
                     # increment the number of true positive detections
