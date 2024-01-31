@@ -67,7 +67,7 @@ class XReportoV1(nn.Module):
                 return object_detector_boxes,object_detector_detected_classes
             
             # object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
-            selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes)
+            _,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes)
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return selected_regions,object_detector_boxes,object_detector_detected_classes
             
