@@ -49,7 +49,7 @@ class FrcnnObjectDetectorV1(nn.Module):
         # # # Defining the out_channel for the backbone = out for the last conv layer in Layer(4) (2048)
         # self.backbone.out_channels=resnet.layer4[-1].conv3.out_channels
 
-        self.backbone = FeatureNetwork("vgg16")
+        self.backbone = FeatureNetwork("resnet50")
         # Anchor Aspect Ratios and Size since the input image size is 512 x 512, we choose the sizes accordingly
         # Suiting 29 Anatomical Region
         

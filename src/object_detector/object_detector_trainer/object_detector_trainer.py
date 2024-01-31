@@ -1,21 +1,19 @@
 import torch
-import torchvision
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import  DataLoader
 import matplotlib.pyplot as plt
 from ..data_loader.custom_dataset import CustomDataset
 from matplotlib import patches
-import numpy as np
-import sys
 from src.object_detector.models.object_detector_factory import ObjectDetector
 import os
+
 # constants
 EPOCHS=30
-LEARNING_RATE=0.0001
+LEARNING_RATE=0.0000005
 BATCH_SIZE=2
-SCHEDULAR_STEP_SIZE=10
-SCHEDULAR_GAMMA=0.1
+SCHEDULAR_STEP_SIZE=500
+SCHEDULAR_GAMMA=0.9999999999999999
 DEBUG=True
 
 
@@ -25,7 +23,7 @@ def collate_fn(batch):
     return images, targets
 class Object_detector_trainer:
     
-    def __init__(self,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/val.csv',
+    def __init__(self,training_csv_path='datasets/train.csv',validation_csv_path='datasets/train.csv',
                  model=None):
         '''
         inputs:
@@ -53,7 +51,7 @@ class Object_detector_trainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val')
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         
         # create data loader
@@ -62,8 +60,8 @@ class Object_detector_trainer:
         self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
         # initialize the best loss to a large value
-        self.bestloss=0.2262
-        self.evalbestloss=0.3220
+        self.bestloss=100000
+        self.evalbestloss=100000
     
     def train(self,rpn_only=False):
         '''
@@ -72,6 +70,7 @@ class Object_detector_trainer:
         # make model in trainning mode
         self.model.train()
         for epoch in range(EPOCHS):
+            total_loss = 0
             for batch_idx, (images, targets) in enumerate(self.data_loader_train):
                 # add new dimension to images after batch size
                 images = torch.stack([image.to(self.device) for image in images])
@@ -88,16 +87,18 @@ class Object_detector_trainer:
 
                 # forward + backward + optimize
                 loss_dict = self.model(images, targetdata)   
+                
+                del targetdata
+                del images
+                torch.cuda.empty_cache()
+                
                 losses = sum(loss for loss in loss_dict.values())
+
                 # sum rpn losses
                 if rpn_only:
                     losses = loss_dict['loss_objectness'] + loss_dict['loss_rpn_box_reg']
                 loss_value = losses.item()
-
-                # save the best model
-                if(loss_value<self.bestloss):
-                    self.bestloss=loss_value
-                    torch.save(self.model.state_dict(), 'bestmodel.pth')
+                total_loss += loss_value
 
                 # BackWard
                 losses.backward()
@@ -108,7 +109,14 @@ class Object_detector_trainer:
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
                     
-            self.lr_scheduler.step()
+            # self.lr_scheduler.step()
+            # save the best model
+            if(total_loss<self.bestloss):
+                self.bestloss=total_loss
+                torch.save(self.model.state_dict(), 'bestmodel.pth')
+                print(f'epoch: {epoch+1}, total_loss: {total_loss/len(self.data_loader_train):.4f}')
+            # free Gpu memory
+            torch.cuda.empty_cache()
 
     def evaluate(self):
         '''
@@ -330,39 +338,39 @@ def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_th
     # for each predicted box
     for pred_box, pred_label in zip(pred_boxes, pred_labels):
         # for each target box
-        for target_box, target_label in zip(target_boxes, target_labels):
-            # if the labels match
-            if index == target_label and pred_label != 0:
-                # if the IOU is greater than the threshold
-                if compute_IOU(pred_box, target_box) > iou_threshold:
-                    # increment the number of true positive detections
-                    num_true_positive += 1
-                    # stop looking for target boxes
-                
-            elif index == target_label and pred_label == 0:
-                num_false_negative += 1
-            elif pred_label != 0:
+        if pred_label != 0 and index in target_labels:
+            if compute_IOU(pred_box, target_boxes[index-1]) > iou_threshold:
+                # increment the number of true positive detections
+                num_true_positive += 1
+            else:
                 num_false_positive += 1
-        
+        elif pred_label != 0 and index not in target_labels:
+            num_false_positive += 1
+        elif pred_label == 0 and index in target_labels:
+            num_false_negative += 1
         # increment the index
-        index += 1
+        index += 1            
     # compute the precision
     precision = num_true_positive / (num_true_positive+num_false_positive)
 
     # compute the recall
     recall = num_true_positive / (num_true_positive+num_false_negative)
 
+    F1_score = 2 * (precision * recall) / (precision + recall)
+    
+    print(f'precision: {precision:.4f}, recall: {recall:.4f}, F1_score: {F1_score:.4f}')
+
     # return the precision and recall
-    return precision, recall
+    return precision, recall, F1_score
 
 
 if __name__ == '__main__':
-    object_detector_model=ObjectDetector().create_model()
-    
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
-    trainer = Object_detector_trainer(model=object_detector_model)
-    # trainer = Object_detector_trainer()
-    trainer.train(rpn_only=True)
-    trainer.train()
-    trainer.evaluate()
+    # object_detector_model=ObjectDetector().create_model()
+    
+    # trainer = Object_detector_trainer(model=object_detector_model)
+    trainer = Object_detector_trainer()
+    # trainer.train(rpn_only=True)
+    # trainer.train()
+    # trainer.evaluate()
     trainer.pridicte_and_display(predicte_path_csv='datasets/predict.csv')
