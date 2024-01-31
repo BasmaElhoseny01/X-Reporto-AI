@@ -159,7 +159,7 @@ class XReportoTrainer():
                     #     elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     #         self.save_model('LM',epoch)
                         
-                    # print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation.item():.4f} selection_classifier_Loss: {selection_classifier_losses.item():.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses.item():.4f} total_Loss: {Total_loss.item():.4f}')
+                    print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation.item():.4f} selection_classifier_Loss: {selection_classifier_losses[0].item():.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses.item():.4f} total_Loss: {Total_loss.item():.4f}')
                     break
             # # update the learning rate
             # self.lr_scheduler.step()
