@@ -127,7 +127,37 @@ def get_general_stats(data_frame):
 
 
 
+def get_bboxes_stats(data_frame):
+    # loop over the dataframe
+    dataset_size = len(data_frame)
+    bboxes_histogram_width = { i: [0]*224 for i in range(29)}
+    bboxes_histogram_height = { i: [0]*224 for i in range(29)}
+    for i in range(dataset_size):
+        bboxes = data_frame.iloc[i, 4]
+        # convert the string representation of bounding boxes into list of list
+        bboxes = eval(bboxes)
 
+        # loop over the bboxes
+        for label,bbox in enumerate(bboxes):
+            # get the width and height of the bbox
+            width = bbox[2] - bbox[0]
+            height = bbox[3] - bbox[1]
+            # get the label of the bbox
+
+            # update the histogram
+            bboxes_histogram_width[label][width] += 1
+            bboxes_histogram_height[label][height] += 1
+    # for each label plot the histogram
+    for label in range(24,29):
+        # plot the width histogram
+        plt.bar(range(224),bboxes_histogram_width[label])
+        plt.title(f"width histogram for label {label}")
+        plt.show()
+        # plot the height histogram
+        plt.bar(range(224),bboxes_histogram_height[label])
+        plt.title(f"height histogram for label {label}")
+        plt.show()
+    return bboxes_histogram_width,bboxes_histogram_height
 
 if __name__ == '__main__':
     # load the csv file
@@ -140,5 +170,8 @@ if __name__ == '__main__':
     print("phrase_exists_ration: ",phrase_exists_ratio)
     print("pos_weight: ",pos_weight)
     print("pos_phrase_weight: ",pos_phrase_weight)
+
+    # get the bboxes stats
+    bboxes_histogram_width,bboxes_histogram_height = get_bboxes_stats(df)
     # plot the stats
     
