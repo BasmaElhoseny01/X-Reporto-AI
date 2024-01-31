@@ -21,6 +21,12 @@ def get_general_stats(data_frame):
     normal_array = [0]*29
     bbox_phrase_exists_array = [0]*29
     bbox_phrase_not_exists_array = [0]*29
+
+    abnormal_phrase_exists_array = [0]*29
+    abnormal_phrase_not_exists_array = [0]*29
+    normal_phrase_exists_array = [0]*29
+    normal_phrase_not_exists_array = [0]*29
+
     for i in range(dataset_size):
         bboxes = data_frame.iloc[i, 4]
         # convert the string representation of bounding boxes into list of list
@@ -58,6 +64,18 @@ def get_general_stats(data_frame):
                 bbox_phrase_exists_array[i] += 1
             else:
                 bbox_phrase_not_exists_array[i] += 1
+        for i in range(len(bbox_phrase_exists)):
+            if bbox_is_abnormal[i] == 1:
+                if bbox_phrase_exists[i] == 1:
+                    abnormal_phrase_exists_array[i] += 1
+                else:
+                    abnormal_phrase_not_exists_array[i] += 1
+            else:
+                if bbox_phrase_exists[i] == 1:
+                    normal_phrase_exists_array[i] += 1
+                else:
+                    normal_phrase_not_exists_array[i] += 1
+    
     print("abnormal_array: ",abnormal_array)
     print("normal_array: ",normal_array)
 
@@ -78,6 +96,26 @@ def get_general_stats(data_frame):
     print("bbox_phrase_exists_array_normalized: ",bbox_phrase_exists_array)
     print("bbox_phrase_not_exists_array_normalized: ",1-bbox_phrase_exists_array)
     
+
+    print("abnormal_phrase_exists_array: ",abnormal_phrase_exists_array)
+    print("abnormal_phrase_not_exists_array: ",abnormal_phrase_not_exists_array)
+    print("normal_phrase_exists_array: ",normal_phrase_exists_array)
+    print("normal_phrase_not_exists_array: ",normal_phrase_not_exists_array)
+
+    # print normalized array
+    abnormal_phrase_exists_array = np.array(abnormal_phrase_exists_array)
+    abnormal_phrase_not_exists_array = np.array(abnormal_phrase_not_exists_array)
+    normal_phrase_exists_array = np.array(normal_phrase_exists_array)
+    normal_phrase_not_exists_array = np.array(normal_phrase_not_exists_array)
+    abnormal_phrase_exists_array = abnormal_phrase_exists_array/(abnormal_phrase_exists_array+abnormal_phrase_not_exists_array)
+    abnormal_phrase_not_exists_array = abnormal_phrase_not_exists_array/(abnormal_phrase_exists_array+abnormal_phrase_not_exists_array)
+    normal_phrase_exists_array = normal_phrase_exists_array/(normal_phrase_exists_array+normal_phrase_not_exists_array)
+    normal_phrase_not_exists_array = normal_phrase_not_exists_array/(normal_phrase_exists_array+normal_phrase_not_exists_array)
+    print("abnormal_phrase_exists_array_normalized: ",abnormal_phrase_exists_array)
+    print("abnormal_phrase_not_exists_array_normalized: ",abnormal_phrase_not_exists_array)
+    print("normal_phrase_exists_array_normalized: ",normal_phrase_exists_array)
+    print("normal_phrase_not_exists_array_normalized: ",normal_phrase_not_exists_array)
+
     print("count_abnormal: ",count_abnormal)
     print("count_normal: ",count_normal)
     print("count_bbox_phrase_exists: ",count_bbox_phrase_exists)
@@ -93,7 +131,7 @@ def get_general_stats(data_frame):
 
 if __name__ == '__main__':
     # load the csv file
-    csv_path = os.path.join(os.getcwd(), "datasets/train-200.csv")
+    csv_path = os.path.join(os.getcwd(), "datasets/train-2000.csv")
     df = load_csv(csv_path)
     # get the stats
     abnormal_ratio,phrase_exists_ratio,pos_weight,pos_phrase_weight = get_general_stats(df)
