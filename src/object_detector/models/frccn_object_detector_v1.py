@@ -49,7 +49,7 @@ class FrcnnObjectDetectorV1(nn.Module):
         # # # Defining the out_channel for the backbone = out for the last conv layer in Layer(4) (2048)
         # self.backbone.out_channels=resnet.layer4[-1].conv3.out_channels
 
-        self.backbone = FeatureNetwork("resnet50")
+        self.backbone = FeatureNetwork("vgg16")
         # Anchor Aspect Ratios and Size since the input image size is 512 x 512, we choose the sizes accordingly
         # Suiting 29 Anatomical Region
         
@@ -79,6 +79,58 @@ class FrcnnObjectDetectorV1(nn.Module):
             features=self.features,
             feature_size=feature_map_output_size,
         )
+
+    def _check_targets(self, targets):
+        """
+        Check if
+            - there are targets for training
+            - all bboxes are of correct type and shape
+            - there are no degenerate bboxes (where e.g. x1 > x2)
+        """
+        if targets is None:
+            torch._assert(False, "targets should not be none when in training mode")
+
+        for target_idx, target in enumerate(targets):
+            boxes = target["boxes"]
+            if not isinstance(boxes, torch.Tensor):
+                torch._assert(False, f"Expected target boxes to be of type Tensor, got {type(boxes)}.")
+
+            torch._assert(
+                len(boxes.shape) == 2 and boxes.shape[-1] == 4,
+                f"Expected target boxes to be a tensor of shape [N, 4], got {boxes.shape}.",
+            )
+
+            # x1 should always be < x2 and y1 should always be < y2
+            degenerate_boxes = boxes[:, 2:] <= boxes[:, :2]
+            if degenerate_boxes.any():
+                # print the first degenerate box
+                bb_idx = torch.where(degenerate_boxes.any(dim=1))[0][0]
+                degen_bb: List[float] = boxes[bb_idx].tolist()
+                torch._assert(
+                    False,
+                    "All bounding boxes should have positive height and width." f" Found invalid box {degen_bb} for target at index {target_idx}.",
+                )
+
+    
+    def _transform_inputs_for_rpn_and_roi(self, images, features):
+        """
+        Tranform images and features from tensors to types that the rpn and roi_heads expect in the current PyTorch implementation.
+
+        Concretely, images have to be of class ImageList, which is a custom PyTorch class.
+        Features have to be a dict where the str "0" maps to the features.
+
+        Args:
+            images (Tensor)
+            features (Tensor): of shape [batch_size, 2048, 16, 16]
+
+        Returns:
+            images (ImageList)
+            features (Dict[str, Tensor])
+        """
+        images = ImageList(images)
+        features = OrderedDict([("0", features)])
+
+        return images, features
 
     def forward(self,images: Tensor ,targets: Optional[List[Dict[str, Tensor]]] = None):
         """
@@ -128,27 +180,30 @@ class FrcnnObjectDetectorV1(nn.Module):
                 "top_region_features"
             }
         """
-        
+        if targets is not None:
+            self._check_targets(targets)
+
         # Features extracted from backbone feature map is 16*16 depth is 2048 [batch_size x 2048 x 16 x 16]
-        features_maps=self.backbone(images)
+        features=self.backbone(images)
         # Transform images and features from tensors to types that the rpn and roi_heads expect in the current PyTorch implementation.
         # Images have to be of class ImageList
         batch_size = images.shape[0] # batch_size
         image_sizes = images.shape[-2:] # 512*512 (input images dim)
         images = ImageList(images,image_sizes=[tuple(image_sizes) for _ in range(batch_size)])
         # Features have to be a dict where the str "0" maps to the features.
-        features_maps = OrderedDict([("0", features_maps)])
+        features = OrderedDict([("0", features)])
+        # images, features = self._transform_inputs_for_rpn_and_roi(images, features)
 
         # Getting Proposals of RPN Bounding Boxes
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
-        proposals, proposal_losses = self.rpn(images, features_maps, targets)
-        detections  = self.roi_heads(features_maps, proposals, images.image_sizes, targets)
+        proposals, proposal_losses = self.rpn(images, features, targets)
+        detections  = self.roi_heads(features, proposals, images.image_sizes, targets)
 
         detector_losses =detections["detector_losses"]
         if not self.training:
             outputs = {}
             outputs["class_detected"] = detections["class_detected"]
-            outputs["detections"]=(detections["detections"])
+            outputs["detections"]=detections["detections"]
             if self.features:
                 outputs["features"]=detections["top_region_features"]
         # print("detections",detections)

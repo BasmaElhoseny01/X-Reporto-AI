@@ -29,7 +29,7 @@ class Roi(RoIHeads):
         keypoint_predictor=None,
         # return features is train in all model or not if train individual model
         features=False,
-        feature_size=1028,
+        feature_size=8,
 
         ):
         super().__init__(

@@ -11,16 +11,21 @@ import sys
 from src.object_detector.models.object_detector_factory import ObjectDetector
 import os
 # constants
-EPOCHS=50
+EPOCHS=30
 LEARNING_RATE=0.0001
-BATCH_SIZE=1
-SCHEDULAR_STEP_SIZE=1
-SCHEDULAR_GAMMA=0.9999999999
+BATCH_SIZE=2
+SCHEDULAR_STEP_SIZE=10
+SCHEDULAR_GAMMA=0.1
 DEBUG=True
 
+
+def collate_fn(batch):
+    images = [item[0] for item in batch]
+    targets = [item[1] for item in batch]
+    return images, targets
 class Object_detector_trainer:
     
-    def __init__(self,training_csv_path='datasets/train.csv',validation_csv_path='datasets/train.csv',
+    def __init__(self,training_csv_path='datasets/train-200.csv',validation_csv_path='datasets/val.csv',
                  model=None):
         '''
         inputs:
@@ -48,17 +53,17 @@ class Object_detector_trainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val')
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         
         # create data loader
         # TODO @Ahmed Hosny suffle Training Loaders
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-        self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-        
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+
         # initialize the best loss to a large value
-        self.bestloss=10000000
-        self.evalbestloss=10000000
+        self.bestloss=0.2262
+        self.evalbestloss=0.3220
     
     def train(self,rpn_only=False):
         '''
@@ -74,8 +79,8 @@ class Object_detector_trainer:
                 targetdata=[]
                 for i in range(len(images)):
                     newdic={}
-                    newdic['boxes']=targets['boxes'][i].to(self.device)
-                    newdic['labels']=targets['labels'][i].to(self.device)
+                    newdic['boxes']=targets[i]['boxes'].to(self.device)
+                    newdic['labels']=targets[i]['labels'].to(self.device)
                     targetdata.append(newdic)
 
                 # zero the parameter gradients
@@ -102,7 +107,7 @@ class Object_detector_trainer:
         
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
-                    break
+                    
             self.lr_scheduler.step()
 
     def evaluate(self):
@@ -111,10 +116,7 @@ class Object_detector_trainer:
         '''
 
         # make the model in evaluation mode
-        # self.model.eval()
-        # in evaluation mode the model will not return losses just predicted boxes so we cant calculate loss
-        # until we implement customize roi and rpn to calculate loss
-        self.model.train()
+        self.model.eval()
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             # add new dimension to images after batch size
             # images = images.unsqueeze(1)
@@ -123,34 +125,23 @@ class Object_detector_trainer:
             targetdata=[]
             for i in range(len(images)):
                 newdic={}
-                newdic['boxes']=targets['boxes'][i].to(self.device)
-                newdic['labels']=targets['labels'][i].to(self.device)
+                newdic['boxes']=targets[i]['boxes'].to(self.device)
+                newdic['labels']=targets[i]['labels'].to(self.device)
                 targetdata.append(newdic)
-
-            # zero the parameter gradients
-            self.optimizer.zero_grad()
-
-            # forward + backward + optimize
-            loss_dict = self.model(images, targetdata)   
-            losses = sum(loss for loss in loss_dict.values())
-            loss_value = losses.item()
+            with torch.no_grad():
+                # forward + backward + optimize
+                loss_dict,_ = self.model(images, targetdata)   
+                losses = sum(loss for loss in loss_dict.values())
+                loss_value = losses.item()
 
             # save the best model
             if(loss_value<self.evalbestloss):
                 self.evalbestloss=loss_value
                 torch.save(self.model.state_dict(), 'BestEvauationModel.pth')
-
-            # BackWard
-            losses.backward()
-
-            # Update
-            self.optimizer.step()
     
             if DEBUG :
                 print(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} in eval Loss: {loss_value:.4f}')
-                break
-        # self.lr_scheduler.step()
-               
+                               
     def pridicte_and_display(self,predicte_path_csv=None):
         '''
         Function to prdict the output and display it with golden output 
@@ -167,7 +158,7 @@ class Object_detector_trainer:
             # create dataset
             prdicted_data = CustomDataset(dataset_path= predicte_path_csv, transform_type='val')
             # create data loader
-            prdicted_dataloader = DataLoader(dataset=prdicted_data, batch_size=1, shuffle=False, num_workers=4)
+            prdicted_dataloader = DataLoader(dataset=prdicted_data, collate_fn=collate_fn, batch_size=1, shuffle=False, num_workers=4)
         # make model in evaluation mode
         self.model.eval()
         for batch_idx, (images, targets) in enumerate(prdicted_dataloader):
@@ -177,8 +168,8 @@ class Object_detector_trainer:
             targetdata=[]
             for i in range(len(images)):
                 newdic={}
-                newdic['boxes']=targets['boxes'][i].to(self.device)
-                newdic['labels']=targets['labels'][i].to(self.device)
+                newdic['boxes']=targets[i]['boxes'].to(self.device)
+                newdic['labels']=targets[i]['labels'].to(self.device)
                 targetdata.append(newdic)
             # forward
             with torch.no_grad():
@@ -192,7 +183,7 @@ class Object_detector_trainer:
                     # move target to cpu
                     targ = {k: v.to(torch.device('cpu')) for k, v in targ.items()} 
                     plot_image(img, targ["labels"].tolist(),targ["boxes"].tolist(),labels,boxes)
-            break
+            
                 
 # display the image with the bounding boxes
 # pridected boxes are solid and the true boxes are dashed
@@ -215,7 +206,7 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
     ax.imshow(img[0])
     region_colors = ["b", "g", "r", "c", "m", "y"]
     for j in range(0,5):
-        for i in range(j*6+1,j*6+7):
+        for i in range(j*6,j*6+5):
             if labels[i]:
                 box = boxes[i]
                 width = box[2] - box[0]
@@ -226,7 +217,7 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[((i-j*6-1)%7)-1],
+                    edgecolor=region_colors[((i-j*6)%5)],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="dashed",
@@ -243,7 +234,7 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[(i-j*6-1%7)-1],
+                    edgecolor=region_colors[(i-j*6)%5],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="solid",
@@ -347,7 +338,7 @@ def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_th
                     # increment the number of true positive detections
                     num_true_positive += 1
                     # stop looking for target boxes
-                break
+                
             elif index == target_label and pred_label == 0:
                 num_false_negative += 1
             elif pred_label != 0:
@@ -369,9 +360,9 @@ if __name__ == '__main__':
     object_detector_model=ObjectDetector().create_model()
     
     # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
-    # trainer = Object_detector_trainer(model=object_detector_model)
-    trainer = Object_detector_trainer()
-    # trainer.train(rpn_only=True)
-    # trainer.train()
-    # trainer.evaluate()
-    trainer.pridicte_and_display()
+    trainer = Object_detector_trainer(model=object_detector_model)
+    # trainer = Object_detector_trainer()
+    trainer.train(rpn_only=True)
+    trainer.train()
+    trainer.evaluate()
+    trainer.pridicte_and_display(predicte_path_csv='datasets/predict.csv')
