@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 class BinaryClassifierRegionAbnormalV1(nn.Module):
     def __init__(self, input_dim=1024, output_dim=1):
-        super(BinaryClassifierRegionAbnormalV1, self).__init__()
+        super().__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.binary_classifier = nn.Sequential(
             nn.Linear(in_features=input_dim, out_features=512),

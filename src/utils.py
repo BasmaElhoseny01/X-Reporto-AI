@@ -43,7 +43,7 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
         if len(unique_labels)!=0:
             return listboxes,unique_labels.tolist()
         return listboxes,[]
-               
+
 # display the image with the bounding boxes
 # pridected boxes are solid and the true boxes are dashed
 def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):

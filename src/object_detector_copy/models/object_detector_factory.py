@@ -7,7 +7,8 @@ import copy
 
 from src.object_detector_copy.models.frccn_object_detector_v1 import FrcnnObjectDetectorV1
 from src.object_detector_copy.models.object_detector_paper.object_detector import ObjectDetectorOriginal
-
+import sys
+import numpy as np
 
 class ObjectDetectorWrapper(nn.Module):
     def __init__(self, object_detector):
@@ -25,13 +26,25 @@ class ObjectDetectorWrapper(nn.Module):
                 for i in range(len(object_detector_detected_classes)):
                     object_detector_detected_classes[i][object_detector_labels[i] - 1] = True
                 object_detector_detected_classes=torch.stack(object_detector_detected_classes)
+            
             object_detector_boxes=None
+            # Select Features of only detected classes
+            # Not returned 
+            object_detector_detected_labels = [[idx.item() + 1 for idx in torch.nonzero(row)] for row in object_detector_detected_classes]
+            object_detector_features=object_detector_features[:,np.array(object_detector_detected_labels)-1, :]
+
         else:
             object_detector_losses,object_detector_boxes,object_detector_features,object_detector_detected_classes=self.object_detector(images,targets)
             object_detector_losses=None
             if(isinstance(self.object_detector, ObjectDetectorOriginal)):
                 object_detector_boxes=object_detector_boxes['top_region_boxes']
                 object_detector_detected_classes = [[idx.item() + 1 for idx in torch.nonzero(row)] for row in object_detector_detected_classes]
+              
+                # Selecting boundries of only detected Boxes
+                object_detector_boxes = object_detector_boxes[:, np.array(object_detector_detected_classes)-1, :]
+                # Selecting features of only detected Boxes
+                object_detector_features=object_detector_features[:,np.array(object_detector_detected_classes)-1, :]
+
         return object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features
 
 class ObjectDetector():

@@ -217,15 +217,28 @@ class XReportoTrainer():
                 images = list(image.to(torch.device('cpu')) for image in images)
 
                 for boxes,labels,target,img in zip(object_detector_boxes,object_detector_detected_classes,object_detector_targets,images):
-                    boxes=boxes.to(torch.device('cpu'))
+                    boxes= torch.squeeze(boxes, dim=0).to(torch.device('cpu')).tolist()
                     plot_image(img, target["labels"].tolist(),target["boxes"].tolist(),labels,boxes)
+                    
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value : continue
-                for boxes,labels,target,img in zip(object_detector_boxes,selected_regions,selection_classifier_targets,images):
-                    print("================Display region================")
-                    boxes=boxes.to(torch.device('cpu'))
-                    selected_boxes=boxes[target] 
-                    target=[idx.item() + 1 for idx in torch.nonzero(target)]
-                    plot_image(img,target,selected_boxes,labels,boxes)
+                # for pred_boxes,pred_boxes_labels,selected_labels,target_boxes,target_labels,img in zip(object_detector_boxes,object_detector_labels,selected_regions,object_detector_targets,selection_classifier_targets,images):
+                #     print("================Display region================")
+                #     # pred_boxes=pred_boxes.to(torch.device('cpu'))
+                #     # target_boxes=target_boxes.to(torch.device('cpu'))
+                #     target_labels=[idx.item() + 1 for idx in torch.nonzero(target_labels)]
+                #     target_boxes_mask = [label in target_labels for label in target_boxes['labels'].tolist()]
+                #     target_boxes=np.array(target_boxes['boxes'].tolist())[target_boxes_mask]
+                #     print("target_labels",target_labels)
+                #     print("selected_labels",selected_labels)
+                #     print("pred_boxes",pred_boxes)
+                #     print("pred_boxes_labels",pred_boxes_labels)
+                # for boxes,labels,target,img in zip(object_detector_boxes,selected_regions,selection_classifier_targets,images):
+                #     print("================Display region================")
+                #     boxes=boxes.to(torch.device('cpu'))
+                #     selected_boxes=boxes[target] 
+                #     target=[idx.item() + 1 for idx in torch.nonzero(target)]
+                    # plot_image(img,target,selected_boxes,labels,boxes)
+                    # plot_image(img,selected_regions_labels_target,selected_boxdes_target,predicted_labels,predicted_boxes)
             break
 
 

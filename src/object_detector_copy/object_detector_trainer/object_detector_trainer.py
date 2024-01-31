@@ -207,11 +207,11 @@ class Object_detector_trainer:
         output:
             diplay images 
         '''
-            # create dataset
-            prdicted_data = CustomDataset(dataset_path= predicte_path_csv, transform_type='val')
-            
-            # create data loader
-            prdicted_dataloader = DataLoader(dataset=prdicted_data, batch_size=1, shuffle=False, num_workers=4)
+        # create dataset
+        prdicted_data = CustomDataset(dataset_path= predicte_path_csv, transform_type='val')
+        
+        # create data loader
+        prdicted_dataloader = DataLoader(dataset=prdicted_data, batch_size=1, shuffle=False, num_workers=4)
         # make model in evaluation mode
         self.model.eval()
         for batch_idx, (images, targets) in enumerate(prdicted_dataloader):
