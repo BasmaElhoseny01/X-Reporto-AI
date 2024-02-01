@@ -150,7 +150,7 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
 
 # display the image with the bounding boxes
 # pridected boxes are solid and the true boxes are dashed
-def plot_image(img,labels, boxes,predictedLabels,predictedBoxes):
+def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
     '''
     Function that draws the BBoxes on the image.
 
@@ -158,7 +158,7 @@ def plot_image(img,labels, boxes,predictedLabels,predictedBoxes):
         img: input-image as numpy.array (shape: [H, W, C])
         labels: list of integers from 1 to 30
         boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-        prdictedLabels: list of integers from 1 to 30
+        prdictedLabels: list of bool
         prdictedBoxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
     '''
     cmap = plt.get_cmap("tab20b")
@@ -169,10 +169,9 @@ def plot_image(img,labels, boxes,predictedLabels,predictedBoxes):
     ax.imshow(img[0])
     region_colors = ["b", "g", "r", "c", "m", "y"]
     for j in range(0,5):
-        for i in range(j*6+1,j*6+7):
-            if i in labels:
-                index = labels.index(i)
-                box = boxes[index]
+        for i in range(j*6,j*6+5):
+            if labels[i]:
+                box = boxes[i]
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -181,16 +180,15 @@ def plot_image(img,labels, boxes,predictedLabels,predictedBoxes):
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[((i-j*6-1)%7)-1],
+                    edgecolor=region_colors[((i-j*6)%5)],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="dashed",
                 )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-            if i in predictedLabels:
-                index = predictedLabels.index(i)
-                box = predictedBoxes[index]
+            if prdictedLabels[i]:
+                box = prdictedBoxes[i]
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -199,7 +197,7 @@ def plot_image(img,labels, boxes,predictedLabels,predictedBoxes):
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[(i-j*6-1%7)-1],
+                    edgecolor=region_colors[(i-j*6)%5],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="solid",

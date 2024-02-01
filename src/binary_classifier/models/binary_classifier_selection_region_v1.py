@@ -35,11 +35,13 @@ class BinaryClassifierSelectionRegionV1(nn.Module):
 
         #     loss = self.loss_fn(detected_logits, detected_region_has_sentence.type(torch.float32))
 
-        if self.training:
-            # only compute loss for logits that correspond to a class that was detected (class_detected=True as can be not existing in image)
+        # compute loss for logits that correspond to a class that was detected (class_detected=True as can be not existing in image)
+        loss=None
+        if region_has_sentence is not None:
             detected_logits = logits[class_detected]
             detected_region_has_sentence = region_has_sentence[class_detected]
             loss = self.loss_fn(detected_logits, detected_region_has_sentence.type(torch.float32))
+        if self.training:
             return loss
         else:
             # if a logit > -1 (log2(0.5)=-1)
@@ -58,7 +60,7 @@ class BinaryClassifierSelectionRegionV1(nn.Module):
             #     return loss, selected_regions, selected_region_features
             # else:
                 # Test mode
-            return selected_regions, selected_region_features
+            return loss,selected_regions, selected_region_features
 
         
     

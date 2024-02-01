@@ -11,7 +11,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 
 # Hyper Parameters
 EPOCHS=50
-LEARNING_RATE=0.0001
+LEARNING_RATE=0.00004
 BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999

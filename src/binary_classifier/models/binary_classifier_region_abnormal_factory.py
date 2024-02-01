@@ -9,13 +9,13 @@ class BinaryClassifierRegionAbnormalWrapper(nn.Module):
         super().__init__()
         self.abnormal_binary_classifier = abnormal_binary_classifier
 
-    def forward(self, object_detector_features: Tensor, object_detector_detected_classes:Tensor,abnormal_classifier_targets: Tensor):
+    def forward(self, object_detector_features: Tensor, object_detector_detected_classes:Tensor,abnormal_classifier_targets: Tensor=None):
         # Modify Input/Output as the Required by submodule
         if self.training:
-                    classifier_losses=self.abnormal_binary_classifier(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
-                    predicted_abnormal_regions=None
+            classifier_losses=self.abnormal_binary_classifier(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
+            predicted_abnormal_regions=None
         else:
-            pass
+            classifier_losses,predicted_abnormal_regions=self.abnormal_binary_classifier(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
 
         return classifier_losses,predicted_abnormal_regions
 

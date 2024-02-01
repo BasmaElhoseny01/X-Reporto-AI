@@ -42,8 +42,11 @@ class ObjectDetectorWrapper(nn.Module):
             # object_detector_features=object_detector_features[:,np.array(object_detector_detected_labels)-1, :]
 
         else:
-            print("Testing Not implemented")
-            pass
+            object_detector_losses, object_detector_predictions =self.object_detector(images,targets)
+            object_detector_features=object_detector_predictions['features']
+            object_detector_detected_classes=object_detector_predictions['class_detected'] # [batch size x 29]
+            object_detector_boxes=object_detector_predictions['detections'] ["top_region_boxes"]# [batch size x 29 x 4]
+            
             # object_detector_losses,object_detector_boxes,object_detector_features,object_detector_detected_classes=self.object_detector(images,targets)
             # object_detector_losses=None
             # if(isinstance(self.object_detector, ObjectDetectorOriginal)):
