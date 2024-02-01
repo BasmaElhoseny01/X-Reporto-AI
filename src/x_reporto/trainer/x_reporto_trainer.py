@@ -262,4 +262,4 @@ if __name__ == '__main__':
     trainer = XReportoTrainer(model= x_reporto_model)
     trainer.train()
     # trainer.evaluate()
-    trainer.predict_and_display()
+    # trainer.predict_and_display()

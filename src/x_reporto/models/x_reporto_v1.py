@@ -7,10 +7,10 @@ import torch.nn as nn
 from config import ModelStage,MODEL_STAGE,DEVICE
 
 # from src.object_detector.models.object_detector_factory import ObjectDetector
-from src.object_detector_copy.models.object_detector_factory import ObjectDetector
+from src.object_detector.models.object_detector_factory import ObjectDetector
 
-from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
-from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
+# from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
+# from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
 import sys
 class XReportoV1(nn.Module):
     def __init__(self):
@@ -27,9 +27,10 @@ class XReportoV1(nn.Module):
         self.object_detector = ObjectDetector().create_model()
 
 
-        if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-            self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
-            self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
+
+        # if MODEL_STAGE==ModelStage.CLASSIFIER.value:
+        #     self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
+        #     self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
     
         
 
@@ -67,6 +68,7 @@ class XReportoV1(nn.Module):
                 return object_detector_boxes,object_detector_detected_classes
             
             # object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
+            # Stage(2) Binary Classifier
             _,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes)
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return selected_regions,object_detector_boxes,object_detector_detected_classes
