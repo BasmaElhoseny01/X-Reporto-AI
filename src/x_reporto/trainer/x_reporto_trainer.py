@@ -183,7 +183,7 @@ class XReportoTrainer():
                     self.save_model('LM')
 
                 # Logging the loss to a file
-                with open("loss.txt", "a") as myfile:
+                with open("../../../logs/loss.txt", "a") as myfile:
                     myfile.write(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
                     myfile.write("\n")
                 # print the epoch loss

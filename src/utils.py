@@ -2,8 +2,10 @@ import torch
 from torch import Tensor
 from typing import List, Union
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import patches
+
 
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """
@@ -55,10 +57,6 @@ def indices_to_boolean(indices_list: List[List[int]], num_columns: int=29) -> to
                 boolean_tensor[i, index - 1] = True
 
     return boolean_tensor
-
-
-import torch
-from typing import List
 
 def select_boxes_with_boolean_mask(boxes_tensor: torch.Tensor, boolean_mask: torch.Tensor) -> List[torch.Tensor]:
     """
@@ -148,19 +146,26 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
             return listboxes,unique_labels.tolist()
         return listboxes,[]
 
-# display the image with the bounding boxes
-# pridected boxes are solid and the true boxes are dashed
-def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
-    '''
+def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]]):
+    """
     Function that draws the BBoxes on the image.
 
-    inputs:
-        img: input-image as numpy.array (shape: [H, W, C])
-        labels: list of integers from 1 to 30
-        boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-        prdictedLabels: list of bool
-        prdictedBoxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-    '''
+    Args:
+        - img (np.ndarray): Input image as numpy.array (shape: [H, W, C]).
+        - labels (List[int]): List of integers representing class labels (1 to 30).
+        - boxes (List[List[float]]): List of ground truth bounding boxes.
+            Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
+        - predicted_labels (List[bool]): List of boolean values representing predicted labels.
+        - predicted_boxes (List[List[float]]): List of predicted bounding boxes.
+            Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
+
+    Returns:
+        None
+
+    Notes:
+        - Predicted boxes are drawn in solid lines.
+        - Ground truth boxes are drawn in dashed lines.
+    """
     cmap = plt.get_cmap("tab20b")
     height, width = img.shape[1:]
     # Create figure and axes
@@ -185,10 +190,11 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
                     facecolor="none",  # Set facecolor to none
                     linestyle="dashed",
                 )
+                
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-            if prdictedLabels[i]:
-                box = prdictedBoxes[i]
+            if predicted_labels[i]:
+                box = predicted_boxes[i]
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -207,26 +213,37 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
         plt.show()
         cmap = plt.get_cmap("tab20b")
         height, width = img.shape[1:]
+
         # Create figure and axes
         fig, ax = plt.subplots(1, figsize=(16, 8))
+
         # Display the image
         ax.imshow(img[0])
 
-# display the image with the bounding boxes (only true boxes or only predicted boxes)
-def plot_single_image(img, boxes):
-    '''
-    Function that draws the BBoxes on the image.
+def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
+    """
+    Function that draws bounding boxes on the image.
 
-    inputs:
-        img: input-image as numpy.array (shape: [H, W, C])
-        boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-    '''
+    Args:
+        img (np.ndarray): Input image as numpy array (shape: [H, W, C]).
+        boxes (List[List[float]]): List of bounding boxes.
+            Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
+
+    Returns:
+        None
+
+    Notes:
+        - Displays the image with bounding boxes.
+        - Each box is represented as a rectangle on the image.
+    """
     cmap = plt.get_cmap("tab20b")
     height, width = img.shape[1:]
     # Create figure and axes
     fig, ax = plt.subplots(1, figsize=(16, 8))
+
     # Display the image
     ax.imshow(img[0])
+    
     for i, box in enumerate(boxes):
         width = box[2] - box[0]
         height = box[3] - box[1]
@@ -238,6 +255,7 @@ def plot_single_image(img, boxes):
             edgecolor="white",  # Set the box border color
             facecolor="none",  # Set facecolor to none
         )
+
         # Add the patch to the Axes
         ax.add_patch(rect)
     plt.show()
