@@ -5,3 +5,5 @@ datasets
 test_detector
 .env
 *.pth
+*.pyc
+*.pyc
