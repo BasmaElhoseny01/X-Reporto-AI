@@ -24,6 +24,7 @@ class BinaryClassifierRegionAbnormalV1(nn.Module):
         # logits of shape [batch_size x 29]
         logits = self.binary_classifier(top_region_features).squeeze(dim=-1)
 
+        loss = None
         if region_is_abnormal is not None:
             # only compute loss for logits that correspond to a class that was detected
             detected_logits = logits[class_detected]

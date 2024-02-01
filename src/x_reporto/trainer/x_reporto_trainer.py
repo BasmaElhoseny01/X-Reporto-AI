@@ -57,6 +57,7 @@ class XReportoTrainer():
 
         # initialize the best loss to a large value
         self.best_loss = float('inf')
+        # self.best_loss = 0.3904
         self.eval_best_loss = float('inf')
 
     def train(self):
@@ -65,7 +66,7 @@ class XReportoTrainer():
         '''
         # make model in training mode
         self.model.train()
-
+        epoch_loss = 0
         for epoch in range(EPOCHS):
             for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):
                 # Check GPU memory usage
@@ -83,7 +84,6 @@ class XReportoTrainer():
                     new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
                     new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
                     object_detector_targets.append(new_dict)
-                # del object_detector_batch
                     
                 selection_classifier_targets=None
                 abnormal_classifier_targets=None
@@ -127,21 +127,14 @@ class XReportoTrainer():
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value:
                     Total_loss+=selection_classifier_losses
                     Total_loss+=abnormal_binary_classifier_losses
+
                 Total_loss.backward()
 
+                epoch_loss += Total_loss
                 # update the parameters
                 self.optimizer.step()
 
                 if DEBUG :
-                     # save the best model
-                    if(Total_loss<self.best_loss):
-                        self.best_loss=Total_loss
-                        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                            self.save_model('object_detector')
-                        elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                            self.save_model('object_detector_classifier')
-                        elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                            self.save_model('LM')
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
                     
                     # free gpu memory
@@ -151,7 +144,26 @@ class XReportoTrainer():
                     del abnormal_binary_classifier_losses
                     torch.cuda.empty_cache()
                     
-                    break
+                    # break
+            # save the best model
+            if(epoch_loss<self.best_loss):
+                self.best_loss=epoch_loss
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                    self.save_model('object_detector')
+                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                    self.save_model('object_detector_classifier')
+                elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                    self.save_model('LM')
+                # wirte the loss to a file
+                with open("loss.txt", "a") as myfile:
+                    myfile.write(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
+                    myfile.write("\n")
+                # print the epoch loss
+                print("\n")
+                print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
+                print("\n")
+            epoch_loss=0
+
             # # update the learning rate
             # self.lr_scheduler.step()
     def Valdiate(self):
@@ -229,7 +241,7 @@ class XReportoTrainer():
                         del abnormal_binary_classifier_losses
                         torch.cuda.empty_cache()
                         
-                        break
+                        # break
    
     def predict_and_display(self,predict_path_csv=None):
         '''
@@ -242,7 +254,7 @@ class XReportoTrainer():
             diplay images 
         '''
         if predict_path_csv==None:
-                prdicted_dataloader=self.data_loader_val
+                predicted_dataloader=self.data_loader_val
         else:
                 predicted_data = CustomDataset(dataset_path= predict_path_csv, transform_type='val')
                 # create data loader
@@ -292,8 +304,11 @@ class XReportoTrainer():
                             abnormal_classifier_targets.append(bbox_is_abnormal)
                         abnormal_classifier_targets=torch.stack(abnormal_classifier_targets).to(DEVICE)
                     # Forward Pass
-                    object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,_,abnormal_binary_classifier_losses,_= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
+                    object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,_,abnormal_binary_classifier_losses,_= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets) 
+                    # object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
+  
                     plot_image(images[0].cpu(),object_detector_targets[0]["labels"].tolist(),object_detector_targets[0]["boxes"].tolist(),object_detector_detected_classes[0].tolist(),object_detector_boxes[0].tolist())
+                    
 
                     # Free GPU memory 
                     del object_detector_targets
@@ -319,7 +334,7 @@ class XReportoTrainer():
                         del abnormal_binary_classifier_losses
                         torch.cuda.empty_cache()
                         
-                        break
+                        # break
 
     # make model in evaluation mode
     def save_model(self,name):
@@ -334,7 +349,7 @@ class XReportoTrainer():
     
 
 if __name__ == '__main__':
-    x_reporto_model=XReporto().create_model()
+    # x_reporto_model=XReporto().create_model()
     
     # trainer = XReportoTrainer(model= x_reporto_model)
     trainer = XReportoTrainer()
