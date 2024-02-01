@@ -86,8 +86,8 @@ class Object_detector_trainer:
                 self.optimizer.zero_grad()
 
                 # forward + backward + optimize
-                loss_dict,_ = self.model(images, targetdata)   
-                
+                loss_dict,test= self.model(images, targetdata)   
+                print(test)
                 del targetdata
                 del images
                 torch.cuda.empty_cache()

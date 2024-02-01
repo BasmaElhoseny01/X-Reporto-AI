@@ -147,6 +147,7 @@ class FrcnnObjectDetectorV1(nn.Module):
                     - loss_rpn_box_reg
                     - loss_classifier
                     - loss_box_reg
+                - features (Tensor): [batch_size x 29 x 1024] features of each bounding box
             (II) in eval mode:
                  case: features=False
 
@@ -205,6 +206,7 @@ class FrcnnObjectDetectorV1(nn.Module):
             outputs["class_detected"] = detections["class_detected"]
             outputs["detections"]=detections["detections"]
         if self.features:
+            outputs["class_detected"] = detections["class_detected"]
             outputs["features"]=detections["top_region_features"]
         # print("detections",detections)
         # sys.exit()
