@@ -11,7 +11,7 @@ import os
 # constants
 EPOCHS=30
 LEARNING_RATE=0.0000005
-BATCH_SIZE=2
+BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=500
 SCHEDULAR_GAMMA=0.9999999999999999
 DEBUG=True
@@ -138,10 +138,10 @@ class Object_detector_trainer:
                 targetdata.append(newdic)
             with torch.no_grad():
                 # forward + backward + optimize
-                loss_dict,_ = self.model(images, targetdata)   
+                loss_dict,prediction= self.model(images, targetdata)   
                 losses = sum(loss for loss in loss_dict.values())
                 loss_value = losses.item()
-
+                
             # save the best model
             if(loss_value<self.evalbestloss):
                 self.evalbestloss=loss_value
@@ -372,5 +372,5 @@ if __name__ == '__main__':
     trainer = Object_detector_trainer()
     # trainer.train(rpn_only=True)
     # trainer.train()
-    # trainer.evaluate()
-    trainer.pridicte_and_display(predicte_path_csv='datasets/predict.csv')
+    trainer.evaluate()
+    # trainer.pridicte_and_display(predicte_path_csv='datasets/predict.csv')

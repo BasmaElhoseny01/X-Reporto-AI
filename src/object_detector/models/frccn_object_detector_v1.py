@@ -27,7 +27,7 @@ backbone:
 '''
 
 class FrcnnObjectDetectorV1(nn.Module):
-    def __init__(self,features=False):
+    def __init__(self,features=True):
         '''
         The constructor for Object Detector model
         Args:
