@@ -86,7 +86,7 @@ class Object_detector_trainer:
                 self.optimizer.zero_grad()
 
                 # forward + backward + optimize
-                loss_dict = self.model(images, targetdata)   
+                loss_dict,_ = self.model(images, targetdata)   
                 
                 del targetdata
                 del images
