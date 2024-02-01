@@ -86,8 +86,8 @@ class Object_detector_trainer:
                 self.optimizer.zero_grad()
 
                 # forward + backward + optimize
-                loss_dict = self.model(images, targetdata)   
-                
+                loss_dict , feat= self.model(images, targetdata)   
+                print(feat)
                 del targetdata
                 del images
                 torch.cuda.empty_cache()
@@ -365,12 +365,12 @@ def compute_precision(pred_boxes,pred_labels, target_boxes,target_labels, iou_th
 
 
 if __name__ == '__main__':
-    # trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
-    # object_detector_model=ObjectDetector().create_model()
+    object_detector_model=ObjectDetector().create_model()    
+    trainer = Object_detector_trainer(model=object_detector_model)
+
+    # trainer = Object_detector_trainer()
     
-    # trainer = Object_detector_trainer(model=object_detector_model)
-    trainer = Object_detector_trainer()
     # trainer.train(rpn_only=True)
-    # trainer.train()
-    trainer.evaluate()
+    trainer.train()
+    # trainer.evaluate()
     # trainer.pridicte_and_display(predicte_path_csv='datasets/predict.csv')
