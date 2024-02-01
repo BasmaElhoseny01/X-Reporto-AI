@@ -1,9 +1,10 @@
 __pycache__/
+*.pyc
 
+# Data sets
 All datasets
 datasets
+
 test_detector
 .env
 *.pth
-*.pyc
-*.pyc
