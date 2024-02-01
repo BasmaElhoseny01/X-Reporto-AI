@@ -16,17 +16,22 @@ class ObjectDetectorWrapper(nn.Module):
         self.object_detector = object_detector
 
     def forward(self, images: Tensor, targets: Optional[List[Dict[str, Tensor]]] = None):
+        '''
+        '''
+        print("images",images)
+        print("targets",targets)
         # Modify Input/Output as the Required by submodule
         if self.training:
             object_detector_losses, object_detector_features, object_detector_labels=self.object_detector(images,targets)
-            object_detector_detected_classes=copy.deepcopy(object_detector_labels)
+            object_detector_detected_classes="bbbbbbbbb"
+            # object_detector_detected_classes=copy.deepcopy(object_detector_labels)
 
-            if(isinstance(self.object_detector, FrcnnObjectDetectorV1)):
-                # from indices to true/false
-                object_detector_detected_classes = [torch.zeros(self.object_detector.num_classes-1,dtype=torch.bool) for _ in object_detector_labels]
-                for i in range(len(object_detector_detected_classes)):
-                    object_detector_detected_classes[i][object_detector_labels[i] - 1] = True
-                object_detector_detected_classes=torch.stack(object_detector_detected_classes)
+            # if(isinstance(self.object_detector, FrcnnObjectDetectorV1)):
+            #     # from indices to true/false
+            #     object_detector_detected_classes = [torch.zeros(self.object_detector.num_classes-1,dtype=torch.bool) for _ in object_detector_labels]
+            #     for i in range(len(object_detector_detected_classes)):
+            #         object_detector_detected_classes[i][object_detector_labels[i] - 1] = True
+            #     object_detector_detected_classes=torch.stack(object_detector_detected_classes)
             
             object_detector_boxes=None
             # # Select Features of only detected classes
@@ -35,16 +40,18 @@ class ObjectDetectorWrapper(nn.Module):
             # object_detector_features=object_detector_features[:,np.array(object_detector_detected_labels)-1, :]
 
         else:
-            object_detector_losses,object_detector_boxes,object_detector_features,object_detector_detected_classes=self.object_detector(images,targets)
-            object_detector_losses=None
-            if(isinstance(self.object_detector, ObjectDetectorOriginal)):
-                object_detector_boxes=object_detector_boxes['top_region_boxes']
-                object_detector_detected_classes = [[idx.item() + 1 for idx in torch.nonzero(row)] for row in object_detector_detected_classes]
+            print("Testing Not implemented")
+            pass
+            # object_detector_losses,object_detector_boxes,object_detector_features,object_detector_detected_classes=self.object_detector(images,targets)
+            # object_detector_losses=None
+            # if(isinstance(self.object_detector, ObjectDetectorOriginal)):
+            #     object_detector_boxes=object_detector_boxes['top_region_boxes']
+            #     object_detector_detected_classes = [[idx.item() + 1 for idx in torch.nonzero(row)] for row in object_detector_detected_classes]
               
-                # Selecting boundries of only detected Boxes
-                object_detector_boxes = object_detector_boxes[:, np.array(object_detector_detected_classes)-1, :]
-                # Selecting features of only detected Boxes
-                object_detector_features=object_detector_features[:,np.array(object_detector_detected_classes)-1, :]
+            #     # Selecting boundries of only detected Boxes
+            #     object_detector_boxes = object_detector_boxes[:, np.array(object_detector_detected_classes)-1, :]
+            #     # Selecting features of only detected Boxes
+            #     object_detector_features=object_detector_features[:,np.array(object_detector_detected_classes)-1, :]
 
         return object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features
 
