@@ -200,12 +200,12 @@ class FrcnnObjectDetectorV1(nn.Module):
         detections  = self.roi_heads(features, proposals, images.image_sizes, targets)
 
         detector_losses =detections["detector_losses"]
+        outputs = {}
         if not self.training:
-            outputs = {}
             outputs["class_detected"] = detections["class_detected"]
             outputs["detections"]=detections["detections"]
-            if self.features:
-                outputs["features"]=detections["top_region_features"]
+        if self.features:
+            outputs["features"]=detections["top_region_features"]
         # print("detections",detections)
         # sys.exit()
         # print("proposals",proposals)
@@ -217,9 +217,12 @@ class FrcnnObjectDetectorV1(nn.Module):
         losses = {}
         losses.update(proposal_losses)
         losses.update(detector_losses)
-
+        if self.training and self.features:
+            return losses,outputs
+        
         if self.training:
             return losses
+        
         else:
             return losses,outputs
 
