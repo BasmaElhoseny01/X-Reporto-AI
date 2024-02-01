@@ -219,6 +219,7 @@ class FrcnnObjectDetectorV1(nn.Module):
         losses = {}
         losses.update(proposal_losses)
         losses.update(detector_losses)
+        
         if self.training and self.features:
             return losses,outputs
         

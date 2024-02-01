@@ -9,9 +9,9 @@ from config import ModelStage,MODEL_STAGE,DEVICE
 # from src.object_detector.models.object_detector_factory import ObjectDetector
 from src.object_detector.models.object_detector_factory import ObjectDetector
 
-# from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
-# from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
-import sys
+from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
+from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
+
 class XReportoV1(nn.Module):
     def __init__(self):
         '''
@@ -28,9 +28,9 @@ class XReportoV1(nn.Module):
 
 
 
-        # if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-        #     self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
-        #     self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
+        if MODEL_STAGE==ModelStage.CLASSIFIER.value:
+            self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
+            self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
     
         
 

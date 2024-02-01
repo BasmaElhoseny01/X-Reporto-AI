@@ -7,6 +7,7 @@ import copy
 from src.binary_classifier.models.binary_classifier_selection_region_v1 import BinaryClassifierSelectionRegionV1
 from config import DEVICE
 import numpy as np
+import sys
 
 class BinaryClassifierSelectionRegionWrapper(nn.Module):
     def __init__(self, selection_binary_classifier):
@@ -29,6 +30,7 @@ class BinaryClassifierSelectionRegionWrapper(nn.Module):
             selected_regions, selected_region_features=self.selection_binary_classifier(object_detector_features,object_detector_detected_classes)
             classifier_losses=None
             selected_regions = [[idx.item() + 1 for idx in torch.nonzero(row)] for row in selected_regions]
+
         return classifier_losses,selected_regions,selected_region_features
 class BinaryClassifierSelectionRegion():
     def __init__(self):

@@ -6,16 +6,11 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 from src.x_reporto.models.x_reporto_factory import XReporto
 from src.utils import plot_image
-from config import ModelStage,MODEL_STAGE,DEVICE
+from config import *
+
 import gc
 import sys
 # constants
-EPOCHS=1
-LEARNING_RATE=0.0001
-BATCH_SIZE=1
-SCHEDULAR_STEP_SIZE=1
-SCHEDULAR_GAMMA=0.9999999999
-DEBUG=True
 
 class XReportoTrainer():
     def __init__(self,training_csv_path: str='datasets/train.csv',validation_csv_path:str ='datasets/train.csv',
@@ -125,16 +120,7 @@ class XReportoTrainer():
                 # Forward Pass
                 # print(torch.cuda.memory_allocated())
                 object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
-                # del images
-                # del object_detector_targets
-                # del selection_classifier_targets
-                # del abnormal_classifier_targets
-                # Check GPU memory usage
-                # print(torch.cuda.memory_allocated())
-                # torch.cuda.empty_cache()
-                # print(gc.collect() )  
-                # # Check GPU memory usage
-                # print(torch.cuda.memory_allocated())
+            
 
                 #backward pass
                 Total_loss=None
@@ -257,7 +243,6 @@ class XReportoTrainer():
 
 if __name__ == '__main__':
     x_reporto_model=XReporto().create_model()
-    # print(x_reporto_model)
     
     trainer = XReportoTrainer(model= x_reporto_model)
     trainer.train()

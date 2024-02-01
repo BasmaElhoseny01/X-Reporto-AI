@@ -23,11 +23,9 @@ class ObjectDetectorWrapper(nn.Module):
         # Modify Input/Output as the Required by submodule
         if self.training:
             object_detector_losses, object_detector_predictions =self.object_detector(images,targets)
-            print("object_detector_predictions",object_detector_predictions)
-            sys.exit()
-            # object_detector_features=object_detector_predictions
-            # object_detector_labels
-            # object_detector_detected_classes="bbbbbbbbb"
+            object_detector_features=object_detector_predictions['features']
+            object_detector_detected_classes=object_detector_predictions['class_detected'] # [batch size x 29]
+
             # object_detector_detected_classes=copy.deepcopy(object_detector_labels)
 
             # if(isinstance(self.object_detector, FrcnnObjectDetectorV1)):
