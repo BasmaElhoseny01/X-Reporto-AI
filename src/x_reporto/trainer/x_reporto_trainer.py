@@ -1,13 +1,11 @@
 import torch
-
+import sys
 import torch.optim as optim
 
 from torch.utils.data import  DataLoader
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
-
 from src.utils import plot_image
 from src.x_reporto.models.x_reporto_factory import XReporto
-
 from config import *
 
 class XReportoTrainer():
@@ -402,7 +400,6 @@ def set_data(args):
                             global SCHEDULAR_GAMMA
                             SCHEDULAR_GAMMA=float(args[6])
     
-import sys
 if __name__ == '__main__':
     
     set_data(sys.argv)
