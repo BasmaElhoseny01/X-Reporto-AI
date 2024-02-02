@@ -399,10 +399,10 @@ def set_data(args):
                         if (len(args)>6):
                             global SCHEDULAR_GAMMA
                             SCHEDULAR_GAMMA=float(args[6])
-    
+import argparse
 if __name__ == '__main__':
     
-    set_data(sys.argv)
+    # set_data(sys.argv)
 
     x_reporto_model = XReporto().create_model()
 
