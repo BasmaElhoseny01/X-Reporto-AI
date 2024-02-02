@@ -380,18 +380,40 @@ class XReportoTrainer():
 
 
 
-
-      
+def set_data(args):
+    # read hyper-parameters from terminal
+    # if not set read from config.py file
+    if (len(args)>1):
+        global EPOCHS
+        EPOCHS = int(args[1])
+        if (len(args)>2):
+            global LEARNING_RATE
+            LEARNING_RATE=float(args[2])
+            if (len(args)>3):
+                global BATCH_SIZE
+                BATCH_SIZE=int(args[3])
+                if (len(args)>4):
+                    global MODEL_STAGE
+                    MODEL_STAGE=int(args[4])
+                    if (len(args)>5):
+                        global SCHEDULAR_STEP_SIZE
+                        SCHEDULAR_STEP_SIZE=float(args[5])
+                        if (len(args)>6):
+                            global SCHEDULAR_GAMMA
+                            SCHEDULAR_GAMMA=float(args[6])
     
-
+import sys
 if __name__ == '__main__':
+    
+    set_data(sys.argv)
+
     x_reporto_model = XReporto().create_model()
 
     # Create an XReportoTrainer instance with the X-Reporto model
     trainer = XReportoTrainer(model=x_reporto_model)
 
     # Alternatively, create an XReportoTrainer instance without specifying the model
-    trainer = XReportoTrainer()
+    # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
     trainer.train()
