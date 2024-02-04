@@ -6,6 +6,7 @@ from src.language_model.GPT2.layer_normalization import LayerNormalization
 from src.language_model.GPT2.feed_forward import FeedForward
 from src.language_model.GPT2.positional_encoding import PositionalEncoding
 from src.language_model.GPT2.residual_connection import ResidualConnection
+from src.language_model.GPT2.conv1d import Conv1D
 import math
 
 class CustomGPT2MultiHeadAttention(nn.Module):
@@ -34,6 +35,9 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         # image hidden state to key, value
         self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
         self.u_v = nn.Linear(self.d_model, self.d_model,bias=False)
+
+        self.c_attn = Conv1D(3 * self.d_model, self.d_model)
+        self.c_proj = Conv1D(self.d_model, self.d_model)
 
         self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
         self.dropout = nn.Dropout(config.dropout)
@@ -66,9 +70,14 @@ class CustomGPT2MultiHeadAttention(nn.Module):
                 use_cache: Optional[bool] = False,
                 output_attentions: Optional[bool] = False,):
         batch_size = hidden_states.size(0)
-        q = self.w_q(hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
-        k = self.w_k(hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
-        v = self.w_v(hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
+        # q = self.w_q(hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
+        # k = self.w_k(hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
+        # v = self.w_v(hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
+        
+        q, k, v = self.c_attn(hidden_states).split(self.d_model, dim=2)
+        q = q.view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
+        k = k.view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
+        v = v.view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
         if image_hidden_states is not None:
             k_image = self.u_k(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
             v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
@@ -80,7 +89,8 @@ class CustomGPT2MultiHeadAttention(nn.Module):
 
         x, attn = CustomGPT2MultiHeadAttention.pesudo_attention(q, k, v,self.causal_mask,self.mask_value, attention_mask, self.dropout) # (batch_size, num_heads, max_seq_len, d_model//num_heads), (batch_size, num_heads, max_seq_len, max_seq_len+1)
         x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.d_model) # (batch_size, max_seq_len, d_model) 
-        x = self.w_o(x) # (batch_size, max_seq_len, d_model)
+        # x = self.w_o(x) # (batch_size, max_seq_len, d_model)
+        x = self.c_proj(x)
         if output_attentions:
             return x, attn # (batch_size, max_seq_len, d_model), (batch_size, num_heads, max_seq_len, max_seq_len+1)
         return x # (batch_size, max_seq_len, d_model), (batch_size, num_heads, max_seq_len, max_seq_len+1)
