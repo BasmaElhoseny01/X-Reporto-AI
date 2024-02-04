@@ -9,7 +9,7 @@ class LayerNormalization(nn.Module):
         self.config = config
         self.gamma = nn.Parameter(torch.ones(self.config.d_model))
         self.beta = nn.Parameter(torch.zeros(self.config.d_model))
-        self.eps = 1e-6
+        self.eps = 1e-05
 
     def forward(self, x):
         mean = x.mean(-1, keepdim=True) # (batch_size, max_seq_len, 1)
