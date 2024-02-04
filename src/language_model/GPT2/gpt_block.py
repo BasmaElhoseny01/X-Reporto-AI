@@ -1,0 +1,41 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+from src.language_model.GPT2.embeddings import InputEmbedding
+from src.language_model.GPT2.positional_encoding import PositionalEncoding
+from src.language_model.GPT2.feed_forward import FeedForward
+from src.language_model.GPT2.residual_connection import ResidualConnection
+from src.language_model.GPT2.layer_normalization import LayerNormalization
+from src.language_model.GPT2.gpt_attention import CustomGPTMultiHeadAttention
+
+class CustomGPT2Block(nn.Module):
+    def __init__(self, config):
+        super(CustomGPT2Block, self).__init__()
+        self.config = config
+        self.attn = CustomGPTMultiHeadAttention(config)
+        self.rc1 = ResidualConnection(config)
+        self.ff = FeedForward(config)
+        self.rc2 = ResidualConnection(config)
+
+    def forward(self, x, image_hidden_states=None):
+        x = self.rc1(x, lambda x: self.attn(x, image_hidden_states=image_hidden_states))
+        x = self.rc2(x, lambda x: self.ff(x))
+        return x
+
+if __name__ == '__main__':
+    # Test
+    from src.language_model.GPT2.config import Config
+    config = Config()
+    config.d_model = 512
+    config.d_ff = 2048
+    config.num_heads = 8
+    config.dropout = 0.1
+    gpt2_block = CustomGPT2Block(config)
+    x = torch.randn(2, 5, config.d_model)
+    print(gpt2_block(x).size()) # torch.Size([2, 5, 512])
+    print(gpt2_block)
+    x = torch.randn(2, 5, config.d_model)
+    image_hidden_states = torch.randn(2, 1, config.d_model)
+    print(gpt2_block(x, image_hidden_states).size()) # torch.Size([2, 5, 512])
+    print(gpt2_block)
