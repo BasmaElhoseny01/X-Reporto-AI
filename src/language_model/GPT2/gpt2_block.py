@@ -7,13 +7,13 @@ from src.language_model.GPT2.positional_encoding import PositionalEncoding
 from src.language_model.GPT2.feed_forward import FeedForward
 from src.language_model.GPT2.residual_connection import ResidualConnection
 from src.language_model.GPT2.layer_normalization import LayerNormalization
-from src.language_model.GPT2.gpt_attention import CustomGPTMultiHeadAttention
+from src.language_model.GPT2.gpt2_attention import CustomGPT2MultiHeadAttention
 
 class CustomGPT2Block(nn.Module):
     def __init__(self, config):
         super(CustomGPT2Block, self).__init__()
         self.config = config
-        self.attn = CustomGPTMultiHeadAttention(config)
+        self.attn = CustomGPT2MultiHeadAttention(config)
         self.rc1 = ResidualConnection(config)
         self.ff = FeedForward(config)
         self.rc2 = ResidualConnection(config)
@@ -39,3 +39,4 @@ if __name__ == '__main__':
     image_hidden_states = torch.randn(2, 1, config.d_model)
     print(gpt2_block(x, image_hidden_states).size()) # torch.Size([2, 5, 512])
     print(gpt2_block)
+    
