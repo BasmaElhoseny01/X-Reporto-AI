@@ -6,9 +6,9 @@ class FeedForward(nn.Module):
     def __init__(self, config):
         super(FeedForward, self).__init__()
         self.config = config
-        self.fc1 = nn.Linear(config.d_model, config.d_ff)
-        self.fc2 = nn.Linear(config.d_ff, config.d_model)
-        self.dropout = nn.Dropout(config.dropout)
+        self.fc1 = nn.Linear(self.config.d_model, self.config.d_ff)
+        self.fc2 = nn.Linear(self.config.d_ff, self.config.d_model)
+        self.dropout = nn.Dropout(self.config.dropout)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))

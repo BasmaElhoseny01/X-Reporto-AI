@@ -7,8 +7,8 @@ class LayerNormalization(nn.Module):
     def __init__(self, config):
         super(LayerNormalization, self).__init__()
         self.config = config
-        self.gamma = nn.Parameter(torch.ones(config.d_model))
-        self.beta = nn.Parameter(torch.zeros(config.d_model))
+        self.gamma = nn.Parameter(torch.ones(self.config.d_model))
+        self.beta = nn.Parameter(torch.zeros(self.config.d_model))
         self.eps = 1e-6
 
     def forward(self, x):

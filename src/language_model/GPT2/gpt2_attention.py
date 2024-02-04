@@ -12,10 +12,10 @@ class CustomGPT2MultiHeadAttention(nn.Module):
     def __init__(self, config):
         super(CustomGPT2MultiHeadAttention, self).__init__()
         self.config = config
-        self.d_model = config.d_model
-        self.num_heads = config.num_heads
+        self.d_model = self.config.d_model
+        self.num_heads = self.config.num_heads
         self.head_dim = self.d_model // self.num_heads
-        self.max_seq_len = config.max_seq_len
+        self.max_seq_len = self.config.max_seq_len
         
         self.register_buffer(
             "causal_mask",

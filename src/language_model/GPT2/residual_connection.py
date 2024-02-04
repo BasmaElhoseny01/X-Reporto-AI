@@ -8,8 +8,8 @@ class ResidualConnection(nn.Module):
     def __init__(self, config):
         super(ResidualConnection, self).__init__()
         self.config = config
-        self.ln = LayerNormalization(config)
-        self.dropout = nn.Dropout(config.dropout)
+        self.ln = LayerNormalization(self.config)
+        self.dropout = nn.Dropout(self.config.dropout)
 
     def forward(self, x, sublayer):
         return x + self.dropout(sublayer(self.ln(x))) # (batch_size, max_seq_len, d_model)

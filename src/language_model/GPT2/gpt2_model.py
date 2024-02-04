@@ -25,19 +25,19 @@ class CustomGPT2(nn.Module):
         self.image_to_text = FeedForward(image_config)
 
         # define embedding layers
-        self.wte = InputEmbedding(config)
+        self.wte = InputEmbedding(self.config)
         # self.wte = nn.Embedding(config.vocab_size, self.d_model)
         # self.wpe = nn.Embedding(self.d_model, self.d_model)
-        self.drop = nn.Dropout(config.dropout)
+        self.drop = nn.Dropout(self.config.dropout)
 
         # define positional encoding layer
-        self.positional_encoding = PositionalEncoding(config)
+        self.positional_encoding = PositionalEncoding(self.config)
 
         # define transformer blocks
-        self.blocks = nn.ModuleList([CustomGPT2Block(config) for _ in range(config.num_layers)])
+        self.blocks = nn.ModuleList([CustomGPT2Block(self.config) for _ in range(self.config.num_layers)])
 
         # define layer normalization layer
-        self.ln = LayerNormalization(config)
+        self.ln = LayerNormalization(self.config)
 
         # define fully connected layer
         self.fc = nn.Linear(self.d_model, self.vocab_size)

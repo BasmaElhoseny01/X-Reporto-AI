@@ -7,8 +7,8 @@ class InputEmbedding(nn.Module):
     def __init__(self, config):
         super(InputEmbedding, self).__init__()
         self.config = config
-        self.token_embedding = nn.Embedding(config.vocab_size, config.d_model)
-        self.dropout = nn.Dropout(config.dropout)
+        self.token_embedding = nn.Embedding(self.config.vocab_size, self.config.d_model)
+        self.dropout = nn.Dropout(self.config.dropout)
 
     def forward(self, x):
         x = self.token_embedding(x) * math.sqrt(self.config.d_model) # (batch_size, max_seq_len, d_model)
