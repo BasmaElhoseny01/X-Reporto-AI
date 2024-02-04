@@ -15,7 +15,17 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         self.d_model = config.d_model
         self.num_heads = config.num_heads
         self.head_dim = self.d_model // self.num_heads
+        self.max_seq_len = config.max_seq_len
         
+        self.register_buffer(
+            "causal_mask",
+            torch.tril(torch.ones((self.max_seq_len, self.max_seq_len), dtype=torch.bool)).view(
+                1, 1, self.max_seq_len, self.max_seq_len
+            ),
+            persistent=False,
+        )
+        self.register_buffer("mask_value", torch.tensor(-1e9), persistent=False)
+
         # hidden state to query, key, value
         self.w_q = nn.Linear(self.d_model, self.d_model,bias=False)
         self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
@@ -27,15 +37,22 @@ class CustomGPT2MultiHeadAttention(nn.Module):
 
         self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
         self.dropout = nn.Dropout(config.dropout)
-        self.ln = LayerNormalization(config)
 
         # assert with print "assert self.d_model % self.num_heads == 0"
         assert self.d_model % self.num_heads == 0 , "d_model should be divisible by num_heads"
 
     @staticmethod
-    def pesudo_attention(query, key, value, mask=None, dropout=None):
+    def pesudo_attention(query, key, value,causal_mask,mask_value, mask=None, dropout=None):
         # query, key, value: (batch_size, h, max_seq_len, d_k)
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(query.size(-1))
+
+        query_length, key_length = query.size(-2), key.size(-2)
+        causal_mask = causal_mask[:, :, key_length - query_length : key_length, :key_length]
+        # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
+        # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
+        mask_value = torch.full([], mask_value, dtype=scores.dtype, device=scores.device)
+        scores = torch.where(causal_mask, scores.to(scores.dtype), mask_value)
+        
         if mask is not None:
             scores = scores.masked_fill(mask == 0, -1e9)
         p_attn = F.softmax(scores, dim=-1) # (batch_size, h, max_seq_len, max_seq_len)
@@ -44,7 +61,6 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         return torch.matmul(p_attn, value), p_attn # (batch_size, h, max_seq_len, d_k), (batch_size, h, max_seq_len, max_seq_len)
     def forward(self,
                 hidden_states: Optional[Tuple[torch.FloatTensor]],
-                layer_past: Optional[Tuple[torch.Tensor]] = None,
                 attention_mask: Optional[torch.FloatTensor] = None,
                 image_hidden_states: Optional[torch.Tensor] = None, # (batch_size, 1, d_model)
                 use_cache: Optional[bool] = False,
@@ -62,7 +78,7 @@ class CustomGPT2MultiHeadAttention(nn.Module):
             k = torch.cat((k, k_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
             v = torch.cat((v, v_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
 
-        x, attn = self.pesudo_attention(q, k, v, attention_mask, self.dropout) # (batch_size, num_heads, max_seq_len, d_model//num_heads), (batch_size, num_heads, max_seq_len, max_seq_len+1)
+        x, attn = CustomGPT2MultiHeadAttention.pesudo_attention(q, k, v,self.causal_mask,self.mask_value, attention_mask, self.dropout) # (batch_size, num_heads, max_seq_len, d_model//num_heads), (batch_size, num_heads, max_seq_len, max_seq_len+1)
         x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.d_model) # (batch_size, max_seq_len, d_model) 
         x = self.w_o(x) # (batch_size, max_seq_len, d_model)
         if output_attentions:

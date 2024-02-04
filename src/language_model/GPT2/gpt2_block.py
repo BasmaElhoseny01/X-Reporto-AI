@@ -13,13 +13,13 @@ class CustomGPT2Block(nn.Module):
     def __init__(self, config):
         super(CustomGPT2Block, self).__init__()
         self.config = config
-        self.attn = CustomGPT2MultiHeadAttention(config)
         self.rc1 = ResidualConnection(config)
-        self.ff = FeedForward(config)
+        self.attn = CustomGPT2MultiHeadAttention(config)
         self.rc2 = ResidualConnection(config)
+        self.ff = FeedForward(config)
 
-    def forward(self, x, image_hidden_states=None):
-        x = self.rc1(x, lambda x: self.attn(x, image_hidden_states=image_hidden_states))
+    def forward(self, x,attention_mask, image_hidden_states=None):
+        x = self.rc1(x, lambda x: self.attn(x, image_hidden_states=image_hidden_states,attention_mask=attention_mask))
         x = self.rc2(x, lambda x: self.ff(x))
         return x
 

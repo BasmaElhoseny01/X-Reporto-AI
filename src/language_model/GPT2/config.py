@@ -5,6 +5,9 @@ class Config:
     d_ff = 2048
     dropout = 0.1
     num_heads = 8
+    num_layers = 6
+    vocab_size = 50257
+    ignore_index = -100
     n_layer = 6
     n_vocab = 32000
     pad_id = 0

@@ -9,7 +9,9 @@ class PositionalEncoding(nn.Module):
         super(PositionalEncoding, self).__init__()
         self.config = config
         self.register_buffer('positional_encoding', self._get_positional_encoding())
-        self.dropout = nn.Dropout(config.dropout)
+        self.dropout = nn.Dropout(self.config.dropout)
+        # self.wpe = nn.Embedding(self.config.max_position_embeddings, self.config.d_model)
+
 
     def _get_positional_encoding(self):
         pe = torch.zeros(self.config.max_seq_len, self.config.d_model) # (max_seq_len, d_model)
@@ -23,6 +25,7 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         x = x + (self.positional_encoding[:, :x.size(1),:]).requires_grad_(False)
+        # x = x + self.wpe(torch.arange(x.size(1)).to(x.device)).unsqueeze(0)
         return self.dropout(x) # (batch_size, max_seq_len, d_model)
 
 if __name__ == '__main__':
