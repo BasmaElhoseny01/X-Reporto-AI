@@ -175,11 +175,33 @@ def get_phrase_stats(data_frame):
                 print("digits:",digits," at line: ",i)
     return max_phrase_length
 
+def get_phrase_stats_histogram(data_frame):
+    # loop over the dataframe
+    dataset_size = len(data_frame)
+    phrase_histogram = [0]*30
+    for i in range(dataset_size):
+        image_phrases = data_frame.iloc[i, 6]
+        # convert the string representation of bounding boxes into list of list
+        image_phrases = eval(image_phrases)
+        count=0
+        for j,phrase in enumerate(image_phrases) :
+            if phrase!="":
+                count += 1
+        phrase_histogram[count] += 1
+    # print("max_pharses in one example: ",max(phrase_histogram))
+    # print("min_pharses in one example: ",min(phrase_histogram))
+    print("histogram: ",phrase_histogram)
+    plt.bar(range(30),phrase_histogram)
+    plt.title(f"phrase histogram")
+    plt.show()
+    return phrase_histogram
+
 if __name__ == '__main__':
     # load the csv file
-    csv_path = os.path.join(os.getcwd(), "datasets/train-2000.csv")
+    csv_path = os.path.join(os.getcwd(), "datasets/train-10000.csv")
     df = load_csv(csv_path)
-    print(get_phrase_stats(df))
+    get_phrase_stats_histogram(df)
+    # print(get_phrase_stats(df))
     # # get the stats
     # abnormal_ratio,phrase_exists_ratio,pos_weight,pos_phrase_weight = get_general_stats(df)
 
