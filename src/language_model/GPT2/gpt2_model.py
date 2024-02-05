@@ -136,13 +136,6 @@ class CustomGPT2(nn.Module):
 if __name__ == '__main__':
     # Test
     config = Config()
-    config.d_model = 1024
-    config.d_ff = 1024
-    config.num_heads = 8
-    config.num_layers = 6
-    config.vocab_size = 50257
-    config.max_seq_len = 1024
-    config.dropout = 0.1
     image_config = Config()
     image_config.d_model = 1024
     image_config.d_ff = 1024
