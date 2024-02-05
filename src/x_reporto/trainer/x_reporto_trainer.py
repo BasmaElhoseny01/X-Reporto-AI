@@ -141,7 +141,7 @@ class XReportoTrainer():
                     input_ids=[]
                     attention_mask=[]
                     for i in range(len(images)):
-                        phrase=LM_batch['phrase'][i]
+                        phrase=LM_batch['label_ids'][i]
                         LM_targets.append(phrase)
                         input_ids.append(LM_batch['input_ids'][i])
                         attention_mask.append(LM_batch['attention_mask'][i])
