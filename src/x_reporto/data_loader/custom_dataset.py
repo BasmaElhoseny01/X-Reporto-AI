@@ -12,11 +12,10 @@ from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from torchvision.transforms import v2
 import ast
-
 from src.object_detector.data_loader.custom_augmentation import CustomAugmentation
-
+from src.x_reporto.data_loader.tokenizer import Tokenizer
 class CustomDataset(Dataset):
-    def __init__(self, dataset_path: str, transform_type:str ='train'):
+    def __init__(self, dataset_path: str, transform_type:str ='train',checkpoint:str="healx/gpt-2-pubmed-medium"):
         self.dataset_path = dataset_path # path to csv file
         
         self.transform_type = transform_type
@@ -25,6 +24,7 @@ class CustomDataset(Dataset):
         self.data_info = pd.read_csv(dataset_path, header=None)
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
+        self.tokenizer = Tokenizer(checkpoint)
 
     def __len__(self):
         return len(self.data_info)
@@ -93,6 +93,9 @@ class CustomDataset(Dataset):
 
         #language_model_targets
         language_model_sample={}
+        tokenize_phrase = self.tokenizer(bbox_phrases)  
         language_model_sample["bbox_phrases"]=bbox_phrases
+        language_model_sample["input_ids"]=tokenize_phrase["input_ids"]
+        language_model_sample["attention_mask"]=tokenize_phrase["attention_mask"]
 
         return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample
