@@ -8,3 +8,6 @@ class Config:
     num_layers = 24
     vocab_size = 50257
     ignore_index = -100
+    bos_token = "<|endoftext|>"  
+    eos_token = "<|endoftext|>"
+    pad_token = "<|endoftext|>"

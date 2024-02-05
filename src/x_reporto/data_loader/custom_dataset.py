@@ -14,6 +14,7 @@ from torchvision.transforms import v2
 import ast
 from src.object_detector.data_loader.custom_augmentation import CustomAugmentation
 from src.x_reporto.data_loader.tokenizer import Tokenizer
+from src.language_model.GPT2.config import Config
 class CustomDataset(Dataset):
     def __init__(self, dataset_path: str, transform_type:str ='train',checkpoint:str="healx/gpt-2-pubmed-medium"):
         self.dataset_path = dataset_path # path to csv file
@@ -95,7 +96,10 @@ class CustomDataset(Dataset):
         language_model_sample={}
         tokenize_phrase = self.tokenizer(bbox_phrases)  
         language_model_sample["bbox_phrases"]=bbox_phrases
-        language_model_sample["input_ids"]=tokenize_phrase["input_ids"]
-        language_model_sample["attention_mask"]=tokenize_phrase["attention_mask"]
-
+        padded_lists_by_pad_token = [tokenize_phrase_lst + [tokenize_phrase[0]] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
+        padded_lists_by_ignore_token = [tokenize_phrase_lst + [Config.ignore_index] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
+        language_model_sample["input_ids"]=padded_lists_by_pad_token
+        language_model_sample["label_ids"]=padded_lists_by_ignore_token
+        padded_mask = [mask_phrase_lst + [0] * (Config.max_seq_len - len(mask_phrase_lst)) for mask_phrase_lst in tokenize_phrase["attention_mask"]]
+        language_model_sample["attention_mask"]=padded_mask
         return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample
