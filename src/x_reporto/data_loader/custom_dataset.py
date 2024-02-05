@@ -23,6 +23,8 @@ class CustomDataset(Dataset):
         self.transform_type = transform_type
         self.transform = CustomAugmentation(transform_type=self.transform_type)
         # read the csv file
+        print("start reading csv file")
+        print(dataset_path)
         self.data_info = pd.read_csv(dataset_path, header=None)
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
@@ -107,6 +109,7 @@ class CustomDataset(Dataset):
         padded_mask = [mask_phrase_lst + [0] * (Config.max_seq_len - len(mask_phrase_lst)) for mask_phrase_lst in tokenize_phrase["attention_mask"]]
         language_model_sample["attention_mask"]=padded_mask
         # convert the label to tensor
+        language_model_sample["input_ids"] = torch.tensor(language_model_sample["input_ids"], dtype=torch.long)
         language_model_sample["input_ids"] = torch.tensor(language_model_sample["input_ids"], dtype=torch.long)
         language_model_sample["label_ids"] = torch.tensor(language_model_sample["label_ids"], dtype=torch.long)
         language_model_sample["attention_mask"] = torch.tensor(language_model_sample["attention_mask"], dtype=torch.long)

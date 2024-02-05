@@ -153,7 +153,7 @@ class XReportoTrainer():
                 self.optimizer.zero_grad()
 
                 # Forward Pass
-                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,lM_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
+                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,lM_losses= self.model(images,input_ids,attention_mask ,object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,LM_targets)   
                 print("LM Losses",lM_losses)
                 sys.exit()
                 # Free GPU memory 
