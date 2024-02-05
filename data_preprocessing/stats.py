@@ -4,7 +4,8 @@ import os
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
+from nltk.tokenize import RegexpTokenizer
+import re
 def load_csv(path):
     df = pd.read_csv(path, header=None)
     print("number of examples: ",len(df)-1)
@@ -125,8 +126,6 @@ def get_general_stats(data_frame):
     pos_phrase_weight = count_bbox_phrase_not_exists/count_bbox_phrase_exists
     return count_abnormal/(count_abnormal+count_normal), count_bbox_phrase_exists/(count_bbox_phrase_exists+count_bbox_phrase_not_exists), pos_weight,pos_phrase_weight
 
-
-
 def get_bboxes_stats(data_frame):
     # loop over the dataframe
     dataset_size = len(data_frame)
@@ -159,19 +158,37 @@ def get_bboxes_stats(data_frame):
         plt.show()
     return bboxes_histogram_width,bboxes_histogram_height
 
+def get_phrase_stats(data_frame):
+    # loop over the dataframe
+    dataset_size = len(data_frame)
+    max_phrase_length = 0
+    for i in range(dataset_size):
+        image_phrases = data_frame.iloc[i, 6]
+        # convert the string representation of bounding boxes into list of list
+        image_phrases = eval(image_phrases)
+        for phrase in image_phrases :
+            digits = re.findall(r'\d+\.?\d*', phrase)
+            tokenizer = RegexpTokenizer(r'\w+')
+            words = tokenizer.tokenize(phrase)
+            max_phrase_length = max(max_phrase_length,len(words))
+            if len(digits) > 0:
+                print("digits:",digits," at line: ",i)
+    return max_phrase_length
+
 if __name__ == '__main__':
     # load the csv file
     csv_path = os.path.join(os.getcwd(), "datasets/train-2000.csv")
     df = load_csv(csv_path)
-    # get the stats
-    abnormal_ratio,phrase_exists_ratio,pos_weight,pos_phrase_weight = get_general_stats(df)
+    print(get_phrase_stats(df))
+    # # get the stats
+    # abnormal_ratio,phrase_exists_ratio,pos_weight,pos_phrase_weight = get_general_stats(df)
 
-    print("abnormal_ratio: ",abnormal_ratio)
-    print("phrase_exists_ration: ",phrase_exists_ratio)
-    print("pos_weight: ",pos_weight)
-    print("pos_phrase_weight: ",pos_phrase_weight)
+    # print("abnormal_ratio: ",abnormal_ratio)
+    # print("phrase_exists_ration: ",phrase_exists_ratio)
+    # print("pos_weight: ",pos_weight)
+    # print("pos_phrase_weight: ",pos_phrase_weight)
 
-    # get the bboxes stats
-    bboxes_histogram_width,bboxes_histogram_height = get_bboxes_stats(df)
-    # plot the stats
+    # # get the bboxes stats
+    # bboxes_histogram_width,bboxes_histogram_height = get_bboxes_stats(df)
+    # # plot the stats
     
