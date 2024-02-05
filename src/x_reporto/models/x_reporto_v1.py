@@ -1,3 +1,4 @@
+import sys
 import torch
 from torch import Tensor
 import torch.nn as nn
@@ -11,7 +12,8 @@ from src.object_detector.models.object_detector_factory import ObjectDetector
 
 from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
 from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
-
+from src.language_model.GPT2.gpt2_model import CustomGPT2
+from src.language_model.GPT2.config import Config
 class XReportoV1(nn.Module):
     """
     A modular model for object detection and binary classification.
@@ -31,13 +33,28 @@ class XReportoV1(nn.Module):
 
         self.object_detector = ObjectDetector().create_model()
 
-        if MODEL_STAGE==ModelStage.CLASSIFIER.value:
+        if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
-    
-        
+        if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+            config = Config()
+            config.d_model = 768
+            config.d_ff = 768
+            config.num_layers = 12
+            config.vocab_size = 50257
+            config.max_seq_len = 1024
+            config.pretrained_model = "gpt2"
+            image_config = Config()
+            image_config.d_model = 1024
+            image_config.d_ff = 1024
+            image_config.num_heads = 8
+            image_config.num_layers = 6
+            image_config.vocab_size = 50257
+            image_config.max_seq_len = 1024
+            image_config.dropout = 0.1
+            self.language_model = CustomGPT2(config,image_config)
 
-    def forward(self,images: Tensor , object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None):
+    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,):
         '''
         Forward pass through the X-ReportoV1 model.
 
@@ -143,16 +160,21 @@ class XReportoV1(nn.Module):
         if self.training:
             # Training
             # Stage(1) Object Detector
+            print("Before object detector")
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
 
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,0,0
             # Stage(2) Binary Classifier
+            print("Before binary classifier selection region")
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
             selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
             abnormal_binary_classifier_losses,_=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses
+            print("Before language model")
+            LM_output=self.language_model(input_ids=input_ids,attention_mask=attention_mask,labels=language_model_targets)
+            return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
        
         else: # Validation (or inference) mode
             # Stage(1) Object Detector

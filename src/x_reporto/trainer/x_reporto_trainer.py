@@ -50,7 +50,6 @@ class XReportoTrainer():
             validation_csv_path (str): the path to the validation csv file
             model Optional[XReporto]: the x_reporto model instance to be trained.If not provided, the model is loaded from a .pth file.
         '''
-
         # Model
         if model==None:
             # load the model from 
@@ -78,12 +77,13 @@ class XReportoTrainer():
         # TODO Change to transform_type train
         self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val')
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
+        print("Dataset Loaded")
         
         # create data loader
         # TODO suffle Training Loaders
         self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-
+        print("DataLoader Loaded")
         # initialize the best loss to a large value
         self.best_loss = float('inf')
         # self.best_loss = 0.3904
@@ -94,12 +94,16 @@ class XReportoTrainer():
         Train X-Reporto on the training dataset depending on the MODEL_STAGE.
         '''
         # make model in training mode
+        print("Training Started")
         self.model.train()
         epoch_loss = 0
         for epoch in range(EPOCHS):
+            print("Epoch",epoch+1)
+            print(self.data_loader_train)
             for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):
+                print("Batch",batch_idx+1)
                 images=object_detector_batch['image']
-
+                print("processing batch",batch_idx+1)
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
 
@@ -113,7 +117,7 @@ class XReportoTrainer():
                     
                 selection_classifier_targets=None
                 abnormal_classifier_targets=None
-                if MODEL_STAGE==ModelStage.CLASSIFIER.value :
+                if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Selection Classifier
                     # Moving Selection Classifier Targets to Device
                     selection_classifier_targets=[]
@@ -129,13 +133,29 @@ class XReportoTrainer():
                         bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
                         abnormal_classifier_targets.append(bbox_is_abnormal)
                     abnormal_classifier_targets=torch.stack(abnormal_classifier_targets).to(DEVICE)
+
+                if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                    # Language Model
+                    # Moving Language Model Targets to Device
+                    LM_targets=[]
+                    input_ids=[]
+                    attention_mask=[]
+                    for i in range(len(images)):
+                        phrase=LM_batch['phrase'][i]
+                        LM_targets.append(phrase)
+                        input_ids.append(LM_batch['input_ids'][i])
+                        attention_mask.append(LM_batch['attention_mask'][i])
+                    LM_targets=torch.stack(LM_targets).to(DEVICE)
+                    input_ids=torch.stack(input_ids).to(DEVICE)
+                    attention_mask=torch.stack(attention_mask).to(DEVICE)
                 
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
 
                 # Forward Pass
-                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
-
+                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,lM_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
+                print("LM Losses",lM_losses)
+                sys.exit()
                 # Free GPU memory 
                 del object_detector_targets
                 del selection_classifier_targets
@@ -415,8 +435,8 @@ if __name__ == '__main__':
     # Train the X-Reporto model on the training dataset
     trainer.train()
 
-    # Run Validation
-    trainer.validate()
+    # # Run Validation
+    # trainer.validate()
 
-    # Predict and display results
-    trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
+    # # Predict and display results
+    # trainer.predict_and_display(predict_path_csv='datasets/predict.csv')

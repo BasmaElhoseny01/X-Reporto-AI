@@ -1,3 +1,4 @@
+import sys
 import torch
 from torch.utils.data import Dataset
 import numpy as np
@@ -95,11 +96,15 @@ class CustomDataset(Dataset):
         #language_model_targets
         language_model_sample={}
         tokenize_phrase = self.tokenizer(bbox_phrases)  
+        # print(tokenize_phrase)
+        # sys.exit()
+        print("start Tokenize")
         language_model_sample["bbox_phrases"]=bbox_phrases
-        padded_lists_by_pad_token = [tokenize_phrase_lst + [tokenize_phrase[0]] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
+        padded_lists_by_pad_token = [tokenize_phrase_lst + [tokenize_phrase_lst[0]] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
         padded_lists_by_ignore_token = [tokenize_phrase_lst + [Config.ignore_index] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
         language_model_sample["input_ids"]=padded_lists_by_pad_token
         language_model_sample["label_ids"]=padded_lists_by_ignore_token
         padded_mask = [mask_phrase_lst + [0] * (Config.max_seq_len - len(mask_phrase_lst)) for mask_phrase_lst in tokenize_phrase["attention_mask"]]
         language_model_sample["attention_mask"]=padded_mask
+        print("end Tokenize")
         return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample

@@ -11,7 +11,7 @@ class ModelStage(Enum):
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Configuration")
 
-parser.add_argument("--model_stage", type=int, choices=[1, 2, 3], default=2, help="Model stage: 1 (OBJECT_DETECTOR), 2 (CLASSIFIER), or 3 (LANGUAGE_MODEL)")
+parser.add_argument("--model_stage", type=int, choices=[1, 2, 3], default=3, help="Model stage: 1 (OBJECT_DETECTOR), 2 (CLASSIFIER), or 3 (LANGUAGE_MODEL)")
 parser.add_argument("--debug", action="store_true", help="Enable debugging")
 
 parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
