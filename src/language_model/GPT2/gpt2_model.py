@@ -15,13 +15,14 @@ from src.language_model.GPT2.gpt2_block import CustomGPT2Block
 from src.language_model.GPT2.config import Config
 
 class CustomGPT2(nn.Module):
-    def __init__(self, config,image_config,load_pretrained_weights=False):
+    def __init__(self, config,image_config):
         super(CustomGPT2, self).__init__()
         self.config = config
         self.d_model = config.d_model
         self.num_layers = config.num_layers
         self.vocab_size = config.vocab_size
         self.ignore_index = config.ignore_index
+        self.pretrained_model = config.pretrained_model
         # define image transformation feed forward layer
         self.image_to_text = FeedForward(image_config)
 
@@ -43,39 +44,37 @@ class CustomGPT2(nn.Module):
         # define fully connected layer
         self.fc = nn.Linear(self.d_model, self.vocab_size)
         self.init_weights()
-        if load_pretrained_weights:
-            self.load_pretrained_weights()
+        self.load_pretrained_weights()
         
     def init_weights(self):
         self.fc.weight.data.normal_(mean=0.0, std=0.02)
         self.fc.bias.data.zero_()
     
     def load_pretrained_weights(self):
-        self.checkpoint = "healx/gpt-2-pubmed-medium"
+        if self.pretrained_model is not None:
+            # use GPT2 model with language modeling head, since we want to generate phrases
+            gpt_with_lm_head = GPT2LMHeadModel.from_pretrained(self.pretrained_model)
 
-        # use GPT2 model with language modeling head, since we want to generate phrases
-        gpt_with_lm_head = GPT2LMHeadModel.from_pretrained(self.checkpoint)
+            # copy weights from pre-trained model to custom model
+            # print("pretrained model architecture: ", gpt_with_lm_head)
 
-        # copy weights from pre-trained model to custom model
-        # print("pretrained model architecture: ", gpt_with_lm_head)
-
-        # copy weights of embedding layers
-        self.wte.token_embedding.weight.data = gpt_with_lm_head.transformer.wte.weight.data
-        
-        # copy weights of transformer blocks
-        for i in range(self.num_layers):
-            self.blocks[i].attn.c_attn.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.weight.data
-            self.blocks[i].attn.c_attn.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.bias.data
-            self.blocks[i].attn.c_proj.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.weight.data
-            self.blocks[i].attn.c_proj.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.bias.data
-            self.blocks[i].rc1.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_1.weight.data
-            self.blocks[i].rc1.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_1.bias.data
-            self.blocks[i].rc2.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_2.weight.data
-            self.blocks[i].rc2.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_2.bias.data
-            self.blocks[i].ff.fc1.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.weight.data.T
-            self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
-            self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
-            self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
+            # copy weights of embedding layers
+            self.wte.token_embedding.weight.data = gpt_with_lm_head.transformer.wte.weight.data
+            
+            # copy weights of transformer blocks
+            for i in range(self.num_layers):
+                self.blocks[i].attn.c_attn.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.weight.data
+                self.blocks[i].attn.c_attn.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.bias.data
+                self.blocks[i].attn.c_proj.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.weight.data
+                self.blocks[i].attn.c_proj.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.bias.data
+                self.blocks[i].rc1.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_1.weight.data
+                self.blocks[i].rc1.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_1.bias.data
+                self.blocks[i].rc2.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_2.weight.data
+                self.blocks[i].rc2.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_2.bias.data
+                self.blocks[i].ff.fc1.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.weight.data.T
+                self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
+                self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
+                self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
 
 
     def forward(self,
@@ -136,6 +135,13 @@ class CustomGPT2(nn.Module):
 if __name__ == '__main__':
     # Test
     config = Config()
+    config.d_model = 768
+    config.d_ff = 768
+    config.num_layers = 12
+    config.vocab_size = 50257
+    config.max_seq_len = 1024
+    config.pretrained_model = "gpt2"
+
     image_config = Config()
     image_config.d_model = 1024
     image_config.d_ff = 1024
@@ -144,7 +150,7 @@ if __name__ == '__main__':
     image_config.vocab_size = 50257
     image_config.max_seq_len = 1024
     image_config.dropout = 0.1
-    gpt2 = CustomGPT2(config,image_config,load_pretrained_weights=True)
+    gpt2 = CustomGPT2(config,image_config)
     x = torch.randint(0, 50257, (2, 5))
     image_hidden_states = torch.randn(2, 1, config.d_model)
     # create attention mask
