@@ -53,18 +53,39 @@ class XReportoTrainer():
 
         # Model
         if model==None:
-            # load the model from 
-            self.model=XReporto().create_model()
+            # Continue training
+            pass
+            # # load the model from 
+            # self.model=XReporto().create_model()
 
-            # TODO Fix Paths
-            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                self.load_model('object_detector')
-            elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                self.load_model('object_detector_classifier')
-            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                self.load_model('LM')
+            # # TODO Fix Paths
+            # if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+            #     self.load_model(model=self.model.object_detector,name='object_detector')
+            # elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+            #     self.load_model('object_detector_classifier')
+            # # elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+            #     self.load_model('LM')
         else:
+            # Train New
             self.model = model
+            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                pass
+
+            elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                # Load the object Detector to train new stage
+                self.load_model(model=self.model.object_detector,name='object_detector')
+
+            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                # Load the object Detector to train new stage
+                self.load_model(model=self.model.object_detector,name='object_detector')
+
+                # Load the Region Selection Classifier  to train new stage
+                self.load_model(model=self.model.region_classifier,name='region_classifier')
+
+                # Load the Abnormal Classifier  to train new stage
+                self.load_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                
+
          
         self.model.to(DEVICE)
 
@@ -173,12 +194,22 @@ class XReportoTrainer():
             # save the best model
             if(epoch_loss<self.best_loss):
                 self.best_loss=epoch_loss
-                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                    self.save_model('object_detector')
-                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                    self.save_model('object_detector_classifier')
-                elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                    self.save_model('LM')
+                # if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                #     # Save Object Detector
+                #     self.save_model(model=self.model.object_detector,name="object_detector")
+               
+                # elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                #     # Save Object Detector
+                #     # Save Classifier
+                #     # Save Classifier
+                #     self.save_model('object_detector_classifier')
+
+                # elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                #     # Save Object Detector
+                #     # Save Classifier
+                #     # Save Classifier
+                #     # Save LM
+                #     self.save_model('LM')
 
                 # Logging the loss to a file
                 with open("../../../logs/loss.txt", "a") as myfile:
@@ -358,23 +389,23 @@ class XReportoTrainer():
                         # To Test Overfitting break
                         break
 
-    def save_model(self,name):
+    def save_model(self,model,name):
         '''
         Save the X-Reporto model to a file.
 
         Args:
             name (str): Name of the model file.
         '''
-        torch.save(self.model.state_dict(), "models/"+name+".pth")
+        torch.save(model.state_dict(), "models/"+name+".pth")
     
-    def load_model(self,name):
+    def load_model(self,model,name):
         '''
         Load the X-Reporto model from a file.
 
         Args:
             name (str): Name of the model file.
         '''
-        self.model.load_state_dict(torch.load("models/"+name+".pth"))
+        model.load_state_dict(torch.load("models/"+name+".pth"))
 
 
 
@@ -401,8 +432,9 @@ def set_data(args):
                             SCHEDULAR_GAMMA=float(args[6])
 import argparse
 if __name__ == '__main__':
+    # print("Basma......")
     
-    # set_data(sys.argv)
+    set_data(sys.argv)
 
     x_reporto_model = XReporto().create_model()
 
@@ -416,7 +448,7 @@ if __name__ == '__main__':
     trainer.train()
 
     # Run Validation
-    trainer.validate()
+    # trainer.validate()
 
     # Predict and display results
-    trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
+    # trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
