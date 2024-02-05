@@ -110,7 +110,6 @@ class CustomDataset(Dataset):
         language_model_sample["attention_mask"]=padded_mask
         # convert the label to tensor
         language_model_sample["input_ids"] = torch.tensor(language_model_sample["input_ids"], dtype=torch.long)
-        language_model_sample["input_ids"] = torch.tensor(language_model_sample["input_ids"], dtype=torch.long)
         language_model_sample["label_ids"] = torch.tensor(language_model_sample["label_ids"], dtype=torch.long)
         language_model_sample["attention_mask"] = torch.tensor(language_model_sample["attention_mask"], dtype=torch.long)
 
