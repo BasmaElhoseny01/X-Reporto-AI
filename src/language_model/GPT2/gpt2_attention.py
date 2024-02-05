@@ -27,19 +27,20 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         )
         self.register_buffer("mask_value", torch.tensor(-1e9), persistent=False)
 
-        # hidden state to query, key, value
-        self.w_q = nn.Linear(self.d_model, self.d_model,bias=False)
-        self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
-        self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
+        # # hidden state to query, key, value
+        # self.w_q = nn.Linear(self.d_model, self.d_model,bias=False)
+        # self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
+        # self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
         
-        # image hidden state to key, value
-        self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
-        self.u_v = nn.Linear(self.d_model, self.d_model,bias=False)
+        # # image hidden state to key, value
+        # self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
+        # self.u_v = nn.Linear(self.d_model, self.d_model,bias=False)
 
         self.c_attn = Conv1D(3 * self.d_model, self.d_model)
         self.c_proj = Conv1D(self.d_model, self.d_model)
 
-        self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
+        # self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
+        self.w_o = Conv1D(self.d_model, self.d_model) # Wo
         self.dropout = nn.Dropout(config.dropout)
 
         # assert with print "assert self.d_model % self.num_heads == 0"

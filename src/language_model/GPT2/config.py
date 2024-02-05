@@ -8,3 +8,7 @@ class Config:
     num_layers = 24
     vocab_size = 50257
     ignore_index = -100
+    pad_token_id = 50256
+    bos_token_id = 50256
+    eos_token_id = 50256
+    pretrained_model = "healx/gpt-2-pubmed-medium"
