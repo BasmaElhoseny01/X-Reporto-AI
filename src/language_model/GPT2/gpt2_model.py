@@ -86,10 +86,12 @@ class CustomGPT2(nn.Module):
         image_hidden_states: Optional[torch.Tensor] = None,
         labels: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
+        output_attentions: Optional[bool] = None
         ):
 
         if image_hidden_states is not None:
+            # convert image hidden states dtype to dtype of the model
+            image_hidden_states = image_hidden_states.to(dtype=self.fc.weight.dtype)
             image_hidden_states = self.image_to_text(image_hidden_states)
 
         input_ids = input_ids.view(-1, input_ids.size(-1))
@@ -100,6 +102,8 @@ class CustomGPT2(nn.Module):
 
         if position_ids is None:
             # apply positional encoding layer
+            # convert hidden states dtype to dtype of the model
+            hidden_states = hidden_states.to(dtype=self.fc.weight.dtype)
             hidden_states = self.positional_encoding(hidden_states)
 
         # apply dropout layer
@@ -167,3 +171,24 @@ if __name__ == '__main__':
     labels = torch.randint(0, 50257, (2, 5))
     print(gpt2(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels)[0]) # tensor(13.5676, grad_fn=<NllLossBackward>)
     print(gpt2)
+
+    # save model
+    torch.save(gpt2.state_dict(), "gpt2.pth")
+
+    # convert model to half precision
+    gpt2.half()
+
+    # print model dtype
+    print(gpt2.fc.weight.dtype)
+    # save half precision model
+    torch.save(gpt2.state_dict(), "gpt2_half.pth")
+
+    # convert model to half precision
+    gpt2.half()
+
+    # print model dtype
+    print(gpt2.fc.weight.dtype)
+    # save half precision model
+    torch.save(gpt2.state_dict(), "gpt2_half2.pth")
+
+    
