@@ -1,3 +1,5 @@
+import gc
+import psutil
 import torch
 import datetime
 import sys
@@ -49,7 +51,7 @@ class XReportoTrainer():
         >>> # Predict and display results
         >>> trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
     """
-    def __init__(self,training_csv_path: str = 'datasets/train.csv',validation_csv_path:str = 'datasets/train.csv',
+    def __init__(self,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path,
                  model:XReporto = None):
         '''
         inputs:
@@ -93,11 +95,15 @@ class XReportoTrainer():
         epoch_loss = 0
         for epoch in range(EPOCHS):
             for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):
+                
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
+
                 images=object_detector_batch['image']
 
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
-
+                length=len(images)
                 # Moving Object Detector Targets to Device
                 object_detector_targets=[]
                 for i in range(len(images)):
@@ -105,38 +111,58 @@ class XReportoTrainer():
                     new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
                     new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
                     object_detector_targets.append(new_dict)
-                    
+                object_detector_losses,_,object_detector_detected_classes,object_detector_features=self.model.object_detector(images, object_detector_targets)
+
+                # Free GPU memory 
+                images=images.to('cpu')
+                # move object_detector_targets to cpu
+                for i in range(len(object_detector_targets)):
+                    object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                    object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                del images
+                del object_detector_targets
+                torch.cuda.empty_cache()
+                gc.collect()
+                print("images and targets deleted")
+
                 selection_classifier_targets=None
                 abnormal_classifier_targets=None
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value :
                     # Selection Classifier
                     # Moving Selection Classifier Targets to Device
                     selection_classifier_targets=[]
-                    for i in range(len(images)):
+                    for i in range(length):
                         phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
                         selection_classifier_targets.append(phrase_exist)
                     selection_classifier_targets=torch.stack(selection_classifier_targets).to(DEVICE)
+                    selection_classifier_losses,_,_=self.model.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+                    # free gpu memory
+                    selection_classifier_targets.to('cpu')
+                    del selection_classifier_targets
+                    torch.cuda.empty_cache()
+                    gc.collect()
+                    print("selection_classifier_targets deleted")
 
                     # Abnormal Classifier
                     # Moving Object Detector Targets to Device
                     abnormal_classifier_targets=[]
-                    for i in range(len(images)):
+                    for i in range(length):
                         bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
                         abnormal_classifier_targets.append(bbox_is_abnormal)
                     abnormal_classifier_targets=torch.stack(abnormal_classifier_targets).to(DEVICE)
+                    abnormal_binary_classifier_losses,_=self.model.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
                 
-                # zero the parameter gradients
-                self.optimizer.zero_grad()
+                    # Free GPU memory 
+                    abnormal_classifier_targets=abnormal_classifier_targets.to('cpu')
+                    del abnormal_classifier_targets
+                    torch.cuda.empty_cache()
+                    gc.collect()
+                    print("abnormal_classifier_targets deleted")
 
                 # Forward Pass
-                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
+                # object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
 
-                # Free GPU memory 
-                del object_detector_targets
-                del selection_classifier_targets
-                del abnormal_classifier_targets
-                del images
-                torch.cuda.empty_cache()
+                
 
                 # Backward pass
                 Total_loss=None
@@ -156,13 +182,20 @@ class XReportoTrainer():
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
                     
-                    # Free GPU memory
-                    del Total_loss
-                    del object_detector_losses
-                    del selection_classifier_losses
-                    del abnormal_binary_classifier_losses
-                    torch.cuda.empty_cache()
-                    
+                # Free GPU memory
+                Total_loss=Total_loss.to('cpu')
+                # move object_detector_losses to cpu
+                for key in object_detector_losses:
+                    object_detector_losses[key]=object_detector_losses[key].to('cpu')
+                selection_classifier_losses=selection_classifier_losses.to('cpu')
+                abnormal_binary_classifier_losses=abnormal_binary_classifier_losses.to('cpu')
+                del Total_loss
+                del object_detector_losses
+                del selection_classifier_losses
+                del abnormal_binary_classifier_losses
+                torch.cuda.empty_cache()
+                gc.collect()
+                print("losses deleted")
                     # break
                 if epoch%10==0:
                     # Save CheckPoint
@@ -189,11 +222,11 @@ class XReportoTrainer():
 
                     # Save Region Selection Classifier
                     print("Saving region_classifier....")
-                    save_model(model=self.model.region_classifier,name="region_classifier")
+                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
 
                     # Save Abnormal Classifier
                     print("Saving abnormal_classifier....")
-                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
 
                 elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Saving Object Detector
@@ -202,11 +235,11 @@ class XReportoTrainer():
 
                     # Save Region Selection Classifier
                     print("Saving region_classifier....")
-                    save_model(model=self.model.region_classifier,name="region_classifier")
+                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
 
                     # Save Abnormal Classifier
                     print("Saving abnormal_classifier....")
-                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
    
                     # # Save LM
                     # self.save_model('LM')
@@ -226,7 +259,7 @@ class XReportoTrainer():
             # self.lr_scheduler.step()
                 
 
-    def Valdiate(self):
+    def Validate(self):
         '''
         Evaluate the X-Reporto model on the validation dataset
         '''
@@ -516,6 +549,13 @@ if __name__ == '__main__':
     print("Abnormal Region Pos Weight:", ABNORMAL_CLASSIFIER_POS_WEIGHT)
     print("Region Selection Pos Weight:", REGION_SELECTION_CLASSIFIER_POS_WEIGHT)
 
+    # create run folder
+    folder_path="models/" + str(RUN)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"Folder '{folder_path}' created successfully.")
+    else:
+        print(f"Folder '{folder_path}' already exists.")
     x_reporto_model = XReporto().create_model()
 
     # Create an XReportoTrainer instance with the X-Reporto model
@@ -528,7 +568,7 @@ if __name__ == '__main__':
     trainer.train()
 
     # Run Validation
-    # trainer.validate()
+    trainer.Validate()
 
     # Predict and display results
     # trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
