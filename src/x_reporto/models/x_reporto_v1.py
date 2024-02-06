@@ -43,9 +43,14 @@ class XReportoV1(nn.Module):
             pass
 
         if CONTINUE_TRAIN:
-            # Load the object Detector to continue training
-            print("Loading object_detector .....")
-            load_model(model=self.object_detector,name='object_detector')
+            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
+                    print("Loading object_detector [Trained RPN]....")
+                    load_model(model=self.object_detector,name='object_detector_rpn')
+            else:
+                # Load full object detector
+                print("Loading object_detector .....")
+                load_model(model=self.object_detector,name='object_detector')
+
 
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the Region Selection Classifier to continue training
@@ -61,7 +66,14 @@ class XReportoV1(nn.Module):
                 pass
             
         else:
-            if not TRAIN_RPN or MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                if TRAIN_RPN:
+                    pass
+                else:
+                    print("Loading object_detector [Trained RPN]....")
+                    load_model(model=self.object_detector,name='object_detector_rpn')
+
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the object_detector to continue training
                 print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector')
@@ -78,12 +90,7 @@ class XReportoV1(nn.Module):
       
 
 
-        
-
             
-
-
-        
 
     def forward(self,images: Tensor , object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None):
         '''

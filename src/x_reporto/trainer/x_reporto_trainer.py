@@ -173,9 +173,14 @@ class XReportoTrainer():
             if(epoch_loss<self.best_loss):
                 self.best_loss=epoch_loss
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                    # Saving Object Detector
-                    print("Saving object_detector....")
-                    save_model(model=self.model.object_detector,name="object_detector")
+                    if TRAIN_RPN:
+                        # Saving object_detector marked as rpn
+                        print("Saving object_detector [Trained RPN]....")
+                        save_model(model=self.model.object_detector,name="object_detector_rpn")
+                    else:
+                        # Saving Object Detector
+                        print("Saving object_detector....")
+                        save_model(model=self.model.object_detector,name="object_detector")
         
                 elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
                     # Saving Object Detector
