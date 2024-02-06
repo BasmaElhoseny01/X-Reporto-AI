@@ -57,6 +57,9 @@ class XReportoV1(nn.Module):
             image_config.max_seq_len = 1024
             image_config.dropout = 0.1
             self.language_model = CustomGPT2(config,image_config)
+            # convert the model to half precision
+            self.language_model.half()
+            self.language_model.convert_to_half()
 
     def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,):
         '''

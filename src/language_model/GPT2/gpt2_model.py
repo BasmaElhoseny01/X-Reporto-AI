@@ -49,7 +49,23 @@ class CustomGPT2(nn.Module):
     def init_weights(self):
         self.fc.weight.data.normal_(mean=0.0, std=0.02)
         self.fc.bias.data.zero_()
-    
+    def convert_to_half(self):
+        self.fc.weight.data = self.fc.weight.data.half()
+        self.fc.bias.data = self.fc.bias.data.half()
+        for i in range(self.num_layers):
+            self.blocks[i].attn.c_attn.weight.data = self.blocks[i].attn.c_attn.weight.data.half()
+            self.blocks[i].attn.c_attn.bias.data = self.blocks[i].attn.c_attn.bias.data.half()
+            self.blocks[i].attn.c_proj.weight.data = self.blocks[i].attn.c_proj.weight.data.half()
+            self.blocks[i].attn.c_proj.bias.data = self.blocks[i].attn.c_proj.bias.data.half()
+            self.blocks[i].rc1.ln.gamma.data = self.blocks[i].rc1.ln.gamma.data.half()
+            self.blocks[i].rc1.ln.beta.data = self.blocks[i].rc1.ln.beta.data.half()
+            self.blocks[i].rc2.ln.gamma.data = self.blocks[i].rc2.ln.gamma.data.half()
+            self.blocks[i].rc2.ln.beta.data = self.blocks[i].rc2.ln.beta.data.half()
+            self.blocks[i].ff.fc1.weight.data = self.blocks[i].ff.fc1.weight.data.half()
+            self.blocks[i].ff.fc1.bias.data = self.blocks[i].ff.fc1.bias.data.half()
+            self.blocks[i].ff.fc2.weight.data = self.blocks[i].ff.fc2.weight.data.half()
+            self.blocks[i].ff.fc2.bias.data = self.blocks[i].ff.fc2.bias.data.half()
+            
     def load_pretrained_weights(self):
         if self.pretrained_model is not None:
             # use GPT2 model with language modeling head, since we want to generate phrases
