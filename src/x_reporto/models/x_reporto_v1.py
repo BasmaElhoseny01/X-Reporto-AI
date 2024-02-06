@@ -162,7 +162,8 @@ class XReportoV1(nn.Module):
             # Stage(1) Object Detector
             print("Before object detector")
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
-
+            del images
+            del object_detector_targets
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,0,0
             # Stage(2) Binary Classifier
@@ -170,10 +171,20 @@ class XReportoV1(nn.Module):
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
             selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
             abnormal_binary_classifier_losses,_=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
+            del abnormal_classifier_targets
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses
+            
+            valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+            del selection_classifier_targets
+            del object_detector_features
+            del input_ids
+            del attention_mask
             print("Before language model")
-            LM_output=self.language_model(input_ids=input_ids,attention_mask=attention_mask,labels=language_model_targets)
+            LM_output=self.language_model(input_ids=valid_input_ids,image_hidden_states=valid_region_features,attention_mask=valid_attention_mask,labels=language_model_targets)
+            del valid_input_ids
+            del valid_attention_mask
+            del valid_region_features
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
        
         else: # Validation (or inference) mode
@@ -188,4 +199,28 @@ class XReportoV1(nn.Module):
             
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
-            
+    
+    
+    def get_valid_decoder_input_for_training(
+        self,
+        class_detected,  # shape [batch_size x 29]
+        region_has_sentence,  # shape [batch_size x 29]
+        input_ids,  # shape [(batch_size * 29) x seq_len]
+        attention_mask,  # shape [(batch_size * 29) x seq_len]
+        region_features,  # shape [batch_size x 29 x 1024]
+    ):
+        """
+        We want to train the decoder only on region features (and corresponding input_ids/attention_mask) whose corresponding sentences are non-empty and
+        that were detected by the object detector.
+        """
+        # valid is of shape [batch_size x 29]
+        valid = torch.logical_and(class_detected, region_has_sentence)
+
+        # reshape to [(batch_size * 29)], such that we can apply the mask to input_ids and attention_mask
+        valid_reshaped = valid.reshape(-1)
+
+        valid_input_ids = input_ids[valid_reshaped]  # of shape [num_detected_regions_with_non_empty_gt_phrase_in_batch x seq_len]
+        valid_attention_mask = attention_mask[valid_reshaped]  # of shape [num_detected_regions_with_non_empty_gt_phrase_in_batch x seq_len]
+        valid_region_features = region_features[valid]  # of shape [num_detected_regions_with_non_empty_gt_phrase_in_batch x 1024]
+
+        return valid_input_ids, valid_attention_mask, valid_region_features
