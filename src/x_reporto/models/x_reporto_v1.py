@@ -183,7 +183,10 @@ class XReportoV1(nn.Module):
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses
             
             # valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+            input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
             del selection_classifier_targets
+            del object_detector_detected_classes
+            del object_detector_targets
           
             print("Before language model")
             LM_output=self.language_model(input_ids=input_ids,image_hidden_states=object_detector_features,attention_mask=attention_mask,labels=language_model_targets)
@@ -205,27 +208,27 @@ class XReportoV1(nn.Module):
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
     
-    
-    def get_valid_decoder_input_for_training(
-        self,
-        class_detected,  # shape [batch_size x 29]
-        region_has_sentence,  # shape [batch_size x 29]
-        input_ids,  # shape [(batch_size * 29) x seq_len]
-        attention_mask,  # shape [(batch_size * 29) x seq_len]
-        region_features,  # shape [batch_size x 29 x 1024]
-    ):
-        """
-        We want to train the decoder only on region features (and corresponding input_ids/attention_mask) whose corresponding sentences are non-empty and
-        that were detected by the object detector.
-        """
-        # valid is of shape [batch_size x 29]
-        valid = torch.logical_and(class_detected, region_has_sentence)
+    def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features):
+        '''
+        Filters the inputs to the language model based on the outputs of the object detector and binary classifiers.
 
-        # reshape to [(batch_size * 29)], such that we can apply the mask to input_ids and attention_mask
-        valid_reshaped = valid.reshape(-1)
+        Args:
+            - selection_classifier_targets (Tensor):Binary Tensor of shape [batch_size x,29]
+                Ground truth indicating whether a phrase exists in the region or not.
+            - input_ids (Tensor): Input tensor for the language model.
+            - attention_mask (Tensor): Attention mask for the language model.
+            - object_detector_features (Tensor): Output features from the object detector.
 
-        valid_input_ids = input_ids[valid_reshaped]  # of shape [num_detected_regions_with_non_empty_gt_phrase_in_batch x seq_len]
-        valid_attention_mask = attention_mask[valid_reshaped]  # of shape [num_detected_regions_with_non_empty_gt_phrase_in_batch x seq_len]
-        valid_region_features = region_features[valid]  # of shape [num_detected_regions_with_non_empty_gt_phrase_in_batch x 1024]
-
+        Returns:
+            - valid_input_ids (Tensor): Input tensor for the language model.
+            - valid_attention_mask (Tensor): Attention mask for the language model.
+            - valid_region_features (Tensor): Output features from the object detector.
+        '''
+        # using gold standard labels to filter the input to the language model
+        valid_input_ids = input_ids[selection_classifier_targets]
+        valid_attention_mask = attention_mask[selection_classifier_targets]
+        valid_region_features = object_detector_features[selection_classifier_targets]
+        print("valid_input_ids",valid_input_ids.size())
+        print("valid_attention_mask",valid_attention_mask.size())
+        print("valid_region_features",valid_region_features.size())
         return valid_input_ids, valid_attention_mask, valid_region_features

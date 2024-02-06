@@ -65,7 +65,7 @@ class CustomGPT2(nn.Module):
             self.blocks[i].ff.fc1.bias.data = self.blocks[i].ff.fc1.bias.data.half()
             self.blocks[i].ff.fc2.weight.data = self.blocks[i].ff.fc2.weight.data.half()
             self.blocks[i].ff.fc2.bias.data = self.blocks[i].ff.fc2.bias.data.half()
-            
+
     def load_pretrained_weights(self):
         if self.pretrained_model is not None:
             # use GPT2 model with language modeling head, since we want to generate phrases
@@ -91,7 +91,6 @@ class CustomGPT2(nn.Module):
                 self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
                 self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
                 self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
-
 
     def forward(self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -148,13 +147,15 @@ class CustomGPT2(nn.Module):
         if labels is not None:
             # move labels to correct device to enable model parallelism
             labels = labels.to(logits.device)
+            # convert labels dtype to dtype of the model
+            labels = labels.to(dtype=torch.long)
             # Shift so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
             shift_labels = labels[..., 1:].contiguous()
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
             # convert logits dtype to float32
-            shift_logits = shift_logits.to(dtype=torch.float32)
+            # shift_logits = shift_logits.to(dtype=torch.float32)
 
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             return (loss,logits) 
