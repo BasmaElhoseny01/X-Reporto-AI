@@ -149,7 +149,7 @@ class XReportoTrainer():
                     Total_loss+=abnormal_binary_classifier_losses
 
                 Total_loss.backward()
-
+            
                 epoch_loss += Total_loss
 
                 # update the parameters
@@ -193,11 +193,11 @@ class XReportoTrainer():
 
                     # Save Region Selection Classifier
                     print("Saving region_classifier....")
-                    save_model(model=self.model.region_classifier,name="region_classifier")
+                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
 
                     # Save Abnormal Classifier
                     print("Saving abnormal_classifier....")
-                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
 
                 elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Saving Object Detector
@@ -206,11 +206,11 @@ class XReportoTrainer():
 
                     # Save Region Selection Classifier
                     print("Saving region_classifier....")
-                    save_model(model=self.model.region_classifier,name="region_classifier")
+                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
 
                     # Save Abnormal Classifier
                     print("Saving abnormal_classifier....")
-                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
    
                     # # Save LM
                     # self.save_model('LM')

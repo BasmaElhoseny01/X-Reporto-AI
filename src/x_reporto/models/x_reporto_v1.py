@@ -82,14 +82,16 @@ class XReportoV1(nn.Module):
                     for param in self.object_detector.object_detector.rpn.parameters():
                         param.requires_grad = False
 
-                    total_trainable_params = sum(p.numel() for p in self.object_detector.parameters() if p.requires_grad)
-                    print("total_trainable_params",total_trainable_params)
 
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the object_detector to continue training
                 print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector')
 
+                # Freeze Object_detector
+                for param in self.object_detector.object_detector.parameters():
+                    param.requires_grad = False
+                            
 
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the Region Selection Classifier to start training
