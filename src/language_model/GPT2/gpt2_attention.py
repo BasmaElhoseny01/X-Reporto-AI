@@ -32,9 +32,9 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         # self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
         # self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
         
-        # # image hidden state to key, value
-        # self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
-        # self.u_v = nn.Linear(self.d_model, self.d_model,bias=False)
+        # image hidden state to key, value
+        self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
+        self.u_v = nn.Linear(self.d_model, self.d_model,bias=False)
 
         self.c_attn = Conv1D(3 * self.d_model, self.d_model)
         self.c_proj = Conv1D(self.d_model, self.d_model)
@@ -59,6 +59,8 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         scores = torch.where(causal_mask, scores.to(scores.dtype), mask_value)
         
         if mask is not None:
+            print("mask: ", mask.size())
+            print("scores: ", scores.size())
             scores = scores.masked_fill(mask == 0, -1e9)
         p_attn = F.softmax(scores, dim=-1) # (batch_size, h, max_seq_len, max_seq_len)
         if dropout is not None:
@@ -82,7 +84,6 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         if image_hidden_states is not None:
             k_image = self.u_k(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
             v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
-        
         # concat k, v from image and text on dim=2
         if image_hidden_states is not None:
             k = torch.cat((k, k_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)

@@ -109,6 +109,9 @@ class CustomGPT2(nn.Module):
         if attention_mask is not None:
             attention_mask = attention_mask.view(-1, attention_mask.size(-1))
             attention_mask = attention_mask[:, None, None, :]
+            # convert attention mask of shape (batch_size,1,1, max_seq_len) to (batch_size, 1, 1, 1+max_seq_len) by concatenating 1s
+            ones = torch.ones(attention_mask.size()[:-1] + (1,), dtype=attention_mask.dtype, device=attention_mask.device)
+            attention_mask = torch.cat((ones, attention_mask), dim=-1)
             attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
             attention_mask = (1.0 - attention_mask) * torch.finfo(hidden_states.dtype).min
 
@@ -143,8 +146,8 @@ if __name__ == '__main__':
     config.pretrained_model = "gpt2"
 
     image_config = Config()
-    image_config.d_model = 1024
-    image_config.d_ff = 1024
+    image_config.d_model = 768
+    image_config.d_ff = 768
     image_config.num_heads = 8
     image_config.num_layers = 6
     image_config.vocab_size = 50257
@@ -155,10 +158,10 @@ if __name__ == '__main__':
     image_hidden_states = torch.randn(2, 1, config.d_model)
     # create attention mask
     attention_mask = torch.ones(2, 5)
-    print(gpt2(x, image_hidden_states,attention_mask = attention_mask).size()) # torch.Size([2, 5, 50257])
+    print(gpt2(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask).size()) # torch.Size([2, 5, 50257])
     print(gpt2)
     x = torch.randint(0, 50257, (2, 5))
     image_hidden_states = torch.randn(2, 1, config.d_model)
     labels = torch.randint(0, 50257, (2, 5))
-    print(gpt2(x, image_hidden_states,attention_mask = attention_mask, labels=labels)[0]) # tensor(13.5676, grad_fn=<NllLossBackward>)
+    print(gpt2(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels)[0]) # tensor(13.5676, grad_fn=<NllLossBackward>)
     print(gpt2)
