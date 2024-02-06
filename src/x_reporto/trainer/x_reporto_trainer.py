@@ -174,34 +174,41 @@ class XReportoTrainer():
                 self.best_loss=epoch_loss
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                     # Saving Object Detector
+                    print("Saving object_detector....")
                     save_model(model=self.model.object_detector,name="object_detector")
         
                 elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
                     # Saving Object Detector
+                    print("Saving object_detector....")
                     save_model(model=self.model.object_detector,name="object_detector")
 
                     # Save Region Selection Classifier
+                    print("Saving region_classifier....")
                     save_model(model=self.model.region_classifier,name="region_classifier")
 
                     # Save Abnormal Classifier
+                    print("Saving abnormal_classifier....")
                     save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
 
                 elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Saving Object Detector
+                    print("Saving object_detector....")
                     save_model(model=self.model.object_detector,name="object_detector")
 
                     # Save Region Selection Classifier
+                    print("Saving region_classifier....")
                     save_model(model=self.model.region_classifier,name="region_classifier")
 
                     # Save Abnormal Classifier
+                    print("Saving abnormal_classifier....")
                     save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
    
-                #     # Save LM
-                #     self.save_model('LM')
-                    
+                    # # Save LM
+                    # self.save_model('LM')
+                                    
 
                 # Logging the loss to a file
-                with open("../../../logs/loss.txt", "a") as myfile:
+                with open("logs/loss.txt", "a") as myfile:
                     myfile.write(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
                     myfile.write("\n")
                 # print the epoch loss

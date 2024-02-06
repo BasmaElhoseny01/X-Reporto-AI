@@ -4,7 +4,7 @@ import torch.nn as nn
 
 from typing import Optional, List, Dict
 
-from config import ModelStage,MODEL_STAGE,DEVICE,CONTINUE_TRAIN
+from config import ModelStage,MODEL_STAGE,DEVICE,CONTINUE_TRAIN,TRAIN_RPN
 
 # Utils 
 from src.utils import load_model
@@ -42,16 +42,18 @@ class XReportoV1(nn.Module):
             # Create LM
             pass
 
-
         if CONTINUE_TRAIN:
             # Load the object Detector to continue training
+            print("Loading object_detector .....")
             load_model(model=self.object_detector,name='object_detector')
 
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the Region Selection Classifier to continue training
+                print("Loading region_classifier .....")
                 load_model(model=self.binary_classifier_selection_region,name='region_classifier')
 
                 # Load the Abnormal Classifier to continue training
+                print("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
             
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
@@ -59,16 +61,19 @@ class XReportoV1(nn.Module):
                 pass
             
         else:
-            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+            if not TRAIN_RPN or MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the object_detector to continue training
+                print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector')
 
 
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the Region Selection Classifier to start training
+                print("Loading region_classifier .....")
                 load_model(model=self.binary_classifier_selection_region,name='region_classifier')
 
                 # Load the Abnormal Classifier to start training
+                print("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
       
 
