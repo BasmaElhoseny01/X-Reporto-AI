@@ -39,14 +39,18 @@ class XReportoV1(nn.Module):
         if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             config = Config()
             config.d_model = 768
-            config.d_ff = 768
+            config.d_ff1 = 768
+            config.d_ff2 = 768
+            config.d_ff3 = 768
             config.num_layers = 12
             config.vocab_size = 50257
             config.max_seq_len = 1024
             config.pretrained_model = "gpt2"
             image_config = Config()
             image_config.d_model = 1024
-            image_config.d_ff = 1024
+            image_config.d_ff1 = 1024
+            image_config.d_ff2 = 1024
+            image_config.d_ff3 = 768
             image_config.num_heads = 8
             image_config.num_layers = 6
             image_config.vocab_size = 50257
