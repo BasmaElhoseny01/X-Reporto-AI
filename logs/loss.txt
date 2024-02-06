@@ -11,3 +11,5 @@ epoch: 1/4, epoch loss: 1.1019
 epoch: 2/4, epoch loss: 1.0955
 epoch: 3/4, epoch loss: 1.0899
 epoch: 4/4, epoch loss: 1.0859
+epoch: 1/4, epoch loss: 1.0211
+epoch: 2/4, epoch loss: 1.0207

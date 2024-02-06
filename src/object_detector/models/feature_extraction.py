@@ -36,6 +36,10 @@ class FeatureNetwork(nn.Module):
             self.feature_extractor = nn.Sequential(*list(self.feature_extractor.children())[:-2])
             # self.feature_extractor.out_channels = self.feature_extractor.layer4[-1].conv3.out_channels
             self.image_size = 512
+
+            # Freeze layers
+            for param in self.feature_extractor.parameters():
+                param.requires_grad = False
     
     def __call__(self, x):
         return self.feature_extractor(x)
