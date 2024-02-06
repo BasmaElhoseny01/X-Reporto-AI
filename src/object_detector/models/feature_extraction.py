@@ -28,6 +28,7 @@ class FeatureNetwork(nn.Module):
             self.feature_extractor = nn.Sequential(*list(self.feature_extractor.children()))
             self.out_channels = 2048
             self.image_size = 512
+
         elif model_type == "resnet50":
             self.feature_extractor = resnet50(weights=ResNet50_Weights.DEFAULT)
             self.feature_extractor.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)

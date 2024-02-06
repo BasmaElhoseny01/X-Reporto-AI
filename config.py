@@ -80,15 +80,15 @@ MODEL_STAGE=1
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # X-Report Trainer Hyper Parameters
-EPOCHS=50
+EPOCHS=2
 LEARNING_RATE=0.00000001
-BATCH_SIZE=1
+BATCH_SIZE=4
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
 
 # Training Process Parameters
-CONTINUE_TRAIN=True # Continue training
+CONTINUE_TRAIN=False # Continue training
 TRAIN_RPN=True # Tain only RPN of the object detector
 RUN = 0
 

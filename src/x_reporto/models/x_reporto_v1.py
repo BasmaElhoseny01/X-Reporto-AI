@@ -15,6 +15,9 @@ from src.object_detector.models.object_detector_factory import ObjectDetector
 from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
 from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
 
+import sys
+
+from src.utils import cuda_memory_info
 class XReportoV1(nn.Module):
     """
     A modular model for object detection and binary classification.
@@ -200,8 +203,16 @@ class XReportoV1(nn.Module):
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
 
+            # Remove images [Not very Large]
+            del images
+            torch.cuda.empty_cache()
+            cuda_memory_info(title="After Removing images")
+
+
+
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,0,0
+            
             # Stage(2) Binary Classifier
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
             selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)

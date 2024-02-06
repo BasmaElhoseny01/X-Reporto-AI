@@ -20,6 +20,8 @@ from src.object_detector.models.rpn import Rpn
 from src.object_detector.models.feature_extraction import FeatureNetwork
 import sys
 
+from src.utils import cuda_memory_info
+
 from config import TRAIN_RPN
 
 '''
@@ -50,6 +52,7 @@ class FrcnnObjectDetectorV1(nn.Module):
         # self.backbone=nn.Sequential(*list(resnet.children())[:-2])
         # # # Defining the out_channel for the backbone = out for the last conv layer in Layer(4) (2048)
         # self.backbone.out_channels=resnet.layer4[-1].conv3.out_channels
+      
 
         self.backbone = FeatureNetwork("resnet50")
         # Anchor Aspect Ratios and Size since the input image size is 512 x 512, we choose the sizes accordingly
@@ -183,11 +186,17 @@ class FrcnnObjectDetectorV1(nn.Module):
                 "top_region_features"
             }
         """
+        cuda_memory_info(title="Before Check Targets")
+
         if targets is not None:
             self._check_targets(targets)
 
         # Features extracted from backbone feature map is 16*16 depth is 2048 [batch_size x 2048 x 16 x 16]
+        cuda_memory_info(title="Before backbone")
+
         features=self.backbone(images)
+        cuda_memory_info(title="After backbone")
+
         # Transform images and features from tensors to types that the rpn and roi_heads expect in the current PyTorch implementation.
         # Images have to be of class ImageList
         batch_size = images.shape[0] # batch_size
@@ -199,7 +208,9 @@ class FrcnnObjectDetectorV1(nn.Module):
 
         # Getting Proposals of RPN Bounding Boxes
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
+        cuda_memory_info(title="Before rpn")
         proposals, proposal_losses = self.rpn(images, features, targets)
+        cuda_memory_info(title="After rpn")
 
 
         if self.training and TRAIN_RPN:

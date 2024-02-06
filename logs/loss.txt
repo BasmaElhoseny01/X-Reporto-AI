@@ -1,0 +1,5 @@
+epoch: 1/2, epoch loss: 1.1798
+epoch: 1/2, epoch loss: 1.0673
+epoch: 1/2, epoch loss: 1.0809
+epoch: 1/2, epoch loss: 1.0335
+epoch: 1/2, epoch loss: 1.0251
