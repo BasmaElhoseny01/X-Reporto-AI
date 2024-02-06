@@ -175,16 +175,14 @@ class XReportoV1(nn.Module):
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses
             
-            valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+            # valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
             del selection_classifier_targets
+          
+            print("Before language model")
+            LM_output=self.language_model(input_ids=input_ids,image_hidden_states=object_detector_features,attention_mask=attention_mask,labels=language_model_targets)
             del object_detector_features
             del input_ids
             del attention_mask
-            print("Before language model")
-            LM_output=self.language_model(input_ids=valid_input_ids,image_hidden_states=valid_region_features,attention_mask=valid_attention_mask,labels=language_model_targets)
-            del valid_input_ids
-            del valid_attention_mask
-            del valid_region_features
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
        
         else: # Validation (or inference) mode
