@@ -1,12 +1,16 @@
 import torch
+import datetime
 import sys
+import os
 import torch.optim as optim
 
 from torch.utils.data import  DataLoader
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 from src.utils import plot_image
 from src.x_reporto.models.x_reporto_factory import XReporto
+
 from config import *
+
 
 class XReportoTrainer():
     """
@@ -50,34 +54,72 @@ class XReportoTrainer():
             validation_csv_path (str): the path to the validation csv file
             model Optional[XReporto]: the x_reporto model instance to be trained.If not provided, the model is loaded from a .pth file.
         '''
+        # Initializing Model
+        self.model = model
 
         # Model
-        if model==None:
+        # if model==None:
+        if CONTINUE_TRAIN:
             # Continue training
-            pass
-            # # load the model from 
-            # self.model=XReporto().create_model()
+            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                # Load the object Detector to continue training
+                # Load RPN
+                self.load_model(model=self.model.object_detector.rpn,name='rpn')
+                if not TRAIN_RPN:
+                    # Also Load ROI
+                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
 
-            # # TODO Fix Paths
-            # if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-            #     self.load_model(model=self.model.object_detector,name='object_detector')
-            # elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-            #     self.load_model('object_detector_classifier')
-            # # elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-            #     self.load_model('LM')
+
+            elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                # Load the object Detector to continue training
+                # Load RPN
+                self.load_model(model=self.model.object_detector.rpn,name='rpn')
+                if not TRAIN_RPN:
+                    # Also Load ROI
+                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
+
+                # Load the Region Selection Classifier to continue training
+                self.load_model(model=self.model.region_classifier,name='region_classifier')
+
+                # Load the Abnormal Classifier to continue training
+                self.load_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                
+            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                # Load the object Detector to continue training
+                # Load RPN
+                self.load_model(model=self.model.object_detector.rpn,name='rpn')
+                if not TRAIN_RPN:
+                    # Also Load ROI
+                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
+
+                # Load the Region Selection Classifier to continue training
+                self.load_model(model=self.model.region_classifier,name='region_classifier')
+
+                # Load the Abnormal Classifier to continue training
+                self.load_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+
+                # Load the Language Model Classifier to continue training
+                # self.load_model('LM')
         else:
             # Train New
-            self.model = model
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 pass
 
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                # Load the object Detector to train new stage
-                self.load_model(model=self.model.object_detector,name='object_detector')
+                # Load the object Detector to continue training
+                # Load RPN
+                self.load_model(model=self.model.object_detector.rpn,name='rpn')
+                if not TRAIN_RPN:
+                    # Also Load ROI
+                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
 
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                # Load the object Detector to train new stage
-                self.load_model(model=self.model.object_detector,name='object_detector')
+                # Load the object Detector to continue training
+                # Load RPN
+                self.load_model(model=self.model.object_detector.rpn,name='rpn')
+                if not TRAIN_RPN:
+                    # Also Load ROI
+                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
 
                 # Load the Region Selection Classifier  to train new stage
                 self.load_model(model=self.model.region_classifier,name='region_classifier')
@@ -85,11 +127,10 @@ class XReportoTrainer():
                 # Load the Abnormal Classifier  to train new stage
                 self.load_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
                 
-
          
         self.model.to(DEVICE)
 
-         # create adam optimizer
+        # create adam optimizer
         self.optimizer = optim.Adam(self.model.parameters(), lr= LEARNING_RATE)
 
         # create learning rate scheduler
@@ -190,26 +231,54 @@ class XReportoTrainer():
                     torch.cuda.empty_cache()
                     
                     # break
+                if epoch%10==0:
+                    # Save CheckPoint
+                    # self.save_check_point(epoch)
+                    pass
 
             # save the best model
             if(epoch_loss<self.best_loss):
                 self.best_loss=epoch_loss
-                # if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                #     # Save Object Detector
-                #     self.save_model(model=self.model.object_detector,name="object_detector")
-               
-                # elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                #     # Save Object Detector
-                #     # Save Classifier
-                #     # Save Classifier
-                #     self.save_model('object_detector_classifier')
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                    # Saving Object Detector
+                    # Save RPN
+                    self.save_model(model=self.model.object_detector.rpn,name="rpn")
+                    if not TRAIN_RPN:
+                        # Also Save ROI
+                        self.save_model(model=self.model.object_detector.roi_heads,name="roi_heads")
 
-                # elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                #     # Save Object Detector
-                #     # Save Classifier
-                #     # Save Classifier
+               
+                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                    # Saving Object Detector
+                    # Save RPN
+                    self.save_model(model=self.model.object_detector.rpn,name="rpn")
+                    if not TRAIN_RPN:
+                        # Also Save ROI
+                        self.save_model(model=self.model.object_detector.roi_heads,name="roi_heads")
+
+                    # Save Region Selection Classifier
+                    self.save_model(model=self.model.region_classifier,name="region_classifier")
+
+                    # Save Abnormal Classifier
+                    self.save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+
+                elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                    # Saving Object Detector
+                    # Save RPN
+                    self.save_model(model=self.model.object_detector.rpn,name="rpn")
+                    if not TRAIN_RPN:
+                        # Also Save ROI
+                        self.save_model(model=self.model.object_detector.roi_heads,name="roi_heads")
+
+                    # Save Region Selection Classifier
+                    self.save_model(model=self.model.region_classifier,name="region_classifier")
+
+                    # Save Abnormal Classifier
+                    self.save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+   
                 #     # Save LM
                 #     self.save_model('LM')
+                    
 
                 # Logging the loss to a file
                 with open("../../../logs/loss.txt", "a") as myfile:
@@ -389,52 +458,145 @@ class XReportoTrainer():
                         # To Test Overfitting break
                         break
 
+    def save_check_point(self,epoch):
+        checkpoint={
+            "epoch":epoch,
+            "optim_state":self.optimizer.state_dict()
+        }
+
+
+        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+            checkpoint['rpn']=self.model.object_detector.rpn.state_dict()
+            if not TRAIN_RPN:
+                checkpoint['roi_heads']=self.model.object_detector.roi_heads.state_dict()
+                
+        elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                checkpoint['rpn']=self.model.object_detector.rpn.state_dict()
+                checkpoint['roi_heads']=self.model.object_detector.roi_heads.state_dict()
+
+                checkpoint['region_classifier']=self.model.abnormal_classifier.state_dict()
+                checkpoint['abnormal_classifier']=self.model.abnormal_classifier.state_dict()
+
+                
+        elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                checkpoint['rpn']=self.model.object_detector.rpn.state_dict()
+                checkpoint['roi_heads']=self.model.object_detector.roi_heads.state_dict()
+
+                checkpoint['region_classifier']=self.model.abnormal_classifier.state_dict()
+                checkpoint['abnormal_classifier']=self.model.abnormal_classifier.state_dict()
+
+                # Save Language Model
+
+        # Get the current date and time
+        current_datetime = datetime.datetime.now()
+        # Format the date and time to be part of the filename
+        formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+        # Create the filename with the formatted datetime
+        name = f"ckpt_{formatted_datetime}"
+
+        # Save Checkpoint File
+        torch.save(checkpoint,"models/" + RUN + '/checkpoints/' + name + ".pth")
+    
+    def load_check_point(self,epoch,name=None):
+        directory_path="models/" + RUN + '/checkpoints/'
+
+        if name is None:
+            # Load latest check point
+            all_files = os.listdir(directory_path)
+
+            # Filter out non-pth files
+            pth_files = [file for file in all_files if file.endswith(".pth")]
+
+            # Sort the files based on creation time
+            sorted_files = sorted(pth_files, key=lambda x: os.path.getctime(os.path.join(directory_path, x)), reverse=True)
+
+            # Get the latest file
+            latest_file = sorted_files[0] if sorted_files else None
+
+            checkpoint_path=directory_path+latest_file
+
+        else:
+            # Load Specified
+            checkpoint_path=directory_path + name + ".pth"
+        
+        checkpoint=torch.load(checkpoint_path)
+        
+        epoch=checkpoint['epoch']
+        self.optimizer.load_state_dict(checkpoint['optim_state'])
+
+
+        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+            checkpoint['rpn']=self.model.object_detector.rpn.load_state_dict(checkpoint['rpn'])
+            if not TRAIN_RPN:
+                checkpoint['roi_heads']=self.model.object_detector.roi_heads.load_state_dict(checkpoint['roi_heads'])
+                
+        elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+            checkpoint['rpn']=self.model.object_detector.rpn.load_state_dict(checkpoint['rpn'])
+            checkpoint['roi_heads']=self.model.object_detector.roi_heads.load_state_dict(checkpoint['roi_heads'])
+
+            checkpoint['region_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['region_classifier'])
+            checkpoint['abnormal_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['abnormal_classifier'])
+
+                
+        elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+            checkpoint['rpn']=self.model.object_detector.rpn.load_state_dict(checkpoint['rpn'])
+            checkpoint['roi_heads']=self.model.object_detector.roi_heads.load_state_dict(checkpoint['roi_heads'])
+
+            checkpoint['region_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['region_classifier'])
+            checkpoint['abnormal_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['abnormal_classifier'])
+
+            # Load Language Model ckpt
+
+
     def save_model(self,model,name):
         '''
         Save the X-Reporto model to a file.
 
         Args:
+            model(nn): model to be saved
             name (str): Name of the model file.
         '''
-        torch.save(model.state_dict(), "models/"+name+".pth")
+        torch.save(model.state_dict(), "models/" + RUN + '/' + name + ".pth")
     
     def load_model(self,model,name):
         '''
         Load the X-Reporto model from a file.
 
         Args:
+            model(nn): model to be loaded
             name (str): Name of the model file.
         '''
-        model.load_state_dict(torch.load("models/"+name+".pth"))
+        model.load_state_dict(torch.load("models/" + RUN + '/' + name + ".pth"))
 
 
 
-def set_data(args):
-    # read hyper-parameters from terminal
-    # if not set read from config.py file
-    if (len(args)>1):
-        global EPOCHS
-        EPOCHS = int(args[1])
-        if (len(args)>2):
-            global LEARNING_RATE
-            LEARNING_RATE=float(args[2])
-            if (len(args)>3):
-                global BATCH_SIZE
-                BATCH_SIZE=int(args[3])
-                if (len(args)>4):
-                    global MODEL_STAGE
-                    MODEL_STAGE=int(args[4])
-                    if (len(args)>5):
-                        global SCHEDULAR_STEP_SIZE
-                        SCHEDULAR_STEP_SIZE=float(args[5])
-                        if (len(args)>6):
-                            global SCHEDULAR_GAMMA
-                            SCHEDULAR_GAMMA=float(args[6])
-import argparse
+# def set_data(args):
+#     # read hyper-parameters from terminal
+#     # if not set read from config.py file
+#     if (len(args)>1):
+#         global EPOCHS
+#         EPOCHS = int(args[1])
+#         if (len(args)>2):
+#             global LEARNING_RATE
+#             LEARNING_RATE=float(args[2])
+#             if (len(args)>3):
+#                 global BATCH_SIZE
+#                 BATCH_SIZE=int(args[3])
+#                 if (len(args)>4):
+#                     global MODEL_STAGE
+#                     MODEL_STAGE=int(args[4])
+#                     if (len(args)>5):
+#                         global SCHEDULAR_STEP_SIZE
+#                         SCHEDULAR_STEP_SIZE=float(args[5])
+#                         if (len(args)>6):
+#                             global SCHEDULAR_GAMMA
+#                             SCHEDULAR_GAMMA=float(args[6])
+        
+# import argparse
 if __name__ == '__main__':
     # print("Basma......")
     
-    set_data(sys.argv)
+    # set_data(sys.argv)
 
     x_reporto_model = XReporto().create_model()
 
