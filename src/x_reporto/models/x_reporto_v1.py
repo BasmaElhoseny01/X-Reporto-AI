@@ -4,7 +4,10 @@ import torch.nn as nn
 
 from typing import Optional, List, Dict
 
-from config import ModelStage,MODEL_STAGE,DEVICE
+from config import ModelStage,MODEL_STAGE,DEVICE,CONTINUE_TRAIN
+
+# Utils 
+from src.utils import load_model
 
 # Modules
 from src.object_detector.models.object_detector_factory import ObjectDetector
@@ -31,10 +34,50 @@ class XReportoV1(nn.Module):
 
         self.object_detector = ObjectDetector().create_model()
 
-        if MODEL_STAGE==ModelStage.CLASSIFIER.value:
+        if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
-    
+
+        if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+            # Create LM
+            pass
+
+
+        if CONTINUE_TRAIN:
+            # Load the object Detector to continue training
+            load_model(model=self.object_detector,name='object_detector')
+
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                # Load the Region Selection Classifier to continue training
+                load_model(model=self.binary_classifier_selection_region,name='region_classifier')
+
+                # Load the Abnormal Classifier to continue training
+                load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
+            
+            if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                # Load Language Model to continue training
+                pass
+            
+        else:
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                # Load the object_detector to continue training
+                load_model(model=self.object_detector,name='object_detector')
+
+
+            if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                # Load the Region Selection Classifier to start training
+                load_model(model=self.binary_classifier_selection_region,name='region_classifier')
+
+                # Load the Abnormal Classifier to start training
+                load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
+      
+
+
+        
+
+            
+
+
         
 
     def forward(self,images: Tensor , object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None):

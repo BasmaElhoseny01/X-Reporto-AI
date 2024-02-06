@@ -9,6 +9,9 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 from src.utils import plot_image
 from src.x_reporto.models.x_reporto_factory import XReporto
 
+# Utils 
+from src.utils import save_model
+
 from config import *
 
 
@@ -57,77 +60,7 @@ class XReportoTrainer():
         # Initializing Model
         self.model = model
 
-        # Model
-        # if model==None:
-        if CONTINUE_TRAIN:
-            # Continue training
-            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                # Load the object Detector to continue training
-                # Load RPN
-                self.load_model(model=self.model.object_detector.rpn,name='rpn')
-                if not TRAIN_RPN:
-                    # Also Load ROI
-                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
-
-
-            elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                # Load the object Detector to continue training
-                # Load RPN
-                self.load_model(model=self.model.object_detector.rpn,name='rpn')
-                if not TRAIN_RPN:
-                    # Also Load ROI
-                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
-
-                # Load the Region Selection Classifier to continue training
-                self.load_model(model=self.model.region_classifier,name='region_classifier')
-
-                # Load the Abnormal Classifier to continue training
-                self.load_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
-                
-            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                # Load the object Detector to continue training
-                # Load RPN
-                self.load_model(model=self.model.object_detector.rpn,name='rpn')
-                if not TRAIN_RPN:
-                    # Also Load ROI
-                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
-
-                # Load the Region Selection Classifier to continue training
-                self.load_model(model=self.model.region_classifier,name='region_classifier')
-
-                # Load the Abnormal Classifier to continue training
-                self.load_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
-
-                # Load the Language Model Classifier to continue training
-                # self.load_model('LM')
-        else:
-            # Train New
-            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                pass
-
-            elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                # Load the object Detector to continue training
-                # Load RPN
-                self.load_model(model=self.model.object_detector.rpn,name='rpn')
-                if not TRAIN_RPN:
-                    # Also Load ROI
-                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
-
-            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                # Load the object Detector to continue training
-                # Load RPN
-                self.load_model(model=self.model.object_detector.rpn,name='rpn')
-                if not TRAIN_RPN:
-                    # Also Load ROI
-                    self.load_model(model=self.model.object_detector.roi_heads,name='roi_heads')
-
-                # Load the Region Selection Classifier  to train new stage
-                self.load_model(model=self.model.region_classifier,name='region_classifier')
-
-                # Load the Abnormal Classifier  to train new stage
-                self.load_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
-                
-         
+        # Move to device
         self.model.to(DEVICE)
 
         # create adam optimizer
@@ -241,40 +174,27 @@ class XReportoTrainer():
                 self.best_loss=epoch_loss
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                     # Saving Object Detector
-                    # Save RPN
-                    self.save_model(model=self.model.object_detector.rpn,name="rpn")
-                    if not TRAIN_RPN:
-                        # Also Save ROI
-                        self.save_model(model=self.model.object_detector.roi_heads,name="roi_heads")
-
-               
+                    save_model(model=self.model.object_detector,name="object_detector")
+        
                 elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
                     # Saving Object Detector
-                    # Save RPN
-                    self.save_model(model=self.model.object_detector.rpn,name="rpn")
-                    if not TRAIN_RPN:
-                        # Also Save ROI
-                        self.save_model(model=self.model.object_detector.roi_heads,name="roi_heads")
+                    save_model(model=self.model.object_detector,name="object_detector")
 
                     # Save Region Selection Classifier
-                    self.save_model(model=self.model.region_classifier,name="region_classifier")
+                    save_model(model=self.model.region_classifier,name="region_classifier")
 
                     # Save Abnormal Classifier
-                    self.save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
 
                 elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Saving Object Detector
-                    # Save RPN
-                    self.save_model(model=self.model.object_detector.rpn,name="rpn")
-                    if not TRAIN_RPN:
-                        # Also Save ROI
-                        self.save_model(model=self.model.object_detector.roi_heads,name="roi_heads")
+                    save_model(model=self.model.object_detector,name="object_detector")
 
                     # Save Region Selection Classifier
-                    self.save_model(model=self.model.region_classifier,name="region_classifier")
+                    save_model(model=self.model.region_classifier,name="region_classifier")
 
                     # Save Abnormal Classifier
-                    self.save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
    
                 #     # Save LM
                 #     self.save_model('LM')
@@ -466,22 +386,19 @@ class XReportoTrainer():
 
 
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-            checkpoint['rpn']=self.model.object_detector.rpn.state_dict()
-            if not TRAIN_RPN:
-                checkpoint['roi_heads']=self.model.object_detector.roi_heads.state_dict()
+            checkpoint['object_detector']=self.model.object_detector.state_dict()
+
                 
         elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                checkpoint['rpn']=self.model.object_detector.rpn.state_dict()
-                checkpoint['roi_heads']=self.model.object_detector.roi_heads.state_dict()
+                checkpoint['object_detector']=self.model.object_detector.state_dict()            
 
                 checkpoint['region_classifier']=self.model.abnormal_classifier.state_dict()
                 checkpoint['abnormal_classifier']=self.model.abnormal_classifier.state_dict()
 
                 
         elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                checkpoint['rpn']=self.model.object_detector.rpn.state_dict()
-                checkpoint['roi_heads']=self.model.object_detector.roi_heads.state_dict()
-
+                checkpoint['object_detector']=self.model.object_detector.state_dict()            
+            
                 checkpoint['region_classifier']=self.model.abnormal_classifier.state_dict()
                 checkpoint['abnormal_classifier']=self.model.abnormal_classifier.state_dict()
 
@@ -526,48 +443,22 @@ class XReportoTrainer():
 
 
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-            checkpoint['rpn']=self.model.object_detector.rpn.load_state_dict(checkpoint['rpn'])
-            if not TRAIN_RPN:
-                checkpoint['roi_heads']=self.model.object_detector.roi_heads.load_state_dict(checkpoint['roi_heads'])
+            checkpoint['object_detector']=self.model.object_detector.load_state_dict(checkpoint['object_detector'])
                 
         elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-            checkpoint['rpn']=self.model.object_detector.rpn.load_state_dict(checkpoint['rpn'])
-            checkpoint['roi_heads']=self.model.object_detector.roi_heads.load_state_dict(checkpoint['roi_heads'])
+            checkpoint['object_detector']=self.model.object_detector.load_state_dict(checkpoint['object_detector'])
 
             checkpoint['region_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['region_classifier'])
             checkpoint['abnormal_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['abnormal_classifier'])
 
                 
         elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-            checkpoint['rpn']=self.model.object_detector.rpn.load_state_dict(checkpoint['rpn'])
-            checkpoint['roi_heads']=self.model.object_detector.roi_heads.load_state_dict(checkpoint['roi_heads'])
+            checkpoint['object_detector']=self.model.object_detector.load_state_dict(checkpoint['object_detector'])
 
             checkpoint['region_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['region_classifier'])
             checkpoint['abnormal_classifier']=self.model.abnormal_classifier.load_state_dict(checkpoint['abnormal_classifier'])
 
             # Load Language Model ckpt
-
-
-    def save_model(self,model,name):
-        '''
-        Save the X-Reporto model to a file.
-
-        Args:
-            model(nn): model to be saved
-            name (str): Name of the model file.
-        '''
-        torch.save(model.state_dict(), "models/" + RUN + '/' + name + ".pth")
-    
-    def load_model(self,model,name):
-        '''
-        Load the X-Reporto model from a file.
-
-        Args:
-            model(nn): model to be loaded
-            name (str): Name of the model file.
-        '''
-        model.load_state_dict(torch.load("models/" + RUN + '/' + name + ".pth"))
-
 
 
 # def set_data(args):

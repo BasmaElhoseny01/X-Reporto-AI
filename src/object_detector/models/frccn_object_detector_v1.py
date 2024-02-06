@@ -20,6 +20,8 @@ from src.object_detector.models.rpn import Rpn
 from src.object_detector.models.feature_extraction import FeatureNetwork
 import sys
 
+from config import TRAIN_RPN
+
 '''
 image is grey scale 1*512*512 [Grey Scale 512*512]  
 (with feature maps of size 16x16) of 2048 channels [2048*16*16] 
@@ -198,21 +200,27 @@ class FrcnnObjectDetectorV1(nn.Module):
         # Getting Proposals of RPN Bounding Boxes
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
         proposals, proposal_losses = self.rpn(images, features, targets)
-        detections  = self.roi_heads(features, proposals, images.image_sizes, targets)
 
-        detector_losses =detections["detector_losses"]
-        outputs = {}
-        if not self.training:
-            outputs["class_detected"] = detections["class_detected"]
-            outputs["detections"]=detections["detections"]
-        if self.features:
-            outputs["class_detected"] = detections["class_detected"]
-            outputs["features"]=detections["top_region_features"]
-        # print("detections",detections)
-        # sys.exit()
-        # print("proposals",proposals)
-        # print("targets",targets)
-        # print("")
+
+        if self.training and TRAIN_RPN:
+            detector_losses={}
+        else:
+            detections  = self.roi_heads(features, proposals, images.image_sizes, targets)
+            detector_losses =detections["detector_losses"]
+
+            outputs = {}
+            if not self.training:
+                outputs["class_detected"] = detections["class_detected"]
+                outputs["detections"]=detections["detections"]
+            if self.features:
+                outputs["class_detected"] = detections["class_detected"]
+                outputs["features"]=detections["top_region_features"]
+            # print("detections",detections)
+            # sys.exit()
+            # print("proposals",proposals)
+            # print("targets",targets)
+            # print("")
+
 
 
         # Losses for RPN Network and ROI Network
