@@ -3,3 +3,11 @@ epoch: 1/2, epoch loss: 1.0673
 epoch: 1/2, epoch loss: 1.0809
 epoch: 1/2, epoch loss: 1.0335
 epoch: 1/2, epoch loss: 1.0251
+epoch: 1/10, epoch loss: 1.0355
+epoch: 2/10, epoch loss: 1.0295
+epoch: 3/10, epoch loss: 1.0284
+epoch: 4/10, epoch loss: 1.0233
+epoch: 1/4, epoch loss: 1.1019
+epoch: 2/4, epoch loss: 1.0955
+epoch: 3/4, epoch loss: 1.0899
+epoch: 4/4, epoch loss: 1.0859

@@ -203,11 +203,10 @@ class XReportoV1(nn.Module):
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
 
-            # Remove images [Not very Large]
+            # Remove [Not very Large]
             del images
+            del object_detector_targets
             torch.cuda.empty_cache()
-            cuda_memory_info(title="After Removing images")
-
 
 
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
@@ -223,6 +222,12 @@ class XReportoV1(nn.Module):
         else: # Validation (or inference) mode
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+            #  Remove [Not very Large]
+            if object_detector_targets:
+                del object_detector_targets
+            del images
+            torch.cuda.empty_cache()
+
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,object_detector_boxes,object_detector_detected_classes
             

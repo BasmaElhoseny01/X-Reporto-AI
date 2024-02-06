@@ -274,6 +274,7 @@ def save_model(model,name):
     '''
     torch.save(model.state_dict(), "models/" + str(RUN) + '/' + name + ".pth")
 
+import sys
 def load_model(model,name):
     '''
     Load the X-Reporto model from a file.

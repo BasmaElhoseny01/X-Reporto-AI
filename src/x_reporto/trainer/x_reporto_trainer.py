@@ -106,8 +106,6 @@ class XReportoTrainer():
                     new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
                     object_detector_targets.append(new_dict)
 
-                print("Epoch",epoch)
-                cuda_memory_info(title="Object Detector Targets")
                     
                 selection_classifier_targets=None
                 abnormal_classifier_targets=None
@@ -134,16 +132,14 @@ class XReportoTrainer():
                 # Forward Pass
                 object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses= self.model(images, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets)   
 
-                cuda_memory_info(title="After Forward Pass")
 
                 # Free GPU memory 
-                del images
-                del object_detector_targets
+                # del images
+                # del object_detector_targets
                 del selection_classifier_targets
                 del abnormal_classifier_targets
                 torch.cuda.empty_cache()
 
-                cuda_memory_info(title="After deleting all targets & Before Backward Pass")
                 # Backward pass
                 Total_loss=None
                 object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
@@ -153,7 +149,6 @@ class XReportoTrainer():
                     Total_loss+=abnormal_binary_classifier_losses
 
                 Total_loss.backward()
-                cuda_memory_info(title="After Backward Pass")
 
                 epoch_loss += Total_loss
 
@@ -178,57 +173,57 @@ class XReportoTrainer():
                 cuda_memory_info(title="After deleting losses & At end of Batch"+str(batch_idx))
                 print("---------------------------------------------------------------------------------------------------")
 
-            # # save the best model
-            # if(epoch_loss<self.best_loss):
-            #     self.best_loss=epoch_loss
-            #     if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-            #         if TRAIN_RPN:
-            #             # Saving object_detector marked as rpn
-            #             print("Saving object_detector [Trained RPN]....")
-            #             save_model(model=self.model.object_detector,name="object_detector_rpn")
-            #         else:
-            #             # Saving Object Detector
-            #             print("Saving object_detector....")
-            #             save_model(model=self.model.object_detector,name="object_detector")
+            # save the best model
+            if(epoch_loss<self.best_loss):
+                self.best_loss=epoch_loss
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                    if TRAIN_RPN:
+                        # Saving object_detector marked as rpn
+                        print("Saving object_detector [Trained RPN]....")
+                        save_model(model=self.model.object_detector,name="object_detector_rpn")
+                    else:
+                        # Saving Object Detector
+                        print("Saving object_detector....")
+                        save_model(model=self.model.object_detector,name="object_detector")
         
-            #     elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-            #         # Saving Object Detector
-            #         print("Saving object_detector....")
-            #         save_model(model=self.model.object_detector,name="object_detector")
+                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                    # Saving Object Detector
+                    print("Saving object_detector....")
+                    save_model(model=self.model.object_detector,name="object_detector")
 
-            #         # Save Region Selection Classifier
-            #         print("Saving region_classifier....")
-            #         save_model(model=self.model.region_classifier,name="region_classifier")
+                    # Save Region Selection Classifier
+                    print("Saving region_classifier....")
+                    save_model(model=self.model.region_classifier,name="region_classifier")
 
-            #         # Save Abnormal Classifier
-            #         print("Saving abnormal_classifier....")
-            #         save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    # Save Abnormal Classifier
+                    print("Saving abnormal_classifier....")
+                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
 
-            #     elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-            #         # Saving Object Detector
-            #         print("Saving object_detector....")
-            #         save_model(model=self.model.object_detector,name="object_detector")
+                elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                    # Saving Object Detector
+                    print("Saving object_detector....")
+                    save_model(model=self.model.object_detector,name="object_detector")
 
-            #         # Save Region Selection Classifier
-            #         print("Saving region_classifier....")
-            #         save_model(model=self.model.region_classifier,name="region_classifier")
+                    # Save Region Selection Classifier
+                    print("Saving region_classifier....")
+                    save_model(model=self.model.region_classifier,name="region_classifier")
 
-            #         # Save Abnormal Classifier
-            #         print("Saving abnormal_classifier....")
-            #         save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
+                    # Save Abnormal Classifier
+                    print("Saving abnormal_classifier....")
+                    save_model(model=self.model.abnormal_classifier,name='abnormal_classifier')
    
-            #         # # Save LM
-            #         # self.save_model('LM')
+                    # # Save LM
+                    # self.save_model('LM')
                                     
 
-            #     # Logging the loss to a file
-            #     with open("logs/loss.txt", "a") as myfile:
-            #         myfile.write(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
-            #         myfile.write("\n")
-            #     # print the epoch loss
-            #     print("\n")
-            #     print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
-            #     print("\n")
+                # Logging the loss to a file
+                with open("logs/loss.txt", "a") as myfile:
+                    myfile.write(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
+                    myfile.write("\n")
+                # print the epoch loss
+                print("\n")
+                print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
+                print("\n")
         
             epoch_loss=0
 
@@ -541,6 +536,7 @@ if __name__ == '__main__':
 
     # Create an XReportoTrainer instance with the X-Reporto model
     trainer = XReportoTrainer(model=x_reporto_model)
+
     cuda_memory_info(title="X-Reporto Model Loaded")
 
     # Train the X-Reporto model on the training dataset

@@ -80,7 +80,7 @@ MODEL_STAGE=1
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # X-Report Trainer Hyper Parameters
-EPOCHS=2
+EPOCHS=4
 LEARNING_RATE=0.00000001
 BATCH_SIZE=4
 SCHEDULAR_STEP_SIZE=1

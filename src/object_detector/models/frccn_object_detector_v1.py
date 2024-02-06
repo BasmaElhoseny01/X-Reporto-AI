@@ -186,7 +186,6 @@ class FrcnnObjectDetectorV1(nn.Module):
                 "top_region_features"
             }
         """
-        cuda_memory_info(title="Before Check Targets")
 
         if targets is not None:
             self._check_targets(targets)
@@ -208,9 +207,7 @@ class FrcnnObjectDetectorV1(nn.Module):
 
         # Getting Proposals of RPN Bounding Boxes
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
-        cuda_memory_info(title="Before rpn")
         proposals, proposal_losses = self.rpn(images, features, targets)
-        cuda_memory_info(title="After rpn")
 
 
         if self.training and TRAIN_RPN:
