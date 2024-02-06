@@ -57,6 +57,8 @@ class CustomDataset(Dataset):
 
         # get the bbox_labels
         bbox_phrases = self.data_info.iloc[idx, 6]
+        bbox_phrases = eval(bbox_phrases)
+
         # get the bbox_labels
         bbox_phrase_exists = self.data_info.iloc[idx, 7]
         # get the bbox_labels
