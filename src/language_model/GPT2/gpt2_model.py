@@ -147,7 +147,9 @@ if __name__ == '__main__':
 
     image_config = Config()
     image_config.d_model = 768
-    image_config.d_ff = 768
+    image_config.d_ff1 = 768
+    image_config.d_ff2 = 768
+    image_config.d_ff3 = 768
     image_config.num_heads = 8
     image_config.num_layers = 6
     image_config.vocab_size = 50257

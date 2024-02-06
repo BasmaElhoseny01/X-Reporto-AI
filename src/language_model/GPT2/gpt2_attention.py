@@ -18,10 +18,11 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         self.head_dim = self.d_model // self.num_heads
         self.max_seq_len = self.config.max_seq_len
         
+        #TODO: check dimension of the causal mask
         self.register_buffer(
             "causal_mask",
-            torch.tril(torch.ones((self.max_seq_len, self.max_seq_len), dtype=torch.bool)).view(
-                1, 1, self.max_seq_len, self.max_seq_len
+            torch.tril(torch.ones((self.max_seq_len, self.max_seq_len+1), dtype=torch.bool)).view(
+                1, 1, self.max_seq_len, self.max_seq_len+1
             ),
             persistent=False,
         )
@@ -52,15 +53,15 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(query.size(-1))
 
         query_length, key_length = query.size(-2), key.size(-2)
-        causal_mask = causal_mask[:, :, key_length - query_length : key_length, :key_length]
+        #TODO: check dimension of the causal mask 
+        # causal_mask = causal_mask[:, :, key_length - query_length : key_length, :key_length]
+        causal_mask = causal_mask[:, :, :query_length, :key_length]
         # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
         # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
         mask_value = torch.full([], mask_value, dtype=scores.dtype, device=scores.device)
         scores = torch.where(causal_mask, scores.to(scores.dtype), mask_value)
         
         if mask is not None:
-            print("mask: ", mask.size())
-            print("scores: ", scores.size())
             scores = scores.masked_fill(mask == 0, -1e9)
         p_attn = F.softmax(scores, dim=-1) # (batch_size, h, max_seq_len, max_seq_len)
         if dropout is not None:
