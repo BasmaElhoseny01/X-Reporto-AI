@@ -272,7 +272,7 @@ def save_model(model,name):
         model(nn): model to be saved
         name (str): Name of the model file.
     '''
-    torch.save(model.state_dict(), "models/" + RUN + '/' + name + ".pth")
+    torch.save(model.state_dict(), "models/" + str(RUN) + '/' + name + ".pth")
 
 def load_model(model,name):
     '''
@@ -282,4 +282,4 @@ def load_model(model,name):
         model(nn): model to be loaded
         name (str): Name of the model file.
     '''
-    model.load_state_dict(torch.load("models/" + RUN + '/' + name + ".pth"))
+    model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))

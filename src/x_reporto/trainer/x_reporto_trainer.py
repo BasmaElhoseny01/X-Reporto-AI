@@ -497,9 +497,24 @@ class XReportoTrainer():
         
 # import argparse
 if __name__ == '__main__':
-    # print("Basma......")
     
-    # set_data(sys.argv)
+    print("Using Configuration:")
+    print("Model Stage", MODEL_STAGE)
+    print("Device", DEVICE)
+
+    print("Epochs:", EPOCHS)
+    print("Learning Rate:", LEARNING_RATE)
+    print("Batch Size:", BATCH_SIZE)
+    print("Scheduler Step Size:", SCHEDULAR_STEP_SIZE)
+    print("Scheduler Gamma:", SCHEDULAR_GAMMA)
+    print("Debug",DEBUG)
+
+    print("Continue train",CONTINUE_TRAIN)
+    print("Train RPN",TRAIN_RPN)
+    print("Run",RUN)
+
+    print("Abnormal Region Pos Weight:", ABNORMAL_CLASSIFIER_POS_WEIGHT)
+    print("Region Selection Pos Weight:", REGION_SELECTION_CLASSIFIER_POS_WEIGHT)
 
     x_reporto_model = XReporto().create_model()
 
