@@ -1,2 +1,5 @@
 
 Basma Data Sets.xlsx
+*.pyc
+datasets
+*.pth
