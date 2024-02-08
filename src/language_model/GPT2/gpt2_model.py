@@ -13,6 +13,8 @@ from src.language_model.GPT2.positional_encoding import PositionalEncoding
 from src.language_model.GPT2.embeddings import InputEmbedding
 from src.language_model.GPT2.gpt2_block import CustomGPT2Block
 from src.language_model.GPT2.config import Config
+import torch.utils.checkpoint
+
 
 class CustomGPT2(nn.Module):
     def __init__(self, config,image_config):
@@ -138,85 +140,139 @@ class CustomGPT2(nn.Module):
 
         # apply transformer blocks
         for i in range(self.num_layers):
-            hidden_states = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask)
-        
+            # check if gradient checkpointing should be used
+            if self.config.use_checkpointing:
+                if self.config.debug and i == 0:
+                    print("using gradient checkpointing")
+                hidden_states = torch.utils.checkpoint.checkpoint(self.blocks[i], hidden_states,attention_mask, image_hidden_states)
+            else:
+                hidden_states = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask)
+            if self.config.debug and i == self.num_layers - 1:
+                print("memory usage after block", i, ":", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+            
         # compute model output logits
         logits = self.fc(hidden_states)
+
+        if self.config.debug:
+            # wait two seconds
+            for i in range(400000000):
+            # print("waiting for 2 seconds")
+                continue
+            # print memory usage
+            print("memory usage after logits:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
 
         loss = None
         if labels is not None:
             # move labels to correct device to enable model parallelism
-            labels = labels.to(logits.device)
+            # labels = labels.to(logits.device)
             # convert labels dtype to dtype of the model
-            labels = labels.to(dtype=torch.long)
+            # labels = labels.to(dtype=torch.long)
             # Shift so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
+            del logits
             shift_labels = labels[..., 1:].contiguous()
+            del labels
+
+            if self.config.debug:
+                # wait two seconds
+                for i in range(200000000):
+                    # print("waiting for 2 seconds")
+                    continue
+                # print memory usage
+                print("memory usage before loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+            
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
             # convert logits dtype to float32
-            # shift_logits = shift_logits.to(dtype=torch.float32)
-
+            shift_logits = shift_logits.to(dtype=torch.float32)
+            if self.config.debug:
+                # wait two seconds
+                for i in range(200000000):
+                    # print("waiting for 2 seconds")
+                    continue
+                
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            return (loss,logits) 
+            return (loss,shift_logits) 
         return logits
 
-if __name__ == '__main__':
-    # Test
+def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False):
     config = Config()
     config.d_model = 768
     config.d_ff = 768
     config.num_layers = 12
     config.vocab_size = 50257
-    config.max_seq_len = 1024
+    config.max_seq_len = seq_length
     config.pretrained_model = "gpt2"
-
+    config.use_checkpointing = use_checkpointing
+    config.debug = debug
     image_config = Config()
     image_config.d_model = 768
     image_config.d_ff1 = 768
     image_config.d_ff2 = 768
     image_config.d_ff3 = 768
-    image_config.num_heads = 8
-    image_config.num_layers = 6
-    image_config.vocab_size = 50257
-    image_config.max_seq_len = 1024
-    image_config.dropout = 0.1
-    gpt2 = CustomGPT2(config,image_config)
-    x = torch.randint(0, 50257, (2, 5))
-    image_hidden_states = torch.randn(2, 1, config.d_model)
-    # create attention mask
-    attention_mask = torch.ones(2, 5)
-    print(gpt2(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask).size()) # torch.Size([2, 5, 50257])
-    print(gpt2)
-    x = torch.randint(0, 50257, (2, 5))
-    image_hidden_states = torch.randn(2, 1, config.d_model)
-    labels = torch.randint(0, 50257, (2, 5))
-    print(gpt2(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels)[0]) # tensor(13.5676, grad_fn=<NllLossBackward>)
-    print(gpt2)
+    
+    model = CustomGPT2(config,image_config)
+    if is_half:
+        model.half()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
 
-    # save model
-    torch.save(gpt2.state_dict(), "gpt2.pth")
-
-    # convert model to half precision
-    gpt2.half()
-
-    # print model dtype
-    print(gpt2.fc.weight.dtype)
-    x = torch.randint(0, 50257, (2, 5))
-    image_hidden_states = torch.randn(2, 1, config.d_model)
-    labels = torch.randint(0, 50257, (2, 5))
-    print(gpt2(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels)[0]) # tensor(13.5676, grad_fn=<NllLossBackward>)
-    print(gpt2)
-
-    # save half precision model
-    torch.save(gpt2.state_dict(), "gpt2_half.pth")
-
-    # convert model to half precision
-    gpt2.half()
-
-    # print model dtype
-    print(gpt2.fc.weight.dtype)
-    # save half precision model
-    torch.save(gpt2.state_dict(), "gpt2_half2.pth")
+    x = torch.randint(0, 50257, (batch_size, seq_length))
+    image_hidden_states = torch.randn(batch_size, 1, config.d_model)
+    labels = torch.randint(0, 50257, (batch_size, seq_length))
+    attention_mask = torch.ones(batch_size, seq_length)
+    x = x.to(device)
+    image_hidden_states = image_hidden_states.to(device)
+    attention_mask = attention_mask.to(device)
+    labels = labels.to(device)
+    model.train()
+    for i in range(4):
+        loss, logits = model(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels)
+        logits = logits.to("cpu")
+        del logits
+        print("loss:", loss.item())
+        print("memory usage after loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+        # apply optimizer
+        # wait two seconds
+        for i in range(100000000):
+            # print("waiting for 2 seconds")
+            continue
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+        optimizer.step()
+        print("memory usage after step:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+    # move to cpu
+    model.to("cpu")
+    x = x.to("cpu")
+    image_hidden_states = image_hidden_states.to("cpu")
+    attention_mask = attention_mask.to("cpu")
+    labels = labels.to("cpu")
+    # free memory
+    del x
+    del image_hidden_states
+    del attention_mask
+    del labels
+    torch.cuda.empty_cache()
+    del model
+    # apply garbage collection
+    import gc
+    gc.collect()
+    
+    torch.cuda.empty_cache()
+    torch.cuda.reset_max_memory_allocated()
+    # print memory usage
+    print("memory usage after empty cache:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
 
     
+if __name__ == '__main__':
+    print("Test 1")
+    print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False")
+    test(use_checkpointing = True, debug=False,batch_size = 4,seq_length =1024,is_half = False)
+    # wait two seconds
+    for i in range(200000000):
+        # print("waiting for 2 seconds")
+        continue
+    # print memory usage
+    print("memory usage after test 1:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+    print("Test 2")
+    print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = True")
+    test(use_checkpointing = True, debug=True,batch_size = 6,seq_length =1024,is_half = True)
