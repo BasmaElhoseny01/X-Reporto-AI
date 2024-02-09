@@ -106,8 +106,8 @@ class XReportoTrainer():
         # make model in training mode
         print("Training Started")
         self.model.train()
-        epoch_loss = 0
         for epoch in range(EPOCHS):
+            epoch_loss = 0
             for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):                
                 
                 images=object_detector_batch['image']
