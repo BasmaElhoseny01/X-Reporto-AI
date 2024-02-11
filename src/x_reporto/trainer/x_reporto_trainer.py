@@ -688,10 +688,10 @@ if __name__ == '__main__':
     # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
-    # trainer.train()
+    trainer.train()
 
     # # Run Validation
     # trainer.Validate()
 
     # # Predict and display results
-    trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
+    # trainer.predict_and_display(predict_path_csv='datasets/predict.csv')

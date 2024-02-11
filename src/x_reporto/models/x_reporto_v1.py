@@ -73,8 +73,7 @@ class XReportoV1(nn.Module):
                 # Load full object detector
                 print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector')
-
-
+                
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the Region Selection Classifier to continue training
                 print("Loading region_classifier .....")
@@ -83,14 +82,24 @@ class XReportoV1(nn.Module):
                 # Load the Abnormal Classifier to continue training
                 print("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
-                
+
                 # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                 for param in self.object_detector.object_detector.parameters():
                     param.requires_grad = False
-            
+                    
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load Language Model to continue training
-                pass
+                # Load Language Model to continue training
+                print("Loading language_model .....")
+                load_model(model=self.language_model,name=' LM')
+
+                # Freezing Selection Region Binary Classifier
+                for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
+                    param.requires_grad = False
+
+                # Freezing Abnormal Region Binary Classifier
+                for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
+                    param.requires_grad = False
             
         else:
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
@@ -102,8 +111,11 @@ class XReportoV1(nn.Module):
 
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the object_detector to continue training
-                print("Loading object_detector .....")
+                print("Loading object_detector false .....")
                 load_model(model=self.object_detector,name='object_detector')
+                # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
+                for param in self.object_detector.object_detector.parameters():
+                    param.requires_grad = False
 
                 # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                 for param in self.object_detector.object_detector.parameters():
@@ -114,11 +126,16 @@ class XReportoV1(nn.Module):
                 # Load the Region Selection Classifier to start training
                 print("Loading region_classifier .....")
                 load_model(model=self.binary_classifier_selection_region,name='region_classifier')
+                # Freezing Selection Region Binary Classifier
+                for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
+                    param.requires_grad = False
 
                 # Load the Abnormal Classifier to start training
                 print("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
-      
+                # Freezing Abnormal Region Binary Classifier
+                for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
+                    param.requires_grad = False
 
 
             
@@ -255,25 +272,25 @@ class XReportoV1(nn.Module):
             if delete:
                 # free gpu memory
                 abnormal_classifier_targets=abnormal_classifier_targets.to('cpu')
+                object_detector_detected_classes=object_detector_detected_classes.to('cpu')
                 del abnormal_classifier_targets
+                del object_detector_detected_classes
                 torch.cuda.empty_cache()
            
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
-            
-            # valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+       
+            print("Before language model")       
             input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
-            
             if delete:
-                # free gpu memory
-                selection_classifier_targets=selection_classifier_targets.to('cpu')
-                object_detector_detected_classes=object_detector_detected_classes.to('cpu')
-                del selection_classifier_targets
-                del object_detector_detected_classes
-                torch.cuda.empty_cache()
-            
-            print("Before language model")
-
+              selection_classifier_targets=selection_classifier_targets.to('cpu')
+              del selection_classifier_targets
+              torch.cuda.empty_cache()
+            print("here is the problem ",len(input_ids))
+            if index>=len(input_ids):
+                return 0,0,0,0,0,0,0,0,True
+            if (index+LM_Batch_Size) >= len(input_ids):
+                stop=True
             LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
             if delete:
                 # Free GPU memory
@@ -285,7 +302,33 @@ class XReportoV1(nn.Module):
                 del attention_mask
                 torch.cuda.empty_cache()
 
-            return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
+            return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
+           
+            # # valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+            # input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+            
+            # if delete:
+            #     # free gpu memory
+            #     selection_classifier_targets=selection_classifier_targets.to('cpu')
+            #     object_detector_detected_classes=object_detector_detected_classes.to('cpu')
+            #     del selection_classifier_targets
+            #     del object_detector_detected_classes
+            #     torch.cuda.empty_cache()
+            
+            # print("Before language model")
+
+            # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+            # if delete:
+            #     # Free GPU memory
+            #     object_detector_features=object_detector_features.to('cpu')
+            #     input_ids=input_ids.to('cpu')
+            #     attention_mask=attention_mask.to('cpu')
+            #     del object_detector_features
+            #     del input_ids
+            #     del attention_mask
+            #     torch.cuda.empty_cache()
+
+            # return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
         
         else: # Validation (or inference) mode
             # Stage(1) Object Detector
