@@ -43,6 +43,7 @@ END
 echo "Fixing bounding boxes in the MIMIC-CXR dataset."
 python3 - <<END
 import shutil
+import os
 from data_preprocessing.create import DataPreprocessing
 shutil.copy('/content/drive/MyDrive/MIMIC/train_csv/train.csv','train.csv')
 dataPreprocessor = DataPreprocessing()
@@ -52,7 +53,7 @@ os.remove("train.csv")
 # rename the new train.csv to train.csv
 os.rename("new_train.csv","train.csv")
 # move the train.csv to datasets folder
-shutil.move("train.csv", path_mimic_cxr)
+shutil.move("train.csv", "datasets/")
 END
 
 
