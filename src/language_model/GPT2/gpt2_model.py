@@ -109,7 +109,7 @@ class CustomGPT2(nn.Module):
         if image_hidden_states is not None:
             # convert image hidden states dtype to dtype of the model
             image_hidden_states = image_hidden_states.to(dtype=self.fc.weight.dtype)
-            print("image_hidden_states dtype:", image_hidden_states.dtype)
+            # print("image_hidden_states dtype:", image_hidden_states.dtype)
             image_hidden_states = self.image_to_text(image_hidden_states)
 
         input_ids = input_ids.view(-1, input_ids.size(-1))
@@ -122,7 +122,7 @@ class CustomGPT2(nn.Module):
             # apply positional encoding layer
             # convert hidden states dtype to dtype of the model
             hidden_states = hidden_states.to(dtype=self.fc.weight.dtype)
-            print("hidden_states dtype:", hidden_states.dtype)
+            # print("hidden_states dtype:", hidden_states.dtype)
             hidden_states = self.positional_encoding(hidden_states)
 
         # apply dropout layer

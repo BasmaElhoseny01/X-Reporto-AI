@@ -39,7 +39,6 @@ class XReportoV1(nn.Module):
         if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
-            
         if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             config = Config()
             config.d_model = 768
@@ -62,8 +61,8 @@ class XReportoV1(nn.Module):
             image_config.dropout = 0.1
             self.language_model = CustomGPT2(config,image_config)
             # convert the model to half precision
-            self.language_model.half()
-            self.language_model.convert_to_half()
+            # self.language_model.half()
+            # self.language_model.convert_to_half()
 
         if CONTINUE_TRAIN:
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
@@ -113,10 +112,6 @@ class XReportoV1(nn.Module):
                 # Load the object_detector to continue training
                 print("Loading object_detector false .....")
                 load_model(model=self.object_detector,name='object_detector')
-                # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
-                for param in self.object_detector.object_detector.parameters():
-                    param.requires_grad = False
-
                 # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                 for param in self.object_detector.object_detector.parameters():
                     param.requires_grad = False
@@ -247,7 +242,7 @@ class XReportoV1(nn.Module):
         if self.training:
             # Training
             # Stage(1) Object Detector
-            print("Before object detector")
+            # print("Before object detector")
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
             
             if delete:
@@ -264,7 +259,7 @@ class XReportoV1(nn.Module):
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,0,0,0
             # Stage(2) Binary Classifier
-            print("Before binary classifier selection region")
+            # print("Before binary classifier selection region")
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
             selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
             abnormal_binary_classifier_losses,_=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
@@ -280,13 +275,13 @@ class XReportoV1(nn.Module):
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
        
-            print("Before language model")       
+            # print("Before language model")       
             input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
             if delete:
               selection_classifier_targets=selection_classifier_targets.to('cpu')
               del selection_classifier_targets
               torch.cuda.empty_cache()
-            print("here is the problem ",len(input_ids))
+            # print("here is the problem ",len(input_ids))
             if index>=len(input_ids):
                 return 0,0,0,0,0,0,0,0,True
             if (index+LM_Batch_Size) >= len(input_ids):
@@ -360,7 +355,7 @@ class XReportoV1(nn.Module):
            
             # Stage(3) Language Model
                       
-            print("Before language model")       
+            # print("Before language model")       
             input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selected_regions, input_ids, attention_mask, object_detector_features)
             print("here is the problem ",len(input_ids))
             if index>=len(input_ids):
@@ -378,7 +373,7 @@ class XReportoV1(nn.Module):
                 del attention_mask
                 torch.cuda.empty_cache()
 
-            return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_output[0],stop
+            return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_output[0],LM_output[1],stop
     
     def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features):
         '''
@@ -400,7 +395,4 @@ class XReportoV1(nn.Module):
         valid_input_ids = input_ids[selection_classifier_targets]
         valid_attention_mask = attention_mask[selection_classifier_targets]
         valid_region_features = object_detector_features[selection_classifier_targets]
-        print("valid_input_ids",valid_input_ids.size())
-        print("valid_attention_mask",valid_attention_mask.size())
-        print("valid_region_features",valid_region_features.size())
         return valid_input_ids, valid_attention_mask, valid_region_features

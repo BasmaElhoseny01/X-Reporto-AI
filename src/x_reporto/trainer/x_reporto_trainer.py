@@ -159,6 +159,7 @@ class XReportoTrainer():
                     
                     loopLength= input_ids.shape[1]
                     for batch in range(BATCH_SIZE):
+                        total_LM_losses=0
                         for i in range(0,loopLength,LM_Batch_Size):
                             # zero the parameter gradients
                             self.optimizer.zero_grad()
@@ -169,25 +170,24 @@ class XReportoTrainer():
                             if stop:
                                 break
                             # Backward pass
+                            # if(batch==0):
                             Total_loss=None
                             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
                             Total_loss=object_detector_losses_summation.clone()
-                            if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                                Total_loss+=selection_classifier_losses
-                                Total_loss+=abnormal_binary_classifier_losses
-                            if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                                Total_loss+=LM_losses
+                            Total_loss+=selection_classifier_losses
+                            Total_loss+=abnormal_binary_classifier_losses
 
+                            Total_loss+=LM_losses
+                            total_LM_losses+=LM_losses
                             Total_loss.backward()
 
                             epoch_loss += Total_loss
 
                             # update the parameters
                             self.optimizer.step()
-
-                            if DEBUG :
-                                print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {LM_losses:.4f} total_Loss: {Total_loss:.4f}')
-                
+                        if DEBUG :
+                          print(f'epoch.....: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+        
                 else:
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
@@ -263,7 +263,7 @@ class XReportoTrainer():
                     save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
    
                     # # Save LM
-                    save_model(model=self.model.LM,name='LM')
+                    save_model(model=self.model.language_model,name='LM')
                                     
 
                 # Logging the loss to a file
@@ -338,28 +338,26 @@ class XReportoTrainer():
                         
                         loopLength= input_ids.shape[1]
                         for batch in range(BATCH_SIZE):
+                            total_LM_losses=0
                             for i in range(0,loopLength,LM_Batch_Size):
 
                                 # Forward Pass  
-                                object_detector_losses,_,_,selection_classifier_losses,_,abnormal_binary_classifier_losses,_,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i,i+LM_Batch_Size>=loopLength and batch+1==BATCH_SIZE)
+                                object_detector_losses,_,_,selection_classifier_losses,_,abnormal_binary_classifier_losses,_,LM_losses,_,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i,i+LM_Batch_Size>=loopLength and batch+1==BATCH_SIZE)
                                 
                                 if stop:
                                     break
-
                                 Total_loss=None
                                 object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
                                 Total_loss=object_detector_losses_summation.clone()
-                                if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                                    Total_loss+=selection_classifier_losses
-                                    Total_loss+=abnormal_binary_classifier_losses
-                                if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                                    Total_loss+=LM_losses
-
+                                Total_loss+=selection_classifier_losses
+                                Total_loss+=abnormal_binary_classifier_losses
+                                Total_loss+=LM_losses
+                                total_LM_losses+=LM_losses
                                 epoch_loss += Total_loss
 
-                                if DEBUG :
-                                    print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {LM_losses:.4f} total_Loss: {Total_loss:.4f}')
-                    
+                            if DEBUG :
+                                print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+                
                     else:
                         # Forward Pass
                         object_detector_losses,_,_,selection_classifier_losses,_,abnormal_binary_classifier_losses,_,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None,None,True)
@@ -475,27 +473,28 @@ class XReportoTrainer():
                     
                     loopLength= input_ids.shape[1]
                     for batch in range(BATCH_SIZE):
+                        total_LM_losses=0
                         for i in range(0,loopLength,LM_Batch_Size):
                             # Forward Pass
-                            object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i,i+LM_Batch_Size>=loopLength-1)
+                            object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_losses,LM_predict,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i,i+LM_Batch_Size>=loopLength-1)
 
                             if stop:
                                 break
                             print("selection looses ",selection_classifier_losses)
                             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
                             Total_loss=object_detector_losses_summation.clone()
-                            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                                Total_loss+=selection_classifier_losses
-                                Total_loss+=abnormal_binary_classifier_losses
-                            if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                                Total_loss+=LM_losses
+                            Total_loss+=selection_classifier_losses
+                            Total_loss+=abnormal_binary_classifier_losses
+                            Total_loss+=LM_losses
+                            total_LM_losses+=LM_losses
 
                             with open("logs/predictions.txt", "a") as myfile:
                                 # don't know the text TODO: 
+                                # myfile.write
                                 myfile.write("\n")
 
                             if DEBUG :
-                                print(f'Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {LM_losses:.4f} total_Loss: {Total_loss:.4f}')
+                                print(f'Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
                 
                 else:
                     # Forward Pass

@@ -23,8 +23,8 @@ class CustomDataset(Dataset):
         self.transform_type = transform_type
         self.transform = CustomAugmentation(transform_type=self.transform_type)
         # read the csv file
-        print("start reading csv file")
-        print(dataset_path)
+        # print("start reading csv file")
+        # print(dataset_path)
         self.data_info = pd.read_csv(dataset_path, header=None)
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
@@ -102,7 +102,7 @@ class CustomDataset(Dataset):
         tokenize_phrase = self.tokenizer(bbox_phrases)  
         # print(tokenize_phrase)
         # sys.exit()
-        print("start Tokenize")
+        # print("start Tokenize")
         language_model_sample["bbox_phrase"]=bbox_phrases
         padded_lists_by_pad_token = [tokenize_phrase_lst + [tokenize_phrase_lst[0]] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
         padded_lists_by_ignore_token = [tokenize_phrase_lst + [Config.ignore_index] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
@@ -115,5 +115,5 @@ class CustomDataset(Dataset):
         language_model_sample["label_ids"] = torch.tensor(language_model_sample["label_ids"], dtype=torch.long)
         language_model_sample["attention_mask"] = torch.tensor(language_model_sample["attention_mask"], dtype=torch.long)
 
-        print("end Tokenize")
+        # print("end Tokenize")
         return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample
