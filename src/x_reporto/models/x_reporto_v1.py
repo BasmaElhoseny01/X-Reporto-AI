@@ -39,6 +39,7 @@ class XReportoV1(nn.Module):
         if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
+            
         if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             config = Config()
             config.d_model = 768
@@ -82,6 +83,10 @@ class XReportoV1(nn.Module):
                 # Load the Abnormal Classifier to continue training
                 print("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
+                
+                # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
+                for param in self.object_detector.object_detector.parameters():
+                    param.requires_grad = False
             
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load Language Model to continue training
@@ -99,6 +104,10 @@ class XReportoV1(nn.Module):
                 # Load the object_detector to continue training
                 print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector')
+
+                # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
+                for param in self.object_detector.object_detector.parameters():
+                    param.requires_grad = False
 
 
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
@@ -236,7 +245,7 @@ class XReportoV1(nn.Module):
                 torch.cuda.empty_cache()
 
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
-                return object_detector_losses,0
+                return object_detector_losses,0,0,0
             # Stage(2) Binary Classifier
             print("Before binary classifier selection region")
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
