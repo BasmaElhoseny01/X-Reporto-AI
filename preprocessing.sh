@@ -47,6 +47,12 @@ from data_preprocessing.create import DataPreprocessing
 shutil.copy('/content/drive/MyDrive/MIMIC/train_csv/train.csv','train.csv')
 dataPreprocessor = DataPreprocessing()
 dataPreprocessor.adjust_bounding_boxes("train.csv","new_train.csv")
+# remove the old train.csv
+os.remove("train.csv")
+# rename the new train.csv to train.csv
+os.rename("new_train.csv","train.csv")
+# move the train.csv to datasets folder
+shutil.move("train.csv", path_mimic_cxr)
 END
 
 
