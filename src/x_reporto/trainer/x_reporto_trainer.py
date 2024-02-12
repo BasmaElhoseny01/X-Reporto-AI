@@ -1,5 +1,6 @@
 import gc
 import psutil
+import spacy
 import torch
 import datetime
 import sys
@@ -10,7 +11,7 @@ from torch.utils.data import  DataLoader
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 from src.utils import plot_image
 from src.x_reporto.models.x_reporto_factory import XReporto
-
+from src.x_reporto.data_loader.tokenizer import Tokenizer
 # Utils 
 from src.utils import save_model
 
@@ -85,8 +86,11 @@ class XReportoTrainer():
 
         # create dataset
         # TODO Change to transform_type train
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val')
-        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
+        self.checkpoint="healx/gpt-2-pubmed-medium"
+        self.tokenizer = Tokenizer(self.checkpoint)
+
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val',tokenizer=self.tokenizer)
+        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val',tokenizer=self.tokenizer)
         print("Dataset Loaded")
         
         # create data loader
@@ -487,7 +491,8 @@ class XReportoTrainer():
                             Total_loss+=abnormal_binary_classifier_losses
                             Total_loss+=LM_losses
                             total_LM_losses+=LM_losses
-
+                            generated_sents_for_selected_regions = self.tokenizer.batch_decode(LM_predict, skip_special_tokens=True, clean_up_tokenization_spaces=True
+            )
                             with open("logs/predictions.txt", "a") as myfile:
                                 # don't know the text TODO: 
                                 # myfile.write
