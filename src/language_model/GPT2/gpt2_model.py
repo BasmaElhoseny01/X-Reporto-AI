@@ -117,13 +117,20 @@ class CustomGPT2(nn.Module):
             print("use_cache:", use_cache)
             print("output_attentions:", output_attentions)
             # print shape of all inputs
-            print("input_ids shape:", input_ids.shape)
-            print("layer_past shape:", layer_past[0][0].shape)
-            print("attention_mask shape:", attention_mask.shape)
-            print("position_ids shape:", position_ids.shape)
-            print("inputs_embeds shape:", inputs_embeds.shape)
-            print("image_hidden_states shape:", image_hidden_states.shape)
-            print("labels shape:", labels.shape)
+            if input_ids is not None:
+                print("input_ids shape:", input_ids.shape)
+            if layer_past is not None:
+                print("layer_past shape:", layer_past[0][0].shape)
+            if attention_mask is not None:
+                print("attention_mask shape:", attention_mask.shape)
+            if position_ids is not None:
+                print("position_ids shape:", position_ids.shape)
+            if inputs_embeds is not None:
+                print("inputs_embeds shape:", inputs_embeds.shape)
+            if image_hidden_states is not None:
+                print("image_hidden_states shape:", image_hidden_states.shape)
+            if labels is not None:
+                print("labels shape:", labels.shape)
             
         if image_hidden_states is not None:
             # convert image hidden states dtype to dtype of the model
@@ -227,7 +234,8 @@ class CustomGPT2(nn.Module):
         if use_cache:
             return (logits, presents)
         return (logits,)
-
+    # add no_grad to forward pass
+    @torch.no_grad()
     def generate(self, max_length, image_hidden_states,device):
         
         batch_size = image_hidden_states.size(0)
@@ -267,6 +275,7 @@ class CustomGPT2(nn.Module):
             # stop when all sentences are finished or if we exceed the maximum length
             if all_sequences_to_generate.max() == 0 or (max_length and cur_len >= max_length):
                 break
+            
         return input_ids
 
 
@@ -305,7 +314,7 @@ class CustomGPT2(nn.Module):
             "use_cache": kwargs.get("use_cache"),
             "position_ids": position_ids,
             "attention_mask": attention_mask,
-            "token_type_ids": token_type_ids,
+            # "token_type_ids": token_type_ids,
         }
     
     def update_model_kwargs(self, input_ids, layer_past=None, inputs_embeds=None, **kwargs):
@@ -349,7 +358,7 @@ class CustomGPT2(nn.Module):
                 "use_cache": kwargs.get("use_cache"),
                 "position_ids": position_ids,
                 "attention_mask": attention_mask,
-                "token_type_ids": token_type_ids,
+                # "token_type_ids": token_type_ids,
             }
         )
 
@@ -427,14 +436,44 @@ def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is
     print("memory usage after empty cache:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
 
 
+def test_genertation(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False):
+    config = Config()
+    config.d_model = 768
+    config.d_ff = 768
+    config.num_layers = 12
+    config.vocab_size = 50257
+    config.max_seq_len = seq_length
+    config.pretrained_model = "gpt2"
+    config.use_checkpointing = use_checkpointing
+    config.debug = debug
+    image_config = Config()
+    image_config.d_model = 768
+    image_config.d_ff1 = 768
+    image_config.d_ff2 = 768
+    image_config.d_ff3 = 768
+    
+    model = CustomGPT2(config,image_config)
+    if is_half:
+        model.half()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    image_hidden_states = torch.randn(batch_size, 1, config.d_model)
+    image_hidden_states = image_hidden_states.to(device)
+    model.eval()
+    generated = model.generate(3, image_hidden_states,device)
+    print("generated: ",generated)
+    
 if __name__ == '__main__':
-    print("Test 1")
-    print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False")
-    test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False)
-    # wait two seconds
-    wait(2)
-    # print memory usage
-    print("memory usage after test 1:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-    print("Test 2")
-    print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = True")
-    test(use_checkpointing = True, debug=True,batch_size = 6,seq_length =1024,is_half = True)
+
+    test_genertation(use_checkpointing = True, debug=True,batch_size = 1,seq_length =1024,is_half = False)
+
+    # print("Test 1")
+    # print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False")
+    # test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False)
+    # # wait two seconds
+    # wait(2)
+    # # print memory usage
+    # print("memory usage after test 1:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+    # print("Test 2")
+    # print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = True")
+    # test(use_checkpointing = True, debug=True,batch_size = 6,seq_length =1024,is_half = True)
