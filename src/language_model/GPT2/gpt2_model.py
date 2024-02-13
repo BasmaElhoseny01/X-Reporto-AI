@@ -249,10 +249,9 @@ class CustomGPT2(nn.Module):
         #start with a random token
         all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device)
         cur_len = seq_len
-        presents = None
         while True:
             # prepare model inputs
-            model_inputs = self.prepare_inputs_for_generation(input_ids,presents, **model_kwargs)
+            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
             # forward pass to get next
             logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
             next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
@@ -264,7 +263,8 @@ class CustomGPT2(nn.Module):
             # update input_ids, attention mask and length for next step
             input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
             # update model kwargs
-            model_kwargs = self.update_model_kwargs(input_ids,presents, model_kwargs)
+            print("**model_kwargs",model_kwargs)
+            model_kwargs = self.update_model_kwargs(presents,model_kwargs)
             # update sequence length
             cur_len += 1
 
@@ -275,8 +275,8 @@ class CustomGPT2(nn.Module):
             # stop when all sentences are finished or if we exceed the maximum length
             if all_sequences_to_generate.max() == 0 or (max_length and cur_len >= max_length):
                 break
-            
         return input_ids
+
 
 
     def prepare_inputs_for_generation(self, input_ids, layer_past=None, **kwargs):
@@ -316,53 +316,60 @@ class CustomGPT2(nn.Module):
             "attention_mask": attention_mask,
             # "token_type_ids": token_type_ids,
         }
+    def update_model_kwargs(self, presents, model_kwargs):
+        model_kwargs["past"] = presents
+        attention_mask = model_kwargs["attention_mask"]
+        model_kwargs["attention_mask"] = torch.cat([attention_mask, attention_mask.new_ones((attention_mask.shape[0], 1))], dim=-1)
+
+        return model_kwargs
     
-    def update_model_kwargs(self, input_ids, layer_past=None, inputs_embeds=None, **kwargs):
-        token_type_ids = kwargs.get("token_type_ids", None)
-        # Omit tokens covered by past_key_values
-        if layer_past:
-            past_length = layer_past[0][0].shape[2]
+    # def update_model_kwargs(self, input_ids, layer_past=None, inputs_embeds=None, **kwargs):
+    #     token_type_ids = kwargs.get("token_type_ids", None)
+    #     # Omit tokens covered by past_key_values
+    #     if layer_past:
+    #         past_length = layer_past[0][0].shape[2]
 
-            # Some generation methods already pass only the last input ID
-            if input_ids.shape[1] > past_length:
-                remove_prefix_length = past_length
-            else:
-                # Default to old behavior: keep only final ID
-                remove_prefix_length = input_ids.shape[1] - 1
+    #         # Some generation methods already pass only the last input ID
+    #         if input_ids.shape[1] > past_length:
+    #             remove_prefix_length = past_length
+    #         else:
+    #             # Default to old behavior: keep only final ID
+    #             remove_prefix_length = input_ids.shape[1] - 1
 
-            input_ids = input_ids[:, remove_prefix_length:]
-            if token_type_ids is not None:
-                token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
+    #         input_ids = input_ids[:, remove_prefix_length:]
+    #         if token_type_ids is not None:
+    #             token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
 
-        attention_mask = kwargs.get("attention_mask", None)
-        position_ids = kwargs.get("position_ids", None)
+    #     attention_mask = kwargs.get("attention_mask", None)
+    #     position_ids = kwargs.get("position_ids", None)
 
-        if attention_mask is not None and position_ids is None:
-            # create position_ids on the fly for batch generation
-            position_ids = attention_mask.long().cumsum(-1) - 1
-            position_ids.masked_fill_(attention_mask == 0, 1)
-            if layer_past:
-                position_ids = position_ids[:, -input_ids.shape[1] :]
-        else:
-            position_ids = None
+    #     if attention_mask is not None and position_ids is None:
+    #         # create position_ids on the fly for batch generation
+    #         position_ids = attention_mask.long().cumsum(-1) - 1
+    #         position_ids.masked_fill_(attention_mask == 0, 1)
+    #         if layer_past:
+    #             position_ids = position_ids[:, -input_ids.shape[1] :]
+    #     else:
+    #         position_ids = None
 
-        # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
-        if inputs_embeds is not None and layer_past is None:
-            model_inputs = {"inputs_embeds": inputs_embeds}
-        else:
-            model_inputs = {"input_ids": input_ids}
+    #     # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
+    #     if inputs_embeds is not None and layer_past is None:
+    #         model_inputs = {"inputs_embeds": inputs_embeds}
+    #     else:
+    #         model_inputs = {"input_ids": input_ids}
 
-        model_inputs.update(
-            {
-                "layer_past": layer_past,
-                "use_cache": kwargs.get("use_cache"),
-                "position_ids": position_ids,
-                "attention_mask": attention_mask,
-                # "token_type_ids": token_type_ids,
-            }
-        )
+    #     model_inputs.update(
+    #         {
+    #             "layer_past": layer_past,
+    #             "use_cache": kwargs.get("use_cache"),
+    #             "position_ids": position_ids,
+    #             "attention_mask": attention_mask,
+    #             # "token_type_ids": token_type_ids,
+    #         }
+    #     )
 
-        return model_inputs
+    #     return model_inputs
+
 
 def wait(seconds):
     seconds = seconds * 200000000
