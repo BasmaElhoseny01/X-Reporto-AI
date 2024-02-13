@@ -105,7 +105,26 @@ class CustomGPT2(nn.Module):
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None
         ):
-
+        # print all inputs
+        if self.config.debug:
+            print("input_ids:", input_ids)
+            print("layer_past:", layer_past)
+            print("attention_mask:", attention_mask)
+            print("position_ids:", position_ids)
+            print("inputs_embeds:", inputs_embeds)
+            print("image_hidden_states:", image_hidden_states)
+            print("labels:", labels)
+            print("use_cache:", use_cache)
+            print("output_attentions:", output_attentions)
+            # print shape of all inputs
+            print("input_ids shape:", input_ids.shape)
+            print("layer_past shape:", layer_past[0][0].shape)
+            print("attention_mask shape:", attention_mask.shape)
+            print("position_ids shape:", position_ids.shape)
+            print("inputs_embeds shape:", inputs_embeds.shape)
+            print("image_hidden_states shape:", image_hidden_states.shape)
+            print("labels shape:", labels.shape)
+            
         if image_hidden_states is not None:
             # convert image hidden states dtype to dtype of the model
             image_hidden_states = image_hidden_states.to(dtype=self.fc.weight.dtype)
@@ -222,9 +241,10 @@ class CustomGPT2(nn.Module):
         #start with a random token
         all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device)
         cur_len = seq_len
+        presents = None
         while True:
             # prepare model inputs
-            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+            model_inputs = self.prepare_inputs_for_generation(input_ids,presents, **model_kwargs)
             # forward pass to get next
             logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
             next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
@@ -236,7 +256,7 @@ class CustomGPT2(nn.Module):
             # update input_ids, attention mask and length for next step
             input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
             # update model kwargs
-            model_kwargs = self.update_model_kwargs(presents, model_kwargs)
+            model_kwargs = self.update_model_kwargs(input_ids,presents, model_kwargs)
             # update sequence length
             cur_len += 1
 
@@ -250,11 +270,11 @@ class CustomGPT2(nn.Module):
         return input_ids
 
 
-    def prepare_inputs_for_generation(self, input_ids, past_key_values=None, **kwargs):
+    def prepare_inputs_for_generation(self, input_ids, layer_past=None, **kwargs):
         token_type_ids = kwargs.get("token_type_ids", None)
         # Omit tokens covered by past_key_values
-        if past_key_values:
-            past_length = past_key_values[0][0].shape[2]
+        if layer_past:
+            past_length = layer_past[0][0].shape[2]
 
             # Some generation methods already pass only the last input ID
             if input_ids.shape[1] > past_length:
@@ -274,25 +294,25 @@ class CustomGPT2(nn.Module):
             # create position_ids on the fly for batch generation
             position_ids = attention_mask.long().cumsum(-1) - 1
             position_ids.masked_fill_(attention_mask == 0, 1)
-            if past_key_values:
+            if layer_past:
                 position_ids = position_ids[:, -input_ids.shape[1] :]
         else:
             position_ids = None
 
         return {
             "input_ids": input_ids,
-            "past_key_values": past_key_values,
+            "layer_past": layer_past,
             "use_cache": kwargs.get("use_cache"),
             "position_ids": position_ids,
             "attention_mask": attention_mask,
             "token_type_ids": token_type_ids,
         }
     
-    def update_model_kwargs(self, input_ids, past_key_values=None, inputs_embeds=None, **kwargs):
+    def update_model_kwargs(self, input_ids, layer_past=None, inputs_embeds=None, **kwargs):
         token_type_ids = kwargs.get("token_type_ids", None)
         # Omit tokens covered by past_key_values
-        if past_key_values:
-            past_length = past_key_values[0][0].shape[2]
+        if layer_past:
+            past_length = layer_past[0][0].shape[2]
 
             # Some generation methods already pass only the last input ID
             if input_ids.shape[1] > past_length:
@@ -312,20 +332,20 @@ class CustomGPT2(nn.Module):
             # create position_ids on the fly for batch generation
             position_ids = attention_mask.long().cumsum(-1) - 1
             position_ids.masked_fill_(attention_mask == 0, 1)
-            if past_key_values:
+            if layer_past:
                 position_ids = position_ids[:, -input_ids.shape[1] :]
         else:
             position_ids = None
 
         # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
-        if inputs_embeds is not None and past_key_values is None:
+        if inputs_embeds is not None and layer_past is None:
             model_inputs = {"inputs_embeds": inputs_embeds}
         else:
             model_inputs = {"input_ids": input_ids}
 
         model_inputs.update(
             {
-                "past_key_values": past_key_values,
+                "layer_past": layer_past,
                 "use_cache": kwargs.get("use_cache"),
                 "position_ids": position_ids,
                 "attention_mask": attention_mask,
