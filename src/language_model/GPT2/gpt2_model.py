@@ -14,7 +14,8 @@ from src.language_model.GPT2.embeddings import InputEmbedding
 from src.language_model.GPT2.gpt2_block import CustomGPT2Block
 from src.language_model.GPT2.config import Config
 import torch.utils.checkpoint
-
+from src.x_reporto.data_loader.tokenizer import Tokenizer 
+from transformers import GPT2Tokenizer
 
 class CustomGPT2(nn.Module):
     def __init__(self, config,image_config):
@@ -197,7 +198,7 @@ class CustomGPT2(nn.Module):
 
         if self.config.debug:
             # wait two seconds
-            wait(4)
+            # wait(4)
             # print memory usage
             print("memory usage after logits:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
             print("logits dtype:", logits.dtype)
@@ -217,7 +218,7 @@ class CustomGPT2(nn.Module):
 
             if self.config.debug:
                 # wait two seconds
-                wait(2)
+                # wait(2)
                 # print memory usage
                 print("memory usage before loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
             
@@ -225,9 +226,9 @@ class CustomGPT2(nn.Module):
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
             # convert logits dtype to float32
             shift_logits = shift_logits.to(dtype=torch.float32)
-            if self.config.debug:
+            # if self.config.debug:
                 # wait two seconds
-                wait(2)
+                # wait(2)
                 
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             return (loss,shift_logits) 
@@ -416,7 +417,7 @@ def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is
         print("memory usage after loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
         # apply optimizer
         # wait two seconds
-        wait(2)
+        # wait(2)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
         optimizer.step()
         print("memory usage after step:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
@@ -467,12 +468,16 @@ def test_genertation(use_checkpointing = True, debug=True,batch_size = 4,seq_len
     image_hidden_states = torch.randn(batch_size, 1, config.d_model)
     image_hidden_states = image_hidden_states.to(device)
     model.eval()
-    generated = model.generate(3, image_hidden_states,device)
+    generated = model.generate(10, image_hidden_states,device)
     print("generated: ",generated)
+    tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+
+    print(tokenizer.decode(generated[0].tolist(),skip_special_tokens=True))
     
 if __name__ == '__main__':
 
     test_genertation(use_checkpointing = True, debug=True,batch_size = 1,seq_length =1024,is_half = False)
+
 
     # print("Test 1")
     # print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False")
