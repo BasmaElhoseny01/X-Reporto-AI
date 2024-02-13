@@ -109,7 +109,7 @@ class CustomGPT2(nn.Module):
         if image_hidden_states is not None:
             # convert image hidden states dtype to dtype of the model
             image_hidden_states = image_hidden_states.to(dtype=self.fc.weight.dtype)
-            print("image_hidden_states dtype:", image_hidden_states.dtype)
+            # print("image_hidden_states dtype:", image_hidden_states.dtype)
             image_hidden_states = self.image_to_text(image_hidden_states)
 
         input_ids = input_ids.view(-1, input_ids.size(-1))
@@ -209,11 +209,138 @@ class CustomGPT2(nn.Module):
             return (logits, presents)
         return (logits,)
 
+    def generate(self, max_length, image_hidden_states,device):
+        
+        batch_size = image_hidden_states.size(0)
+
+        input_ids = torch.full(size=(batch_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
+        model_kwargs = {"attention_mask": torch.ones(size=(batch_size, 1), dtype=torch.int64, device=device),
+                        "use_cache": True}
+        
+        #greedy search
+        seq_len = 1
+        #start with a random token
+        all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device)
+        cur_len = seq_len
+        while True:
+            # prepare model inputs
+            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+            # forward pass to get next
+            logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
+            next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
+            # greedy decoding
+            next_token = torch.argmax(next_token_logits, dim=-1)
+            # concatenate the new token
+            next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
+            
+            # update input_ids, attention mask and length for next step
+            input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
+            # update model kwargs
+            model_kwargs = self.update_model_kwargs(presents, model_kwargs)
+            # update sequence length
+            cur_len += 1
+
+            # if eos_token was found in one sentence, set sentence to finished
+            binary_mask = (next_token != self.config.eos_token_id).long()
+            all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask)
+
+            # stop when all sentences are finished or if we exceed the maximum length
+            if all_sequences_to_generate.max() == 0 or (max_length and cur_len >= max_length):
+                break
+        return input_ids
+
+
+    def prepare_inputs_for_generation(self, input_ids, past_key_values=None, **kwargs):
+        token_type_ids = kwargs.get("token_type_ids", None)
+        # Omit tokens covered by past_key_values
+        if past_key_values:
+            past_length = past_key_values[0][0].shape[2]
+
+            # Some generation methods already pass only the last input ID
+            if input_ids.shape[1] > past_length:
+                remove_prefix_length = past_length
+            else:
+                # Default to old behavior: keep only final ID
+                remove_prefix_length = input_ids.shape[1] - 1
+
+            input_ids = input_ids[:, remove_prefix_length:]
+            if token_type_ids is not None:
+                token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
+
+        attention_mask = kwargs.get("attention_mask", None)
+        position_ids = kwargs.get("position_ids", None)
+
+        if attention_mask is not None and position_ids is None:
+            # create position_ids on the fly for batch generation
+            position_ids = attention_mask.long().cumsum(-1) - 1
+            position_ids.masked_fill_(attention_mask == 0, 1)
+            if past_key_values:
+                position_ids = position_ids[:, -input_ids.shape[1] :]
+        else:
+            position_ids = None
+
+        return {
+            "input_ids": input_ids,
+            "past_key_values": past_key_values,
+            "use_cache": kwargs.get("use_cache"),
+            "position_ids": position_ids,
+            "attention_mask": attention_mask,
+            "token_type_ids": token_type_ids,
+        }
+    
+    def update_model_kwargs(self, input_ids, past_key_values=None, inputs_embeds=None, **kwargs):
+        token_type_ids = kwargs.get("token_type_ids", None)
+        # Omit tokens covered by past_key_values
+        if past_key_values:
+            past_length = past_key_values[0][0].shape[2]
+
+            # Some generation methods already pass only the last input ID
+            if input_ids.shape[1] > past_length:
+                remove_prefix_length = past_length
+            else:
+                # Default to old behavior: keep only final ID
+                remove_prefix_length = input_ids.shape[1] - 1
+
+            input_ids = input_ids[:, remove_prefix_length:]
+            if token_type_ids is not None:
+                token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
+
+        attention_mask = kwargs.get("attention_mask", None)
+        position_ids = kwargs.get("position_ids", None)
+
+        if attention_mask is not None and position_ids is None:
+            # create position_ids on the fly for batch generation
+            position_ids = attention_mask.long().cumsum(-1) - 1
+            position_ids.masked_fill_(attention_mask == 0, 1)
+            if past_key_values:
+                position_ids = position_ids[:, -input_ids.shape[1] :]
+        else:
+            position_ids = None
+
+        # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
+        if inputs_embeds is not None and past_key_values is None:
+            model_inputs = {"inputs_embeds": inputs_embeds}
+        else:
+            model_inputs = {"input_ids": input_ids}
+
+        model_inputs.update(
+            {
+                "past_key_values": past_key_values,
+                "use_cache": kwargs.get("use_cache"),
+                "position_ids": position_ids,
+                "attention_mask": attention_mask,
+                "token_type_ids": token_type_ids,
+            }
+        )
+
+        return model_inputs
+
 def wait(seconds):
     seconds = seconds * 200000000
     for i in range(seconds):
         continue
-
+    
+    
 def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False):
     config = Config()
     config.d_model = 768
