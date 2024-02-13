@@ -71,7 +71,8 @@ class CustomGPT2MultiHeadAttention(nn.Module):
                 hidden_states: Optional[Tuple[torch.FloatTensor]],
                 attention_mask: Optional[torch.FloatTensor] = None,
                 image_hidden_states: Optional[torch.Tensor] = None, # (batch_size, 1, d_model)
-                use_cache: Optional[bool] = False,
+                layer_past: Optional[Tuple[torch.Tensor]] = None, #(key, value) for past sequence
+                use_cache: Optional[bool] = False, # whether to use cache for decoding
                 output_attentions: Optional[bool] = False,):
         batch_size = hidden_states.size(0)
         # q = self.w_q(hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, max_seq_len, d_model//num_heads)
@@ -85,16 +86,29 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         if image_hidden_states is not None:
             k_image = self.u_k(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
             v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
+        
         # concat k, v from image and text on dim=2
         if image_hidden_states is not None:
             k = torch.cat((k, k_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
             v = torch.cat((v, v_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
+        
+        # concat k, v from past and current on dim=2
+        if layer_past is not None:
+            print("layer_past",layer_past)
+            past_k, past_v = layer_past
+            k = torch.cat((past_k, k), dim=-2)  # (batch_size, num_heads, past_seq_len + seq_len, d_model//num_heads)
+            v = torch.cat((past_v, v), dim=-2)  # (batch_size, num_heads, past_seq_len + seq_len, d_model//num_heads)
 
+        if use_cache is True:
+            present = (k, v)
+        else:
+            present = None
         x, attn = CustomGPT2MultiHeadAttention.pesudo_attention(q, k, v,self.causal_mask,self.mask_value, attention_mask, self.dropout) # (batch_size, num_heads, max_seq_len, d_model//num_heads), (batch_size, num_heads, max_seq_len, max_seq_len+1)
         x = x.transpose(1, 2).contiguous().view(batch_size, -1, self.d_model) # (batch_size, max_seq_len, d_model) 
         # x = self.w_o(x) # (batch_size, max_seq_len, d_model)
         x = self.c_proj(x)
+        outputs = (x, present)
         if output_attentions:
-            return x, attn # (batch_size, max_seq_len, d_model), (batch_size, num_heads, max_seq_len, max_seq_len+1)
-        return x # (batch_size, max_seq_len, d_model), (batch_size, num_heads, max_seq_len, max_seq_len+1)
+            outputs += (attn,)
+        return outputs # a (batch_size, max_seq_len, d_model), present, (attentions) (batch_size, num_heads, max_seq_len, max_seq_len+1)
     

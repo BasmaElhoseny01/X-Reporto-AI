@@ -96,7 +96,7 @@ class CustomGPT2(nn.Module):
 
     def forward(self,
         input_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[Tuple[Tuple[torch.Tensor]]] = None,
+        layer_past: Optional[Tuple[Tuple[torch.Tensor]]] = None,
         attention_mask: Optional[torch.FloatTensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
         inputs_embeds: Optional[torch.FloatTensor] = None,
@@ -116,14 +116,13 @@ class CustomGPT2(nn.Module):
         
         # apply embedding layers
         if inputs_embeds is None:
-            hidden_states = self.wte(input_ids)
+            hidden_states = self.wte(input_ids) # (batch_size, seq_len, d_model)
 
         if position_ids is None:
             # apply positional encoding layer
             # convert hidden states dtype to dtype of the model
-            hidden_states = hidden_states.to(dtype=self.fc.weight.dtype)
-            print("hidden_states dtype:", hidden_states.dtype)
-            hidden_states = self.positional_encoding(hidden_states)
+            hidden_states = hidden_states.to(dtype=self.fc.weight.dtype) 
+            hidden_states = self.positional_encoding(hidden_states) # (batch_size, seq_len, d_model)
 
         # apply dropout layer
         hidden_states = self.drop(hidden_states)
@@ -138,15 +137,32 @@ class CustomGPT2(nn.Module):
             attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
             attention_mask = (1.0 - attention_mask) * torch.finfo(hidden_states.dtype).min
 
+        presents = ()
+        if use_cache is False:
+            # make presents be None
+            for i in range(self.num_layers):
+                presents = presents + (None,)
+
+        if layer_past is None:
+            # make layer_past be None
+            layer_past = ()
+            for i in range(self.num_layers):
+                layer_past = layer_past + (None,)
         # apply transformer blocks
         for i in range(self.num_layers):
             # check if gradient checkpointing should be used
             if self.config.use_checkpointing:
                 if self.config.debug and i == 0:
                     print("using gradient checkpointing")
-                hidden_states = torch.utils.checkpoint.checkpoint(self.blocks[i], hidden_states,attention_mask, image_hidden_states)
+                outputs = torch.utils.checkpoint.checkpoint(self.blocks[i], hidden_states,attention_mask, image_hidden_states,layer_past[i],use_cache,output_attentions)
+                hidden_states = outputs[0]
             else:
-                hidden_states = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask)
+                outputs = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask,layer_past=layer_past[i],use_cache=use_cache,output_attentions=output_attentions)
+                hidden_states = outputs[0]
+            if use_cache:
+                present = outputs[1]
+                presents = presents + (present,)
+
             if self.config.debug and i == self.num_layers - 1:
                 print("memory usage after block", i, ":", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
             
@@ -155,12 +171,12 @@ class CustomGPT2(nn.Module):
 
         if self.config.debug:
             # wait two seconds
-            for i in range(400000000):
-            # print("waiting for 2 seconds")
-                continue
+            wait(4)
             # print memory usage
             print("memory usage after logits:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-
+            print("logits dtype:", logits.dtype)
+            print("present shape:", presents[0][0].shape)
+            # print("presents", presents)
         loss = None
         if labels is not None:
             # move labels to correct device to enable model parallelism
@@ -175,9 +191,7 @@ class CustomGPT2(nn.Module):
 
             if self.config.debug:
                 # wait two seconds
-                for i in range(200000000):
-                    # print("waiting for 2 seconds")
-                    continue
+                wait(2)
                 # print memory usage
                 print("memory usage before loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
             
@@ -187,13 +201,18 @@ class CustomGPT2(nn.Module):
             shift_logits = shift_logits.to(dtype=torch.float32)
             if self.config.debug:
                 # wait two seconds
-                for i in range(200000000):
-                    # print("waiting for 2 seconds")
-                    continue
+                wait(2)
                 
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             return (loss,shift_logits) 
-        return logits
+        if use_cache:
+            return (logits, presents)
+        return (logits,)
+
+def wait(seconds):
+    seconds = seconds * 200000000
+    for i in range(seconds):
+        continue
 
 def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False):
     config = Config()
@@ -227,16 +246,14 @@ def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is
     labels = labels.to(device)
     model.train()
     for i in range(4):
-        loss, logits = model(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels)
+        loss, logits = model(x,layer_past=None, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels, use_cache = True,output_attentions = False)
         logits = logits.to("cpu")
         del logits
         print("loss:", loss.item())
         print("memory usage after loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
         # apply optimizer
         # wait two seconds
-        for i in range(100000000):
-            # print("waiting for 2 seconds")
-            continue
+        wait(2)
         optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
         optimizer.step()
         print("memory usage after step:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
@@ -262,15 +279,13 @@ def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is
     # print memory usage
     print("memory usage after empty cache:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
 
-    
+
 if __name__ == '__main__':
     print("Test 1")
     print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False")
-    test(use_checkpointing = True, debug=False,batch_size = 4,seq_length =1024,is_half = False)
+    test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False)
     # wait two seconds
-    for i in range(200000000):
-        # print("waiting for 2 seconds")
-        continue
+    wait(2)
     # print memory usage
     print("memory usage after test 1:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
     print("Test 2")
