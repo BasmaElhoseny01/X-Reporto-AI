@@ -281,7 +281,7 @@ class XReportoV1(nn.Module):
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
        
             # print("Before language model")       
-            input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+            valid_input_ids, valid_attention_mask, valid_object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
             if delete:
               selection_classifier_targets=selection_classifier_targets.to('cpu')
               del selection_classifier_targets
@@ -291,11 +291,15 @@ class XReportoV1(nn.Module):
                 return 0,0,0,0,0,0,0,0,True
             if (index+LM_Batch_Size) >= len(input_ids):
                 stop=True
-            LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+            LM_output=self.language_model(valid_input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
             tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
             logits = LM_output[1] 
             # greedy decoding
             logits = torch.argmax(logits, dim=-1) # of shape [batch_size]
+            print("=============================================================")
+            for reference_sentencs in input_ids[index:index+LM_Batch_Size,:]:
+                rs=tokenizer.decode(reference_sentencs.tolist(),skip_special_tokens=True)
+                print("reference_sentencs in Forward: ",rs)
             for sentence in logits:
                 generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
                 print("Generated Sentence in Forward: ",generated_sentence_for_selected_regions)
@@ -307,6 +311,9 @@ class XReportoV1(nn.Module):
                 del object_detector_features
                 del input_ids
                 del attention_mask
+                del valid_input_ids
+                del valid_attention_mask
+                del valid_object_detector_features
                 torch.cuda.empty_cache()
 
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
