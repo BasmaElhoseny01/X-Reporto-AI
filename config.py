@@ -70,6 +70,7 @@
 from ast import Continue
 from enum import Enum
 import torch
+import sys
 
 class ModelStage(Enum):
     OBJECT_DETECTOR = 1
@@ -101,3 +102,4 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 # pathes to the datasets
 training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/predict.csv'
+Heat_map_train_csv_path:str = 'datasets/HeatMapData-mini.csv'

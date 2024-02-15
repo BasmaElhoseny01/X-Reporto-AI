@@ -1,7 +1,13 @@
 from torch import nn
 import torch
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import densenet121,DenseNet121_Weights
+from torchvision import models
+
 import torch.nn.functional as F
+
+from torchsummary import summary
+from config import *
+
 
 class GlobalAveragePooling(nn.Module):
     def __init__(self):
@@ -12,49 +18,63 @@ class GlobalAveragePooling(nn.Module):
         return F.avg_pool2d(x, x.size()[2:]).view(x.size()[0], -1)
 
 # Example usage:
-# Create an instance of the GlobalAveragePooling layer
-gap_layer = GlobalAveragePooling()
+# # Create an instance of the GlobalAveragePooling layer
+# gap_layer = GlobalAveragePooling()
 
 
-class HeatMapCAM(nn.Module):
+class HeatMap(nn.Module):
     def __init__(self):
-        super(HeatMapCAM, self).__init__()
-        netlist = list(resnet50(pretrained=True).children())
-        self.feature_extractor = nn.Sequential(*netlist[:-2])
-        self.fc = netlist[-1]
-        self.feature_extractor = nn.Sequential(*list(self.feature_extractor.children())[:-2])
-        self.fc_weight =  nn.Parameter(self.fc.weight.t().unsqueeze(0))
+        super(HeatMap, self).__init__()
+        self.feature_Layers=models.densenet121()
+        self.feature_Layers=nn.Sequential(*list(self.feature_Layers.children())[:-1])
+
+        self.GAP=GlobalAveragePooling()
+
+        self.fc=nn.Linear(in_features=1024,out_features=14)  # Sigmoid will be applied in training loop
 
     def forward(self, x):
-        feature_map = self.feature_extractor(x)
-        output = F.softmax(self.fc_layer(feature_map.mean([2, 3])), dim=1)
-        prob, args = torch.sort(output, dim=1, descending=True)
+        feature_map=self.feature_Layers(x)
+        y=self.GAP(feature_map)
+        y=self.fc(y)
+
+        # Apply Sotmax
+        y=F.softmax(y, dim=1)
         
-        # get all class with value =1 
-        topk_arg = args[:, :1]
-        
-        # generage class activation map
-        b, c, h, w = feature_map.size()
-        feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
+        return feature_map,y
 
-        cam = torch.bmm(feature_map, self.network.fc_weight).transpose(1, 2)
+# from torchinfo import summary
 
-        ## normalize to 0 ~ 1
-        min_val, min_args = torch.min(cam, dim=2, keepdim=True)
-        cam -= min_val
-        max_val, max_args = torch.max(cam, dim=2, keepdim=True)
-        cam /= max_val
-        
-        ## top k class activation map
-        topk_cam = cam.view(1, -1, h, w)[0, topk_arg]
-        topk_cam = nn.functional.interpolate(topk_cam.unsqueeze(0), 
-                                        (x.size(2), x.size(3)), mode='bilinear', align_corners=True).squeeze(0)
-        topk_cam = torch.split(topk_cam, 1)
+# # # # pip install torchsummary
+# # import torchsummary
 
-        return topk_arg, topk_cam
+# model= HeatMap().to('cuda')
+# print(model)
+# summary(model, input_size=(4, 3, 512, 512))
 
 
-x=HeatMapCAM()
-print(x)
+# # Freezing
+# for name, param in model.named_parameters():
+#     param.requires_grad = False
+# summary(model, input_size=(4, 3, 512, 512))
+
+###########################################################################
 
 
+
+# You need to define input size to calcualte parameters
+# torchsummary.summary(model,batch_size=4, input_size=(3, 512, 512))
+
+
+# print("Demo of Data Flow")
+# input_data = torch.randn(4,3,512, 512).to('cuda')
+# output=model.to('cuda')(input_data)
+# # Apply softmax activation
+# print(output.shape)
+    
+# from torchvision import models
+# from torchsummary import summary
+
+# vgg = models.vgg16()
+# print(vgg)
+# summary(vgg, (3, 512, 512),device='cpu')
+# summary(vgg, input_size=(4, 3, 512, 512))
