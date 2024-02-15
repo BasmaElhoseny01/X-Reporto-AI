@@ -293,13 +293,17 @@ class XReportoV1(nn.Module):
                 stop=True
             LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
             tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
-            next_token_logits = LM_output[1][:, -1, :]  # of shape [batch_size x vocab_size]
+            next_token_logits = LM_output[1]  # of shape [batch_size x vocab_size]
             # greedy decoding
             next_token = torch.argmax(next_token_logits, dim=-1) # of shape [batch_size]
+            print("=============================================================")
+            for reference_sentencs in input_ids[index:index+LM_Batch_Size,:]:
+                rs=tokenizer.decode(reference_sentencs.tolist(),skip_special_tokens=True)
+                print("reference_sentencs",rs)
             for sentence in next_token:
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
                             print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
-            sys.exit()
+            # sys.exit()
             if delete:
                 # Free GPU memory
                 object_detector_features=object_detector_features.to('cpu')

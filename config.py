@@ -79,10 +79,10 @@ class ModelStage(Enum):
 MODEL_STAGE=3
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # X-Report Trainer Hyper Parameters
-EPOCHS=1
-LEARNING_RATE=0.00000001
+EPOCHS=12
+LEARNING_RATE=0.000005
 BATCH_SIZE=1
-LM_Batch_Size=3
+LM_Batch_Size=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
