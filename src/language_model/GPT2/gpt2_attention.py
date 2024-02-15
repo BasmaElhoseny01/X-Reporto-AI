@@ -88,13 +88,13 @@ class CustomGPT2MultiHeadAttention(nn.Module):
             v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
         
         # concat k, v from image and text on dim=2
-        if image_hidden_states is not None:
+        if image_hidden_states is not None and layer_past is  None:
             k = torch.cat((k, k_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
             v = torch.cat((v, v_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
         
         # concat k, v from past and current on dim=2
         if layer_past is not None:
-            print("layer_past",layer_past)
+            # print("layer_past",layer_past)
             past_k, past_v = layer_past
             k = torch.cat((past_k, k), dim=-2)  # (batch_size, num_heads, past_seq_len + seq_len, d_model//num_heads)
             v = torch.cat((past_v, v), dim=-2)  # (batch_size, num_heads, past_seq_len + seq_len, d_model//num_heads)
