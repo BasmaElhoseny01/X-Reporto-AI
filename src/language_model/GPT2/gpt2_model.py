@@ -252,9 +252,8 @@ class CustomGPT2(nn.Module):
         all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device) # (batch_size,)
         cur_len = seq_len
         while True:
-            layer_past = model_kwargs.get("layer_past", None)
             # prepare model inputs (attention mask, layer_past, inputs_ids, position_ids, use_cache)
-            model_inputs = self.prepare_inputs_for_generation(input_ids =input_ids,layer_past=layer_past ,seq_len=cur_len, **model_kwargs)
+            model_inputs = self.prepare_inputs_for_generation(input_ids =input_ids ,seq_len=cur_len, **model_kwargs)
             # forward pass to get next
             logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
             next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
@@ -281,9 +280,10 @@ class CustomGPT2(nn.Module):
 
 
 
-    def prepare_inputs_for_generation(self, input_ids, layer_past=None,seq_len = None, **kwargs):
+    def prepare_inputs_for_generation(self, input_ids,seq_len = None, **kwargs):
         token_type_ids = kwargs.get("token_type_ids", None)
         # Omit tokens covered by past_key_values
+        layer_past = kwargs.get("layer_past", None)
         if layer_past:
             past_length = layer_past[0][0].shape[2]
 
