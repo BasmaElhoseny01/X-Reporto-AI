@@ -23,8 +23,11 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('positional_encoding', pe)
         return pe # (1, max_seq_len, d_model)
 
-    def forward(self, x):
-        x = x + (self.positional_encoding[:, :x.size(1),:]).requires_grad_(False)
+    def forward(self, x,past_length=None):
+        if past_length is not None:
+            x = x + self.positional_encoding[:, past_length:past_length+x.size(1),:]
+        else:
+            x = x + (self.positional_encoding[:, :x.size(1),:]).requires_grad_(False)
         # x = x + self.wpe(torch.arange(x.size(1)).to(x.device)).unsqueeze(0)
         return self.dropout(x) # (batch_size, max_seq_len, d_model)
 

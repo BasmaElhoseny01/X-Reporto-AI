@@ -59,14 +59,14 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
         # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
         mask_value = torch.full([], mask_value, dtype=scores.dtype, device=scores.device)
-        scores = torch.where(causal_mask, scores.to(scores.dtype), mask_value)
+        scores = torch.where(causal_mask, scores.to(scores.dtype), mask_value) # (batch_size, h, max_seq_len, max_seq_len+1)
         
         if mask is not None:
             scores = scores.masked_fill(mask == 0, -1e4)
-        p_attn = F.softmax(scores, dim=-1) # (batch_size, h, max_seq_len, max_seq_len)
+        p_attn = F.softmax(scores, dim=-1) # (batch_size, h, max_seq_len, max_seq_len+1)
         if dropout is not None:
             p_attn = dropout(p_attn)
-        return torch.matmul(p_attn, value), p_attn # (batch_size, h, max_seq_len, d_k), (batch_size, h, max_seq_len, max_seq_len)
+        return torch.matmul(p_attn, value), p_attn # (batch_size, h, max_seq_len, d_k), (batch_size, h, max_seq_len, max_seq_len+1)
     def forward(self,
                 hidden_states: Optional[Tuple[torch.FloatTensor]],
                 attention_mask: Optional[torch.FloatTensor] = None,

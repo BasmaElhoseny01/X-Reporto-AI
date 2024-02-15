@@ -104,7 +104,8 @@ class CustomGPT2(nn.Module):
         image_hidden_states: Optional[torch.Tensor] = None,
         labels: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None
+        output_attentions: Optional[bool] = None,
+        seq_len: Optional[int] = None
         ):
         # print all inputs
         # if self.config.debug:
@@ -149,7 +150,7 @@ class CustomGPT2(nn.Module):
             # apply positional encoding layer
             # convert hidden states dtype to dtype of the model
             hidden_states = hidden_states.to(dtype=self.fc.weight.dtype) 
-            hidden_states = self.positional_encoding(hidden_states) # (batch_size, seq_len, d_model)
+            hidden_states = self.positional_encoding(hidden_states,seq_len) # (batch_size, seq_len, d_model)
 
         # apply dropout layer
         hidden_states = self.drop(hidden_states)
@@ -248,16 +249,16 @@ class CustomGPT2(nn.Module):
         #greedy search
         seq_len = 1
         #start with a random token
-        all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device)
+        all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device) # (batch_size,)
         cur_len = seq_len
         while True:
-            # prepare model inputs
-            model_inputs = self.prepare_inputs_for_generation(input_ids, **model_kwargs)
+            # prepare model inputs (attention mask, layer_past, inputs_ids, position_ids, use_cache)
+            model_inputs = self.prepare_inputs_for_generation(input_ids,cur_len, **model_kwargs)
             # forward pass to get next
             logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
             next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
             # greedy decoding
-            next_token = torch.argmax(next_token_logits, dim=-1)
+            next_token = torch.argmax(next_token_logits, dim=-1) # of shape [batch_size]
             # concatenate the new token
             next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
             # next_token = next_token * all_sequences_to_generate 
@@ -269,17 +270,17 @@ class CustomGPT2(nn.Module):
             cur_len += 1
 
             # if eos_token was found in one sentence, set sentence to finished
-            binary_mask = (next_token != self.config.eos_token_id).long()
-            all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask)
+            binary_mask = (next_token != self.config.eos_token_id).long() # of shape [batch_size]
+            all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask) # of shape [batch_size]
 
             # stop when all sentences are finished or if we exceed the maximum length
-            if all_sequences_to_generate.max() == 0 or (max_length and cur_len >= max_length):
+            if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
                 break
         return input_ids
 
 
 
-    def prepare_inputs_for_generation(self, input_ids, layer_past=None, **kwargs):
+    def prepare_inputs_for_generation(self, input_ids, layer_past=None,seq_len = None, **kwargs):
         token_type_ids = kwargs.get("token_type_ids", None)
         # Omit tokens covered by past_key_values
         if layer_past:
@@ -293,35 +294,41 @@ class CustomGPT2(nn.Module):
                 remove_prefix_length = input_ids.shape[1] - 1
 
             input_ids = input_ids[:, remove_prefix_length:]
+            print("input_ids shape:", input_ids.shape)
             if token_type_ids is not None:
                 token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
 
         attention_mask = kwargs.get("attention_mask", None)
         position_ids = kwargs.get("position_ids", None)
 
-        if attention_mask is not None and position_ids is None:
-            # create position_ids on the fly for batch generation
-            position_ids = attention_mask.long().cumsum(-1) - 1
-            position_ids.masked_fill_(attention_mask == 0, 1)
-            if layer_past:
-                position_ids = position_ids[:, -input_ids.shape[1] :]
-        else:
-            position_ids = None
+        # if attention_mask is not None and position_ids is None:
+        #     # create position_ids on the fly for batch generation
+        #     position_ids = attention_mask.long().cumsum(-1) - 1
+        #     position_ids.masked_fill_(attention_mask == 0, 1)
+        #     if layer_past:
+        #         position_ids = position_ids[:, -input_ids.shape[1] :]
+        # else:
+        #     position_ids = None
 
+        position_ids = None
         return {
             "input_ids": input_ids,
             "layer_past": layer_past,
             "use_cache": kwargs.get("use_cache"),
             "position_ids": position_ids,
             "attention_mask": attention_mask,
+            "seq_len": seq_len
             # "token_type_ids": token_type_ids,
         }
 
     def update_model_kwargs(self, presents, model_kwargs):
-        model_kwargs["past"] = presents
+        model_kwargs["layer_past"] = presents
         attention_mask = model_kwargs["attention_mask"]
         model_kwargs["attention_mask"] = torch.cat([attention_mask, attention_mask.new_ones((attention_mask.shape[0], 1))], dim=-1)
-
+        # print dimensions of attention mask
+        print("attention_mask shape:", model_kwargs["attention_mask"].shape)
+        print("layer_past shape:", presents[0][0].shape)
+        print("layer_past shape:", presents[0][1].shape)
         return model_kwargs
     
     # def update_model_kwargs(self, input_ids, layer_past=None, inputs_embeds=None, **kwargs):
