@@ -17,6 +17,8 @@ from src.binary_classifier.models.binary_classifier_selection_region_factory imp
 from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
 from src.language_model.GPT2.gpt2_model import CustomGPT2
 from src.language_model.GPT2.config import Config
+from transformers import GPT2Tokenizer
+
 class XReportoV1(nn.Module):
     """
     A modular model for object detection and binary classification.
@@ -290,6 +292,14 @@ class XReportoV1(nn.Module):
             if (index+LM_Batch_Size) >= len(input_ids):
                 stop=True
             LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+            tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+            next_token_logits = LM_output[1][:, -1, :]  # of shape [batch_size x vocab_size]
+            # greedy decoding
+            next_token = torch.argmax(next_token_logits, dim=-1) # of shape [batch_size]
+            for sentence in next_token:
+                            generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
+                            print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
+            sys.exit()
             if delete:
                 # Free GPU memory
                 object_detector_features=object_detector_features.to('cpu')
