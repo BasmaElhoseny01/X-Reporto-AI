@@ -107,31 +107,31 @@ class CustomGPT2(nn.Module):
         output_attentions: Optional[bool] = None
         ):
         # print all inputs
-        if self.config.debug:
-            print("input_ids:", input_ids)
-            print("layer_past:", layer_past)
-            print("attention_mask:", attention_mask)
-            print("position_ids:", position_ids)
-            print("inputs_embeds:", inputs_embeds)
-            print("image_hidden_states:", image_hidden_states)
-            print("labels:", labels)
-            print("use_cache:", use_cache)
-            print("output_attentions:", output_attentions)
-            # print shape of all inputs
-            if input_ids is not None:
-                print("input_ids shape:", input_ids.shape)
-            if layer_past is not None:
-                print("layer_past shape:", layer_past[0][0].shape)
-            if attention_mask is not None:
-                print("attention_mask shape:", attention_mask.shape)
-            if position_ids is not None:
-                print("position_ids shape:", position_ids.shape)
-            if inputs_embeds is not None:
-                print("inputs_embeds shape:", inputs_embeds.shape)
-            if image_hidden_states is not None:
-                print("image_hidden_states shape:", image_hidden_states.shape)
-            if labels is not None:
-                print("labels shape:", labels.shape)
+        # if self.config.debug:
+        #     print("input_ids:", input_ids)
+        #     print("layer_past:", layer_past)
+        #     print("attention_mask:", attention_mask)
+        #     print("position_ids:", position_ids)
+        #     print("inputs_embeds:", inputs_embeds)
+        #     print("image_hidden_states:", image_hidden_states)
+        #     print("labels:", labels)
+        #     print("use_cache:", use_cache)
+        #     print("output_attentions:", output_attentions)
+        #     # print shape of all inputs
+        #     if input_ids is not None:
+        #         print("input_ids shape:", input_ids.shape)
+        #     if layer_past is not None:
+        #         print("layer_past shape:", layer_past[0][0].shape)
+        #     if attention_mask is not None:
+        #         print("attention_mask shape:", attention_mask.shape)
+        #     if position_ids is not None:
+        #         print("position_ids shape:", position_ids.shape)
+        #     if inputs_embeds is not None:
+        #         print("inputs_embeds shape:", inputs_embeds.shape)
+        #     if image_hidden_states is not None:
+        #         print("image_hidden_states shape:", image_hidden_states.shape)
+        #     if labels is not None:
+        #         print("labels shape:", labels.shape)
             
         if image_hidden_states is not None:
             # convert image hidden states dtype to dtype of the model
@@ -201,8 +201,8 @@ class CustomGPT2(nn.Module):
             # wait(4)
             # print memory usage
             print("memory usage after logits:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-            print("logits dtype:", logits.dtype)
-            print("present shape:", presents[0][0].shape)
+            # print("logits dtype:", logits.dtype)
+            # print("present shape:", presents[0][0].shape)
             # print("presents", presents)
         loss = None
         if labels is not None:
@@ -260,11 +260,10 @@ class CustomGPT2(nn.Module):
             next_token = torch.argmax(next_token_logits, dim=-1)
             # concatenate the new token
             next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
-            
+            # next_token = next_token * all_sequences_to_generate 
             # update input_ids, attention mask and length for next step
             input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
             # update model kwargs
-            print("**model_kwargs",model_kwargs)
             model_kwargs = self.update_model_kwargs(presents,model_kwargs)
             # update sequence length
             cur_len += 1
@@ -317,6 +316,7 @@ class CustomGPT2(nn.Module):
             "attention_mask": attention_mask,
             # "token_type_ids": token_type_ids,
         }
+
     def update_model_kwargs(self, presents, model_kwargs):
         model_kwargs["past"] = presents
         attention_mask = model_kwargs["attention_mask"]

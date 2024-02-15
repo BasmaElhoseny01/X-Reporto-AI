@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from typing import Optional, List, Dict
 
-from config import ModelStage,MODEL_STAGE,DEVICE,CONTINUE_TRAIN,TRAIN_RPN,LM_Batch_Size
+from config import ModelStage,MODEL_STAGE,DEVICE,CONTINUE_TRAIN,TRAIN_RPN,LM_Batch_Size,GENERATE_REPORT,DEVICE
 
 # Utils 
 from src.utils import load_model
@@ -90,7 +90,7 @@ class XReportoV1(nn.Module):
                 # Load Language Model to continue training
                 # Load Language Model to continue training
                 print("Loading language_model .....")
-                load_model(model=self.language_model,name=' LM')
+                load_model(model=self.language_model,name='LM')
 
                 # Freezing Selection Region Binary Classifier
                 for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
@@ -131,11 +131,14 @@ class XReportoV1(nn.Module):
                 # Freezing Abnormal Region Binary Classifier
                 for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
                     param.requires_grad = False
+                    if  GENERATE_REPORT:
+                        load_model(model=self.language_model,name='LM')
+                    
 
 
             
 
-    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch=None,index=None,delete=False):
+    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch=None,index=None,delete=False,generate_sentence=False):
         '''
         Forward pass through the X-ReportoV1 model.
 
@@ -299,32 +302,38 @@ class XReportoV1(nn.Module):
 
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
            
-            # # valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
-            # input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
-            
-            # if delete:
-            #     # free gpu memory
-            #     selection_classifier_targets=selection_classifier_targets.to('cpu')
-            #     object_detector_detected_classes=object_detector_detected_classes.to('cpu')
-            #     del selection_classifier_targets
-            #     del object_detector_detected_classes
-            #     torch.cuda.empty_cache()
-            
-            # print("Before language model")
+        if generate_sentence:
+                object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                if delete:
+                    # Free GPU memory 
+                    images=images.to('cpu')
+                    # move object_detector_targets to cpu
+                    for i in range(len(object_detector_targets)):
+                        object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                        object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                    del images
+                    del object_detector_targets
+                    torch.cuda.empty_cache()
+                    # Stage(2) Binary Classifier
+                selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+                if delete:
+                        # free gpu memory
+                        selection_classifier_targets=selection_classifier_targets.to('cpu')
+                        del selection_classifier_targets
+                        torch.cuda.empty_cache()
+                object_detector_features = object_detector_features[selected_regions]
+                if (index+LM_Batch_Size) >= object_detector_features.shape[0]:
+                    stop=True
+                LM_sentencses=self.language_model.generate(max_length=1024,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],device=DEVICE)
+                if delete:
+                    # Free GPU memory
+                    object_detector_features=object_detector_features.to('cpu')
+                    del object_detector_features
+                    torch.cuda.empty_cache()
 
-            # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
-            # if delete:
-            #     # Free GPU memory
-            #     object_detector_features=object_detector_features.to('cpu')
-            #     input_ids=input_ids.to('cpu')
-            #     attention_mask=attention_mask.to('cpu')
-            #     del object_detector_features
-            #     del input_ids
-            #     del attention_mask
-            #     torch.cuda.empty_cache()
+                return LM_sentencses,stop
 
-            # return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
-        
+
         else: # Validation (or inference) mode
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)

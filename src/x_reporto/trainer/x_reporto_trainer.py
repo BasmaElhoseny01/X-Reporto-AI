@@ -14,6 +14,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.tokenizer import Tokenizer
 # Utils 
 from src.utils import save_model
+from transformers import GPT2Tokenizer
 
 from config import *
 
@@ -474,14 +475,12 @@ class XReportoTrainer():
                     LM_targets=torch.stack(LM_targets).to(DEVICE)
                     input_ids=torch.stack(input_ids).to(DEVICE)
                     attention_mask=torch.stack(attention_mask).to(DEVICE)
-                    
                     loopLength= input_ids.shape[1]
                     for batch in range(BATCH_SIZE):
                         total_LM_losses=0
                         for i in range(0,loopLength,LM_Batch_Size):
                             # Forward Pass
                             object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_losses,LM_predict,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i,i+LM_Batch_Size>=loopLength-1)
-
                             if stop:
                                 break
                             print("selection looses ",selection_classifier_losses)
@@ -491,8 +490,10 @@ class XReportoTrainer():
                             Total_loss+=abnormal_binary_classifier_losses
                             Total_loss+=LM_losses
                             total_LM_losses+=LM_losses
-                            generated_sents_for_selected_regions = self.tokenizer.batch_decode(LM_predict, skip_special_tokens=True, clean_up_tokenization_spaces=True
-            )
+                            print(LM_predict)
+                            generated_sents_for_selected_regions = self.tokenizer.batch_decode(LM_predict, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+                            print("Generated Sentences for Selected Regions: ", generated_sents_for_selected_regions)
+                            # sys.exit()
                             with open("logs/predictions.txt", "a") as myfile:
                                 # don't know the text TODO: 
                                 # myfile.write
@@ -504,15 +505,12 @@ class XReportoTrainer():
                 else:
                     # Forward Pass
                     object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None,None,True)
-                    
                     Total_loss=None
                     object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
                     Total_loss=object_detector_losses_summation.clone()
                     if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                         Total_loss+=selection_classifier_losses
                         Total_loss+=abnormal_binary_classifier_losses
-
-
                     epoch_loss += Total_loss
 
                     if DEBUG :
@@ -550,6 +548,52 @@ class XReportoTrainer():
                     # To Test Overfitting break
                     break
 
+
+    def generate_sentences(self,predict_path_csv=None):
+        '''
+        Predict the output and display it with golden output.
+        Each image is displayed in 5 sub-images with 6 labels in each sub-image.
+        The golden output is dashed, and the predicted output is solid.
+
+        Args:
+            predict_path_csv (str): Path to the CSV file for prediction. (Default: None)
+        '''
+        if predict_path_csv==None:
+                predicted_dataloader=self.data_loader_val
+        else:
+                predicted_data = CustomDataset(dataset_path= predict_path_csv, transform_type='val',tokenizer=self.tokenizer)
+
+                # create data loader
+                predicted_dataloader = DataLoader(dataset=predicted_data, batch_size=1, shuffle=False, num_workers=4)
+                
+        # make model in Evaluation mode
+        self.model.eval()
+        with torch.no_grad():
+            epoch_loss=0
+            for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(predicted_dataloader):
+                # Check GPU memory usage
+                images=object_detector_batch['image']
+                # Move images to Device
+                images = torch.stack([image.to(DEVICE) for image in images])
+                loopLength=29
+                for batch in range(BATCH_SIZE):
+                    for i in range(0,loopLength,LM_Batch_Size):
+                        # Forward Pass
+                        # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
+                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
+                        tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+                        for sentence in LM_sentances:
+                            # print("sentence",sentence)
+                            # sys.exit()
+                            generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
+                            print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
+                        with open("logs/predictions.txt", "a") as myfile:
+                            myfile.write(generated_sentence_for_selected_regions)
+                            myfile.write("\n")
+                        if stop:
+                            break
+                        
+                
     def save_check_point(self,epoch):
         checkpoint={
             "epoch":epoch,
@@ -692,10 +736,11 @@ if __name__ == '__main__':
     # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
-    trainer.train()
+    # trainer.train()
 
     # # Run Validation
     # trainer.Validate()
 
     # # Predict and display results
-    # trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
+    # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
+    trainer.generate_sentences(predict_path_csv='datasets/train.csv')

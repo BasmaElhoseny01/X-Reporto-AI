@@ -82,10 +82,11 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 EPOCHS=1
 LEARNING_RATE=0.00000001
 BATCH_SIZE=1
-LM_Batch_Size=1
+LM_Batch_Size=3
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
+GENERATE_REPORT=True
 
 # Training Process Parameters
 CONTINUE_TRAIN=True # Continue training
@@ -100,4 +101,4 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # pathes to the datasets
 training_csv_path: str = 'datasets/train.csv'
-validation_csv_path:str = 'datasets/predict.csv'
+validation_csv_path:str = 'datasets/train.csv'
