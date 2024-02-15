@@ -295,7 +295,7 @@ class CustomGPT2(nn.Module):
                 remove_prefix_length = input_ids.shape[1] - 1
 
             input_ids = input_ids[:, remove_prefix_length:]
-            print("input_ids shape:", input_ids.shape)
+            # print("input_ids shape:", input_ids.shape)
             if token_type_ids is not None:
                 token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
 
@@ -327,9 +327,9 @@ class CustomGPT2(nn.Module):
         attention_mask = model_kwargs["attention_mask"]
         model_kwargs["attention_mask"] = torch.cat([attention_mask, attention_mask.new_ones((attention_mask.shape[0], 1))], dim=-1)
         # print dimensions of attention mask
-        print("attention_mask shape:", model_kwargs["attention_mask"].shape)
-        print("layer_past shape:", presents[0][0].shape)
-        print("layer_past shape:", presents[0][1].shape)
+        # print("attention_mask shape:", model_kwargs["attention_mask"].shape)
+        # print("layer_past shape:", presents[0][0].shape)
+        # print("layer_past shape:", presents[0][1].shape)
         return model_kwargs
     
     # def update_model_kwargs(self, input_ids, layer_past=None, inputs_embeds=None, **kwargs):

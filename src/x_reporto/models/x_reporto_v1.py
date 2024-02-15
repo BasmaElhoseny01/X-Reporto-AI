@@ -324,7 +324,8 @@ class XReportoV1(nn.Module):
                 object_detector_features = object_detector_features[selected_regions]
                 if (index+LM_Batch_Size) >= object_detector_features.shape[0]:
                     stop=True
-                LM_sentencses=self.language_model.generate(max_length=1024,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],device=DEVICE)
+                LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],device=DEVICE)
+                # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
                 if delete:
                     # Free GPU memory
                     object_detector_features=object_detector_features.to('cpu')

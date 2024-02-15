@@ -573,6 +573,10 @@ class XReportoTrainer():
             for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(predicted_dataloader):
                 # Check GPU memory usage
                 images=object_detector_batch['image']
+                reference_sentences=[]
+                for i in range(len(images)):
+                       reference_sentences.append(LM_batch['bbox_phrase'][i])
+                       
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
                 loopLength=29
@@ -583,8 +587,6 @@ class XReportoTrainer():
                         LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
                         tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
                         for sentence in LM_sentances:
-                            # print("sentence",sentence)
-                            # sys.exit()
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
                             print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
                         with open("logs/predictions.txt", "a") as myfile:
