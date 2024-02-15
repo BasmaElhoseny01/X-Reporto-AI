@@ -1,6 +1,6 @@
 import gc
 import psutil
-import spacy
+# import spacy
 import torch
 import datetime
 import sys
