@@ -1,6 +1,6 @@
 from torch import nn
 import torch
-from torchvision.models import densenet121,DenseNet121_Weights
+from torchvision.models import ResNet50_Weights
 from torchvision import models
 
 import torch.nn.functional as F
@@ -25,12 +25,14 @@ class GlobalAveragePooling(nn.Module):
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
-        self.feature_Layers=models.densenet121()
-        self.feature_Layers=nn.Sequential(*list(self.feature_Layers.children())[:-1])
+        # self.feature_Layers=models.densenet121()
+        self.feature_Layers=models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        # Remove the last two layers
+        self.feature_Layers=nn.Sequential(*list(self.feature_Layers.children())[:-2])
 
         self.GAP=GlobalAveragePooling()
 
-        self.fc=nn.Linear(in_features=1024,out_features=14)  # Sigmoid will be applied in training loop
+        self.fc=nn.Linear(in_features=2048,out_features=14)  # SoftMax will be applied in training loop
 
     def forward(self, x):
         feature_map=self.feature_Layers(x)
@@ -38,27 +40,26 @@ class HeatMap(nn.Module):
         y=self.fc(y)
 
         # Apply Sotmax
-        y=F.softmax(y, dim=1)
-        
+        # y=F.softmax(y, dim=1)
+
         return feature_map,y
 
 # from torchinfo import summary
 
-# # # # pip install torchsummary
-# # import torchsummary
 
 # model= HeatMap().to('cuda')
 # print(model)
 # summary(model, input_size=(4, 3, 512, 512))
 
 
-# # Freezing
+# Freezing
 # for name, param in model.named_parameters():
 #     param.requires_grad = False
 # summary(model, input_size=(4, 3, 512, 512))
 
 ###########################################################################
 
+# # pip install torchsummary
 
 
 # You need to define input size to calcualte parameters

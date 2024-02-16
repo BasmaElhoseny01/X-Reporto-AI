@@ -1,4 +1,5 @@
 import os
+import sys
 import cv2
 import pandas as pd
 import torch
@@ -28,14 +29,24 @@ class HeatMapDataset(Dataset):
         # read the image
         img = cv2.imread(img_path)
         assert img is not None, f"Image at {img_path} is None"
-
+        # convert the image from BGR to RGB
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # get the labels and if column is 1 then it is true if empty then false
         labels = self.data_info.iloc[idx, 2:16]
         # make labels as numpy array of bool values true if value is 1 else false
+        if labels.isnull().values.any():
+            labels = labels.fillna(0)
+        # replace the -1 values with 0
+        labels = labels.replace("-1.0", 0)
+        labels = labels.replace("0.0", 0)
+
+
+        labels = labels.astype(bool)
         labels = labels.to_numpy(dtype=bool)
+  
         labels=torch.as_tensor(labels, dtype=torch.bool)
         # tranform image
         transformed = self.transform(image=img)
         transformed_image = transformed["image"]
         return transformed_image, labels
-        
         
