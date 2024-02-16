@@ -57,6 +57,8 @@ class Heat_Map_trainer:
                 # Move to device
                 images = images.to(DEVICE)
                 targets=targets.to(DEVICE)
+                # convert targets to float
+                targets=targets.type(torch.float32)
 
                 # Zero the gradients
                 self.optimizer.zero_grad()
@@ -81,7 +83,14 @@ class Heat_Map_trainer:
                     break
 
             print(f"Epoch [{epoch}/{EPOCHS}] Loss: {epoch_losses/len(self.data_loader_train)}")
-            sys.exit()
+            
+            if epoch%5==0:
+                self.lr_scheduler.step()
+                # Save the model
+                torch.save(self.model.state_dict(), 'models/'+str(RUN)+'/heat_map.pth')
+
+            continue
+            # sys.exit()
         
 
             feature_map,y=self.model(images)
@@ -189,8 +198,8 @@ if __name__ == '__main__':
     heat_map_model=HeatMap().to('cuda')
 
     # Freezing
-    for name, param in heat_map_model.named_parameters():
-        param.requires_grad = False
+    # for name, param in heat_map_model.named_parameters():
+    #     param.requires_grad = False
     summary(heat_map_model, input_size=(4, 3, 512, 512))
 
     trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
