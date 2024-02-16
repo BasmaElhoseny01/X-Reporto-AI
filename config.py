@@ -79,8 +79,8 @@ class ModelStage(Enum):
 MODEL_STAGE=3
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # X-Report Trainer Hyper Parameters
-EPOCHS=31
-LEARNING_RATE=0.0000000007
+EPOCHS=11
+LEARNING_RATE=0.00001
 BATCH_SIZE=1
 LM_Batch_Size=1
 SCHEDULAR_STEP_SIZE=1
@@ -89,7 +89,7 @@ DEBUG=True
 GENERATE_REPORT=True
 
 # Training Process Parameters
-CONTINUE_TRAIN=True # Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 RUN = "0"
 

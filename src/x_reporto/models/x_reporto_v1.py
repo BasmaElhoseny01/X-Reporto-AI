@@ -339,7 +339,7 @@ class XReportoV1(nn.Module):
                 selected_regions=torch.ones_like(selected_regions)
                 object_detector_features = object_detector_features[selected_regions]
                 # print("object_detector_features: ",object_detector_features)
-                if (index+LM_Batch_Size) >= object_detector_features.shape[0]:
+                if (index+LM_Batch_Size) >= object_detector_features.shape[0]-1:
                     stop=True
                 # print("object_detector_features.shape[0]: ",object_detector_features.shape)
                 # print("features: ",object_detector_features[index:index+LM_Batch_Size,:])

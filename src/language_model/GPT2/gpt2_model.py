@@ -263,7 +263,8 @@ class CustomGPT2(nn.Module):
             next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
             # next_token = next_token * all_sequences_to_generate 
             # update input_ids, attention mask and length for next step
-            input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
+            # input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
+            input_ids = torch.cat([input_ids, next_token], dim=-1)
             # update model kwargs
             model_kwargs = self.update_model_kwargs(presents,model_kwargs)
             # update sequence length
@@ -276,9 +277,6 @@ class CustomGPT2(nn.Module):
             # stop when all sentences are finished or if we exceed the maximum length
             # if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
             if ( cur_len >= max_length):
-                print("input_ids shape:", input_ids.shape)
-                print("input_ids:", input_ids)
-                print("inside break")
                 break
         return input_ids
 
