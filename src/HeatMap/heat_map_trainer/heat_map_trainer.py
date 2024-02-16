@@ -1,3 +1,4 @@
+from matplotlib import cm, pyplot as plt
 from torch import nn
 
 from torchinfo import summary
@@ -78,81 +79,16 @@ class Heat_Map_trainer:
                 # Add losses
                 epoch_losses+=losses
 
-                if DEBUG:
+                if DEBUG ==0:
                     print(f"Epoch [{epoch}/{EPOCHS}] Batch [{batch_idx}/{len(self.data_loader_train)}] Loss: {losses.item()}")
                     break
 
             print(f"Epoch [{epoch}/{EPOCHS}] Loss: {epoch_losses/len(self.data_loader_train)}")
             
-            if epoch%5==0:
+            if epoch%5==0 and epoch!=0:
                 self.lr_scheduler.step()
                 # Save the model
                 torch.save(self.model.state_dict(), 'models/'+str(RUN)+'/heat_map.pth')
-
-            continue
-            # sys.exit()
-        
-
-            feature_map,y=self.model(images)
-            print(feature_map.shape)
-            print(y)
-
-            # Generate HeatMap
-            # generage class activation map
-            b, c, h, w = feature_map.size()
-            feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
-
-            fc_weight=torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0))
-
-            print(feature_map.shape) # torch.Size([1, 256, 1024])
-            print(fc_weight.shape) # torch.Size([1, 1024, 14])
-
-            # Perform batch matrix multiplication
-            cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 14, 256])
-            print(cam.shape)
-
-            ## normalize to 0 ~ 1
-            min_val, min_args = torch.min(cam, dim=2, keepdim=True)
-            cam -= min_val
-            max_val, max_args = torch.max(cam, dim=2, keepdim=True)
-            cam /= max_val
-
-
-            # prob, args = torch.sort(y, dim=1, descending=True)
-            # topk_args=args.squeeze().tolist()[:10]
-            # print(topk_args)
-
-            topk_cam = cam.view(b, -1, h, w)
-            print(topk_cam)
-            print(topk_cam.shape)#torch.Size([1, 14, 16, 16]) torch.Size([10, 16, 16])
-
-            topk_cam = torch.nn.functional.interpolate(topk_cam, 
-                                    (images.size(2), images.size(3)), mode='bilinear', align_corners=True).squeeze(0)
-            # print(topk_cam)
-            print(topk_cam.shape) # torch.Size([14, 512, 512])
-
-            topk_cam = torch.split(topk_cam, 1)
-            print(len(topk_cam)) #torch.Size([1, 512, 512])
-            print(topk_cam[0].shape) #torch.Size([1, 512, 512])
-
-
-            # Show Image
-            img_pil = imshow(images[0])
-            img_pil.save("./input.jpg")
-
-            # Show CAM
-            for k in range(10):
-                print(topk_cam[k].shape) #torch.Size([1, 512, 512])
-                cam_ = topk_cam[k].squeeze().cpu().data.numpy()
-                print(cam_)
-
-                cam_pil = Image.fromarray(np.uint8(matplotlib.cm.gist_earth(cam_)*255)).convert("RGB")
-                cam_pil.save("./cam_class"+str(k)+'.jpg')
-
-
-                # overlay image and class activation map
-                blended_cam = Image.blend(img_pil, cam_pil, alpha=0.25)
-                blended_cam.save("./blended_class__"+str(k)+'.jpg')
 
     def test(self):
         print("Testing")
@@ -161,31 +97,77 @@ class Heat_Map_trainer:
             # Move to device
             images = images.to(DEVICE)
             targets=targets.to(DEVICE)
+            targets=targets.type(torch.float32)
 
 
-            # with torch.no_grad():
-            # Forward Pass
-            # feature_map,y=self.model(images)
+            with torch.no_grad():
+                # Forward Pass
+                feature_map,y=self.model(images)
 
-            # if targets is not None:
-            #     # Compute Loss
-            #     losses = self.criterion(y, targets)
-            #     print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
-
-            # self.generate_heat_map(feature_map)
+                if targets is not None:
+                    # Compute Loss
+                    losses = self.criterion(y, targets)
+                    print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
+                y=y.to('cpu')
+                # get index where prediction is 1
+                y=y>0.5
+                print(y)
+                classes = np.where(y[0] == 1)[0]
+                self.generate_heat_map(feature_map,image=images[0],classes=classes)
+                break
     
-    def generate_heat_map(self,feature_map):
+    def generate_heat_map(self,feature_map,image,classes):
         b, c, h, w = feature_map.size()
-        print(feature_map.shape)  # torch.Size([batch_size, 2048, 16, 16])
+        # print(feature_map.shape)  # torch.Size([batch_size, 2048, 16, 16])
 
         # Reshape feature map
         feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
-        print(feature_map.shape) # torch.Size([1, 256, 1024])
-        sys.exit()
-        pass           
-            
+        # print(feature_map.shape) # torch.Size([1, 256, 2048])
+        fc_weight=torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0))
+        # print(fc_weight.shape) # torch.Size([1, 2048, 14])
 
-                
+        # Perform batch matrix multiplication
+        cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 14, 256])
+
+        ## normalize to 0 ~ 1
+        min_val, min_args = torch.min(cam, dim=2, keepdim=True)
+        cam -= min_val
+        max_val, max_args = torch.max(cam, dim=2, keepdim=True)
+        cam /= max_val
+
+        cam = cam.view(b, -1, h, w)
+        cam = torch.nn.functional.interpolate(cam, 
+                                (image.size(1), image.size(2)), mode='bilinear', align_corners=True).squeeze(0)
+        # print(cam.shape) # torch.Size([14, 512, 512])
+        cam = torch.split(cam, 1)
+        # print(len(cam)) #torch.Size([1, 512, 512])
+
+
+        # image = image.permute(1, 2, 0)
+        # # normalize the image
+        # image = (image - image.min()) / (image.max() - image.min())
+        # image=image.to('cpu')
+        # plt.imshow(image, cmap='hot')
+        # plt.show()
+        image=imshow(image)
+        final_result = None
+        print(classes)
+        for k in classes:
+            cam_ = cam[k].squeeze().cpu().data.numpy()
+            cam_pil = Image.fromarray(np.uint8(matplotlib.cm.gist_earth(cam_)*255)).convert("RGB")
+            # overlay image and class activation map
+            blended_cam = Image.blend(image, cam_pil, alpha=0.25)
+            # append all belnded images the print them in one image 
+            final_result = torchvision.transforms.functional.to_tensor(final_result)
+            blended_cam = torchvision.transforms.functional.to_tensor(blended_cam)
+            final_result = torch.cat((final_result, blended_cam), 2)
+
+        final_result = torchvision.transforms.functional.to_pil_image(final_result)
+        final_result.show()
+
+        # plt.imshow(blended_cam, cmap='hot')
+        # plt.show()
+          
 
 def imshow(tensor):
     denormalize = _normalizer(denormalize=True)    
@@ -205,18 +187,20 @@ def _normalizer(denormalize=False):
         STD = [1/std for std in STD]
     
     return torchvision.transforms.Normalize(mean=MEAN, std=STD)
-
+  
 if __name__ == '__main__':
 
-    heat_map_model=HeatMap().to('cuda')
+    heat_map_model=HeatMap().to(DEVICE)
 
     # Freezing
     # for name, param in heat_map_model.named_parameters():
     #     param.requires_grad = False
     summary(heat_map_model, input_size=(4, 3, 512, 512))
 
+    # trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
+    
     trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
-    # trainer.train()
+    trainer.train()
         
     # Testing
     trainer.test()
