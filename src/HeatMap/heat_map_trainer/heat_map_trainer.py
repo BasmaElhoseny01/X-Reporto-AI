@@ -79,7 +79,7 @@ class Heat_Map_trainer:
                 # Add losses
                 epoch_losses+=losses
 
-                if DEBUG ==0:
+                if DEBUG == 0:
                     print(f"Epoch [{epoch}/{EPOCHS}] Batch [{batch_idx}/{len(self.data_loader_train)}] Loss: {losses.item()}")
                     break
 
@@ -110,10 +110,10 @@ class Heat_Map_trainer:
                     print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
                 y=y.to('cpu')
                 # get index where prediction is 1
-                y=y>0.5
-                print(y)
-                classes = np.where(y[0] == 1)[0]
-                self.generate_heat_map(feature_map,image=images[0],classes=classes)
+                # y=y>0.5
+                # print(y)
+                # classes = np.where(y[0] == 1)[0]
+                self.generate_heat_map(feature_map,image=images[0],classes=y[0])
                 break
     
     def generate_heat_map(self,feature_map,image,classes):
@@ -138,9 +138,16 @@ class Heat_Map_trainer:
         cam = cam.view(b, -1, h, w)
         cam = torch.nn.functional.interpolate(cam, 
                                 (image.size(1), image.size(2)), mode='bilinear', align_corners=True).squeeze(0)
-        # print(cam.shape) # torch.Size([14, 512, 512])
+        # print(cam.shape) # torch.Size([13, 512, 512])
+       
+        # multiply each heatmap by the corresponding class probability
+        for i in range(cam.shape[0]):
+            cam[i] = cam[i] * classes[i]
+        # cam = torch.stack(cam)
+            
+        # print(cam.shape) # torch.Size([13, 512, 512])
         cam = torch.split(cam, 1)
-        # print(len(cam)) #torch.Size([1, 512, 512])
+        # print(cam.shape) #torch.Size([1, 512, 512])
 
 
         # image = image.permute(1, 2, 0)
@@ -149,25 +156,37 @@ class Heat_Map_trainer:
         # image=image.to('cpu')
         # plt.imshow(image, cmap='hot')
         # plt.show()
+
         image=imshow(image)
-        final_result = None
-        print(classes)
-        for k in classes:
+        heatmapList = []
+        # Load the heatmap images into a list
+        # Convert images to NumPy arrays
+        img_np = np.array(image)        
+        # print(classes)
+        for k in range(len(classes)):
             cam_ = cam[k].squeeze().cpu().data.numpy()
+           
+            # displaied as infera red image 
+            # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.hot(cam_)*255)).convert("RGB")
+           
+            # displaied black and red for important area
+            # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.afmhot(cam_)*255)).convert("RGB")
+           
+            # colored but slightly blue
             cam_pil = Image.fromarray(np.uint8(matplotlib.cm.gist_earth(cam_)*255)).convert("RGB")
-            # overlay image and class activation map
-            blended_cam = Image.blend(image, cam_pil, alpha=0.25)
-            # append all belnded images the print them in one image 
-            final_result = torchvision.transforms.functional.to_tensor(final_result)
-            blended_cam = torchvision.transforms.functional.to_tensor(blended_cam)
-            final_result = torch.cat((final_result, blended_cam), 2)
+            heatmapList.append(np.array(cam_pil) )
 
-        final_result = torchvision.transforms.functional.to_pil_image(final_result)
-        final_result.show()
-
-        # plt.imshow(blended_cam, cmap='hot')
-        # plt.show()
-          
+        # Calculate the blended image
+        alpha = 0.25  # Alpha value for blending (adjust as needed)
+        blended_image_np = img_np.copy().astype(np.float32)
+        for cam_np in heatmapList:
+            blended_image_np += alpha * cam_np
+        # Clip the pixel values to the valid range [0, 255]
+        blended_image_np = np.clip(blended_image_np, 0, 255).astype(np.uint8)
+        # Convert the resulting array back to a PIL image
+        blended_image_pil = Image.fromarray(blended_image_np).convert("RGB")
+        # Display or save the blended image in rgb formate
+        blended_image_pil.show()          
 
 def imshow(tensor):
     denormalize = _normalizer(denormalize=True)    
@@ -195,7 +214,7 @@ if __name__ == '__main__':
     # Freezing
     # for name, param in heat_map_model.named_parameters():
     #     param.requires_grad = False
-    summary(heat_map_model, input_size=(4, 3, 512, 512))
+    # summary(heat_map_model, input_size=(4, 3, 512, 512))
 
     # trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
     

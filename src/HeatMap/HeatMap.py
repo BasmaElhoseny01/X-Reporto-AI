@@ -32,8 +32,13 @@ class HeatMap(nn.Module):
 
         self.GAP=GlobalAveragePooling()
 
-        self.fc=nn.Linear(in_features=2048,out_features=14)  # SoftMax will be applied in training loop
-
+        self.fc=nn.Linear(in_features=2048,out_features=13)  # SoftMax will be applied in training loop
+        # self.fc=nn.Sequential(
+        #     nn.Linear(in_features=2048,out_features=512),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.5),
+        #     nn.Linear(in_features=512,out_features=13),
+        # )
     def forward(self, x):
         feature_map=self.feature_Layers(x)
         y=self.GAP(feature_map)

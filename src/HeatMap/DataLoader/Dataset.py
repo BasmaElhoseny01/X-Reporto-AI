@@ -21,7 +21,7 @@ class HeatMapDataset(Dataset):
     def __getitem__(self, idx):
         # imag_path_col = self.data_info.columns.get_loc('mimic_image_file_path')
 
-        img_path = self.data_info.iloc[idx,17]
+        img_path = self.data_info.iloc[idx,16]
         # read the image with parent path of current folder + image path
         # img_path = os.path.join("datasets/", img_path)
         img_path = os.path.join(os.getcwd(), img_path)
@@ -32,7 +32,7 @@ class HeatMapDataset(Dataset):
         # convert the image from BGR to RGB
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         # get the labels and if column is 1 then it is true if empty then false
-        labels = self.data_info.iloc[idx, 2:16]
+        labels = self.data_info.iloc[idx, 2:15]
         # make labels as numpy array of bool values true if value is 1 else false
         if labels.isnull().values.any():
             labels = labels.fillna(0)
