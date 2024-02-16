@@ -66,7 +66,7 @@ class Heat_Map_trainer:
 
                 # Forward Pass
                 feature_map,y=self.model(images)
-                
+
                 # apply threshold to make it binary
                 # y=y>0.5
                 # y=y.type(torch.float32)
@@ -110,7 +110,7 @@ class Heat_Map_trainer:
                 feature_map,y=self.model(images)
                 probabilit=y[0]
                 probabilit=probabilit.to('cpu')
-                y=y>0.5
+                y=y>0.25
                 y=y.type(torch.float32)
                 if targets is not None:
                     # Compute Loss
@@ -172,16 +172,18 @@ class Heat_Map_trainer:
         # print(classes)
         for k in range(len(classes)):
             cam_ = cam[k].squeeze().cpu().data.numpy()
-           
+        
             # displaied as infera red image 
             # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.hot(cam_)*255)).convert("RGB")
-           
+        
             # displaied black and red for important area
             # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.afmhot(cam_)*255)).convert("RGB")
-           
+        
             # colored but slightly blue
             cam_pil = Image.fromarray(np.uint8(matplotlib.cm.gist_earth(cam_)*255)).convert("RGB")
+
             heatmapList.append(np.array(cam_pil) )
+            
 
         # Calculate the blended image
         alpha = 0.25  # Alpha value for blending (adjust as needed)
@@ -223,10 +225,10 @@ if __name__ == '__main__':
     #     param.requires_grad = False
     # summary(heat_map_model, input_size=(4, 3, 512, 512))
 
-    # trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
+    trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
     
-    trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
-    trainer.train()
+    # trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
+    # trainer.train()
         
     # Testing
     trainer.test()
