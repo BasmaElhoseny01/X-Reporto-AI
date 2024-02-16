@@ -66,6 +66,8 @@ class Heat_Map_trainer:
 
                 # Forward Pass
                 feature_map,y=self.model(images)
+                y=y>0.2
+                y=y.type(torch.float32)
 
                 # Compute Loss
                 losses = self.criterion(y, targets)
@@ -103,17 +105,19 @@ class Heat_Map_trainer:
             with torch.no_grad():
                 # Forward Pass
                 feature_map,y=self.model(images)
-
+                probabilit=y[0]
+                probabilit=probabilit.to('cpu')
+                y=y>0.2
+                y=y.type(torch.float32)
                 if targets is not None:
                     # Compute Loss
                     losses = self.criterion(y, targets)
                     print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
-                y=y.to('cpu')
                 # get index where prediction is 1
                 # y=y>0.5
                 # print(y)
                 # classes = np.where(y[0] == 1)[0]
-                self.generate_heat_map(feature_map,image=images[0],classes=y[0])
+                self.generate_heat_map(feature_map,image=images[0],classes=probabilit)
                 break
     
     def generate_heat_map(self,feature_map,image,classes):
@@ -216,10 +220,10 @@ if __name__ == '__main__':
     #     param.requires_grad = False
     # summary(heat_map_model, input_size=(4, 3, 512, 512))
 
-    # trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
+    trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
     
-    trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
-    trainer.train()
+    # trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
+    # trainer.train()
         
     # Testing
     trainer.test()
