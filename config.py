@@ -86,10 +86,10 @@ LM_Batch_Size=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
-GENERATE_REPORT=True
+GENERATE_REPORT=False
 
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
+CONTINUE_TRAIN=True# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 RUN = "0"
 
