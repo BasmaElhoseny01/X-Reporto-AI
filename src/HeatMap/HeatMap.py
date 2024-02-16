@@ -45,7 +45,7 @@ class HeatMap(nn.Module):
         y=self.fc(y)
 
         # Apply Sotmax
-        y=F.softmax(y, dim=1)
+        y=F.sigmoid(y)
 
         return feature_map,y
 

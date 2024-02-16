@@ -73,8 +73,12 @@ class Heat_Map_trainer:
                 # y.requires_grad=True
 
                 # Compute Loss
-                losses = self.criterion(y, targets)
-
+                losses=0
+                # calc loss for each label
+                for i in range (y.shape[0]):
+                    for j in range(y.shape[1]):
+                        losses += self.criterion(y[i][j], targets[i][j])
+                        
                 # Backward Pass
                 losses.backward()
 
@@ -110,12 +114,20 @@ class Heat_Map_trainer:
                 feature_map,y=self.model(images)
                 probabilit=y[0]
                 probabilit=probabilit.to('cpu')
-                y=y>0.25
-                y=y.type(torch.float32)
+
                 if targets is not None:
                     # Compute Loss
-                    losses = self.criterion(y, targets)
+                    losses=0
+
+                    for i in range (y.shape[0]):
+                        for j in range(y.shape[1]):
+                            losses += self.criterion(y[i][j], targets[i][j])
                     print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
+                
+                y=y>0.5
+                y=y.type(torch.float32)
+                print(probabilit)
+                print(y)
                 # get index where prediction is 1
                 # y=y>0.5
                 # print(y)
@@ -149,7 +161,7 @@ class Heat_Map_trainer:
        
         # multiply each heatmap by the corresponding class probability
         for i in range(cam.shape[0]):
-            cam[i] = cam[i] * classes[i]
+            cam[i] = cam[i] * classes[i]*0.9
         # cam = torch.stack(cam)
             
         # print(cam.shape) # torch.Size([13, 512, 512])
@@ -186,7 +198,7 @@ class Heat_Map_trainer:
             
 
         # Calculate the blended image
-        alpha = 0.25  # Alpha value for blending (adjust as needed)
+        alpha = 0.1  # Alpha value for blending (adjust as needed)
         blended_image_np = img_np.copy().astype(np.float32)
         for cam_np in heatmapList:
             blended_image_np += alpha * cam_np
