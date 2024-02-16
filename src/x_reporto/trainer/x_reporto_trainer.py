@@ -589,9 +589,9 @@ class XReportoTrainer():
                         for sentence in LM_sentances:
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
                             print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
-                        with open("logs/predictions.txt", "a") as myfile:
-                            myfile.write(generated_sentence_for_selected_regions)
-                            myfile.write("\n")
+                            with open("logs/predictions.txt", "a") as myfile:
+                                myfile.write(generated_sentence_for_selected_regions)
+                                myfile.write("\n")
                         if stop:
                             break
                         
@@ -738,11 +738,11 @@ if __name__ == '__main__':
     # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
-    trainer.train()
+    # trainer.train()
 
     # # Run Validation
     # trainer.Validate()
 
     # # Predict and display results
     # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
-    # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
+    trainer.generate_sentences(predict_path_csv='datasets/train.csv')

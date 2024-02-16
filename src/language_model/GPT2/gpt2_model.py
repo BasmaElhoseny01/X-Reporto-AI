@@ -256,9 +256,9 @@ class CustomGPT2(nn.Module):
             model_inputs = self.prepare_inputs_for_generation(input_ids =input_ids ,seq_len=cur_len, **model_kwargs)
             # forward pass to get next
             logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
-            next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
+            # next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
             # greedy decoding
-            next_token = torch.argmax(next_token_logits, dim=-1) # of shape [batch_size]
+            next_token = torch.argmax(logits, dim=-1) # of shape [batch_size]
             # concatenate the new token
             next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
             # next_token = next_token * all_sequences_to_generate 
@@ -274,7 +274,11 @@ class CustomGPT2(nn.Module):
             all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask) # of shape [batch_size]
 
             # stop when all sentences are finished or if we exceed the maximum length
-            if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
+            # if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
+            if ( cur_len >= max_length):
+                print("input_ids shape:", input_ids.shape)
+                print("input_ids:", input_ids)
+                print("inside break")
                 break
         return input_ids
 

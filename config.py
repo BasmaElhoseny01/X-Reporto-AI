@@ -82,11 +82,11 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 EPOCHS=31
 LEARNING_RATE=0.0000000007
 BATCH_SIZE=1
-LM_Batch_Size=6
+LM_Batch_Size=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
-GENERATE_REPORT=False
+GENERATE_REPORT=True
 
 # Training Process Parameters
 CONTINUE_TRAIN=True # Continue training

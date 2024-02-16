@@ -336,10 +336,15 @@ class XReportoV1(nn.Module):
                         selection_classifier_targets=selection_classifier_targets.to('cpu')
                         del selection_classifier_targets
                         torch.cuda.empty_cache()
+                selected_regions=torch.ones_like(selected_regions)
                 object_detector_features = object_detector_features[selected_regions]
+                # print("object_detector_features: ",object_detector_features)
                 if (index+LM_Batch_Size) >= object_detector_features.shape[0]:
                     stop=True
+                # print("object_detector_features.shape[0]: ",object_detector_features.shape)
+                # print("features: ",object_detector_features[index:index+LM_Batch_Size,:])
                 LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],device=DEVICE)
+                
                 # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
                 if delete:
                     # Free GPU memory
@@ -348,7 +353,6 @@ class XReportoV1(nn.Module):
                     torch.cuda.empty_cache()
 
                 return LM_sentencses,stop
-
 
         else: # Validation (or inference) mode
             # Stage(1) Object Detector
