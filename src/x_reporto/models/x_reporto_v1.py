@@ -281,23 +281,22 @@ class XReportoV1(nn.Module):
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
        
             # print("Before language model")       
-            valid_input_ids, valid_attention_mask, valid_object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
+            valid_input_ids, valid_attention_mask, valid_object_detector_features ,valid_labels= self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets)
             if delete:
               selection_classifier_targets=selection_classifier_targets.to('cpu')
               del selection_classifier_targets
               torch.cuda.empty_cache()
             # print("here is the problem ",len(input_ids))
-            if index>=len(input_ids):
+            if index>=len(valid_input_ids):
                 return 0,0,0,0,0,0,0,0,True
-            if (index+LM_Batch_Size) >= len(input_ids):
+            if (index+LM_Batch_Size) >= len(valid_input_ids):
                 stop=True
-            LM_output=self.language_model(valid_input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+            LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
             tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
             logits = LM_output[1] 
-            # greedy decoding
             logits = torch.argmax(logits, dim=-1) # of shape [batch_size]
             print("=============================================================")
-            for reference_sentencs in input_ids[index:index+LM_Batch_Size,:]:
+            for reference_sentencs in valid_input_ids[index:index+LM_Batch_Size,:]:
                 rs=tokenizer.decode(reference_sentencs.tolist(),skip_special_tokens=True)
                 print("reference_sentencs in Forward: ",rs)
             for sentence in logits:
@@ -401,7 +400,7 @@ class XReportoV1(nn.Module):
 
             return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_output[0],LM_output[1],stop
     
-    def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features):
+    def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets):
         '''
         Filters the inputs to the language model based on the outputs of the object detector and binary classifiers.
 
@@ -421,4 +420,5 @@ class XReportoV1(nn.Module):
         valid_input_ids = input_ids[selection_classifier_targets]
         valid_attention_mask = attention_mask[selection_classifier_targets]
         valid_region_features = object_detector_features[selection_classifier_targets]
-        return valid_input_ids, valid_attention_mask, valid_region_features
+        valid_labels=language_model_targets[selection_classifier_targets]
+        return valid_input_ids, valid_attention_mask, valid_region_features,valid_labels

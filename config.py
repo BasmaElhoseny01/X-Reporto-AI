@@ -76,17 +76,17 @@ class ModelStage(Enum):
     CLASSIFIER = 2
     LANGUAGE_MODEL = 3
 
-MODEL_STAGE=1
+MODEL_STAGE=3
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # X-Report Trainer Hyper Parameters
 EPOCHS=31
-LEARNING_RATE=0.00001
+LEARNING_RATE=0.0000000007
 BATCH_SIZE=1
-LM_Batch_Size=1
+LM_Batch_Size=6
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
-GENERATE_REPORT=True
+GENERATE_REPORT=False
 
 # Training Process Parameters
 CONTINUE_TRAIN=True # Continue training
