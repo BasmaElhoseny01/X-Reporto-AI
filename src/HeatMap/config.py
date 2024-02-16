@@ -5,8 +5,8 @@ import sys
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Trainer Hyper Parameters
-EPOCHS=21
-LEARNING_RATE=0.000005
+EPOCHS=51
+LEARNING_RATE=0.001
 BATCH_SIZE=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999

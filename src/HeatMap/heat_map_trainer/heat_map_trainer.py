@@ -66,8 +66,11 @@ class Heat_Map_trainer:
 
                 # Forward Pass
                 feature_map,y=self.model(images)
-                y=y>0.2
-                y=y.type(torch.float32)
+                
+                # apply threshold to make it binary
+                # y=y>0.5
+                # y=y.type(torch.float32)
+                # y.requires_grad=True
 
                 # Compute Loss
                 losses = self.criterion(y, targets)
@@ -107,7 +110,7 @@ class Heat_Map_trainer:
                 feature_map,y=self.model(images)
                 probabilit=y[0]
                 probabilit=probabilit.to('cpu')
-                y=y>0.2
+                y=y>0.5
                 y=y.type(torch.float32)
                 if targets is not None:
                     # Compute Loss
@@ -220,10 +223,10 @@ if __name__ == '__main__':
     #     param.requires_grad = False
     # summary(heat_map_model, input_size=(4, 3, 512, 512))
 
-    trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
+    # trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
     
-    # trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
-    # trainer.train()
+    trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
+    trainer.train()
         
     # Testing
     trainer.test()
