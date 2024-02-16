@@ -155,6 +155,7 @@ class Heat_Map_trainer:
                 blended_cam.save("./blended_class__"+str(k)+'.jpg')
 
     def test(self):
+        print("Testing")
         self.model.eval()
         for batch_idx, (images, targets) in enumerate(self.data_loader_test):
             # Move to device
@@ -162,14 +163,26 @@ class Heat_Map_trainer:
             targets=targets.to(DEVICE)
 
 
-            with torch.no_grad():
-                # Forward Pass
-                feature_map,y=self.model(images)
+            # with torch.no_grad():
+            # Forward Pass
+            # feature_map,y=self.model(images)
 
-                if targets is not None:
-                    # Compute Loss
-                    losses = self.criterion(y, targets)
-                    print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
+            # if targets is not None:
+            #     # Compute Loss
+            #     losses = self.criterion(y, targets)
+            #     print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
+
+            # self.generate_heat_map(feature_map)
+    
+    def generate_heat_map(self,feature_map):
+        b, c, h, w = feature_map.size()
+        print(feature_map.shape)  # torch.Size([batch_size, 2048, 16, 16])
+
+        # Reshape feature map
+        feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
+        print(feature_map.shape) # torch.Size([1, 256, 1024])
+        sys.exit()
+        pass           
             
 
                 
@@ -203,4 +216,7 @@ if __name__ == '__main__':
     summary(heat_map_model, input_size=(4, 3, 512, 512))
 
     trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
-    trainer.train()
+    # trainer.train()
+        
+    # Testing
+    trainer.test()
