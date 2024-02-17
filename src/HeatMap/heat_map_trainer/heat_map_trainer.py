@@ -41,12 +41,12 @@ class Heat_Map_trainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # TODO transform_type->Train
-        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='val')
+        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
         self.dataset_test = HeatMapDataset(dataset_path= testing_csv_path, transform_type='val')
         
         # create data loader
         # TODO suffle Training Loaders
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
         self.data_loader_test = DataLoader(dataset=self.dataset_test, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
 
@@ -90,7 +90,7 @@ class Heat_Map_trainer:
 
                 if DEBUG == 0:
                     print(f"Epoch [{epoch}/{EPOCHS}] Batch [{batch_idx}/{len(self.data_loader_train)}] Loss: {losses.item()}")
-                    break
+                    # break
 
             print(f"Epoch [{epoch}/{EPOCHS}] Loss: {epoch_losses/len(self.data_loader_train)}")
             
@@ -237,10 +237,10 @@ if __name__ == '__main__':
     #     param.requires_grad = False
     # summary(heat_map_model, input_size=(4, 3, 512, 512))
 
-    trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
+    # trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
     
-    # trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
-    # trainer.train()
+    trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
+    trainer.train()
         
     # Testing
     trainer.test()
