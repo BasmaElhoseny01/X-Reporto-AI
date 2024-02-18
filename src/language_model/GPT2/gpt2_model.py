@@ -1,5 +1,7 @@
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 import torch
+from torch import Tensor
+from torch import device
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss
@@ -236,53 +238,8 @@ class CustomGPT2(nn.Module):
         if use_cache:
             return (logits, presents)
         return (logits,)
-    # add no_grad to forward pass
-    @torch.no_grad()
-    def generate(self, max_length, image_hidden_states,device):
-        
-        batch_size = image_hidden_states.size(0)
 
-        input_ids = torch.full(size=(batch_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
-        model_kwargs = {"attention_mask": torch.ones(size=(batch_size, 1), dtype=torch.int64, device=device),
-                        "use_cache": True}
-        
-        #greedy search
-        seq_len = 1
-        #start with a random token
-        all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device) # (batch_size,)
-        cur_len = seq_len
-        while True:
-            # prepare model inputs (attention mask, layer_past, inputs_ids, position_ids, use_cache)
-            model_inputs = self.prepare_inputs_for_generation(input_ids =input_ids ,seq_len=cur_len, **model_kwargs)
-            # forward pass to get next
-            logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
-            # next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
-            # greedy decoding
-            next_token = torch.argmax(logits, dim=-1) # of shape [batch_size]
-            # concatenate the new token
-            next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
-            # next_token = next_token * all_sequences_to_generate 
-            # update input_ids, attention mask and length for next step
-            # input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
-            input_ids = torch.cat([input_ids, next_token], dim=-1)
-            # update model kwargs
-            model_kwargs = self.update_model_kwargs(presents,model_kwargs)
-            # update sequence length
-            cur_len += 1
-
-            # if eos_token was found in one sentence, set sentence to finished
-            binary_mask = (next_token != self.config.eos_token_id).long() # of shape [batch_size]
-            all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask) # of shape [batch_size]
-
-            # stop when all sentences are finished or if we exceed the maximum length
-            # if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
-            if ( cur_len >= max_length):
-                break
-        return input_ids
-
-
-
-    def prepare_inputs_for_generation(self, input_ids,seq_len = None, **kwargs):
+    def prepare_inputs_for_generation(self, input_ids:Tensor=None, seq_len:int=1, **kwargs:dict[str, Any]):
         token_type_ids = kwargs.get("token_type_ids", None)
         # Omit tokens covered by past_key_values
         layer_past = kwargs.get("layer_past", None)
@@ -303,16 +260,6 @@ class CustomGPT2(nn.Module):
 
         attention_mask = kwargs.get("attention_mask", None)
         position_ids = kwargs.get("position_ids", None)
-
-        # if attention_mask is not None and position_ids is None:
-        #     # create position_ids on the fly for batch generation
-        #     position_ids = attention_mask.long().cumsum(-1) - 1
-        #     position_ids.masked_fill_(attention_mask == 0, 1)
-        #     if layer_past:
-        #         position_ids = position_ids[:, -input_ids.shape[1] :]
-        # else:
-        #     position_ids = None
-
         position_ids = None
         return {
             "input_ids": input_ids,
@@ -324,64 +271,132 @@ class CustomGPT2(nn.Module):
             # "token_type_ids": token_type_ids,
         }
 
-    def update_model_kwargs(self, presents, model_kwargs):
+    def update_model_kwargs(self, model_kwargs, presents:Any=None):
         model_kwargs["layer_past"] = presents
         attention_mask = model_kwargs["attention_mask"]
         model_kwargs["attention_mask"] = torch.cat([attention_mask, attention_mask.new_ones((attention_mask.shape[0], 1))], dim=-1)
-        # print dimensions of attention mask
-        # print("attention_mask shape:", model_kwargs["attention_mask"].shape)
-        # print("layer_past shape:", presents[0][0].shape)
-        # print("layer_past shape:", presents[0][1].shape)
         return model_kwargs
     
-    # def update_model_kwargs(self, input_ids, layer_past=None, inputs_embeds=None, **kwargs):
-    #     token_type_ids = kwargs.get("token_type_ids", None)
-    #     # Omit tokens covered by past_key_values
-    #     if layer_past:
-    #         past_length = layer_past[0][0].shape[2]
+    def generate(self, max_length: int = 300, image_hidden_states: Tensor = None, Temperature: int = 1,
+             top_k: int = 0, device: device = None, greedy: bool = False, sampling: bool = False,
+             sampling_top_k: bool = False) -> Tensor:
 
-    #         # Some generation methods already pass only the last input ID
-    #         if input_ids.shape[1] > past_length:
-    #             remove_prefix_length = past_length
-    #         else:
-    #             # Default to old behavior: keep only final ID
-    #             remove_prefix_length = input_ids.shape[1] - 1
+        batch_size = image_hidden_states.size(0)
 
-    #         input_ids = input_ids[:, remove_prefix_length:]
-    #         if token_type_ids is not None:
-    #             token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
+        input_ids = torch.full(size=(batch_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
+        model_kwargs = {"attention_mask": torch.ones(size=(batch_size, 1), dtype=torch.int64, device=device),
+                        "use_cache": True}
 
-    #     attention_mask = kwargs.get("attention_mask", None)
-    #     position_ids = kwargs.get("position_ids", None)
+        # greedy search
+        seq_len = 1
+        # start with a random token
+        all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device)  # (batch_size,)
+        cur_len = seq_len
+        while True:
+            # prepare model inputs (attention mask, layer_past, inputs_ids, position_ids, use_cache)
+            model_inputs = self.prepare_inputs_for_generation(input_ids=input_ids, seq_len=cur_len, **model_kwargs)
+            # forward pass to get next
+            logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
+            next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
 
-    #     if attention_mask is not None and position_ids is None:
-    #         # create position_ids on the fly for batch generation
-    #         position_ids = attention_mask.long().cumsum(-1) - 1
-    #         position_ids.masked_fill_(attention_mask == 0, 1)
-    #         if layer_past:
-    #             position_ids = position_ids[:, -input_ids.shape[1] :]
-    #     else:
-    #         position_ids = None
+            # greedy decoding
+            if greedy:
+                next_token = torch.argmax(next_token_logits, dim=-1)  # of shape [batch_size]
+            # sampling
+            elif sampling:
+                next_token = torch.multinomial(F.softmax(next_token_logits / Temperature, dim=-1), num_samples=1).squeeze(1)
+            # top-k sampling
+            elif sampling_top_k:  
+                top_k_values, top_k_indices = torch.topk(next_token_logits /Temperature, top_k, dim=-1)
+                # Apply softmax to the top-k values
+                top_k_probs = F.softmax(top_k_values, dim=-1)
+                # Multinomial sampling based on the top-k probabilities
+                sampled_index = torch.multinomial(top_k_probs, 1).item()
+                next_token=top_k_indices[0, sampled_index].item()
+            # concatenate the new token
+            next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
 
-    #     # if `inputs_embeds` are passed, we only want to use them in the 1st generation step
-    #     if inputs_embeds is not None and layer_past is None:
-    #         model_inputs = {"inputs_embeds": inputs_embeds}
-    #     else:
-    #         model_inputs = {"input_ids": input_ids}
+            # update input_ids, attention mask and length for the next step
+            print("input_ids shape:", input_ids.shape)
+            print("next_token shape:", next_token.shape)
+            input_ids = torch.cat([input_ids,  next_token[:, None]], dim=-1)
+            # update model kwargs
+            model_kwargs = self.update_model_kwargs(model_kwargs=model_kwargs, presents=presents)
+            # update sequence length
+            cur_len += 1
 
-    #     model_inputs.update(
-    #         {
-    #             "layer_past": layer_past,
-    #             "use_cache": kwargs.get("use_cache"),
-    #             "position_ids": position_ids,
-    #             "attention_mask": attention_mask,
-    #             # "token_type_ids": token_type_ids,
-    #         }
-    #     )
+            # if eos_token was found in one sentence, set sentence to finished
+            binary_mask = (next_token != self.config.eos_token_id).long()  # of shape [batch_size]
+            all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask)  # of shape [batch_size]
 
-    #     return model_inputs
+            # stop when all sentences are finished or if we exceed the maximum length
+            # if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
 
+            if (cur_len >= max_length):
+                break
 
+        return input_ids
+
+    
+    # def generate(self, max_length:int=300, image_hidden_states:Tensor=None,Temperature:int=1,top_k:int=0,device:device=None,greedy:bool=False,sampling:bool=False,sampling_top_k:bool=False)->Tensor:
+        
+    #     batch_size = image_hidden_states.size(0)
+
+    #     input_ids = torch.full(size=(batch_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
+    #     model_kwargs = {"attention_mask": torch.ones(size=(batch_size, 1), dtype=torch.int64, device=device),
+    #                     "use_cache": True}
+        
+    #     #greedy search
+    #     seq_len = 1
+    #     #start with a random token
+    #     all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device) # (batch_size,)
+    #     cur_len = seq_len
+    #     while True:
+    #         # prepare model inputs (attention mask, layer_past, inputs_ids, position_ids, use_cache)
+    #         model_inputs = self.prepare_inputs_for_generation(input_ids =input_ids ,seq_len=cur_len, **model_kwargs)
+    #         # forward pass to get next
+    #         logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
+    #         next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
+    #         # greedy decoding
+    #         print("mmmmmmmmmmmmmmm")
+    #         if greedy:
+    #             next_token = torch.argmax(next_token_logits, dim=-1) # of shape [batch_size]
+    #         # sampling
+    #         elif sampling:
+    #             next_token = torch.multinomial(F.softmax(next_token_logits / Temperature, dim=-1), num_samples=1).squeeze(1)
+    #             print("next_token shape:", next_token.shape)
+    #         # top-k sampling
+    #         elif sampling_top_k:
+    #             next_token_logits  /= Temperature
+    #             # Use torch.topk to get the top-k indices and values
+    #             top_k_values, top_k_indices = torch.topk(next_token_logits, top_k, dim=-1)
+    #             # Apply softmax to the top-k values
+    #             top_k_probs = F.softmax(top_k_values, dim=-1)
+    #             # Multinomial sampling based on the top-k probabilities
+    #             sampled_index = torch.multinomial(top_k_probs, 1).item()
+    #             next_token=top_k_indices[0, sampled_index].item()
+    #         # concatenate the new token
+    #         next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
+    #         # next_token = next_token * all_sequences_to_generate 
+    #         # update input_ids, attention mask and length for next step
+    #         input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
+    #         # input_ids = torch.cat([input_ids, next_token], dim=-1)
+    #         # update model kwargs
+    #         model_kwargs = self.update_model_kwargs(model_kwargs=model_kwargs,presents=presents)
+    #         # update sequence length
+    #         cur_len += 1
+
+    #         # if eos_token was found in one sentence, set sentence to finished
+    #         binary_mask = (next_token != self.config.eos_token_id).long() # of shape [batch_size]
+    #         all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask) # of shape [batch_size]
+
+    #         # stop when all sentences are finished or if we exceed the maximum length
+    #         # if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
+    #         if ( cur_len >= max_length):
+    #             break
+    #     return input_ids
+
+   
 def wait(seconds):
     seconds = seconds * 200000000
     for i in range(seconds):
@@ -478,7 +493,10 @@ def test_genertation(use_checkpointing = True, debug=True,batch_size = 4,seq_len
     image_hidden_states = torch.randn(batch_size, 1, config.d_model)
     image_hidden_states = image_hidden_states.to(device)
     model.eval()
-    generated = model.generate(10, image_hidden_states,device)
+    # def generate(self, max_length:int=300, image_hidden_states:Tensor=None,Temperture:int=1,top_k:int=1,device:device=None,greedy:bool=False,sampling:bool=False,sampling_top_k:bool=False)->Tensor:
+    # generated = model.generate(max_length= 10, image_hidden_states=image_hidden_states,Temperature=1,top_k=6,greedy=True,device=device)
+    generated = model.generate(max_length= 10, image_hidden_states=image_hidden_states,greedy=True,device=device)
+
     print("generated: ",generated)
     tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
 
