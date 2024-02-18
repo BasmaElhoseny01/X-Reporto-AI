@@ -42,13 +42,14 @@ class Heat_Map_trainer:
 
         # TODO transform_type->Train
         self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
-        # self.dataset_test = HeatMapDataset(dataset_path= testing_csv_path, transform_type='val')
+        self.dataset_test = HeatMapDataset(dataset_path= testing_csv_path, transform_type='val')
         
         # create data loader
         # TODO suffle Training Loaders
         self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-        # self.data_loader_test = DataLoader(dataset=self.dataset_test, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        self.data_loader_test = DataLoader(dataset=self.dataset_test, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         print(" self.dataset_train",len(self.dataset_train))
+        print(" self.dataset_test",len(self.dataset_test))
 
 
     def train(self):
@@ -74,21 +75,17 @@ class Heat_Map_trainer:
                 for c in range(13):
                   losses+=self.criterion(y[:,c],targets[:,c])
 
-
-
-
-
                 # apply threshold to make it binary
                 # y=y>0.5
                 # y=y.type(torch.float32)
                 # y.requires_grad=True
 
-                # # # Compute Loss
-                # # losses=0
-                # # # calc loss for each label
-                # # for i in range (y.shape[0]):
-                # #     for j in range(y.shape[1]):
-                # #         losses += self.criterion(y[i][j], targets[i][j])
+                # # Compute Loss
+                # losses=0
+                # # calc loss for each label
+                # for i in range (y.shape[0]):
+                #     for j in range(y.shape[1]):
+                #         losses += self.criterion(y[i][j], targets[i][j])
                 # sys.exit()
                 # # loss = 0
                 # # for c in range(14):
@@ -111,16 +108,10 @@ class Heat_Map_trainer:
             
             if epoch%5==0 and epoch!=0:
                 self.lr_scheduler.step()
-
-                # If folder doesn't exist create it
-                directory = 'models/' + str(RUN)
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
                 # Save the model
-                torch.save(self.model.state_dict(), directory+'/heat_map.pth')
+                torch.save(self.model.state_dict(), 'models/'+str(RUN)+'/heat_map.pth')
 
     def test(self):
-        print("Testing")
         self.model.eval()
         for batch_idx, (images, targets) in enumerate(self.data_loader_test):
             # Move to device
@@ -132,30 +123,49 @@ class Heat_Map_trainer:
             with torch.no_grad():
                 # Forward Pass
                 feature_map,y=self.model(images)
-                probabilit=y[0]
-                probabilit=probabilit.to('cpu')
+                print("y",y)
+                print("targets",targets)
+                # print("y.shape",y.shape)
+                # print("feature_map",feature_map.shape)
+
+                # probabilit=y[0]
+                # probabilit=probabilit.to('cpu')
 
                 if targets is not None:
-                    # Compute Loss
-                    losses=0
+                    # Computing Losses For the Batch
+                    losses= 0
+                    # Loss as summation of Binary cross entropy for each class :D
+                    # Only 13 Classes becuase we removed the class of nofinding 
+                    for c in range(13):
+                      losses+=self.criterion(y[:,c],targets[:,c])
 
-                    for i in range (y.shape[0]):
-                        for j in range(y.shape[1]):
-                            losses += self.criterion(y[i][j], targets[i][j])
                     print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
-                
-                y=y>0.5
-                y=y.type(torch.float32)
-                print(probabilit)
-                print(y)
-                # get index where prediction is 1
-                # y=y>0.5
-                # print(y)
+
+                # Generating Heat Map
+                # y=(y>0.5)*1.0
+                # self.generate_heat_map(feature_map,image=images[0],classes=y)
+
                 # classes = np.where(y[0] == 1)[0]
-                self.generate_heat_map(feature_map,image=images[0],classes=probabilit)
+                # print("classes",classes)
+
+                # y=y.type(torch.float32)
+                # y=y>0.5
+                # print(probabilit)
+                # print(y)
+                # # get index where prediction is 1
+                # # y=y>0.5
+                # # # print(y)
+                # classes = np.where(y[0] == 1)[0]
+                # self.generate_heat_map(feature_map,image=images[0],classes=probabilit)
                 break
     
     def generate_heat_map(self,feature_map,image,classes):
+        print("generate_heat_map")
+        print("feature_map",feature_map.shape)
+        print("classes",classes)
+        print("classes.shape",classes.shape)
+        print("torch.nn.Parameter(self.model.fc.weight.t())",torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0)).shape)
+        # print("torch.nn.Parameter(self.model.fc.weight.t())",torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0)))
         b, c, h, w = feature_map.size()
         # print(feature_map.shape)  # torch.Size([batch_size, 2048, 16, 16])
 
@@ -167,6 +177,7 @@ class Heat_Map_trainer:
 
         # Perform batch matrix multiplication
         cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 14, 256])
+     
 
         ## normalize to 0 ~ 1
         min_val, min_args = torch.min(cam, dim=2, keepdim=True)
@@ -175,28 +186,27 @@ class Heat_Map_trainer:
         cam /= max_val
 
         cam = cam.view(b, -1, h, w)
+
+        # UpSampling
         cam = torch.nn.functional.interpolate(cam, 
                                 (image.size(1), image.size(2)), mode='bilinear', align_corners=True).squeeze(0)
         # print(cam.shape) # torch.Size([13, 512, 512])
        
-        # multiply each heatmap by the corresponding class probability
-        for i in range(cam.shape[0]):
-            cam[i] = cam[i] * classes[i]*0.9
-        # cam = torch.stack(cam)
+        # # multiply each heatmap by the corresponding class probability
+        # for i in range(cam.shape[0]):
+        #     cam[i] = cam[i] * classes[i]*0.9
+        # # cam = torch.stack(cam)
             
         # print(cam.shape) # torch.Size([13, 512, 512])
         cam = torch.split(cam, 1)
-        # print(cam.shape) #torch.Size([1, 512, 512])
 
-
-        # image = image.permute(1, 2, 0)
-        # # normalize the image
-        # image = (image - image.min()) / (image.max() - image.min())
-        # image=image.to('cpu')
-        # plt.imshow(image, cmap='hot')
-        # plt.show()
+        # # print(len(cam)) #13
+        # print(cam[0])
+        # print(cam[1])
 
         image=imshow(image)
+
+        sys.exit()
         heatmapList = []
         # Load the heatmap images into a list
         # Convert images to NumPy arrays
@@ -256,10 +266,10 @@ if __name__ == '__main__':
     #     param.requires_grad = False
     # summary(heat_map_model, input_size=(4, 3, 512, 512))
 
-    # trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
+    trainer = Heat_Map_trainer(model=None,training_csv_path=Heat_map_train_csv_path)
     
-    trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
-    trainer.train()
+    # trainer = Heat_Map_trainer(model=heat_map_model,training_csv_path=Heat_map_train_csv_path)
+    # trainer.train()
         
     # Testing
-    # trainer.test()
+    trainer.test()
