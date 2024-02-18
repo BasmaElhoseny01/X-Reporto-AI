@@ -282,10 +282,13 @@ class XReportoV1(nn.Module):
        
             # print("Before language model")       
             valid_input_ids, valid_attention_mask, valid_object_detector_features ,valid_labels= self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets)
-            if delete:
-              selection_classifier_targets=selection_classifier_targets.to('cpu')
-              del selection_classifier_targets
-              torch.cuda.empty_cache()
+            if delete or True:
+                selection_classifier_targets=selection_classifier_targets.to('cpu')
+                del selection_classifier_targets
+                # del object_detector_features
+                # del input_ids
+                # del attention_mask
+                torch.cuda.empty_cache()
             # print("here is the problem ",len(input_ids))
             if index>=len(valid_input_ids):
                 return 0,0,0,0,0,0,0,0,True
@@ -297,10 +300,10 @@ class XReportoV1(nn.Module):
             logits = torch.argmax(logits, dim=-1) # of shape [batch_size]
             print("=============================================================")
             for reference_sentencs in valid_input_ids[index:index+LM_Batch_Size,:]:
-                rs=tokenizer.decode(reference_sentencs.tolist(),skip_special_tokens=True)
+                rs=tokenizer.decode(reference_sentencs[:100].tolist(),skip_special_tokens=True)
                 print("reference_sentencs in Forward: ",rs)
             for sentence in logits:
-                generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
+                generated_sentence_for_selected_regions = tokenizer.decode(sentence[:100].tolist(),skip_special_tokens=True)
                 print("Generated Sentence in Forward: ",generated_sentence_for_selected_regions)
             if delete:
                 # Free GPU memory

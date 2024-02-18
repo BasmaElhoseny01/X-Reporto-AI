@@ -19,6 +19,14 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         self.head_dim = self.d_model // self.num_heads
         self.max_seq_len = self.config.max_seq_len
         
+        
+        # self.register_buffer(
+        #     "causal_mask",
+        #     torch.tril(torch.ones((self.max_seq_len, self.max_seq_len+1), dtype=torch.bool)).view(
+        #         1, 1, self.max_seq_len, self.max_seq_len+1
+        #     ),
+        #     persistent=False,
+        # )
         #TODO: check dimension of the causal mask
         self.register_buffer(
             "causal_mask",
@@ -29,7 +37,7 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         )
         # ----------------- TEST -----------------
         # remove the first row of the causal mask
-        self.causal_mask = self.causal_mask[:,:,1:,:]
+        # self.causal_mask = self.causal_mask[:,:,1:,:]
         # ----------------- TEST -----------------
         self.register_buffer("mask_value", torch.tensor(-1e4), persistent=False)
 
@@ -39,8 +47,12 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         # self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
         
         # image hidden state to key, value
-        self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
-        self.u_v = nn.Linear(self.d_model, self.d_model,bias=False)
+        # self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
+        # self.u_v = nn.Linear(self.d_model, self.d_model,bias=False)
+
+        #TODO: Test Conv1D instead of Linear
+        self.u_k = Conv1D(self.d_model, self.d_model)
+        self.u_v = Conv1D(self.d_model, self.d_model)
 
         self.c_attn = Conv1D(3 * self.d_model, self.d_model)
         self.c_proj = Conv1D(self.d_model, self.d_model)
@@ -59,8 +71,9 @@ class CustomGPT2MultiHeadAttention(nn.Module):
 
         query_length, key_length = query.size(-2), key.size(-2)
         #TODO: check dimension of the causal mask 
-        # causal_mask_selected = causal_mask[:, :, key_length - query_length -1: key_length-1, :key_length]
-        causal_mask_selected = causal_mask[:, :, :query_length, :key_length]
+        # in training, key_length = 1025, query_length = 1024 , causal_mask_selected = (1, 1, 1024, 1025)
+        causal_mask_selected = causal_mask[:, :, key_length - query_length : key_length, :key_length]
+        # causal_mask_selected = causal_mask[:, :, :query_length, :key_length]
 
         # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
         # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
