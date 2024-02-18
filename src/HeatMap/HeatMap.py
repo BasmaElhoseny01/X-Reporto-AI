@@ -56,9 +56,7 @@ class HeatMap(nn.Module):
         # y=self.fc(y)
 
         # Apply Sigmoid
-        # y=F.sigmoid(y)
-
-        F.sigmoid(self.fc(y)) #sigmoid as we use BCELoss
+        y=F.sigmoid(self.fc(y)) #sigmoid as we use BCELoss
 
         return feature_map,y
 

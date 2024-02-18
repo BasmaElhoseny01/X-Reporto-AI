@@ -35,20 +35,20 @@ class Heat_Map_trainer:
 
 
         # Create Criterion 
-        # self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss for multi-label classification
-    
+        self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
 
         # create learning rate scheduler
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # TODO transform_type->Train
         self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
-        self.dataset_test = HeatMapDataset(dataset_path= testing_csv_path, transform_type='val')
+        # self.dataset_test = HeatMapDataset(dataset_path= testing_csv_path, transform_type='val')
         
         # create data loader
         # TODO suffle Training Loaders
         self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-        self.data_loader_test = DataLoader(dataset=self.dataset_test, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        # self.data_loader_test = DataLoader(dataset=self.dataset_test, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        print(" self.dataset_train",len(self.dataset_train))
 
 
     def train(self):
@@ -67,24 +67,32 @@ class Heat_Map_trainer:
 
                 # Forward Pass
                 feature_map,y=self.model(images)
-                print("y",y)
-                print("y",y.shape)
+
+                losses= 0
+                # Loss as summation of Binary cross entropy for each class :D
+                # Only 13 Classes becuase we removed the class of nofinding 
+                for c in range(13):
+                  losses+=self.criterion(y[:,c],targets[:,c])
+
+
+
+
 
                 # apply threshold to make it binary
                 # y=y>0.5
                 # y=y.type(torch.float32)
                 # y.requires_grad=True
 
-                # # Compute Loss
-                # losses=0
-                # # calc loss for each label
-                # for i in range (y.shape[0]):
-                #     for j in range(y.shape[1]):
-                #         losses += self.criterion(y[i][j], targets[i][j])
-                sys.exit()
-                # loss = 0
-                # for c in range(14):
-                    # loss += F.binary_cross_entropy(predicted[:, c], target[:, c], reduction='mean')
+                # # # Compute Loss
+                # # losses=0
+                # # # calc loss for each label
+                # # for i in range (y.shape[0]):
+                # #     for j in range(y.shape[1]):
+                # #         losses += self.criterion(y[i][j], targets[i][j])
+                # sys.exit()
+                # # loss = 0
+                # # for c in range(14):
+                #     # loss += F.binary_cross_entropy(predicted[:, c], target[:, c], reduction='mean')
                         
                 # Backward Pass
                 losses.backward()
@@ -103,8 +111,13 @@ class Heat_Map_trainer:
             
             if epoch%5==0 and epoch!=0:
                 self.lr_scheduler.step()
+
+                # If folder doesn't exist create it
+                directory = 'models/' + str(RUN)
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
                 # Save the model
-                torch.save(self.model.state_dict(), 'models/'+str(RUN)+'/heat_map.pth')
+                torch.save(self.model.state_dict(), directory+'/heat_map.pth')
 
     def test(self):
         print("Testing")
@@ -236,7 +249,6 @@ def _normalizer(denormalize=False):
     return torchvision.transforms.Normalize(mean=MEAN, std=STD)
   
 if __name__ == '__main__':
-
     heat_map_model=HeatMap().to(DEVICE)
 
     # Freezing
@@ -250,4 +262,4 @@ if __name__ == '__main__':
     trainer.train()
         
     # Testing
-    trainer.test()
+    # trainer.test()
