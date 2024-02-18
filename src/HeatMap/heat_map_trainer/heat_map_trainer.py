@@ -142,8 +142,9 @@ class Heat_Map_trainer:
                     print(f"Test Batch [{batch_idx}/{len(self.data_loader_test)}] Loss: {losses.item()}")
 
                 # Generating Heat Map
-                # y=(y>0.5)*1.0
-                # self.generate_heat_map(feature_map,image=images[0],classes=y)
+                prob=y
+                y=(y>0.5)*1.0
+                # self.generate_heat_map(feature_map,image=images[0],classes=y,prob=prob)
 
                 # classes = np.where(y[0] == 1)[0]
                 # print("classes",classes)
@@ -159,7 +160,7 @@ class Heat_Map_trainer:
                 # self.generate_heat_map(feature_map,image=images[0],classes=probabilit)
                 break
     
-    def generate_heat_map(self,feature_map,image,classes):
+    def generate_heat_map(self,feature_map,image,classes,prob):
         print("generate_heat_map")
         print("feature_map",feature_map.shape)
         print("classes",classes)
@@ -177,67 +178,36 @@ class Heat_Map_trainer:
 
         # Perform batch matrix multiplication
         cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 14, 256])
-     
 
         ## normalize to 0 ~ 1
         min_val, min_args = torch.min(cam, dim=2, keepdim=True)
         cam -= min_val
         max_val, max_args = torch.max(cam, dim=2, keepdim=True)
         cam /= max_val
-
+        
+        ## top k class activation map
         cam = cam.view(b, -1, h, w)
 
-        # UpSampling
-        cam = torch.nn.functional.interpolate(cam, 
-                                (image.size(1), image.size(2)), mode='bilinear', align_corners=True).squeeze(0)
-        # print(cam.shape) # torch.Size([13, 512, 512])
-       
-        # # multiply each heatmap by the corresponding class probability
-        # for i in range(cam.shape[0]):
-        #     cam[i] = cam[i] * classes[i]*0.9
-        # # cam = torch.stack(cam)
-            
-        # print(cam.shape) # torch.Size([13, 512, 512])
+        print("cam",cam.shape)
+        print("image",image.shape)
+        cam = nn.functional.interpolate(cam.unsqueeze(0), 
+                                        (image.size(1), image.size(2)), mode='bilinear', align_corners=True).squeeze(0)
         cam = torch.split(cam, 1)
 
-        # # print(len(cam)) #13
-        # print(cam[0])
-        # print(cam[1])
+        # tensor to pil image
+        img_pil = imshow(image)
+        img_pil.save('/content/'+"input.jpg")
 
-        image=imshow(image)
-
-        sys.exit()
-        heatmapList = []
-        # Load the heatmap images into a list
-        # Convert images to NumPy arrays
-        img_np = np.array(image)        
-        # print(classes)
-        for k in range(len(classes)):
+        for k in range(13):
+            print("Predict '%s' with %2.4f probability"%(k, prob[k]))
             cam_ = cam[k].squeeze().cpu().data.numpy()
-        
-            # displaied as infera red image 
-            # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.hot(cam_)*255)).convert("RGB")
-        
-            # displaied black and red for important area
-            # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.afmhot(cam_)*255)).convert("RGB")
-        
-            # colored but slightly blue
-            cam_pil = Image.fromarray(np.uint8(matplotlib.cm.gist_earth(cam_)*255)).convert("RGB")
+            cam_pil = Image.fromarray(np.uint8(cm.gist_earth(arr)*255)).convert("RGB")
+            cam_pil.save('/content/'+"cam_class__%s_prob__%2.4f.jpg"%(k, prob[k]))
 
-            heatmapList.append(np.array(cam_pil) )
-            
-
-        # Calculate the blended image
-        alpha = 0.1  # Alpha value for blending (adjust as needed)
-        blended_image_np = img_np.copy().astype(np.float32)
-        for cam_np in heatmapList:
-            blended_image_np += alpha * cam_np
-        # Clip the pixel values to the valid range [0, 255]
-        blended_image_np = np.clip(blended_image_np, 0, 255).astype(np.uint8)
-        # Convert the resulting array back to a PIL image
-        blended_image_pil = Image.fromarray(blended_image_np).convert("RGB")
-        # Display or save the blended image in rgb formate
-        blended_image_pil.show()          
+            # # overlay image and class activation map
+            # blended_cam = blend(img_pil, cam_pil, 0.2)
+            # blended_cam.save(args.save_path+"blended_class__%s_prob__%2.4f.jpg"%(idx_to_label[cls[k]], prob[k]))
+    
 
 def imshow(tensor):
     denormalize = _normalizer(denormalize=True)    
