@@ -30,9 +30,19 @@ class HeatMap(nn.Module):
         # Remove the last two layers
         self.feature_Layers=nn.Sequential(*list(self.feature_Layers.children())[:-2])
 
+
+        # Transition Layer
+        # in_channels=2048 --> # channels from teh resnet
+        self.transition_Layer = nn.Conv2d(in_channels=2048, 
+                       out_channels=1024, 
+                       kernel_size=3, 
+                       stride=1, 
+                       padding=1)
+
         self.GAP=GlobalAveragePooling()
 
-        self.fc=nn.Linear(in_features=2048,out_features=13)  # SoftMax will be applied in training loop
+        # self.fc=nn.Linear(in_features=2048,out_features=13)  # SoftMax will be applied in training loop
+        self.fc=nn.Linear(in_features=1024,out_features=13)  # SoftMax will be applied in training loop
         # self.fc=nn.Sequential(
         #     nn.Linear(in_features=2048,out_features=512),
         #     nn.ReLU(),
@@ -40,21 +50,24 @@ class HeatMap(nn.Module):
         #     nn.Linear(in_features=512,out_features=13),
         # )
     def forward(self, x):
-        feature_map=self.feature_Layers(x)
+        feature_map=self.feature_Layers(x) #[4, 2048, 16, 16]
+        feature_map=self.transition_Layer(feature_map) #[4, 1024, 16, 16]
         y=self.GAP(feature_map)
-        y=self.fc(y)
+        # y=self.fc(y)
 
-        # Apply Sotmax
-        y=F.sigmoid(y)
+        # Apply Sigmoid
+        # y=F.sigmoid(y)
+
+        F.sigmoid(self.fc(y)) #sigmoid as we use BCELoss
 
         return feature_map,y
 
-# from torchinfo import summary
+from torchinfo import summary
 
 
-# model= HeatMap().to('cuda')
+model= HeatMap().to('cuda')
 # print(model)
-# summary(model, input_size=(4, 3, 512, 512))
+summary(model, input_size=(4, 3, 512, 512))
 
 
 # Freezing

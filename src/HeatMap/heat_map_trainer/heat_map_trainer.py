@@ -35,7 +35,8 @@ class Heat_Map_trainer:
 
 
         # Create Criterion 
-        self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss for multi-label classification
+        # self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss for multi-label classification
+    
 
         # create learning rate scheduler
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
@@ -66,18 +67,24 @@ class Heat_Map_trainer:
 
                 # Forward Pass
                 feature_map,y=self.model(images)
+                print("y",y)
+                print("y",y.shape)
 
                 # apply threshold to make it binary
                 # y=y>0.5
                 # y=y.type(torch.float32)
                 # y.requires_grad=True
 
-                # Compute Loss
-                losses=0
-                # calc loss for each label
-                for i in range (y.shape[0]):
-                    for j in range(y.shape[1]):
-                        losses += self.criterion(y[i][j], targets[i][j])
+                # # Compute Loss
+                # losses=0
+                # # calc loss for each label
+                # for i in range (y.shape[0]):
+                #     for j in range(y.shape[1]):
+                #         losses += self.criterion(y[i][j], targets[i][j])
+                sys.exit()
+                # loss = 0
+                # for c in range(14):
+                    # loss += F.binary_cross_entropy(predicted[:, c], target[:, c], reduction='mean')
                         
                 # Backward Pass
                 losses.backward()
