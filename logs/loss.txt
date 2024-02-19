@@ -72,3 +72,8 @@ epoch: 11/11, epoch loss: 10.9706
 epoch: 1/11, epoch loss: 10.9231
 epoch: 11/11, epoch loss: 10.8246
 epoch: 1/11, epoch loss: 10.7517
+epoch: 1/11, epoch loss: 757.1688
+epoch: 1/11, epoch loss: 294.6654
+epoch: 11/11, epoch loss: 24.2745
+epoch: 1/11, epoch loss: 12.6893
+epoch: 11/11, epoch loss: 10.6306

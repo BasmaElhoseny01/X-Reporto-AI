@@ -575,7 +575,7 @@ class XReportoTrainer():
                 images=object_detector_batch['image']
                 reference_sentences=[]
                 for i in range(len(images)):
-                       reference_sentences.append(LM_batch['bbox_phrase'][i])
+                    reference_sentences.append(LM_batch['bbox_phrase'])
                        
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
@@ -584,7 +584,7 @@ class XReportoTrainer():
                     for i in range(0,loopLength,LM_Batch_Size):
                         # Forward Pass
                         # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
-                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
+                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True,use_beam_search=True)
                         tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
                         for sentence in LM_sentances:
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
@@ -592,6 +592,8 @@ class XReportoTrainer():
                             with open("logs/predictions.txt", "a") as myfile:
                                 myfile.write(generated_sentence_for_selected_regions)
                                 myfile.write("\n")
+                        print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
+                        
                         if stop:
                             break
                         

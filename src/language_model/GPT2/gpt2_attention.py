@@ -82,7 +82,10 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         # attn_weights = torch.where(causal_mask, attn_weights, mask_value.to(attn_weights.dtype))
 
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e4)
+            # print("mask is not None")
+            # print(mask)
+            # sys.exit()
+            scores = scores + mask
         p_attn = F.softmax(scores, dim=-1) # (batch_size, h, max_seq_len, max_seq_len+1)
         if dropout is not None:
             p_attn = dropout(p_attn)
