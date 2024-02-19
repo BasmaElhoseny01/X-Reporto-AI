@@ -144,7 +144,7 @@ class Heat_Map_trainer:
                 # Generating Heat Map
                 prob=y
                 y=(y>0.5)*1.0
-                # self.generate_heat_map(feature_map,image=images[0],classes=y,prob=prob)
+                self.generate_heat_map(feature_map,image=images,classes=y,prob=prob)
 
                 # classes = np.where(y[0] == 1)[0]
                 # print("classes",classes)
@@ -161,6 +161,9 @@ class Heat_Map_trainer:
                 break
     
     def generate_heat_map(self,feature_map,image,classes,prob):
+        '''
+        Heat Map for 1 Image
+        '''
         print("generate_heat_map")
         print("feature_map",feature_map.shape)
         print("classes",classes)
