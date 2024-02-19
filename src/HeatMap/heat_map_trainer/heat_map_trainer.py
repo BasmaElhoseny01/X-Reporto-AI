@@ -170,43 +170,44 @@ class Heat_Map_trainer:
         b, c, h, w = feature_map.size()
         # print(feature_map.shape)  # torch.Size([batch_size, 2048, 16, 16])
 
-        # Reshape feature map
-        feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
+        # Reshape feature map feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
+       
         # print(feature_map.shape) # torch.Size([1, 256, 2048])
         fc_weight=torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0))
         # print(fc_weight.shape) # torch.Size([1, 2048, 14])
 
         # Perform batch matrix multiplication
         cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 14, 256])
+        # (S*S*D)X(D*C)=(S*S*C)
 
-        ## normalize to 0 ~ 1
-        min_val, min_args = torch.min(cam, dim=2, keepdim=True)
-        cam -= min_val
-        max_val, max_args = torch.max(cam, dim=2, keepdim=True)
-        cam /= max_val
+        # ## normalize to 0 ~ 1
+        # min_val, min_args = torch.min(cam, dim=2, keepdim=True)
+        # cam -= min_val
+        # max_val, max_args = torch.max(cam, dim=2, keepdim=True)
+        # cam /= max_val
         
-        ## top k class activation map
-        cam = cam.view(b, -1, h, w)
+        # ## top k class activation map
+        # cam = cam.view(b, -1, h, w)
 
-        print("cam",cam.shape)
-        print("image",image.shape)
-        cam = nn.functional.interpolate(cam.unsqueeze(0), 
-                                        (image.size(1), image.size(2)), mode='bilinear', align_corners=True).squeeze(0)
-        cam = torch.split(cam, 1)
+        # print("cam",cam.shape)
+        # print("image",image.shape)
+        # cam = nn.functional.interpolate(cam.unsqueeze(0), 
+        #                                 (image.size(1), image.size(2)), mode='bilinear', align_corners=True).squeeze(0)
+        # cam = torch.split(cam, 1)
 
-        # tensor to pil image
-        img_pil = imshow(image)
-        img_pil.save('/content/'+"input.jpg")
+        # # tensor to pil image
+        # img_pil = imshow(image)
+        # img_pil.save('/content/'+"input.jpg")
 
-        for k in range(13):
-            print("Predict '%s' with %2.4f probability"%(k, prob[k]))
-            cam_ = cam[k].squeeze().cpu().data.numpy()
-            cam_pil = Image.fromarray(np.uint8(cm.gist_earth(arr)*255)).convert("RGB")
-            cam_pil.save('/content/'+"cam_class__%s_prob__%2.4f.jpg"%(k, prob[k]))
+        # for k in range(13):
+        #     print("Predict '%s' with %2.4f probability"%(k, prob[k]))
+        #     cam_ = cam[k].squeeze().cpu().data.numpy()
+        #     cam_pil = Image.fromarray(np.uint8(cm.gist_earth(arr)*255)).convert("RGB")
+        #     cam_pil.save('/content/'+"cam_class__%s_prob__%2.4f.jpg"%(k, prob[k]))
 
-            # # overlay image and class activation map
-            # blended_cam = blend(img_pil, cam_pil, 0.2)
-            # blended_cam.save(args.save_path+"blended_class__%s_prob__%2.4f.jpg"%(idx_to_label[cls[k]], prob[k]))
+        #     # # overlay image and class activation map
+        #     # blended_cam = blend(img_pil, cam_pil, 0.2)
+        #     # blended_cam.save(args.save_path+"blended_class__%s_prob__%2.4f.jpg"%(idx_to_label[cls[k]], prob[k]))
     
 
 def imshow(tensor):
