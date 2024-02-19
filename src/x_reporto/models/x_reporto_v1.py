@@ -326,18 +326,16 @@ class XReportoV1(nn.Module):
                     # Free GPU memory 
                     images=images.to('cpu')
                     # move object_detector_targets to cpu
-                    for i in range(len(object_detector_targets)):
-                        object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
-                        object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                    # for i in range(len(object_detector_targets)):
+                    #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                    #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
                     del images
-                    del object_detector_targets
+                    # del object_detector_targets
                     torch.cuda.empty_cache()
                     # Stage(2) Binary Classifier
                 selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
                 if delete:
                         # free gpu memory
-                        selection_classifier_targets=selection_classifier_targets.to('cpu')
-                        del selection_classifier_targets
                         torch.cuda.empty_cache()
                 selected_regions=torch.ones_like(selected_regions)
                 object_detector_features = object_detector_features[selected_regions]
@@ -346,7 +344,7 @@ class XReportoV1(nn.Module):
                 if use_beam_search:
                     LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=True)
                 else:
-                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],sampling_top_k=True,top_k=5,device=DEVICE)
                 
                 # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
                 if delete:

@@ -361,8 +361,10 @@ class CustomGPT2(nn.Module):
         model_kwargs = {"attention_mask": attention_mask,
                         "use_cache": True}
         
-        # convert image_hidden_state from batch_size to total_size by copying
-        image_hidden_states = image_hidden_states.repeat_interleave(total_size, dim=0)
+        # convert image_hidden_state from batch_size to total_size by copying the same hidden state
+        image_hidden_states = image_hidden_states.repeat(1,beam_size,1)
+        print("image_hidden_states shape:", image_hidden_states.shape)
+        print("image_hidden_states:", image_hidden_states)
 
         beam_scorer = BeamSearchScorer(
                 batch_size=batch_size,
@@ -398,18 +400,25 @@ class CustomGPT2(nn.Module):
             next_token_scores = next_token_scores.view((batch_size, beam_size * self.config.vocab_size))
 
             # select top-k tokens
-            next_token_scores, next_tokens = torch.topk(next_token_scores, k=beam_size, dim=-1,largest=True, sorted=True)
+            next_token_scores, next_tokens = torch.topk(next_token_scores, k=beam_size, dim=1,largest=True, sorted=True)
             if debug:
                 # print next_token_scores, next_tokens dimensions
                 print("next_token_scores shape:", next_token_scores.shape)
                 print("next_tokens shape:", next_tokens.shape)
             # get indices of top-k tokens
-            beam_idx = next_tokens // self.config.vocab_size
+            # beam_idx = next_tokens 
+            # beam_idx = next_tokens // self.config.vocab_size
+                
+            beam_idx = torch.div(next_tokens, self.config.vocab_size, rounding_mode="floor")
             next_tokens = next_tokens % self.config.vocab_size
+            if debug:
+                print("beam_idx shape:", beam_idx.shape)
+                print("next_tokens shape:", next_tokens.shape)
+                print("beam: ", beam_idx, next_tokens)
 
             # calculate beam_scores
             beam_outputs = beam_scorer.process(
-                input_ids, next_token_scores, next_tokens, beam_idx, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id
+                input_ids, next_token_scores, next_tokens, beam_idx, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id+1
             )
             beam_scores = beam_outputs["next_beam_scores"]
             beam_next_tokens = beam_outputs["next_beam_tokens"]
