@@ -170,17 +170,20 @@ class Heat_Map_trainer:
         # print("classes.shape",classes.shape)
         # print("torch.nn.Parameter(self.model.fc.weight.t())",torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0)).shape)
         # print("torch.nn.Parameter(self.model.fc.weight.t())",torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0)))
+        print("image.shape",image.shape)
+       
         # Generate class activation map
-        b, c, h, w = feature_map.size()
-        feature_map = feature_map.view(b, c, h*w).transpose(1, 2) #(S*S*D)
-         # print(feature_map.shape)  # torch.Size([batch_size, 1028, 16, 16])
+        b, c, h, w = feature_map.size()  #1,1024,16,16
+        feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
+        print("feature_map.shape",feature_map.shape)  # torch.Size([batch_size, 256, 1024])
 
         # Classification Layer Weight 
         fc_weight=torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0)) #(D*C)
-        # print(fc_weight.shape) # torch.Size([1, 2048, 14])
+        print("fc_weight.shape",fc_weight.shape) # torch.Size([1, 2048, 13])
 
         # Batch Matrix Multiplication
-        cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 14, 256])
+        cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 13, 256])
+        print("cam.shape",cam.shape) #torch.Size([1, 13, 256])
 
         ## normalize to 0 ~ 1
         min_val, min_args = torch.min(cam, dim=2, keepdim=True)
@@ -189,29 +192,35 @@ class Heat_Map_trainer:
         cam /= max_val
 
         # Fix Dimension
-        cam = cam.view(b, c, h, w)
+        cam = cam.view(b, -1, h, w)
+        print("cam.shape",cam.shape) #torch.Size([1,13,16,16])
+
 
         # Interpolation
-        cam = nn.functional.interpolate(cam.unsqueeze(0), 
+        cam = nn.functional.interpolate(cam, 
                                         (image.size(2), image.size(3)), mode='bilinear', align_corners=True).squeeze(0)
+        print("cam.shape",cam.shape)
         
         # Split By classes
         cam = torch.split(cam, 1)
+        print("len(cam)",len(cam))
+        print("cam[0].shape",cam[0].shape)
         
 
-        # # # tensor to pil image
-        # # img_pil = imshow(image)
-        # # img_pil.save('/content/'+"input.jpg")
+        # tensor to pil image
+        img_pil = imshow(image)
+        img_pil.save('/content/'+"input.jpg")
 
-        # # for k in range(13):
-        # #     print("Predict '%s' with %2.4f probability"%(k, prob[k]))
-        # #     cam_ = cam[k].squeeze().cpu().data.numpy()
-        # #     cam_pil = Image.fromarray(np.uint8(cm.gist_earth(arr)*255)).convert("RGB")
-        # #     cam_pil.save('/content/'+"cam_class__%s_prob__%2.4f.jpg"%(k, prob[k]))
 
-        # #     # # overlay image and class activation map
-        # #     # blended_cam = blend(img_pil, cam_pil, 0.2)
-        # #     # blended_cam.save(args.save_path+"blended_class__%s_prob__%2.4f.jpg"%(idx_to_label[cls[k]], prob[k]))
+        for k in range(13):
+            print("Predict '%s' with %2.4f probability"%(k, prob[0][k]))
+            cam_ = cam[k].squeeze().cpu().data.numpy()
+            cam_pil = Image.fromarray(np.uint8(cm.gist_earth(cam_)*255)).convert("RGB")
+            cam_pil.save('/content/'+"cam_class__%s_prob__%2.4f.jpg"%(k, prob[0][k]))
+
+            # overlay image and class activation map
+            blended_cam = Image.blend(img_pil, cam_pil, 0.2)
+            blended_cam.save('/content/'+"blended_class__%s_prob__%2.4f.jpg"%(k,prob[0][k]))
     
 
 def imshow(tensor):
