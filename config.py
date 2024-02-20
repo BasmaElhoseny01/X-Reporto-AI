@@ -11,7 +11,7 @@ class ModelStage(Enum):
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description="Configuration")
 
-parser.add_argument("--model_stage", type=int, choices=[1, 2, 3], default=2, help="Model stage: 1 (OBJECT_DETECTOR), 2 (CLASSIFIER), or 3 (LANGUAGE_MODEL)")
+parser.add_argument("--model_stage", type=int, choices=[1, 2, 3], default=3, help="Model stage: 1 (OBJECT_DETECTOR), 2 (CLASSIFIER), or 3 (LANGUAGE_MODEL)")
 parser.add_argument("--debug", action="store_true", help="Enable debugging")
 
 parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
@@ -45,6 +45,7 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT = args.region_pos_weight
 # Device Selection
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
+
 # # Print or use the updated configuration
 # print("*********************************************************************************************************************************************************************")
 # print("Using Global Configuration:")
@@ -60,7 +61,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # print("Abnormal Region Pos Weight:", ABNORMAL_CLASSIFIER_POS_WEIGHT)
 # print("Region Selection Pos Weight:", REGION_SELECTION_CLASSIFIER_POS_WEIGHT)
 # print("*********************************************************************************************************************************************************************")
-
+print("Device:", DEVICE)    
 
 #>>>  python your_script.py --epochs 100 --learning_rate 0.0001 --batch_size 32 --scheduler_step_size 5 --scheduler_gamma 0.95 --debug --abnormal_pos_weight 7.5 --region_pos_weight 3.0
 

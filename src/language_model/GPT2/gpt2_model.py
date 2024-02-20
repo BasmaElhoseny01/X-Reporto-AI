@@ -13,15 +13,18 @@ from src.language_model.GPT2.positional_encoding import PositionalEncoding
 from src.language_model.GPT2.embeddings import InputEmbedding
 from src.language_model.GPT2.gpt2_block import CustomGPT2Block
 from src.language_model.GPT2.config import Config
+import torch.utils.checkpoint
+
 
 class CustomGPT2(nn.Module):
-    def __init__(self, config,image_config,load_pretrained_weights=False):
+    def __init__(self, config,image_config):
         super(CustomGPT2, self).__init__()
         self.config = config
         self.d_model = config.d_model
         self.num_layers = config.num_layers
         self.vocab_size = config.vocab_size
         self.ignore_index = config.ignore_index
+        self.pretrained_model = config.pretrained_model
         # define image transformation feed forward layer
         self.image_to_text = FeedForward(image_config)
 
@@ -43,40 +46,53 @@ class CustomGPT2(nn.Module):
         # define fully connected layer
         self.fc = nn.Linear(self.d_model, self.vocab_size)
         self.init_weights()
-        if load_pretrained_weights:
-            self.load_pretrained_weights()
+        self.load_pretrained_weights()
         
     def init_weights(self):
         self.fc.weight.data.normal_(mean=0.0, std=0.02)
         self.fc.bias.data.zero_()
-    
-    def load_pretrained_weights(self):
-        self.checkpoint = "healx/gpt-2-pubmed-medium"
-
-        # use GPT2 model with language modeling head, since we want to generate phrases
-        gpt_with_lm_head = GPT2LMHeadModel.from_pretrained(self.checkpoint)
-
-        # copy weights from pre-trained model to custom model
-        # print("pretrained model architecture: ", gpt_with_lm_head)
-
-        # copy weights of embedding layers
-        self.wte.token_embedding.weight.data = gpt_with_lm_head.transformer.wte.weight.data
-        
-        # copy weights of transformer blocks
+    def convert_to_half(self):
+        self.fc.weight.data = self.fc.weight.data.half()
+        self.fc.bias.data = self.fc.bias.data.half()
         for i in range(self.num_layers):
-            self.blocks[i].attn.c_attn.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.weight.data
-            self.blocks[i].attn.c_attn.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.bias.data
-            self.blocks[i].attn.c_proj.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.weight.data
-            self.blocks[i].attn.c_proj.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.bias.data
-            self.blocks[i].rc1.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_1.weight.data
-            self.blocks[i].rc1.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_1.bias.data
-            self.blocks[i].rc2.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_2.weight.data
-            self.blocks[i].rc2.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_2.bias.data
-            self.blocks[i].ff.fc1.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.weight.data.T
-            self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
-            self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
-            self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
+            self.blocks[i].attn.c_attn.weight.data = self.blocks[i].attn.c_attn.weight.data.half()
+            self.blocks[i].attn.c_attn.bias.data = self.blocks[i].attn.c_attn.bias.data.half()
+            self.blocks[i].attn.c_proj.weight.data = self.blocks[i].attn.c_proj.weight.data.half()
+            self.blocks[i].attn.c_proj.bias.data = self.blocks[i].attn.c_proj.bias.data.half()
+            self.blocks[i].rc1.ln.gamma.data = self.blocks[i].rc1.ln.gamma.data.half()
+            self.blocks[i].rc1.ln.beta.data = self.blocks[i].rc1.ln.beta.data.half()
+            self.blocks[i].rc2.ln.gamma.data = self.blocks[i].rc2.ln.gamma.data.half()
+            self.blocks[i].rc2.ln.beta.data = self.blocks[i].rc2.ln.beta.data.half()
+            self.blocks[i].ff.fc1.weight.data = self.blocks[i].ff.fc1.weight.data.half()
+            self.blocks[i].ff.fc1.bias.data = self.blocks[i].ff.fc1.bias.data.half()
+            self.blocks[i].ff.fc2.weight.data = self.blocks[i].ff.fc2.weight.data.half()
+            self.blocks[i].ff.fc2.bias.data = self.blocks[i].ff.fc2.bias.data.half()
 
+    def load_pretrained_weights(self):
+        if self.pretrained_model is not None:
+            # use GPT2 model with language modeling head, since we want to generate phrases
+            gpt_with_lm_head = GPT2LMHeadModel.from_pretrained(self.pretrained_model)
+
+            # copy weights from pre-trained model to custom model
+            # print("pretrained model architecture: ", gpt_with_lm_head)
+
+            # copy weights of embedding layers
+            self.wte.token_embedding.weight.data = gpt_with_lm_head.transformer.wte.weight.data
+            
+            # copy weights of transformer blocks
+            for i in range(self.num_layers):
+                self.blocks[i].attn.c_attn.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.weight.data
+                self.blocks[i].attn.c_attn.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.bias.data
+                self.blocks[i].attn.c_proj.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.weight.data
+                self.blocks[i].attn.c_proj.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.bias.data
+                self.blocks[i].rc1.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_1.weight.data
+                self.blocks[i].rc1.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_1.bias.data
+                self.blocks[i].rc2.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_2.weight.data
+                self.blocks[i].rc2.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_2.bias.data
+                self.blocks[i].ff.fc1.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.weight.data.T
+                self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
+                self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
+                self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
 
     def forward(self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -87,10 +103,13 @@ class CustomGPT2(nn.Module):
         image_hidden_states: Optional[torch.Tensor] = None,
         labels: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
+        output_attentions: Optional[bool] = None
         ):
 
         if image_hidden_states is not None:
+            # convert image hidden states dtype to dtype of the model
+            image_hidden_states = image_hidden_states.to(dtype=self.fc.weight.dtype)
+            print("image_hidden_states dtype:", image_hidden_states.dtype)
             image_hidden_states = self.image_to_text(image_hidden_states)
 
         input_ids = input_ids.view(-1, input_ids.size(-1))
@@ -101,6 +120,9 @@ class CustomGPT2(nn.Module):
 
         if position_ids is None:
             # apply positional encoding layer
+            # convert hidden states dtype to dtype of the model
+            hidden_states = hidden_states.to(dtype=self.fc.weight.dtype)
+            print("hidden_states dtype:", hidden_states.dtype)
             hidden_states = self.positional_encoding(hidden_states)
 
         # apply dropout layer
@@ -110,49 +132,147 @@ class CustomGPT2(nn.Module):
         if attention_mask is not None:
             attention_mask = attention_mask.view(-1, attention_mask.size(-1))
             attention_mask = attention_mask[:, None, None, :]
+            # convert attention mask of shape (batch_size,1,1, max_seq_len) to (batch_size, 1, 1, 1+max_seq_len) by concatenating 1s
+            ones = torch.ones(attention_mask.size()[:-1] + (1,), dtype=attention_mask.dtype, device=attention_mask.device)
+            attention_mask = torch.cat((ones, attention_mask), dim=-1)
             attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
             attention_mask = (1.0 - attention_mask) * torch.finfo(hidden_states.dtype).min
 
         # apply transformer blocks
         for i in range(self.num_layers):
-            hidden_states = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask)
-        
+            # check if gradient checkpointing should be used
+            if self.config.use_checkpointing:
+                if self.config.debug and i == 0:
+                    print("using gradient checkpointing")
+                hidden_states = torch.utils.checkpoint.checkpoint(self.blocks[i], hidden_states,attention_mask, image_hidden_states)
+            else:
+                hidden_states = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask)
+            if self.config.debug and i == self.num_layers - 1:
+                print("memory usage after block", i, ":", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+            
         # compute model output logits
         logits = self.fc(hidden_states)
+
+        if self.config.debug:
+            # wait two seconds
+            for i in range(400000000):
+            # print("waiting for 2 seconds")
+                continue
+            # print memory usage
+            print("memory usage after logits:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
 
         loss = None
         if labels is not None:
             # move labels to correct device to enable model parallelism
-            labels = labels.to(logits.device)
+            # labels = labels.to(logits.device)
+            # convert labels dtype to dtype of the model
+            # labels = labels.to(dtype=torch.long)
             # Shift so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
+            del logits
             shift_labels = labels[..., 1:].contiguous()
+            del labels
+
+            if self.config.debug:
+                # wait two seconds
+                for i in range(200000000):
+                    # print("waiting for 2 seconds")
+                    continue
+                # print memory usage
+                print("memory usage before loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+            
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
+            # convert logits dtype to float32
+            shift_logits = shift_logits.to(dtype=torch.float32)
+            if self.config.debug:
+                # wait two seconds
+                for i in range(200000000):
+                    # print("waiting for 2 seconds")
+                    continue
+                
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            return (loss,logits) 
+            return (loss,shift_logits) 
         return logits
 
-if __name__ == '__main__':
-    # Test
+def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False):
     config = Config()
+    config.d_model = 768
+    config.d_ff = 768
+    config.num_layers = 12
+    config.vocab_size = 50257
+    config.max_seq_len = seq_length
+    config.pretrained_model = "gpt2"
+    config.use_checkpointing = use_checkpointing
+    config.debug = debug
     image_config = Config()
-    image_config.d_model = 1024
-    image_config.d_ff = 1024
-    image_config.num_heads = 8
-    image_config.num_layers = 6
-    image_config.vocab_size = 50257
-    image_config.max_seq_len = 1024
-    image_config.dropout = 0.1
-    gpt2 = CustomGPT2(config,image_config,load_pretrained_weights=True)
-    x = torch.randint(0, 50257, (2, 5))
-    image_hidden_states = torch.randn(2, 1, config.d_model)
-    # create attention mask
-    attention_mask = torch.ones(2, 5)
-    print(gpt2(x, image_hidden_states,attention_mask = attention_mask).size()) # torch.Size([2, 5, 50257])
-    print(gpt2)
-    x = torch.randint(0, 50257, (2, 5))
-    image_hidden_states = torch.randn(2, 1, config.d_model)
-    labels = torch.randint(0, 50257, (2, 5))
-    print(gpt2(x, image_hidden_states,attention_mask = attention_mask, labels=labels)[0]) # tensor(13.5676, grad_fn=<NllLossBackward>)
-    print(gpt2)
+    image_config.d_model = 768
+    image_config.d_ff1 = 768
+    image_config.d_ff2 = 768
+    image_config.d_ff3 = 768
+    
+    model = CustomGPT2(config,image_config)
+    if is_half:
+        model.half()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
+    x = torch.randint(0, 50257, (batch_size, seq_length))
+    image_hidden_states = torch.randn(batch_size, 1, config.d_model)
+    labels = torch.randint(0, 50257, (batch_size, seq_length))
+    attention_mask = torch.ones(batch_size, seq_length)
+    x = x.to(device)
+    image_hidden_states = image_hidden_states.to(device)
+    attention_mask = attention_mask.to(device)
+    labels = labels.to(device)
+    model.train()
+    for i in range(4):
+        loss, logits = model(x, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels)
+        logits = logits.to("cpu")
+        del logits
+        print("loss:", loss.item())
+        print("memory usage after loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+        # apply optimizer
+        # wait two seconds
+        for i in range(100000000):
+            # print("waiting for 2 seconds")
+            continue
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+        optimizer.step()
+        print("memory usage after step:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+    # move to cpu
+    model.to("cpu")
+    x = x.to("cpu")
+    image_hidden_states = image_hidden_states.to("cpu")
+    attention_mask = attention_mask.to("cpu")
+    labels = labels.to("cpu")
+    # free memory
+    del x
+    del image_hidden_states
+    del attention_mask
+    del labels
+    torch.cuda.empty_cache()
+    del model
+    # apply garbage collection
+    import gc
+    gc.collect()
+    
+    torch.cuda.empty_cache()
+    torch.cuda.reset_max_memory_allocated()
+    # print memory usage
+    print("memory usage after empty cache:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+
+    
+if __name__ == '__main__':
+    print("Test 1")
+    print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False")
+    test(use_checkpointing = True, debug=False,batch_size = 4,seq_length =1024,is_half = False)
+    # wait two seconds
+    for i in range(200000000):
+        # print("waiting for 2 seconds")
+        continue
+    # print memory usage
+    print("memory usage after test 1:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
+    print("Test 2")
+    print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = True")
+    test(use_checkpointing = True, debug=True,batch_size = 6,seq_length =1024,is_half = True)

@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from data_preprocessing.constants import ANATOMICAL_REGIONS, IMAGE_IDS_TO_IGNORE, SUBSTRINGS_TO_REMOVE
 import data_preprocessing.section_parser as sp
-from paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg, path_full_dataset,path_dataset,path_dataset_csv
+from data_preprocessing.paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg, path_full_dataset,path_dataset,path_dataset_csv
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -29,20 +29,18 @@ NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 10
 
 
 class DataPreprocessing:
-    def __init__(self,train_only = False):
+    def __init__(self,train_only = False,fix_bboxes = True):
         self.path_chest_imagenome = path_chest_imagenome
         self.path_mimic_cxr = path_mimic_cxr
         self.path_mimic_cxr_jpg = path_mimic_cxr_jpg
         self.path_full_dataset = path_full_dataset
-
-        self.path_to_images_to_avoid = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits", "images_to_avoid.csv")
-
-        self.image_ids_to_avoid = self.get_images_to_avoid()
-
-        if train_only:
-            self.csv_files_dict = self.get_train_files()
-        else:
-            self.csv_files_dict = self.get_train_val_test_csv_files()
+        if fix_bboxes == False:
+            self.path_to_images_to_avoid = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits", "images_to_avoid.csv")
+            self.image_ids_to_avoid = self.get_images_to_avoid()
+            if train_only:
+                self.csv_files_dict = self.get_train_files()
+            else:
+                self.csv_files_dict = self.get_train_val_test_csv_files()
     def get_train_files(self):
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(path_chest_imagenome, "silver_dataset", "splits")
@@ -473,4 +471,65 @@ class DataPreprocessing:
         image = image / 255.
         image = (image - mean) / std
         return image
-   
+    def adjust_bounding_boxes(self,csv_file: str,new_csv_file: str) -> None:
+        total_num_rows = self.get_total_num_rows(csv_file)
+        old_height ,old_width = 224,224
+        with open(csv_file) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",")
+            # write the header line in the new csv file
+            with open(new_csv_file, "w") as f:
+                writer = csv.writer(f)
+                writer.writerow(next(csv_reader))
+
+            for row in tqdm(csv_reader, total=total_num_rows):
+                mimic_image_file_path = os.path.join(path_dataset, row[3])
+                # replace \ with / in mimic_image_file_path
+                mimic_image_file_path = mimic_image_file_path.replace("\\", "/")
+                # update the row with the new bbox coordinates
+                row[3] = row[3].replace("\\", "/")
+                # check if the image exists
+                if not os.path.exists(mimic_image_file_path):
+                    continue
+
+                # read the image
+                image = cv2.imread(mimic_image_file_path, cv2.IMREAD_UNCHANGED)
+                height, width = image.shape
+
+                # calculate the scaling factors
+                scaling_factor_height = height / old_height
+                scaling_factor_width = width / old_width
+
+                # get the bbox coordinates
+                bbox_coordinates = row[4]
+                # convert the bbox coordinates string to a list of lists
+                bbox_coordinates = eval(bbox_coordinates)
+                bbox_coordinates = np.array(bbox_coordinates)
+                bbox_coordinates = bbox_coordinates.reshape(-1, 4)
+                new_bbox_coordinates = []
+                for bbox in bbox_coordinates:
+                    x1, y1, x2, y2 = bbox
+
+                    # scale the bbox coordinates
+                    x1 = int(x1 * scaling_factor_width)
+                    y1 = int(y1 * scaling_factor_height)
+                    x2 = int(x2 * scaling_factor_width)
+                    y2 = int(y2 * scaling_factor_height)
+
+                    # check if the bbox coordinates are within the image dimensions
+                    x1 = self.check_coordinate(x1, width)
+                    y1 = self.check_coordinate(y1, height)
+                    x2 = self.check_coordinate(x2, width)
+                    y2 = self.check_coordinate(y2, height)
+
+                    bbox = [x1, y1, x2, y2]
+                    bbox = np.array(bbox)
+                    new_bbox_coordinates.append(bbox)
+                    
+                # update the row with the new bbox coordinates
+                row[4] = new_bbox_coordinates
+
+                # write the updated row in the csv file
+                with open(new_csv_file, "a") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(row)
+

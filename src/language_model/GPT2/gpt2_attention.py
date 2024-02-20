@@ -18,19 +18,20 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         self.head_dim = self.d_model // self.num_heads
         self.max_seq_len = self.config.max_seq_len
         
+        #TODO: check dimension of the causal mask
         self.register_buffer(
             "causal_mask",
-            torch.tril(torch.ones((self.max_seq_len, self.max_seq_len), dtype=torch.bool)).view(
-                1, 1, self.max_seq_len, self.max_seq_len
+            torch.tril(torch.ones((self.max_seq_len, self.max_seq_len+1), dtype=torch.bool)).view(
+                1, 1, self.max_seq_len, self.max_seq_len+1
             ),
             persistent=False,
         )
         self.register_buffer("mask_value", torch.tensor(-1e9), persistent=False)
 
-        # hidden state to query, key, value
-        self.w_q = nn.Linear(self.d_model, self.d_model,bias=False)
-        self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
-        self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
+        # # hidden state to query, key, value
+        # self.w_q = nn.Linear(self.d_model, self.d_model,bias=False)
+        # self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
+        # self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
         
         # image hidden state to key, value
         self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
@@ -39,7 +40,8 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         self.c_attn = Conv1D(3 * self.d_model, self.d_model)
         self.c_proj = Conv1D(self.d_model, self.d_model)
 
-        self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
+        # self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
+        self.w_o = Conv1D(self.d_model, self.d_model) # Wo
         self.dropout = nn.Dropout(config.dropout)
 
         # assert with print "assert self.d_model % self.num_heads == 0"
@@ -51,14 +53,16 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(query.size(-1))
 
         query_length, key_length = query.size(-2), key.size(-2)
-        causal_mask = causal_mask[:, :, key_length - query_length : key_length, :key_length]
+        #TODO: check dimension of the causal mask 
+        # causal_mask = causal_mask[:, :, key_length - query_length : key_length, :key_length]
+        causal_mask = causal_mask[:, :, :query_length, :key_length]
         # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
         # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
         mask_value = torch.full([], mask_value, dtype=scores.dtype, device=scores.device)
         scores = torch.where(causal_mask, scores.to(scores.dtype), mask_value)
         
         if mask is not None:
-            scores = scores.masked_fill(mask == 0, -1e9)
+            scores = scores.masked_fill(mask == 0, -1e4)
         p_attn = F.softmax(scores, dim=-1) # (batch_size, h, max_seq_len, max_seq_len)
         if dropout is not None:
             p_attn = dropout(p_attn)
@@ -81,7 +85,6 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         if image_hidden_states is not None:
             k_image = self.u_k(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
             v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
-        
         # concat k, v from image and text on dim=2
         if image_hidden_states is not None:
             k = torch.cat((k, k_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)

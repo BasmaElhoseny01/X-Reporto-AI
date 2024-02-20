@@ -1,3 +1,4 @@
+import sys
 import torch
 from torch.utils.data import Dataset
 import numpy as np
@@ -12,19 +13,22 @@ from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from torchvision.transforms import v2
 import ast
-
 from src.object_detector.data_loader.custom_augmentation import CustomAugmentation
-
+from src.x_reporto.data_loader.tokenizer import Tokenizer
+from src.language_model.GPT2.config import Config
 class CustomDataset(Dataset):
-    def __init__(self, dataset_path: str, transform_type:str ='train'):
+    def __init__(self, dataset_path: str, transform_type:str ='train',checkpoint:str="healx/gpt-2-pubmed-medium"):
         self.dataset_path = dataset_path # path to csv file
         
         self.transform_type = transform_type
         self.transform = CustomAugmentation(transform_type=self.transform_type)
         # read the csv file
+        print("start reading csv file")
+        print(dataset_path)
         self.data_info = pd.read_csv(dataset_path, header=None)
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
+        self.tokenizer = Tokenizer(checkpoint)
 
     def __len__(self):
         return len(self.data_info)
@@ -53,6 +57,8 @@ class CustomDataset(Dataset):
 
         # get the bbox_labels
         bbox_phrases = self.data_info.iloc[idx, 6]
+        bbox_phrases = eval(bbox_phrases)
+
         # get the bbox_labels
         bbox_phrase_exists = self.data_info.iloc[idx, 7]
         # get the bbox_labels
@@ -93,6 +99,21 @@ class CustomDataset(Dataset):
 
         #language_model_targets
         language_model_sample={}
-        language_model_sample["bbox_phrases"]=bbox_phrases
+        tokenize_phrase = self.tokenizer(bbox_phrases)  
+        # print(tokenize_phrase)
+        # sys.exit()
+        print("start Tokenize")
+        language_model_sample["bbox_phrase"]=bbox_phrases
+        padded_lists_by_pad_token = [tokenize_phrase_lst + [tokenize_phrase_lst[0]] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
+        padded_lists_by_ignore_token = [tokenize_phrase_lst + [Config.ignore_index] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
+        language_model_sample["input_ids"]=padded_lists_by_pad_token
+        language_model_sample["label_ids"]=padded_lists_by_ignore_token
+        padded_mask = [mask_phrase_lst + [0] * (Config.max_seq_len - len(mask_phrase_lst)) for mask_phrase_lst in tokenize_phrase["attention_mask"]]
+        language_model_sample["attention_mask"]=padded_mask
+        # convert the label to tensor
+        language_model_sample["input_ids"] = torch.tensor(language_model_sample["input_ids"], dtype=torch.long)
+        language_model_sample["label_ids"] = torch.tensor(language_model_sample["label_ids"], dtype=torch.long)
+        language_model_sample["attention_mask"] = torch.tensor(language_model_sample["attention_mask"], dtype=torch.long)
 
+        print("end Tokenize")
         return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample
