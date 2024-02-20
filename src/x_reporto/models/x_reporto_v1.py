@@ -342,7 +342,7 @@ class XReportoV1(nn.Module):
                 # if (index+LM_Batch_Size) >= object_detector_features.shape[0]-1:
                 #     stop=True
                 if use_beam_search:
-                    LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=True)
+                    LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
                 else:
                     LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
                 

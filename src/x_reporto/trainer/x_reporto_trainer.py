@@ -584,7 +584,7 @@ class XReportoTrainer():
                     for i in range(0,loopLength,LM_Batch_Size):
                         # Forward Pass
                         # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
-                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True,use_beam_search=False)
+                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True,use_beam_search=True)
                         tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
                         for sentence in LM_sentances:
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
@@ -740,11 +740,11 @@ if __name__ == '__main__':
     # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
-    trainer.train()
+    # trainer.train()
 
     # # Run Validation
     # trainer.Validate()
 
     # # Predict and display results
     # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
-    # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
+    trainer.generate_sentences(predict_path_csv='datasets/train.csv')
