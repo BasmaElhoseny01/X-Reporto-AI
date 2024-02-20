@@ -344,7 +344,7 @@ class XReportoV1(nn.Module):
                 if use_beam_search:
                     LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=True)
                 else:
-                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],sampling_top_k=True,top_k=5,device=DEVICE)
+                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
                 
                 # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
                 if delete:

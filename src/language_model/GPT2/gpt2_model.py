@@ -155,9 +155,6 @@ class CustomGPT2(nn.Module):
             hidden_states = hidden_states.to(dtype=self.fc.weight.dtype) 
             hidden_states = self.positional_encoding(hidden_states,seq_len) # (batch_size, seq_len, d_model)
 
-        # apply dropout layer
-        hidden_states = self.drop(hidden_states)
-
         # create attention mask
         if attention_mask is not None:
             attention_mask = attention_mask.view(-1, attention_mask.size(-1))
@@ -281,11 +278,13 @@ class CustomGPT2(nn.Module):
         batch_size = image_hidden_states.size(0)
 
         input_ids = torch.full(size=(batch_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
-        model_kwargs = {"attention_mask": torch.ones(size=(batch_size, 1), dtype=torch.int64, device=device),
+        # add 2949 to input_ids to make it of shape (batch_size, 2)
+        # input_ids = torch.cat([input_ids, torch.full(size=(batch_size, 1), fill_value=2949, dtype=torch.int64, device=device)], dim=-1)
+        model_kwargs = {"attention_mask": torch.ones(size=(batch_size, input_ids.shape[-1]), dtype=torch.int64, device=device),
                         "use_cache": True}
 
         # greedy search
-        seq_len = 1
+        seq_len = input_ids.shape[-1]
         # start with a random token
         all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device)  # (batch_size,)
         cur_len = seq_len

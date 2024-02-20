@@ -67,7 +67,7 @@ class CustomGPT2MultiHeadAttention(nn.Module):
     @staticmethod
     def pesudo_attention(query, key, value,causal_mask,mask_value, mask=None, dropout=None):
         # query, key, value: (batch_size, h, max_seq_len, d_k)
-        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(query.size(-1))
+        scores = torch.matmul(query, key.transpose(-1, -2)) / math.sqrt(query.size(-1))
 
         query_length, key_length = query.size(-2), key.size(-2)
         #TODO: check dimension of the causal mask 
@@ -111,9 +111,11 @@ class CustomGPT2MultiHeadAttention(nn.Module):
             v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model//self.num_heads).transpose(1, 2) # (batch_size, num_heads, 1, d_model//num_heads)
         
             # concat k, v from image and text on dim=2
-            k = torch.cat((k, k_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
-            v = torch.cat((v, v_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
-        
+            # k = torch.cat((k, k_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
+            # v = torch.cat((v, v_image), dim=2) # (batch_size, num_heads, max_seq_len+1, d_model//num_heads)
+            #TODO: test ordering of k and k_image
+            k = torch.cat((k_image, k), dim=2)
+            v = torch.cat((v_image, v), dim=2)
         # concat k, v from past and current on dim=2
         if layer_past is not None:
             # print("layer_past")
