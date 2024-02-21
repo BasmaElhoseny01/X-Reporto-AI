@@ -19,6 +19,7 @@ import torch.utils.checkpoint
 from src.x_reporto.data_loader.tokenizer import Tokenizer 
 from transformers import GPT2Tokenizer
 from transformers.generation.beam_search import BeamSearchScorer
+from torchsummary import summary
 
 class CustomGPT2(nn.Module):
     def __init__(self, config,image_config):
@@ -362,7 +363,7 @@ class CustomGPT2(nn.Module):
         
         # convert image_hidden_state from batch_size to total_size by copying the same hidden state
         image_hidden_states = image_hidden_states.repeat(1,beam_size,1)
-        if debug
+        if debug:
             print("image_hidden_states shape:", image_hidden_states.shape)
             print("image_hidden_states:", image_hidden_states)
 
@@ -622,6 +623,14 @@ def test_genertation(use_checkpointing = True, debug=True,batch_size = 4,seq_len
     
 if __name__ == '__main__':
 
+    # print model summary
+    config = Config()
+    image_config = Config()
+    model = CustomGPT2(config,image_config)
+    model.to("cuda")
+    summary(model, [(4, 1024)],batch_size=4)
+
+    # test gpt2 model at generation mode
     test_genertation(use_checkpointing = True, debug=True,batch_size = 1,seq_length =1024,is_half = False)
 
 
