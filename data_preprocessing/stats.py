@@ -162,20 +162,30 @@ def get_phrase_stats(data_frame):
     # loop over the dataframe
     dataset_size = len(data_frame)
     max_phrase_length = 0
+    min_phrase_length = 1024
+    phrase_histogram = [0]*1024
     for i in range(dataset_size):
         image_phrases = data_frame.iloc[i, 6]
         # convert the string representation of bounding boxes into list of list
         image_phrases = eval(image_phrases)
         for phrase in image_phrases :
-            digits = re.findall(r'\d+\.?\d*', phrase)
-            tokenizer = RegexpTokenizer(r'\w+')
-            words = tokenizer.tokenize(phrase)
-            max_phrase_length = max(max_phrase_length,len(words))
-            if len(digits) > 0:
-                print("digits:",digits," at line: ",i)
-    return max_phrase_length
+            if phrase=="":
+                continue
+            max_phrase_length = max(max_phrase_length,len(phrase.split(" ")))
+            min_phrase_length = min(min_phrase_length,len(phrase.split(" ")))
+            phrase_histogram[len(phrase.split(" "))] += 1
+            # if(len(phrase.split(" "))==1):
+            #     print("phrase: ",phrase)
+            #     print("length: ",len(phrase.split(" ")))
+    print("histogram: ",phrase_histogram)
+    plt.bar(range(1024),phrase_histogram)
+    plt.title(f"phrase histogram")
+    plt.show()
+    return max_phrase_length,min_phrase_length
 
-def get_phrase_stats_histogram(data_frame):
+
+
+def get_phrase_stats_boxes_histogram(data_frame):
     # loop over the dataframe
     dataset_size = len(data_frame)
     phrase_histogram = [0]*30
@@ -188,8 +198,6 @@ def get_phrase_stats_histogram(data_frame):
             if phrase!="":
                 count += 1
         phrase_histogram[count] += 1
-    # print("max_pharses in one example: ",max(phrase_histogram))
-    # print("min_pharses in one example: ",min(phrase_histogram))
     print("histogram: ",phrase_histogram)
     plt.bar(range(30),phrase_histogram)
     plt.title(f"phrase histogram")
@@ -198,9 +206,9 @@ def get_phrase_stats_histogram(data_frame):
 
 if __name__ == '__main__':
     # load the csv file
-    csv_path = os.path.join(os.getcwd(), "datasets/train-10000.csv")
+    csv_path = os.path.join(os.getcwd(), "datasets/train.csv")
     df = load_csv(csv_path)
-    get_phrase_stats_histogram(df)
+    print(get_phrase_stats(df))
     # print(get_phrase_stats(df))
     # # get the stats
     # abnormal_ratio,phrase_exists_ratio,pos_weight,pos_phrase_weight = get_general_stats(df)
