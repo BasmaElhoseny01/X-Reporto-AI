@@ -247,7 +247,6 @@ class XReportoV1(nn.Module):
         if self.training:
             # Training
             # Stage(1) Object Detector
-            # print("Before object detector")
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
             
             if delete:
@@ -264,7 +263,6 @@ class XReportoV1(nn.Module):
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,0,0,0
             # Stage(2) Binary Classifier
-            # print("Before binary classifier selection region")
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
             selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
             abnormal_binary_classifier_losses,_=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
@@ -279,32 +277,17 @@ class XReportoV1(nn.Module):
            
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
-       
-            # print("Before language model")       
+            # Stage(3) Language Model
             valid_input_ids, valid_attention_mask, valid_object_detector_features ,valid_labels= self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets)
             if delete or True:
                 selection_classifier_targets=selection_classifier_targets.to('cpu')
                 del selection_classifier_targets
-                # del object_detector_features
-                # del input_ids
-                # del attention_mask
                 torch.cuda.empty_cache()
-            # print("here is the problem ",len(input_ids))
             if index>=len(valid_input_ids):
                 return 0,0,0,0,0,0,0,0,True
             if (index+LM_Batch_Size) >= len(valid_input_ids):
                 stop=True
             LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
-            tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
-            logits = LM_output[1] 
-            logits = torch.argmax(logits, dim=-1) # of shape [batch_size]
-            print("=============================================================")
-            for reference_sentencs in valid_input_ids[index:index+LM_Batch_Size,:]:
-                rs=tokenizer.decode(reference_sentencs[:100].tolist(),skip_special_tokens=True)
-                print("reference_sentencs in Forward: ",rs)
-            for sentence in logits:
-                generated_sentence_for_selected_regions = tokenizer.decode(sentence[:100].tolist(),skip_special_tokens=True)
-                print("Generated Sentence in Forward: ",generated_sentence_for_selected_regions)
             if delete:
                 # Free GPU memory
                 object_detector_features=object_detector_features.to('cpu')
