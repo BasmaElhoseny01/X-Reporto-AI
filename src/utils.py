@@ -283,3 +283,46 @@ def load_model(model,name):
         name (str): Name of the model file.
     '''
     model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))
+
+
+
+def cuda_memory_info(title=""):
+    print("==========================================================================================================")
+    print("Memory after ["+title+"]")
+    num_cuda_devices = torch.cuda.device_count()
+    for i in range(num_cuda_devices):
+        device = torch.cuda.get_device_properties(i)
+        total_memory = device.total_memory / 1024**3  # Total memory available on the device
+        allocated_memory = torch.cuda.memory_allocated(i) / 1024**3  # Memory currently in use by tensors
+        reserved_memory = torch.cuda.memory_reserved(i) / 1024**3  # Total memory reserved by PyTorch
+        remaining_memory_current = total_memory - allocated_memory  # Remaining memory that is currently available for allocation
+        remaining_memory_potential = total_memory - reserved_memory  # Remaining memory that can potentially be allocated
+        print(f"Device {i}:")
+        print(f"  Name: {device.name}")
+        print(f"  Total Memory: {total_memory:.2f} GB")
+        print(f"  Allocated Memory: {allocated_memory:.2f} GB")
+        print(f"  Reserved Memory: {reserved_memory:.2f} GB")
+        print(f"  Remaining Memory (Current): {remaining_memory_current:.2f} GB")
+        print(f"  Remaining Memory (Potential): {remaining_memory_potential:.2f} GB")
+    print("==========================================================================================================")
+
+
+def cuda_memory_info(title=""):
+    print("==========================================================================================================")
+    print("Memory Usage")
+    num_cuda_devices = torch.cuda.device_count()
+    for i in range(num_cuda_devices):
+        device = torch.cuda.get_device_properties(i)
+        total_memory = device.total_memory / 1024**3  # Total memory available on the device
+        allocated_memory = torch.cuda.memory_allocated(i) / 1024**3  # Memory currently in use by tensors
+        reserved_memory = torch.cuda.memory_reserved(i) / 1024**3  # Total memory reserved by PyTorch
+        remaining_memory_current = total_memory - allocated_memory  # Remaining memory that is currently available for allocation
+        remaining_memory_potential = total_memory - reserved_memory  # Remaining memory that can potentially be allocated
+        print(f"Device {i}:")
+        print(f"  Name: {device.name}")
+        print(f"  Total Memory: {total_memory:.2f} GB")
+        print(f"  Allocated Memory: {allocated_memory:.2f} GB")
+        print(f"  Reserved Memory: {reserved_memory:.2f} GB")
+        print(f"  Remaining Memory (Current): {remaining_memory_current:.2f} GB")
+        print(f"  Remaining Memory (Potential): {remaining_memory_potential:.2f} GB")
+    print("==========================================================================================================")

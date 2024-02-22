@@ -525,7 +525,7 @@ class DataPreprocessing:
                     y2 = self.check_coordinate(y2, height)
 
                     bbox = [x1, y1, x2, y2]
-                    bbox = np.array(bbox)
+                    # bbox = np.array(bbox)
                     new_bbox_coordinates.append(bbox)
                     
                 # update the row with the new bbox coordinates
