@@ -155,7 +155,6 @@ class CustomGPT2(nn.Module):
         if image_hidden_states is not None:
             # convert image hidden states dtype to dtype of the model
             image_hidden_states = image_hidden_states.to(dtype=self.fc.weight.dtype)
-            # print("image_hidden_states dtype:", image_hidden_states.dtype)
             image_hidden_states = self.image_to_text(image_hidden_states)
 
         input_ids = input_ids.view(-1, input_ids.size(-1))
@@ -196,8 +195,6 @@ class CustomGPT2(nn.Module):
         for i in range(self.num_layers):
             # check if gradient checkpointing should be used
             if self.config.use_checkpointing:
-                if self.config.debug and i == 0:
-                    print("using gradient checkpointing")
                 outputs = torch.utils.checkpoint.checkpoint(self.blocks[i], hidden_states,attention_mask, image_hidden_states,layer_past[i],use_cache,output_attentions)
                 hidden_states = outputs[0]
             else:
@@ -206,17 +203,11 @@ class CustomGPT2(nn.Module):
             if use_cache:
                 present = outputs[1]
                 presents = presents + (present,)
-
-            if self.config.debug and i == self.num_layers - 1:
-                print("memory usage after block", i, ":", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
             
         # compute model output logits
         logits = self.fc(hidden_states) 
 
-        if self.config.debug:
-            # print memory usage
-            print("memory usage after logits:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-
+       
         loss = None
         if labels is not None:
             # move labels to correct device to enable model parallelism
@@ -229,19 +220,12 @@ class CustomGPT2(nn.Module):
             shift_labels = labels[..., 1:].contiguous()
             del labels
 
-            if self.config.debug:
-                # wait two seconds
-                # wait(2)
-                # print memory usage
-                print("memory usage before loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
             
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
             # convert logits dtype to float32
             shift_logits = shift_logits.to(dtype=torch.float32)
-            # if self.config.debug:
-                # wait two seconds
-                # wait(2)
+         
                 
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             return (loss,shift_logits) 
@@ -274,7 +258,6 @@ class CustomGPT2(nn.Module):
                 remove_prefix_length = input_ids.shape[1] - 1
 
             input_ids = input_ids[:, remove_prefix_length:]
-            # print("input_ids shape:", input_ids.shape)
             if token_type_ids is not None:
                 token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
 
@@ -418,10 +401,7 @@ class CustomGPT2(nn.Module):
         
         # convert image_hidden_state from batch_size to total_size by copying the same hidden state
         image_hidden_states = image_hidden_states.repeat(1,beam_size,1)
-        if debug:
-            print("image_hidden_states shape:", image_hidden_states.shape)
-            print("image_hidden_states:", image_hidden_states)
-
+ 
         beam_scorer = BeamSearchScorer(
                 batch_size=batch_size,
                 num_beams=beam_size,
@@ -446,9 +426,7 @@ class CustomGPT2(nn.Module):
             
             # calculate probabilities of logits
             next_token_scores = nn.functional.log_softmax(logits, dim=-1)  # (batch_size * beam_size, vocab_size)
-            if debug:
-                # print next_token_scores dimensions
-                print("next_token_scores shape:", next_token_scores.shape)
+           
             # add beam_scores of previous sentences to all probabilities of tokens
             next_token_scores = next_token_scores + beam_scores[:, None].expand_as(next_token_scores)
 
@@ -457,20 +435,13 @@ class CustomGPT2(nn.Module):
 
             # select top-k tokens
             next_token_scores, next_tokens = torch.topk(next_token_scores, k=beam_size, dim=1,largest=True, sorted=True)
-            if debug:
-                # print next_token_scores, next_tokens dimensions
-                print("next_token_scores shape:", next_token_scores.shape)
-                print("next_tokens shape:", next_tokens.shape)
             # get indices of top-k tokens
             # beam_idx = next_tokens 
             # beam_idx = next_tokens // self.config.vocab_size
                 
             beam_idx = torch.div(next_tokens, self.config.vocab_size, rounding_mode="floor")
             next_tokens = next_tokens % self.config.vocab_size
-            if debug:
-                print("beam_idx shape:", beam_idx.shape)
-                print("next_tokens shape:", next_tokens.shape)
-                print("beam: ", beam_idx, next_tokens)
+           
 
             # calculate beam_scores
             beam_outputs = beam_scorer.process(
@@ -479,11 +450,6 @@ class CustomGPT2(nn.Module):
             beam_scores = beam_outputs["next_beam_scores"]
             beam_next_tokens = beam_outputs["next_beam_tokens"]
             beam_idx = beam_outputs["next_beam_indices"]
-            if debug:
-                # print beam_scores, beam_next_tokens, beam_idx dimensions
-                print("beam_scores shape:", beam_scores.shape)
-                print("beam_next_tokens shape:", beam_next_tokens.shape)
-                print("beam_idx shape:", beam_idx.shape)
 
             # update input_ids, attention mask and length for the next step
             beam_next_tokens = beam_next_tokens.view((batch_size * beam_size, 1))
@@ -492,17 +458,12 @@ class CustomGPT2(nn.Module):
 
             # check if there is past layer
             if model_kwargs["layer_past"] is not None:
-                if debug:
-                    # print past layer dimensions
-                    print("past layer shape:", model_kwargs["layer_past"][0][0].shape)
+                
                 # reorder past layer
                 model_kwargs["layer_past"] = self.reorder_past_layer(
                     layer_past=model_kwargs["layer_past"], beam_idx=beam_idx
                 )
-                if debug:
-                    # print past layer dimensions
-                    print("past layer shape:", model_kwargs["layer_past"][0][0].shape)
-                    debug = False
+                
 
             # if all sentences are finished or if we exceed the maximum length
             if beam_scorer.is_done or (seq_len >= max_length):
@@ -512,131 +473,3 @@ class CustomGPT2(nn.Module):
         # return the generated tokens
         return input_ids
    
-def wait(seconds):
-    seconds = seconds * 200000000
-    for i in range(seconds):
-        continue
-    
-    
-def test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False):
-    config = Config()
-    config.d_model = 768
-    config.d_ff = 768
-    config.num_layers = 12
-    config.vocab_size = 50257
-    config.max_seq_len = seq_length
-    config.pretrained_model = "gpt2"
-    config.use_checkpointing = use_checkpointing
-    config.debug = debug
-    image_config = Config()
-    image_config.d_model = 768
-    image_config.d_ff1 = 768
-    image_config.d_ff2 = 768
-    image_config.d_ff3 = 768
-    
-    model = CustomGPT2(config,image_config)
-    if is_half:
-        model.half()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
-    x = torch.randint(0, 50257, (batch_size, seq_length))
-    image_hidden_states = torch.randn(batch_size, 1, config.d_model)
-    labels = torch.randint(0, 50257, (batch_size, seq_length))
-    attention_mask = torch.ones(batch_size, seq_length)
-    x = x.to(device)
-    image_hidden_states = image_hidden_states.to(device)
-    attention_mask = attention_mask.to(device)
-    labels = labels.to(device)
-    model.train()
-    for i in range(4):
-        loss, logits = model(x,layer_past=None, image_hidden_states = image_hidden_states,attention_mask = attention_mask, labels=labels, use_cache = True,output_attentions = False)
-        logits = logits.to("cpu")
-        del logits
-        print("loss:", loss.item())
-        print("memory usage after loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-        # apply optimizer
-        # wait two seconds
-        # wait(2)
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-        optimizer.step()
-        print("memory usage after step:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-    # move to cpu
-    model.to("cpu")
-    x = x.to("cpu")
-    image_hidden_states = image_hidden_states.to("cpu")
-    attention_mask = attention_mask.to("cpu")
-    labels = labels.to("cpu")
-    # free memory
-    del x
-    del image_hidden_states
-    del attention_mask
-    del labels
-    torch.cuda.empty_cache()
-    del model
-    # apply garbage collection
-    import gc
-    gc.collect()
-    
-    torch.cuda.empty_cache()
-    torch.cuda.reset_max_memory_allocated()
-    # print memory usage
-    print("memory usage after empty cache:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-
-
-def test_genertation(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False):
-    config = Config()
-    config.d_model = 768
-    config.d_ff = 768
-    config.num_layers = 12
-    config.vocab_size = 50257
-    config.max_seq_len = seq_length
-    config.pretrained_model = "gpt2"
-    config.use_checkpointing = use_checkpointing
-    config.debug = debug
-    image_config = Config()
-    image_config.d_model = 768
-    image_config.d_ff1 = 768
-    image_config.d_ff2 = 768
-    image_config.d_ff3 = 768
-    
-    model = CustomGPT2(config,image_config)
-    if is_half:
-        model.half()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    image_hidden_states = torch.randn(batch_size, 1, config.d_model)
-    image_hidden_states = image_hidden_states.to(device)
-    model.eval()
-    # def generate(self, max_length:int=300, image_hidden_states:Tensor=None,Temperture:int=1,top_k:int=1,device:device=None,greedy:bool=False,sampling:bool=False,sampling_top_k:bool=False)->Tensor:
-    # generated = model.generate(max_length= 10, image_hidden_states=image_hidden_states,Temperature=1,top_k=6,greedy=True,device=device)
-    generated = model.generate(max_length= 10, image_hidden_states=image_hidden_states,greedy=True,device=device)
-
-    print("generated: ",generated)
-    tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
-
-    print(tokenizer.decode(generated[0].tolist(),skip_special_tokens=True))
-    
-if __name__ == '__main__':
-
-    # print model summary
-    config = Config()
-    image_config = Config()
-    model = CustomGPT2(config,image_config)
-    model.to("cuda")
-    summary(model, [(4, 1024)],batch_size=4)
-
-    # test gpt2 model at generation mode
-    test_genertation(use_checkpointing = True, debug=True,batch_size = 1,seq_length =1024,is_half = False)
-
-
-    # print("Test 1")
-    # print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False")
-    # test(use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = False)
-    # # wait two seconds
-    # wait(2)
-    # # print memory usage
-    # print("memory usage after test 1:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-    # print("Test 2")
-    # print("use_checkpointing = True, debug=True,batch_size = 4,seq_length =1024,is_half = True")
-    # test(use_checkpointing = True, debug=True,batch_size = 6,seq_length =1024,is_half = True)

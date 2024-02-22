@@ -61,16 +61,3 @@ class PositionalEncoding(nn.Module):
         else:
               x = x + (self.positional_encoding[:, :x.size(1),:]).requires_grad_(False)
         return self.dropout(x) # (batch_size, max_seq_len, d_model)
-
-
-if __name__ == '__main__':
-    # Test
-    from src.language_model.GPT2.config import Config
-    config = Config()
-    config.max_seq_len = 5
-    config.d_model = 512
-    config.dropout = 0.1
-    pe = PositionalEncoding(config)
-    x = torch.randn(2, 5, config.d_model)
-    print(pe(x).size()) # torch.Size([2, 5, 512])
-    print(pe)

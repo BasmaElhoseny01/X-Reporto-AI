@@ -390,10 +390,7 @@ class XReportoV1(nn.Module):
                 return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
            
             # Stage(3) Language Model
-                      
-            # print("Before language model")       
             input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selected_regions, input_ids, attention_mask, object_detector_features)
-            print("here is the problem ",len(input_ids))
             if index>=len(input_ids):
                 return 0,0,0,0,0,0,0,0,True
             if (index+LM_Batch_Size) >= len(input_ids):

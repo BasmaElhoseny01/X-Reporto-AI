@@ -45,15 +45,3 @@ class FeedForward(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
         return x
-
-if __name__ == '__main__':
-    # Test
-    from src.language_model.GPT2.config import Config
-    config = Config()
-    config.d_model = 512
-    config.d_ff = 2048
-    config.dropout = 0.1
-    ff = FeedForward(config)
-    x = torch.randn(2, 5, config.d_model)
-    print(ff(x).size()) # torch.Size([2, 5, 512])
-    print(ff)

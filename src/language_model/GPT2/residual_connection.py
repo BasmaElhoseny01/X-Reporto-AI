@@ -46,13 +46,3 @@ class ResidualConnection(nn.Module):
         return x + self.dropout(sublayer(self.ln(x)))
 
 
-if __name__ == '__main__':
-    # Test
-    from src.language_model.GPT2.config import Config
-    config = Config()
-    config.d_model = 512
-    config.dropout = 0.1
-    rc = ResidualConnection(config)
-    x = torch.randn(2, 5, config.d_model)
-    print(rc(x, lambda x: x).size()) # torch.Size([2, 5, 512])
-    print(rc)
