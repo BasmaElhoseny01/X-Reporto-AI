@@ -30,6 +30,7 @@ class XReportoV1(nn.Module):
         - object_detector (ObjectDetectorWrapper): Object detector module.
         - binary_classifier_selection_region (BinaryClassifierSelectionRegionWrapper): Binary classifier for region selection.
         - binary_classifier_region_abnormal (BinaryClassifierRegionAbnormalWrapper): Binary classifier for abnormal region detection.
+        - language_model (CustomGPT2): Language model for generating reports.
     """
 
     def __init__(self):
@@ -140,7 +141,7 @@ class XReportoV1(nn.Module):
 
             
 
-    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch=None,index=None,delete=False,generate_sentence=False,use_beam_search = False):
+    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch:Optional[int]=None,index:Optional[int]=None,delete:Optional[bool]= False,generate_sentence :Optional[bool]=False,use_beam_search :Optional[bool] = False):
         '''
         Forward pass through the X-ReportoV1 model.
 
@@ -151,18 +152,20 @@ class XReportoV1(nn.Module):
                 - 'boxes' (FloatTensor[N, 4]): Ground-truth boxes in [x1, y1, x2, y2] format, where N is the number of bounding boxes detected.
                 - 'labels' (Int64Tensor[N]): Ground-truth labels for each box, where N is the number of bounding boxes detected.
                 If None, the model assumes inference mode without ground truth labels.
-
             - selection_classifier_targets (Optional[Tensor]):Binary Tensor of shape [batch_size x,29]
                 Ground truth indicating whether a phrase exists in the region or not.
                 In CLASSIFIER Mode:
                     If None , the model assumes inference mode without ground truth labels.
-
             - abnormal_classifier_targets (Optional[Tensor]):Binary Tensor of shape [batch_size x,29]
                 Ground truth indicating whether a region is abnormal or not.
                 In CLASSIFIER Mode:
                     If None , the model assumes inference mode without ground truth labels.
-
             - language_model__targets
+            -batch (Optional[int]): The batch index.
+            -index (Optional[int]): The index of the input in the batch.
+            -delete (Optional[bool]): If True, delete the input tensors from the GPU memory after the forward pass.
+            -generate_sentence (Optional[bool]): If True, generate a sentence using the language model.
+            -use_beam_search (Optional[bool]): If True, use beam search to generate a sentence.
 
         Returns:
             If in OBJECT_DETECTOR Mode:
@@ -174,6 +177,7 @@ class XReportoV1(nn.Module):
                         - 'loss_box_reg' (Tensor): Box regression loss.
                 - selection_classifier_losses: 0
                 - abnormal_binary_classifier_losses: 0
+                - LM_output: 0
 
                 If in Validation mode:
                 - object_detector_losses Dict: Dictionary containing object detector losses with keys:
@@ -205,6 +209,7 @@ class XReportoV1(nn.Module):
                         The format is similar to `tensor(1.0215, device='cuda:0', grad_fn=<....>)`.
                    - abnormal_binary_classifier_losses (Tensor): Loss of the Abnormal Binary Classifier.
                         The format is similar to `tensor(1.0215, device='cuda:0', grad_fn=<....>)`.
+                    - LM_output: 0
 
                 If in Validation mode:
                     - object_detector_losses (Dict): Dictionary containing object detector losses with keys:
@@ -242,6 +247,24 @@ class XReportoV1(nn.Module):
                     - abnormal_binary_classifier_losses: None.
                     - predicted_abnormal_regions(Tensor): Boolean Tensor of shape [batch_size x 29] 
                         Indicating predicted abnormal regions.    
+            if in LANGUAGE_MODEL Mode:
+                If in training mode:
+                    - object_detector_losses (Dict): Dictionary containing object detector losses with keys:
+                        - 'loss_objectness' (Tensor): Objectness loss.
+                        - 'loss_rpn_box_reg' (Tensor): RPN box regression loss.
+                        - 'loss_classifier' (Tensor): Classifier loss.
+                        - 'loss_box_reg' (Tensor): Box regression loss.
+                    - selection_classifier_losses (Tensor): Loss of the Selection Region Binary Classifier.
+                        The format is similar to `tensor(1.0215, device='cuda:0', grad_fn=<....>)`.
+                    - abnormal_binary_classifier_losses (Tensor): Loss of the Abnormal Binary Classifier.
+                        The format is similar to `tensor(1.0215, device='cuda:0', grad_fn=<....>)`.
+                    - LM_output (Tuple): Tuple containing the language model output with keys:
+                        - 'loss' (Tensor): Language model loss.
+                        - 'logits' (Tensor): Logits of the language model.
+                        - 'hidden_states' (Tensor): Hidden states of the language model.
+                        - 'attentions' (Tensor): Attention weights of the language model.
+                    - stop (bool): If True, the batch index has reached the end of the dataset.
+
        '''
         stop=False
         if self.training:
@@ -367,10 +390,7 @@ class XReportoV1(nn.Module):
                 return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
            
             # Stage(3) Language Model
-                      
-            # print("Before language model")       
             input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selected_regions, input_ids, attention_mask, object_detector_features)
-            print("here is the problem ",len(input_ids))
             if index>=len(input_ids):
                 return 0,0,0,0,0,0,0,0,True
             if (index+LM_Batch_Size) >= len(input_ids):
