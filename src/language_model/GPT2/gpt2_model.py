@@ -6,23 +6,41 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss
 from transformers import GPT2LMHeadModel
-import math
 from src.language_model.GPT2.feed_forward import FeedForward
 from src.language_model.GPT2.layer_normalization import LayerNormalization
-from src.language_model.GPT2.residual_connection import ResidualConnection
-from src.language_model.GPT2.gpt2_attention import CustomGPT2MultiHeadAttention
 from src.language_model.GPT2.positional_encoding import PositionalEncoding
 from src.language_model.GPT2.embeddings import InputEmbedding
 from src.language_model.GPT2.gpt2_block import CustomGPT2Block
 from src.language_model.GPT2.config import Config
 import torch.utils.checkpoint
-from src.x_reporto.data_loader.tokenizer import Tokenizer 
 from transformers import GPT2Tokenizer
 from transformers.generation.beam_search import BeamSearchScorer
 from torchsummary import summary
 
 class CustomGPT2(nn.Module):
     def __init__(self, config,image_config):
+        """
+        Custom GPT-2 model with additional modifications.
+
+        Args:
+            config (Config): An instance of the Config class containing model configuration.
+            image_config (Any): Configuration for image transformation feed-forward layer.
+
+        Attributes:
+            config (Config): Model configuration.
+            d_model (int): Dimension of the model.
+            num_layers (int): Number of transformer blocks.
+            vocab_size (int): Size of the vocabulary.
+            ignore_index (int): Index to ignore during loss calculation.
+            pretrained_model (Optional[str]): Path to a pre-trained GPT-2 model.
+            image_to_text (FeedForward): Image transformation feed-forward layer.
+            wte (InputEmbedding): Embedding layer for input tokens.
+            drop (nn.Dropout): Dropout layer.
+            positional_encoding (PositionalEncoding): Positional encoding layer.
+            blocks (nn.ModuleList): List of transformer blocks.
+            ln (LayerNormalization): Layer normalization layer.
+            fc (nn.Linear): Fully connected layer for model output.
+        """
         super(CustomGPT2, self).__init__()
         self.config = config
         self.d_model = config.d_model
@@ -35,8 +53,6 @@ class CustomGPT2(nn.Module):
 
         # define embedding layers
         self.wte = InputEmbedding(self.config)
-        # self.wte = nn.Embedding(config.vocab_size, self.d_model)
-        # self.wpe = nn.Embedding(self.d_model, self.d_model)
         self.drop = nn.Dropout(self.config.dropout)
 
         # define positional encoding layer
@@ -54,9 +70,15 @@ class CustomGPT2(nn.Module):
         self.load_pretrained_weights()
         
     def init_weights(self):
+        """
+        initialize model weights.
+        """
         self.fc.weight.data.normal_(mean=0.0, std=0.02)
         self.fc.bias.data.zero_()
     def convert_to_half(self):
+        """
+        Convert model parameters to half precision (float16).
+        """
         self.fc.weight.data = self.fc.weight.data.half()
         self.fc.bias.data = self.fc.bias.data.half()
         for i in range(self.num_layers):
@@ -74,12 +96,12 @@ class CustomGPT2(nn.Module):
             self.blocks[i].ff.fc2.bias.data = self.blocks[i].ff.fc2.bias.data.half()
 
     def load_pretrained_weights(self):
+        """
+        Load weights from a pre-trained GPT-2 model.
+        """
         if self.pretrained_model is not None:
             # use GPT2 model with language modeling head, since we want to generate phrases
             gpt_with_lm_head = GPT2LMHeadModel.from_pretrained(self.pretrained_model)
-
-            # copy weights from pre-trained model to custom model
-            # print("pretrained model architecture: ", gpt_with_lm_head)
 
             # copy weights of embedding layers
             self.wte.token_embedding.weight.data = gpt_with_lm_head.transformer.wte.weight.data
@@ -111,32 +133,24 @@ class CustomGPT2(nn.Module):
         output_attentions: Optional[bool] = None,
         seq_len: Optional[int] = None
         ):
-        # print all inputs
-        # if self.config.debug:
-        #     print("input_ids:", input_ids)
-        #     print("layer_past:", layer_past)
-        #     print("attention_mask:", attention_mask)
-        #     print("position_ids:", position_ids)
-        #     print("inputs_embeds:", inputs_embeds)
-        #     print("image_hidden_states:", image_hidden_states)
-        #     print("labels:", labels)
-        #     print("use_cache:", use_cache)
-        #     print("output_attentions:", output_attentions)
-        #     # print shape of all inputs
-        #     if input_ids is not None:
-        #         print("input_ids shape:", input_ids.shape)
-        #     if layer_past is not None:
-        #         print("layer_past shape:", layer_past[0][0].shape)
-        #     if attention_mask is not None:
-        #         print("attention_mask shape:", attention_mask.shape)
-        #     if position_ids is not None:
-        #         print("position_ids shape:", position_ids.shape)
-        #     if inputs_embeds is not None:
-        #         print("inputs_embeds shape:", inputs_embeds.shape)
-        #     if image_hidden_states is not None:
-        #         print("image_hidden_states shape:", image_hidden_states.shape)
-        #     if labels is not None:
-        #         print("labels shape:", labels.shape)
+        """
+        Forward pass of the CustomGPT2 model.
+
+        Args:
+            input_ids (Optional[torch.LongTensor]): Input token IDs.
+            layer_past (Optional[Tuple[Tuple[torch.Tensor]]]): Past layers for autoregressive generation.
+            attention_mask (Optional[torch.FloatTensor]): Attention mask for input tokens.
+            position_ids (Optional[torch.LongTensor]): Positional IDs for input tokens.
+            inputs_embeds (Optional[torch.FloatTensor]): Embedded input tokens.
+            image_hidden_states (Optional[torch.Tensor]): Hidden states from image processing.
+            labels (Optional[torch.LongTensor]): Target labels for training.
+            use_cache (Optional[bool]): Whether to use past layers for autoregressive generation.
+            output_attentions (Optional[bool]): Whether to output attention weights.
+            seq_len (Optional[int]): Length of the input sequence.
+
+        Returns:
+            Tuple[torch.Tensor or Tuple[torch.Tensor]]: Model output, and optionally, past layers and attention weights.
+        """
             
         if image_hidden_states is not None:
             # convert image hidden states dtype to dtype of the model
@@ -161,10 +175,7 @@ class CustomGPT2(nn.Module):
             attention_mask = attention_mask.view(-1, attention_mask.size(-1))
             attention_mask = attention_mask[:, None, None, :]
             # convert attention mask of shape (batch_size,1,1, max_seq_len) to (batch_size, 1, 1, 1+max_seq_len) by concatenating 1s
-            ones = torch.ones(attention_mask.size()[:-1] + (1,), dtype=attention_mask.dtype, device=attention_mask.device)
-            attention_mask = torch.cat((ones, attention_mask), dim=-1)
-            attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
-            attention_mask = (1.0 - attention_mask) * -10000.0
+            c
 
         presents = ()
         if use_cache is False:
@@ -235,7 +246,17 @@ class CustomGPT2(nn.Module):
         return (logits,)
 
     def prepare_inputs_for_generation(self, input_ids:Tensor=None, seq_len:int=1, **kwargs:dict[str, Any]):
-        token_type_ids = kwargs.get("token_type_ids", None)
+        """
+        Prepares inputs for the generation process.
+
+        Args:
+            input_ids (Tensor): Input token IDs.
+            seq_len (int): Length of the sequence.
+            **kwargs (dict): Additional keyword arguments.
+
+        Returns:
+            dict: Model inputs including input IDs, past layers, use_cache flag, position IDs, attention mask, and sequence length.
+        """
         # Omit tokens covered by past_key_values
         layer_past = kwargs.get("layer_past", None)
         if layer_past:
@@ -263,10 +284,19 @@ class CustomGPT2(nn.Module):
             "position_ids": position_ids,
             "attention_mask": attention_mask,
             "seq_len": seq_len
-            # "token_type_ids": token_type_ids,
         }
 
     def update_model_kwargs(self, model_kwargs, presents:Any=None):
+        """
+        Updates model keyword arguments during generation.
+
+        Args:
+            model_kwargs (dict): Model keyword arguments.
+            presents (Any): Past layers.
+
+        Returns:
+            dict: Updated model keyword arguments.
+        """
         model_kwargs["layer_past"] = presents
         attention_mask = model_kwargs["attention_mask"]
         model_kwargs["attention_mask"] = torch.cat([attention_mask, attention_mask.new_ones((attention_mask.shape[0], 1))], dim=-1)
@@ -275,12 +305,25 @@ class CustomGPT2(nn.Module):
     def generate(self, max_length: int = 300, image_hidden_states: Tensor = None, Temperature: int = 1,
              top_k: int = 0, device: device = None, greedy: bool = False, sampling: bool = False,
              sampling_top_k: bool = False) -> Tensor:
+        """
+        Generates sequences using greedy decoding, sampling, or top-k sampling.
 
+        Args:
+            max_length (int): Maximum length of the generated sequence.
+            image_hidden_states (Tensor): Hidden states from image processing.
+            Temperature (int): Controls the randomness of sampling (higher values make output more random).
+            top_k (int): Number of top tokens to consider during top-k sampling.
+            device (device): Device to perform generation on.
+            greedy (bool): Whether to use greedy decoding.
+            sampling (bool): Whether to use random sampling.
+            sampling_top_k (bool): Whether to use top-k sampling.
+
+        Returns:
+            Tensor: Generated sequence of token IDs.
+        """
         batch_size = image_hidden_states.size(0)
 
         input_ids = torch.full(size=(batch_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
-        # add 2949 to input_ids to make it of shape (batch_size, 2)
-        # input_ids = torch.cat([input_ids, torch.full(size=(batch_size, 1), fill_value=2949, dtype=torch.int64, device=device)], dim=-1)
         model_kwargs = {"attention_mask": torch.ones(size=(batch_size, input_ids.shape[-1]), dtype=torch.int64, device=device),
                         "use_cache": True}
 
@@ -325,17 +368,25 @@ class CustomGPT2(nn.Module):
             all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask)  # of shape [batch_size]
 
             # stop when all sentences are finished or if we exceed the maximum length
-            # if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
-
-            if (cur_len >= max_length):
+            if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
                 break
 
         return input_ids
-
+    
     @staticmethod
-    def reorder_past_lauer(
+    def reorder_past_layer(
         layer_past: Tuple[Tuple[torch.Tensor]], beam_idx: torch.Tensor
     ) -> Tuple[Tuple[torch.Tensor]]:
+        """
+        Reorders the past layer cache for beam search.
+
+        Args:
+            layer_past (Tuple[Tuple[torch.Tensor]]): Past layers.
+            beam_idx (torch.Tensor): Indices for beam search.
+
+        Returns:
+            Tuple[Tuple[torch.Tensor]]: Reordered past layers.
+        """
         """
         This function is used to re-order the `past layer` cache if [`beam_search`] .
         This is required to match `past_key_values` with the correct beam_idx at every generation step.
@@ -441,7 +492,7 @@ class CustomGPT2(nn.Module):
                     # print past layer dimensions
                     print("past layer shape:", model_kwargs["layer_past"][0][0].shape)
                 # reorder past layer
-                model_kwargs["layer_past"] = self.reorder_past_lauer(
+                model_kwargs["layer_past"] = self.reorder_past_layer(
                     layer_past=model_kwargs["layer_past"], beam_idx=beam_idx
                 )
                 if debug:
@@ -456,65 +507,6 @@ class CustomGPT2(nn.Module):
             seq_len +=1
         # return the generated tokens
         return input_ids
-    
-    # def generate(self, max_length:int=300, image_hidden_states:Tensor=None,Temperature:int=1,top_k:int=0,device:device=None,greedy:bool=False,sampling:bool=False,sampling_top_k:bool=False)->Tensor:
-        
-    #     batch_size = image_hidden_states.size(0)
-
-    #     input_ids = torch.full(size=(batch_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
-    #     model_kwargs = {"attention_mask": torch.ones(size=(batch_size, 1), dtype=torch.int64, device=device),
-    #                     "use_cache": True}
-        
-    #     #greedy search
-    #     seq_len = 1
-    #     #start with a random token
-    #     all_sequences_to_generate = torch.ones(size=(batch_size,), dtype=torch.int64, device=device) # (batch_size,)
-    #     cur_len = seq_len
-    #     while True:
-    #         # prepare model inputs (attention mask, layer_past, inputs_ids, position_ids, use_cache)
-    #         model_inputs = self.prepare_inputs_for_generation(input_ids =input_ids ,seq_len=cur_len, **model_kwargs)
-    #         # forward pass to get next
-    #         logits, presents = self.forward(**model_inputs, image_hidden_states=image_hidden_states)
-    #         next_token_logits = logits[:, -1, :]  # of shape [batch_size x vocab_size]
-    #         # greedy decoding
-    #         print("mmmmmmmmmmmmmmm")
-    #         if greedy:
-    #             next_token = torch.argmax(next_token_logits, dim=-1) # of shape [batch_size]
-    #         # sampling
-    #         elif sampling:
-    #             next_token = torch.multinomial(F.softmax(next_token_logits / Temperature, dim=-1), num_samples=1).squeeze(1)
-    #             print("next_token shape:", next_token.shape)
-    #         # top-k sampling
-    #         elif sampling_top_k:
-    #             next_token_logits  /= Temperature
-    #             # Use torch.topk to get the top-k indices and values
-    #             top_k_values, top_k_indices = torch.topk(next_token_logits, top_k, dim=-1)
-    #             # Apply softmax to the top-k values
-    #             top_k_probs = F.softmax(top_k_values, dim=-1)
-    #             # Multinomial sampling based on the top-k probabilities
-    #             sampled_index = torch.multinomial(top_k_probs, 1).item()
-    #             next_token=top_k_indices[0, sampled_index].item()
-    #         # concatenate the new token
-    #         next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
-    #         # next_token = next_token * all_sequences_to_generate 
-    #         # update input_ids, attention mask and length for next step
-    #         input_ids = torch.cat([input_ids, next_token[:, None]], dim=-1)
-    #         # input_ids = torch.cat([input_ids, next_token], dim=-1)
-    #         # update model kwargs
-    #         model_kwargs = self.update_model_kwargs(model_kwargs=model_kwargs,presents=presents)
-    #         # update sequence length
-    #         cur_len += 1
-
-    #         # if eos_token was found in one sentence, set sentence to finished
-    #         binary_mask = (next_token != self.config.eos_token_id).long() # of shape [batch_size]
-    #         all_sequences_to_generate = all_sequences_to_generate.mul(binary_mask) # of shape [batch_size]
-
-    #         # stop when all sentences are finished or if we exceed the maximum length
-    #         # if all_sequences_to_generate.max() == 0 or ( cur_len >= max_length):
-    #         if ( cur_len >= max_length):
-    #             break
-    #     return input_ids
-
    
 def wait(seconds):
     seconds = seconds * 200000000
