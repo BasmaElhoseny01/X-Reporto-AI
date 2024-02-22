@@ -3,3 +3,4 @@ spacy
 spacy-transformers
 albumentations
 torch-summary
+imagesize

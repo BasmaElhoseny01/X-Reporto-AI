@@ -283,6 +283,56 @@ class XReportoTrainer():
                 print("\n")
                 print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
                 print("\n")
+            else:
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                    if TRAIN_RPN:
+                        # Saving object_detector marked as rpn
+                        print("Saving object_detector [Trained RPN]....")
+                        save_model(model=self.model.object_detector,name="object_detector_rpn_epoch"+str(epoch))
+                    else:
+                        # Saving Object Detector
+                        print("Saving object_detector....")
+                        save_model(model=self.model.object_detector,name="object_detector_epoch"+str(epoch))
+        
+                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                    # Saving Object Detector
+                    print("Saving object_detector....")
+                    save_model(model=self.model.object_detector,name="object_detector_epoch"+str(epoch))
+
+                    # Save Region Selection Classifier
+                    print("Saving region_classifier....")
+                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier_epoch"+str(epoch))
+
+                    # Save Abnormal Classifier
+                    print("Saving abnormal_classifier....")
+                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier_epoch'+str(epoch))
+
+                elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                    # Saving Object Detector
+                    print("Saving object_detector....")
+                    save_model(model=self.model.object_detector,name="object_detector_epoch"+str(epoch))
+
+                    # Save Region Selection Classifier
+                    print("Saving region_classifier....")
+                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier_epoch"+str(epoch))
+
+                    # Save Abnormal Classifier
+                    print("Saving abnormal_classifier....")
+                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier_epoch'+str(epoch))
+   
+                    #Save language model
+                    print("Saving language model....")
+                    save_model(model=self.model.language_model,name='LM_epoch'+str(epoch))
+                                    
+
+                # Logging the loss to a file
+                with open("logs/loss.txt", "a") as myfile:
+                    myfile.write(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
+                    myfile.write("\n")
+                # print the epoch loss
+                print("\n")
+                print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
+                print("\n")
 
 
                 
@@ -602,10 +652,11 @@ class XReportoTrainer():
                             break
                         
                 
-    def save_check_point(self,epoch):
+    def save_check_point(self,epoch,loss):
         checkpoint={
             "epoch":epoch,
-            "optim_state":self.optimizer.state_dict()
+            "optim_state":self.optimizer.state_dict(),
+            "losses":loss,
         }
 
 
@@ -664,6 +715,7 @@ class XReportoTrainer():
         
         epoch=checkpoint['epoch']
         self.optimizer.load_state_dict(checkpoint['optim_state'])
+        self.best_loss=checkpoint["losses"]
 
 
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
