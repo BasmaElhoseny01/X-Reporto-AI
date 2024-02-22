@@ -13,7 +13,7 @@ from src.utils import plot_image
 from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.tokenizer import Tokenizer
 # Utils 
-from src.utils import save_model
+from src.utils import save_model,cuda_memory_info
 from transformers import GPT2Tokenizer
 
 from config import *
@@ -230,8 +230,9 @@ class XReportoTrainer():
                         Total_loss+=selection_classifier_losses
                         Total_loss+=abnormal_binary_classifier_losses
         
+                    # cuda_memory_info()
                     Total_loss.backward()
-
+                    # cuda_memory_info("after")
                     epoch_loss += Total_loss
 
                     # update the parameters
@@ -765,7 +766,6 @@ def collate_fn(batch):
     # discard images from batch where __getitem__ from custom_image_dataset failed (i.e. returned None)
     # otherwise, whole training loop will stop (even if only 1 image fails to open)
     # batch = list(filter(lambda x: x is not None, batch))
-    print("batch",batch)
     return batch
 
 # def set_data(args):

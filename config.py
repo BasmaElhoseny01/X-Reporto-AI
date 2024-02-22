@@ -81,9 +81,9 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # X-Report Trainer Hyper Parameters
 EPOCHS=5 # 10
 LEARNING_RATE=0.0001
-BATCH_SIZE=2 # 
+BATCH_SIZE=32 # 
 LM_Batch_Size=1
-SCHEDULAR_STEP_SIZE=4000 #
+SCHEDULAR_STEP_SIZE=1500 #
 SCHEDULAR_GAMMA=0.9
 DEBUG=True
 GENERATE_REPORT=False
