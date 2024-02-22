@@ -76,21 +76,21 @@ class ModelStage(Enum):
     CLASSIFIER = 2
     LANGUAGE_MODEL = 3
 
-MODEL_STAGE=3
+MODEL_STAGE=1
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # X-Report Trainer Hyper Parameters
-EPOCHS=11
-LEARNING_RATE=0.00006
+EPOCHS=1
+LEARNING_RATE=0.0001
 BATCH_SIZE=1
 LM_Batch_Size=1
-SCHEDULAR_STEP_SIZE=1
-SCHEDULAR_GAMMA=0.9999999999
+SCHEDULAR_STEP_SIZE=40000
+SCHEDULAR_GAMMA=0.7
 DEBUG=True
 GENERATE_REPORT=False
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=False # Tain only RPN of the object detector
+TRAIN_RPN=True # Tain only RPN of the object detector
 RUN = "0"
 
 # Abnormal Binary Classifier Hyper Parameters

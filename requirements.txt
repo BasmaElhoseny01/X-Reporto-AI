@@ -1,3 +1,5 @@
 transformers
 spacy
 spacy-transformers
+albumentations
+torch-summary
