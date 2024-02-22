@@ -119,23 +119,36 @@ class XReportoTrainer():
                 # sys.exit()
                 image_shape = batch[0][0]["image"].size()
                 images_batch = torch.empty(size=(len(batch), *image_shape))
+                object_detector_targets=[]
 
                 for k in range(len(batch)):
                     (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[k]
-
-
-                images=object_detector_batch['image']
-                # Move images to Device
-                images = torch.stack([image.to(DEVICE) for image in images])
-                length=len(images)
-
-                # Moving Object Detector Targets to Device
-                object_detector_targets=[]
-                for i in range(len(images)):
+                    # stack images
+                    images_batch[k] = object_detector_batch['image']
+                    # Moving Object Detector Targets to Device
                     new_dict={}
-                    new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
-                    new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
-                    object_detector_targets.append(new_dict)   
+                    new_dict['boxes']=object_detector_batch['bboxes'].to(DEVICE)
+                    new_dict['labels']=object_detector_batch['bbox_labels'].to(DEVICE)
+                    object_detector_targets.append(new_dict)
+
+                # Move images to Device
+                images = images_batch.to(DEVICE)
+                length=len(images)
+                
+                #TODO: fix other targets
+
+                # images=object_detector_batch['image']
+                # # Move images to Device
+                # images = torch.stack([image.to(DEVICE) for image in images])
+                # length=len(images)
+
+                # # Moving Object Detector Targets to Device
+                # object_detector_targets=[]
+                # for i in range(len(images)):
+                #     new_dict={}
+                #     new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
+                #     new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
+                #     object_detector_targets.append(new_dict)   
 
                 selection_classifier_targets=None
                 abnormal_classifier_targets=None
