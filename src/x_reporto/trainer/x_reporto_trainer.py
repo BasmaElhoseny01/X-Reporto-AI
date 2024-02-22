@@ -96,8 +96,8 @@ class XReportoTrainer():
         
         # create data loader
         # TODO suffle Training Loaders
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
-        self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
         print("DataLoader Loaded")
         # initialize the best loss to a large value
         self.best_loss = float('inf')
@@ -113,8 +113,17 @@ class XReportoTrainer():
         self.model.train()
         for epoch in range(EPOCHS):
             epoch_loss = 0
-            for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):                
-                
+            # for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):                
+            for batch_idx,batch in enumerate(self.data_loader_train):                
+            
+                # sys.exit()
+                image_shape = batch[0][0]["image"].size()
+                images_batch = torch.empty(size=(len(batch), *image_shape))
+
+                for k in range(len(batch)):
+                    (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[k]
+
+
                 images=object_detector_batch['image']
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
@@ -736,6 +745,15 @@ class XReportoTrainer():
 
             # Load Language Model ckpt
 
+
+def collate_fn(batch):
+    # each dict in batch (which is a list) is for a single image and has the keys "image", "boxes", "labels"
+
+    # discard images from batch where __getitem__ from custom_image_dataset failed (i.e. returned None)
+    # otherwise, whole training loop will stop (even if only 1 image fails to open)
+    # batch = list(filter(lambda x: x is not None, batch))
+    print("batch",batch)
+    return batch
 
 # def set_data(args):
 #     # read hyper-parameters from terminal
