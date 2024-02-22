@@ -521,14 +521,11 @@ class DataPreprocessing:
 
                     # check if the bbox coordinates are faulty
                     if self.coordinates_faulty(height, width, x1, y1, x2, y2):
-<<<<<<< HEAD
                         is_faulty = True
-                        break
-=======
                         print("faulty "+str(count_faulty))
                         count_faulty +=1
-                        continue
->>>>>>> 8d62169 (add faulty boxes)
+                        break
+                        
                     # check if the bbox coordinates are within the image dimensions
                     x1 = self.check_coordinate(x1, width)
                     y1 = self.check_coordinate(y1, height)
