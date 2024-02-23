@@ -821,7 +821,7 @@ def main():
 
 
     # # Start Training
-    # trainer.train()
+    trainer.train()
         
 
     

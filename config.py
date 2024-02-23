@@ -17,7 +17,7 @@ RUN = "0"
 
 # Training Configurations
 EPOCHS=5
-BATCH_SIZE=32
+BATCH_SIZE=1
 LM_Batch_Size=1
 
 LEARNING_RATE=0.0001

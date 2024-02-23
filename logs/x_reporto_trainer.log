@@ -126,3 +126,49 @@ Traceback (most recent call last):
   File "D:\Graduation-Project\src\object_detector\data_loader\custom_augmentation.py", line 53, in __init__
     A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE),keep_ratio=True),
 TypeError: Affine.__init__() got an unexpected keyword argument 'keep_ratio'
+2024-02-23 14:03:20 - INFO - =================== New Run Started: 2024-02-23 14:03:20 ===================
+2024-02-23 14:03:20 - INFO - Tarning X_Reporto Started
+2024-02-23 14:03:20 - INFO - MODEL_STAGE: 1
+2024-02-23 14:03:20 - INFO - DEVICE: cuda
+2024-02-23 14:03:20 - INFO - CONTINUE_TRAIN: False
+2024-02-23 14:03:20 - INFO - TRAIN_RPN: True
+2024-02-23 14:03:20 - INFO - RUN: 0
+2024-02-23 14:03:20 - INFO - EPOCHS: 5
+2024-02-23 14:03:20 - INFO - BATCH_SIZE: 32
+2024-02-23 14:03:20 - INFO - LM_Batch_Size: 1
+2024-02-23 14:03:20 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 14:03:20 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 14:03:20 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 14:03:20 - INFO - DEBUG: True
+2024-02-23 14:03:20 - INFO - GENERATE_REPORT: False
+2024-02-23 14:03:20 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 14:03:20 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 14:03:20 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 14:03:20 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 14:03:20 - INFO - PERIODIC_LOGGING: False
+2024-02-23 14:03:20 - INFO - Folder 'models/0' already exists.
+2024-02-23 14:03:24 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 14:03:24 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 14:04:38 - INFO - =================== New Run Started: 2024-02-23 14:04:38 ===================
+2024-02-23 14:04:38 - INFO - Tarning X_Reporto Started
+2024-02-23 14:04:38 - INFO - MODEL_STAGE: 1
+2024-02-23 14:04:38 - INFO - DEVICE: cuda
+2024-02-23 14:04:38 - INFO - CONTINUE_TRAIN: False
+2024-02-23 14:04:38 - INFO - TRAIN_RPN: True
+2024-02-23 14:04:38 - INFO - RUN: 0
+2024-02-23 14:04:38 - INFO - EPOCHS: 5
+2024-02-23 14:04:38 - INFO - BATCH_SIZE: 1
+2024-02-23 14:04:38 - INFO - LM_Batch_Size: 1
+2024-02-23 14:04:38 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 14:04:38 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 14:04:38 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 14:04:38 - INFO - DEBUG: True
+2024-02-23 14:04:38 - INFO - GENERATE_REPORT: False
+2024-02-23 14:04:38 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 14:04:38 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 14:04:38 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 14:04:38 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 14:04:38 - INFO - PERIODIC_LOGGING: False
+2024-02-23 14:04:38 - INFO - Folder 'models/0' already exists.
+2024-02-23 14:04:41 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 14:04:42 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
