@@ -15,6 +15,9 @@ Old folder hierarchy:
                  |- files
                     |- p10
                     |- p11
+        |- robots.txt
+  |- p10_subset1.zip
+  |- p11_subset2.zip
 
 New folder hierarchy:
 - Graduation-Project
@@ -23,6 +26,8 @@ New folder hierarchy:
         |- files
            |- p10
            |- p11
+     |- p10_subset1.zip
+     |- p11_subset2.zip
 
 Usage:
 ------
@@ -38,7 +43,7 @@ Example:
 --------
 To run the script , execute:
 
-    >>>  /home/basma/Desktop/Graduation-Project$ python .\scripts\fix_dataset_path.py
+    >>>  /home/basma/Desktop/Graduation-Project$ python ./scripts/fix_dataset_path.py
 """
 
 import shutil
@@ -90,13 +95,11 @@ def main():
         # List all files in the folder
         files = os.listdir(os.path.join(parent_folder, 'physionet.org'))
 
-        # Iterate over the files and remove .txt files
-        for file in files:
-            if file.endswith('.txt'):
-                file_path = os.path.join(parent_folder, 'physionet.org', file)
-                print(file_path)
-                os.remove(file_path)
-
+        # Remove robots.txt file 
+        file='robots.txt'
+        file_path = os.path.join(parent_folder, 'physionet.org', file)
+        print(file_path)
+        os.remove(file_path)
 
         # This isn't extra
         os.rmdir(os.path.join(parent_folder, 'physionet.org'))
@@ -106,18 +109,15 @@ def main():
 if __name__ == "__main__":
     # Get the current working directory
     current_directory = os.getcwd()
-    # print(current_directory)
+    print(current_directory)
 
     # Use regex to capture the directory path
-    match = re.search(r'.*\\Graduation-Project$', current_directory)
-    # print(match)
+    match = re.search(r'.*(\\|/)Graduation-Project$', current_directory)
+    print(match)
     
     if not match:
         print("Error: This script should be called from the 'Graduation-Project' directory.")
         sys.exit(1)
     
-
-    print("main func")
-
     # Call the main function
-    # main()
+    main()
