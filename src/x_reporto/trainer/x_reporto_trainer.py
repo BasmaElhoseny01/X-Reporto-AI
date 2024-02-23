@@ -62,28 +62,14 @@ class XReportoTrainer():
         >>> # Predict and display results
         >>> trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
     """
-    def __init__(self,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path,
-                 model:XReporto = None):
+    def __init__(self, model:XReporto,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path):
         '''
         inputs:
             training_csv_path (str): the path to the training csv file
             validation_csv_path (str): the path to the validation csv file
             model Optional[XReporto]: the x_reporto model instance to be trained.If not provided, the model is loaded from a .pth file.
         '''
-        # Model
-        if model==None:
-            # load the model from 
-            self.model=XReporto().create_model()
-
-            # TODO Fix Paths
-            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                self.load_model('object_detector')
-            elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                self.load_model('object_detector_classifier')
-            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                self.load_model('LM')
-        else:
-            self.model = model
+        self.model = model
 
         # Move to device
         self.model.to(DEVICE)
@@ -95,22 +81,18 @@ class XReportoTrainer():
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
-        # TODO Change to transform_type train
-        self.checkpoint="healx/gpt-2-pubmed-medium"
-        self.tokenizer = Tokenizer(self.checkpoint)
-
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train',tokenizer=self.tokenizer)
-        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val',tokenizer=self.tokenizer)
-        print("Dataset Loaded")
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
+        logging.info("Train dataset loaded")
+        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
+        logging.info("Validate dataset loaded")
         
         # create data loader
-        # TODO suffle Training Loaders
         self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
-        print("DataLoader Loaded")
+        logging.info("DataLoader Loaded")
+
         # initialize the best loss to a large value
         self.best_loss = float('inf')
-        # self.best_loss = 0.3904
         self.eval_best_loss = float('inf')
 
     def train(self):
@@ -821,7 +803,7 @@ def main():
 
 
     # # Start Training
-    trainer.train()
+    # trainer.train()
         
 
     
