@@ -2,13 +2,9 @@
 from logger_setup import setup_logging
 import logging
 
-import spacy
-import sys
+
 import os
 import gc
-import psutil
-import datetime
-from transformers import GPT2Tokenizer
 
 # Torch
 import torch
@@ -18,7 +14,6 @@ from torch.utils.data import  DataLoader
 # Modules
 from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
-from src.x_reporto.data_loader.tokenizer import Tokenizer
 
 # Utils 
 from src.utils import plot_image,save_model,save_checkpoint
@@ -626,7 +621,7 @@ def collate_fn(batch):
 #                             SCHEDULAR_GAMMA=float(args[6])
 
 def main():
-    logging.info("Tarning X_Reporto Started")
+    logging.info("Training X_Reporto Started")
     # Logging Configurations
     log_config()
 
