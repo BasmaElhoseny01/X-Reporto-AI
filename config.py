@@ -11,12 +11,15 @@ class OperationMode(Enum):
     TRAINING = 1
     VALIDATION = 2
     TESTING = 3
+
 # device
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
 # Training / validation / Testing
 OPERATION_MODE=2
 # Model Stage
 MODEL_STAGE=1
+
 # Training Process Parameters
 CONTINUE_TRAIN=True # Continue training
 TRAIN_RPN=True # Tain only RPN of the object detector
@@ -50,13 +53,15 @@ CHECKPOINT_EVERY_N=2
 
 
 def log_config():
-    logging.info(f"MODEL_STAGE: {MODEL_STAGE}")
     logging.info(f"DEVICE: {DEVICE}")
+
+    logging.info(f"OPERATION_MODE: {OPERATION_MODE}")
+    logging.info(f"MODEL_STAGE: {MODEL_STAGE}")
 
     logging.info(f"CONTINUE_TRAIN: {CONTINUE_TRAIN}")
     logging.info(f"TRAIN_RPN: {TRAIN_RPN}")
-    logging.info(f"RUN: {RUN}")
 
+    logging.info(f"RUN: {RUN}")
     logging.info(f"EPOCHS: {EPOCHS}")
     logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
     logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
@@ -81,8 +86,9 @@ def log_config():
 def get_config():
     # Get the Configuration dictionary to be saved in check point
     config = {
-    "MODEL_STAGE": MODEL_STAGE,
     "DEVICE": DEVICE,
+    "OPERATION_MODE":OPERATION_MODE,
+    "MODEL_STAGE": MODEL_STAGE,
     "CONTINUE_TRAIN": CONTINUE_TRAIN,
     "TRAIN_RPN": TRAIN_RPN,
     "RUN": RUN,
