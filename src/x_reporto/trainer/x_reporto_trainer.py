@@ -798,3 +798,4 @@ if __name__ == '__main__':
     # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
     # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
     # python -m src.x_reporto.trainer.x_reporto_trainer
+    #python -m src.x_reporto.trainer.x_reporto_trainer 2>&1 | tee logs.log

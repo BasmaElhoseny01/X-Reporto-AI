@@ -26,11 +26,11 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s]: %(message)s")
 log = logging.getLogger(__name__)
 
 
-NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 10
+NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 500
 
 
 class DataPreprocessing:
-    def __init__(self,train_only = False,fix_bboxes = True):
+    def __init__(self,train_only = False,fix_bboxes = False):
         self.path_chest_imagenome = path_chest_imagenome
         self.path_mimic_cxr = path_mimic_cxr
         self.path_mimic_cxr_jpg = path_mimic_cxr_jpg
@@ -583,4 +583,4 @@ def get_image_dimensions(image_path):
 
 if __name__=="__main__":
     data=DataPreprocessing()
-    data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
+    # data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
