@@ -122,77 +122,24 @@ class XReportoTrainer():
         self.model.train()
         for epoch in range(EPOCHS):
             epoch_loss = 0
-            # for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):                
-            for batch_idx,batch in enumerate(self.data_loader_train):                
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):                
             
-                # sys.exit()
-                image_shape = batch[0][0]["image"].size()
-                images_batch = torch.empty(size=(len(batch), *image_shape))
-                object_detector_targets=[]
+                # Move inputs to Device
+                images = images.to(DEVICE)
+                object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
 
-                for k in range(len(batch)):
-                    (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[k]
-                    # stack images
-                    images_batch[k] = object_detector_batch['image']
-                    # Moving Object Detector Targets to Device
-                    new_dict={}
-                    new_dict['boxes']=object_detector_batch['bboxes'].to(DEVICE)
-                    new_dict['labels']=object_detector_batch['bbox_labels'].to(DEVICE)
-                    object_detector_targets.append(new_dict)
 
-                # Move images to Device
-                images = images_batch.to(DEVICE)
-                length=len(images)
-                
-                #TODO: fix other targets
-
-                # images=object_detector_batch['image']
-                # # Move images to Device
-                # images = torch.stack([image.to(DEVICE) for image in images])
-                # length=len(images)
-
-                # # Moving Object Detector Targets to Device
-                # object_detector_targets=[]
-                # for i in range(len(images)):
-                #     new_dict={}
-                #     new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
-                #     new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
-                #     object_detector_targets.append(new_dict)   
-
-                selection_classifier_targets=None
-                abnormal_classifier_targets=None
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Selection Classifier
                     # Moving Selection Classifier Targets to Device
-                    selection_classifier_targets=[]
-                    for i in range(length):
-                        phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
-                        selection_classifier_targets.append(phrase_exist)
-                    selection_classifier_targets=torch.stack(selection_classifier_targets).to(DEVICE)
-                    
-                    # Abnormal Classifier
-                    # Moving Object Detector Targets to Device
-                    abnormal_classifier_targets=[]
-                    for i in range(length):
-                        bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
-                        abnormal_classifier_targets.append(bbox_is_abnormal)
-                    abnormal_classifier_targets=torch.stack(abnormal_classifier_targets).to(DEVICE)
-
+                    selection_classifier_targets = selection_classifier_targets.to(DEVICE)
+                    abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Language Model
                     # Moving Language Model Targets to Device
-                    LM_targets=[]
-                    input_ids=[]
-                    attention_mask=[]
-                    for i in range(len(images)):
-                        phrase=LM_batch['label_ids'][i]
-                        LM_targets.append(phrase)
-                        input_ids.append(LM_batch['input_ids'][i])
-                        attention_mask.append(LM_batch['attention_mask'][i])
-                    LM_targets=torch.stack(LM_targets).to(DEVICE)
-                    input_ids=torch.stack(input_ids).to(DEVICE)
-                    attention_mask=torch.stack(attention_mask).to(DEVICE)
-                    
+                    LM_targets = LM_targets.to(DEVICE)
+                    input_ids = LM_inputs['input_ids'].to(DEVICE)
+                    attention_mask = LM_inputs['attention_mask'].to(DEVICE)
                     loopLength= input_ids.shape[1]
                     for batch in range(BATCH_SIZE):
                         total_LM_losses=0
@@ -770,12 +717,46 @@ class XReportoTrainer():
 
 
 def collate_fn(batch):
-    # each dict in batch (which is a list) is for a single image and has the keys "image", "boxes", "labels"
 
-    # discard images from batch where __getitem__ from custom_image_dataset failed (i.e. returned None)
-    # otherwise, whole training loop will stop (even if only 1 image fails to open)
-    # batch = list(filter(lambda x: x is not None, batch))
-    return batch
+    image_shape = batch[0][0]["image"].size()
+    images = torch.empty(size=(len(batch), *image_shape))
+    object_detector_targets=[]
+    selection_classifier_targets=[]
+    abnormal_classifier_targets=[]
+    LM_targets=[]
+    input_ids=[]
+    attention_mask=[]
+    LM_inputs={}
+
+    for i in range(len(batch)):
+        (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[k]
+        # stack images
+        images[i] = object_detector_batch['image']
+        # Moving Object Detector Targets to Device
+        new_dict={}
+        new_dict['boxes']=object_detector_batch['bboxes']
+        new_dict['labels']=object_detector_batch['bbox_labels']
+        object_detector_targets.append(new_dict)
+        
+        bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
+        abnormal_classifier_targets.append(bbox_is_abnormal)
+
+        phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
+        selection_classifier_targets.append(phrase_exist)
+
+        phrase=LM_batch['label_ids'][i]
+        LM_targets.append(phrase)
+        input_ids.append(LM_batch['input_ids'][i])
+        attention_mask.append(LM_batch['attention_mask'][i])
+
+
+    selection_classifier_targets=torch.stack(selection_classifier_targets)
+    abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
+    LM_targets=torch.stack(LM_targets)
+    LM_inputs['input_ids']=torch.stack(input_ids)
+    LM_inputs['attention_mask']=torch.stack(attention_mask)
+
+    return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
 # def set_data(args):
 #     # read hyper-parameters from terminal
