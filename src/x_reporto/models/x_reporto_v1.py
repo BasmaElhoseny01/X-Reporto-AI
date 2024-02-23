@@ -18,7 +18,7 @@ from src.binary_classifier.models.binary_classifier_region_abnormal_factory impo
 from src.language_model.GPT2.gpt2_model import CustomGPT2
 from src.language_model.GPT2.config import Config
 from transformers import GPT2Tokenizer
-
+import logging
 class XReportoV1(nn.Module):
     """
     A modular model for object detection and binary classification.
@@ -52,21 +52,22 @@ class XReportoV1(nn.Module):
 
         if CONTINUE_TRAIN:
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
-                    print("Loading object_detector [Trained RPN]....")
-                    load_model(model=self.object_detector,name='object_detector_rpn')
+                    
+                    logging.info("Loading object_detector [Trained RPN]....")
+                    load_model(model=self.object_detector,name='object_detector_rpn_best')
             else:
                 # Load full object detector
-                print("Loading object_detector .....")
-                load_model(model=self.object_detector,name='object_detector')
+                logging.info("Loading object_detector .....")
+                load_model(model=self.object_detector,name='object_detector_best')
                 
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the Region Selection Classifier to continue training
-                print("Loading region_classifier .....")
-                load_model(model=self.binary_classifier_selection_region,name='region_classifier')
+                logging.info("Loading region_classifier .....")
+                load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
 
                 # Load the Abnormal Classifier to continue training
-                print("Loading abnormal_classifier .....")
-                load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
+                logging.info("Loading abnormal_classifier .....")
+                load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
 
                 # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                 for param in self.object_detector.object_detector.parameters():
@@ -74,9 +75,8 @@ class XReportoV1(nn.Module):
                     
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load Language Model to continue training
-                # Load Language Model to continue training
-                print("Loading language_model .....")
-                load_model(model=self.language_model,name='LM')
+                logging.info("Loading language_model .....")
+                load_model(model=self.language_model,name='LM_best')
 
                 # Freezing Selection Region Binary Classifier
                 for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
@@ -91,13 +91,13 @@ class XReportoV1(nn.Module):
                 if TRAIN_RPN:
                     pass
                 else:
-                    print("Loading object_detector [Trained RPN]....")
-                    load_model(model=self.object_detector,name='object_detector_rpn')
+                    logging.info("Loading object_detector [Trained RPN]....")
+                    load_model(model=self.object_detector,name='object_detector_rpn_best')
 
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the object_detector to continue training
-                print("Loading object_detector false .....")
-                load_model(model=self.object_detector,name='object_detector')
+                logging.info("Loading object_detector .....")
+                load_model(model=self.object_detector,name='object_detector_best')
                 # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                 for param in self.object_detector.object_detector.parameters():
                     param.requires_grad = False
@@ -105,20 +105,20 @@ class XReportoV1(nn.Module):
 
             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 # Load the Region Selection Classifier to start training
-                print("Loading region_classifier .....")
-                load_model(model=self.binary_classifier_selection_region,name='region_classifier')
+                logging.info("Loading region_classifier .....")
+                load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
                 # Freezing Selection Region Binary Classifier
                 for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
                     param.requires_grad = False
 
                 # Load the Abnormal Classifier to start training
-                print("Loading abnormal_classifier .....")
-                load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier')
+                logging.info("Loading abnormal_classifier .....")
+                load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
                 # Freezing Abnormal Region Binary Classifier
                 for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
                     param.requires_grad = False
                     if  GENERATE_REPORT:
-                        load_model(model=self.language_model,name='LM')
+                        load_model(model=self.language_model,name='LM_best')
                     
 
 
