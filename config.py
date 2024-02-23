@@ -39,8 +39,7 @@ DEBUG=True
 training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/train.csv'
 
-SERVER=False
-BASH_LOGGING=True
+PERIODIC_LOGGING=False
 
 
 def log_config():
@@ -68,8 +67,7 @@ def log_config():
     logging.info(f"training_csv_path: {training_csv_path}")
     logging.info(f"validation_csv_path: {validation_csv_path}")
 
-    logging.info(f"SERVER: {SERVER}")
-    logging.info(f"BASH_LOGGING: {BASH_LOGGING}")
+    logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
 
 
 # By Command Line

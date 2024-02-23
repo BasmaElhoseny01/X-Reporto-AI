@@ -3,7 +3,7 @@ import logging
 import datetime
 import os
 
-def setup_logging(log_file_path,bash=False,log_folder_path=None,periodic_logger=False):
+def setup_logging(log_file_path,bash=False,periodic_logger=False,log_folder_path=None):
     if log_folder_path is None: log_folder_path='logs/'
 
     if not os.path.exists(log_folder_path):

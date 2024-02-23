@@ -791,7 +791,7 @@
 # #                            SCHEDULAR_GAMMA=float(args[6])
 
 from logger_setup import setup_logging
-from config import RUN,SERVER,BASH_LOGGING,log_config
+from config import RUN,PERIODIC_LOGGING,log_config
 import logging
 import os
 
@@ -821,7 +821,7 @@ def main():
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
-    setup_logging(log_file_path='./logs/x_reporto_trainer.log',bash=BASH_LOGGING,periodic_logger=SERVER)
+    setup_logging(log_file_path='./logs/x_reporto_trainer.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
     try:
         # The main script runs here
