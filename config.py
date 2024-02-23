@@ -29,16 +29,16 @@ DEBUG=True
 GENERATE_REPORT=False
 
 # Modules Configurations:
-# # Abnormal Binary Classifier Hyper Parameters
-# ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
-
-# # Region Selection Classifier Hyper Parameters
-# REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
+# Abnormal Binary Classifier Hyper Parameters
+ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
+# Region Selection Classifier Hyper Parameters
+REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # Pathes to the external files
 training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/train.csv'
 
+# Logging
 PERIODIC_LOGGING=False
 
 
@@ -61,8 +61,8 @@ def log_config():
     logging.info(f"DEBUG: {DEBUG}")
     logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
 
-    # logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
-    # logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
+    logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
+    logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
 
     logging.info(f"training_csv_path: {training_csv_path}")
     logging.info(f"validation_csv_path: {validation_csv_path}")
@@ -70,7 +70,7 @@ def log_config():
     logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
 
 
-# By Command Line
+# By Command Line TODO fix with new arguments :D
 # import argparse
 # from enum import Enum
 # import torch

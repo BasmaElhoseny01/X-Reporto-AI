@@ -1,0 +1,128 @@
+2024-02-23 11:46:45 - INFO - =================== New Run Started: 2024-02-23 11:46:45 ===================
+2024-02-23 11:46:45 - INFO - Tarning X_Reporto Started
+2024-02-23 11:46:45 - INFO - MODEL_STAGE: 1
+2024-02-23 11:46:45 - INFO - DEVICE: cuda
+2024-02-23 11:46:45 - INFO - CONTINUE_TRAIN: False
+2024-02-23 11:46:45 - INFO - TRAIN_RPN: True
+2024-02-23 11:46:45 - INFO - RUN: 0
+2024-02-23 11:46:45 - INFO - EPOCHS: 5
+2024-02-23 11:46:45 - INFO - BATCH_SIZE: 32
+2024-02-23 11:46:45 - INFO - LM_Batch_Size: 1
+2024-02-23 11:46:45 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 11:46:45 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 11:46:45 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 11:46:45 - INFO - DEBUG: True
+2024-02-23 11:46:45 - INFO - GENERATE_REPORT: False
+2024-02-23 11:46:45 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 11:46:45 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 11:46:45 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 11:46:45 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 11:46:45 - INFO - PERIODIC_LOGGING: False
+2024-02-23 11:46:45 - INFO - Folder 'models/0' already exists.
+2024-02-23 11:47:21 - INFO - =================== New Run Started: 2024-02-23 11:47:21 ===================
+2024-02-23 11:47:21 - INFO - Tarning X_Reporto Started
+2024-02-23 11:47:21 - INFO - MODEL_STAGE: 1
+2024-02-23 11:47:21 - INFO - DEVICE: cuda
+2024-02-23 11:47:21 - INFO - CONTINUE_TRAIN: False
+2024-02-23 11:47:21 - INFO - TRAIN_RPN: True
+2024-02-23 11:47:21 - INFO - RUN: 0
+2024-02-23 11:47:21 - INFO - EPOCHS: 5
+2024-02-23 11:47:21 - INFO - BATCH_SIZE: 32
+2024-02-23 11:47:21 - INFO - LM_Batch_Size: 1
+2024-02-23 11:47:21 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 11:47:21 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 11:47:21 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 11:47:21 - INFO - DEBUG: True
+2024-02-23 11:47:21 - INFO - GENERATE_REPORT: False
+2024-02-23 11:47:21 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 11:47:21 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 11:47:21 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 11:47:21 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 11:47:21 - INFO - PERIODIC_LOGGING: False
+2024-02-23 11:47:21 - INFO - Folder 'models/0' already exists.
+2024-02-23 11:47:28 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 11:47:29 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 11:47:29 - DEBUG - Attempting to acquire lock 2256455263296 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+2024-02-23 11:47:29 - DEBUG - Lock 2256455263296 acquired on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+2024-02-23 11:47:30 - DEBUG - https://huggingface.co:443 "GET /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 26
+2024-02-23 11:47:30 - DEBUG - Attempting to release lock 2256455263296 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+2024-02-23 11:47:30 - DEBUG - Lock 2256455263296 released on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\be4d21d94f3b4687e5a54d84bf6ab46ed0f8defd.lock
+2024-02-23 11:47:30 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/vocab.json HTTP/1.1" 200 0
+2024-02-23 11:47:30 - DEBUG - Attempting to acquire lock 2256455262432 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\b00361fece0387ca34b4b8b8539ed830d644dbeb.lock
+2024-02-23 11:47:30 - DEBUG - Lock 2256455262432 acquired on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\b00361fece0387ca34b4b8b8539ed830d644dbeb.lock
+2024-02-23 11:47:31 - DEBUG - https://huggingface.co:443 "GET /healx/gpt-2-pubmed-medium/resolve/main/vocab.json HTTP/1.1" 200 898669
+2024-02-23 11:47:35 - DEBUG - Attempting to release lock 2256455262432 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\b00361fece0387ca34b4b8b8539ed830d644dbeb.lock
+2024-02-23 11:47:35 - DEBUG - Lock 2256455262432 released on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\b00361fece0387ca34b4b8b8539ed830d644dbeb.lock
+2024-02-23 11:47:35 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/merges.txt HTTP/1.1" 200 0
+2024-02-23 11:47:35 - DEBUG - Attempting to acquire lock 2256455262816 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+2024-02-23 11:47:35 - DEBUG - Lock 2256455262816 acquired on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+2024-02-23 11:47:36 - DEBUG - https://huggingface.co:443 "GET /healx/gpt-2-pubmed-medium/resolve/main/merges.txt HTTP/1.1" 200 456318
+2024-02-23 11:47:38 - DEBUG - Attempting to release lock 2256455262816 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+2024-02-23 11:47:38 - DEBUG - Lock 2256455262816 released on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\226b0752cac7789c48f0cb3ec53eda48b7be36cc.lock
+2024-02-23 11:47:38 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/added_tokens.json HTTP/1.1" 404 0
+2024-02-23 11:47:38 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/special_tokens_map.json HTTP/1.1" 200 0
+2024-02-23 11:47:38 - DEBUG - Attempting to acquire lock 2256455262048 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\817762d631ad6f9c799f6b9dc713c46420e65546.lock
+2024-02-23 11:47:38 - DEBUG - Lock 2256455262048 acquired on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\817762d631ad6f9c799f6b9dc713c46420e65546.lock
+2024-02-23 11:47:39 - DEBUG - https://huggingface.co:443 "GET /healx/gpt-2-pubmed-medium/resolve/main/special_tokens_map.json HTTP/1.1" 200 90
+2024-02-23 11:47:39 - DEBUG - Attempting to release lock 2256455262048 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\817762d631ad6f9c799f6b9dc713c46420e65546.lock
+2024-02-23 11:47:39 - DEBUG - Lock 2256455262048 released on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\817762d631ad6f9c799f6b9dc713c46420e65546.lock
+2024-02-23 11:47:39 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer.json HTTP/1.1" 404 0
+2024-02-23 11:47:39 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 11:47:39 - DEBUG - Attempting to acquire lock 2256455262816 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
+2024-02-23 11:47:39 - DEBUG - Lock 2256455262816 acquired on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
+2024-02-23 11:47:39 - DEBUG - https://huggingface.co:443 "GET /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 651
+2024-02-23 11:47:39 - DEBUG - Attempting to release lock 2256455262816 on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
+2024-02-23 11:47:39 - DEBUG - Lock 2256455262816 released on C:\Users\Dell\.cache\huggingface\hub\.locks\models--healx--gpt-2-pubmed-medium\820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
+2024-02-23 11:47:39 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "D:\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 836, in <module>
+    main()
+  File "D:\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 820, in main
+    trainer = XReportoTrainer(model=x_reporto_model)
+  File "D:\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 102, in __init__
+    self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train',tokenizer=self.tokenizer)
+  File "D:\Graduation-Project\src\x_reporto\data_loader\custom_dataset.py", line 24, in __init__
+    self.transform = CustomAugmentation(transform_type=self.transform_type)
+  File "D:\Graduation-Project\src\object_detector\data_loader\custom_augmentation.py", line 29, in __init__
+    self.transform=TransformLibrary(transform_type)
+  File "D:\Graduation-Project\src\object_detector\data_loader\custom_augmentation.py", line 53, in __init__
+    A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE),keep_ratio=True),
+TypeError: Affine.__init__() got an unexpected keyword argument 'keep_ratio'
+2024-02-23 11:48:55 - INFO - =================== New Run Started: 2024-02-23 11:48:55 ===================
+2024-02-23 11:48:55 - INFO - Tarning X_Reporto Started
+2024-02-23 11:48:55 - INFO - MODEL_STAGE: 1
+2024-02-23 11:48:55 - INFO - DEVICE: cuda
+2024-02-23 11:48:55 - INFO - CONTINUE_TRAIN: False
+2024-02-23 11:48:55 - INFO - TRAIN_RPN: True
+2024-02-23 11:48:55 - INFO - RUN: 0
+2024-02-23 11:48:55 - INFO - EPOCHS: 5
+2024-02-23 11:48:55 - INFO - BATCH_SIZE: 32
+2024-02-23 11:48:55 - INFO - LM_Batch_Size: 1
+2024-02-23 11:48:55 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 11:48:55 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 11:48:55 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 11:48:55 - INFO - DEBUG: True
+2024-02-23 11:48:55 - INFO - GENERATE_REPORT: False
+2024-02-23 11:48:55 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 11:48:55 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 11:48:55 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 11:48:55 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 11:48:55 - INFO - PERIODIC_LOGGING: False
+2024-02-23 11:48:55 - INFO - Folder 'models/0' already exists.
+2024-02-23 11:49:01 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 11:49:01 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 11:49:01 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "D:\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 836, in <module>
+    main()
+  File "D:\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 820, in main
+    trainer = XReportoTrainer(model=x_reporto_model)
+  File "D:\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 102, in __init__
+    self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train',tokenizer=self.tokenizer)
+  File "D:\Graduation-Project\src\x_reporto\data_loader\custom_dataset.py", line 24, in __init__
+    self.transform = CustomAugmentation(transform_type=self.transform_type)
+  File "D:\Graduation-Project\src\object_detector\data_loader\custom_augmentation.py", line 29, in __init__
+    self.transform=TransformLibrary(transform_type)
+  File "D:\Graduation-Project\src\object_detector\data_loader\custom_augmentation.py", line 53, in __init__
+    A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE),keep_ratio=True),
+TypeError: Affine.__init__() got an unexpected keyword argument 'keep_ratio'
