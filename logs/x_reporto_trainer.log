@@ -788,3 +788,68 @@ RuntimeError: Parent directory /check_points/0 does not exist.
 2024-02-23 19:08:21 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
 2024-02-23 19:08:23 - INFO - Saving object_detector_rpn_epoch 3
 2024-02-23 19:08:43 - INFO - best epoch: 3, best epoch loss: 1.8634
+2024-02-23 19:39:31 - INFO - =================== New Run Started: 2024-02-23 19:39:31 ===================
+2024-02-23 19:39:31 - INFO - Tarning X_Reporto Started
+2024-02-23 19:39:31 - INFO - MODEL_STAGE: 1
+2024-02-23 19:39:31 - INFO - DEVICE: cuda
+2024-02-23 19:39:31 - INFO - CONTINUE_TRAIN: False
+2024-02-23 19:39:31 - INFO - TRAIN_RPN: True
+2024-02-23 19:39:31 - INFO - RUN: 0
+2024-02-23 19:39:31 - INFO - EPOCHS: 5
+2024-02-23 19:39:31 - INFO - BATCH_SIZE: 1
+2024-02-23 19:39:31 - INFO - LM_Batch_Size: 1
+2024-02-23 19:39:31 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 19:39:31 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 19:39:31 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 19:39:31 - INFO - DEBUG: True
+2024-02-23 19:39:31 - INFO - GENERATE_REPORT: False
+2024-02-23 19:39:31 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 19:39:31 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 19:39:31 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 19:39:31 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 19:39:31 - INFO - PERIODIC_LOGGING: False
+2024-02-23 19:39:31 - INFO - CHECKPOINT_EVERY_N: 2
+2024-02-23 19:39:31 - INFO - Folder 'models/0' already exists.
+2024-02-23 19:39:31 - INFO - Folder 'check_points/0' created successfully.
+2024-02-23 19:39:36 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 19:39:36 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:39:37 - INFO - Train dataset loaded
+2024-02-23 19:39:37 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:39:37 - INFO - Validate dataset loaded
+2024-02-23 19:39:37 - INFO - DataLoader Loaded
+2024-02-23 19:39:37 - INFO - Start Training
+2024-02-23 19:39:57 - DEBUG - epoch: 1, Batch 1/2 object_detector_Loss: 1.0643 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0643
+2024-02-23 19:39:58 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:39:59 - DEBUG - epoch: 1, Batch 2/2 object_detector_Loss: 1.0300 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0300
+2024-02-23 19:39:59 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:40:13 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:40:14 - INFO - Savingobject_detector_rpn_epoch 1
+2024-02-23 19:40:33 - INFO - best epoch: 1, best epoch loss: 2.0943
+2024-02-23 19:40:46 - DEBUG - epoch: 2, Batch 1/2 object_detector_Loss: 0.9383 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.9383
+2024-02-23 19:40:46 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:40:47 - DEBUG - epoch: 2, Batch 2/2 object_detector_Loss: 0.9343 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.9343
+2024-02-23 19:40:47 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:41:00 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:41:01 - INFO - Savingobject_detector_rpn_epoch 2
+2024-02-23 19:41:21 - INFO - best epoch: 2, best epoch loss: 1.8726
+2024-02-23 19:41:33 - DEBUG - epoch: 3, Batch 1/2 object_detector_Loss: 0.8607 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.8607
+2024-02-23 19:41:34 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:41:34 - DEBUG - epoch: 3, Batch 2/2 object_detector_Loss: 0.8996 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.8996
+2024-02-23 19:41:34 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:41:51 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:41:52 - INFO - Savingobject_detector_rpn_epoch 3
+2024-02-23 19:42:11 - INFO - best epoch: 3, best epoch loss: 1.7604
+2024-02-23 19:42:24 - DEBUG - epoch: 4, Batch 1/2 object_detector_Loss: 0.8180 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.8180
+2024-02-23 19:42:24 - INFO - Epoch 4/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:42:24 - DEBUG - epoch: 4, Batch 2/2 object_detector_Loss: 0.8321 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.8321
+2024-02-23 19:42:24 - INFO - Epoch 4/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:42:41 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:42:43 - INFO - Savingobject_detector_rpn_epoch 4
+2024-02-23 19:43:04 - INFO - best epoch: 4, best epoch loss: 1.6501
+2024-02-23 19:43:19 - DEBUG - epoch: 5, Batch 1/2 object_detector_Loss: 0.9500 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.9500
+2024-02-23 19:43:19 - INFO - Epoch 5/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:43:20 - DEBUG - epoch: 5, Batch 2/2 object_detector_Loss: 0.7461 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.7461
+2024-02-23 19:43:20 - INFO - Epoch 5/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:43:35 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:43:36 - INFO - Savingobject_detector_rpn_epoch 5
+2024-02-23 19:43:45 - INFO - Training Done
