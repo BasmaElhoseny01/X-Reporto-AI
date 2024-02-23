@@ -107,9 +107,9 @@ class XReportoTrainer():
             
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train, start=start_batch):     
 
-                # Test Recovery
-                if epoch==3 and batch_idx==1:
-                    raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
+                # # Test Recovery
+                # if epoch==3 and batch_idx==1:
+                #     raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
                   
                 # Move inputs to Device
                 images = images.to(DEVICE)
@@ -676,7 +676,7 @@ def main():
         trainer.best_epoch=checkpoint['best_epoch']
 
         # Start Train form checkpoint ends
-        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'],start_batch=checkpoint['batch_index'])
+        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=checkpoint['batch_index'])
 
     else:
         # No check point

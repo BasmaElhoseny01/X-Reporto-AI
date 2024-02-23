@@ -11,7 +11,6 @@ from src.utils import load_model
 
 # Modules
 from src.object_detector.models.object_detector_factory import ObjectDetector
-
 from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
 from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
 from src.language_model.GPT2.gpt2_model import CustomGPT2
@@ -51,7 +50,7 @@ class XReportoV1(nn.Module):
 
         if RECOVER==True:
             # Don't Load any module the check point will be loaded Later :
-            logging.DEBUG("No Modules are loaded in x_reporto_v1 due to Recovery Mode")
+            logging.debug("No Modules are loaded in x_reporto_v1 due to Recovery Mode")
 
         elif OPERATION_MODE==OperationMode.TRAINING.value:
             if CONTINUE_TRAIN:
