@@ -5,8 +5,7 @@ import torch.nn as nn
 
 from typing import Optional, List, Dict
 
-from config import ModelStage,MODEL_STAGE,DEVICE,CONTINUE_TRAIN,TRAIN_RPN,LM_Batch_Size,GENERATE_REPORT,DEVICE
-
+from config import *
 # Utils 
 from src.utils import load_model
 
@@ -49,77 +48,93 @@ class XReportoV1(nn.Module):
             # convert the model to half precision
             # self.language_model.half()
             # self.language_model.convert_to_half()
-
-        if CONTINUE_TRAIN:
-            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
-                    
-                    logging.info("Loading object_detector [Trained RPN]....")
-                    load_model(model=self.object_detector,name='object_detector_rpn_best')
-            else:
-                # Load full object detector
-                logging.info("Loading object_detector .....")
-                load_model(model=self.object_detector,name='object_detector_best')
-                
-            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
-                # Load the Region Selection Classifier to continue training
-                logging.info("Loading region_classifier .....")
-                load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
-
-                # Load the Abnormal Classifier to continue training
-                logging.info("Loading abnormal_classifier .....")
-                load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
-
-                # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
-                for param in self.object_detector.object_detector.parameters():
-                    param.requires_grad = False
-                    
-            if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
-                # Load Language Model to continue training
-                logging.info("Loading language_model .....")
-                load_model(model=self.language_model,name='LM_best')
-
-                # Freezing Selection Region Binary Classifier
-                for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
-                    param.requires_grad = False
-
-                # Freezing Abnormal Region Binary Classifier
-                for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
-                    param.requires_grad = False
-            
-        else:
-            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                if TRAIN_RPN:
-                    pass
+        if OPERATION_MODE==OperationMode.TRAINING.value:
+            if CONTINUE_TRAIN:
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
+                        
+                        logging.info("Loading object_detector [Trained RPN]....")
+                        load_model(model=self.object_detector,name='object_detector_rpn_best')
                 else:
-                    logging.info("Loading object_detector [Trained RPN]....")
-                    load_model(model=self.object_detector,name='object_detector_rpn_best')
+                    # Load full object detector
+                    logging.info("Loading object_detector .....")
+                    load_model(model=self.object_detector,name='object_detector_best')
+                    
+                if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                    # Load the Region Selection Classifier to continue training
+                    logging.info("Loading region_classifier .....")
+                    load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
 
-            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
-                # Load the object_detector to continue training
+                    # Load the Abnormal Classifier to continue training
+                    logging.info("Loading abnormal_classifier .....")
+                    load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
+
+                    # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
+                    for param in self.object_detector.object_detector.parameters():
+                        param.requires_grad = False
+                        
+                if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                    # Load Language Model to continue training
+                    logging.info("Loading language_model .....")
+                    load_model(model=self.language_model,name='LM_best')
+
+                    # Freezing Selection Region Binary Classifier
+                    for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
+                        param.requires_grad = False
+
+                    # Freezing Abnormal Region Binary Classifier
+                    for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
+                        param.requires_grad = False   
+            else:
+                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                    if TRAIN_RPN:
+                        pass
+                    else:
+                        logging.info("Loading object_detector [Trained RPN]....")
+                        load_model(model=self.object_detector,name='object_detector_rpn_best')
+                    
+
+                if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                    # Load the object_detector to continue training
+                    logging.info("Loading object_detector .....")
+                    load_model(model=self.object_detector,name='object_detector_best')
+                    # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
+                    for param in self.object_detector.object_detector.parameters():
+                        param.requires_grad = False
+
+
+                if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                    # Load the Region Selection Classifier to start training
+                    logging.info("Loading region_classifier .....")
+                    load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
+                    # Freezing Selection Region Binary Classifier
+                    for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
+                        param.requires_grad = False
+
+                    # Load the Abnormal Classifier to start training
+                    logging.info("Loading abnormal_classifier .....")
+                    load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
+                    # Freezing Abnormal Region Binary Classifier
+                    for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
+                        param.requires_grad = False
+                        # if  GENERATE_REPORT:
+                        #     load_model(model=self.language_model,name='LM_best')
+
+        elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.TESTING.value:
+            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 logging.info("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector_best')
-                # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
-                for param in self.object_detector.object_detector.parameters():
-                    param.requires_grad = False
 
-
-            if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
-                # Load the Region Selection Classifier to start training
+            elif MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                logging.info("Loading object_detector .....")
+                load_model(model=self.object_detector,name='object_detector_best')
                 logging.info("Loading region_classifier .....")
                 load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
-                # Freezing Selection Region Binary Classifier
-                for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
-                    param.requires_grad = False
-
-                # Load the Abnormal Classifier to start training
                 logging.info("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
-                # Freezing Abnormal Region Binary Classifier
-                for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
-                    param.requires_grad = False
-                    if  GENERATE_REPORT:
-                        load_model(model=self.language_model,name='LM_best')
-                    
+
+            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                logging.info("Loading language_model .....")
+                load_model(model=self.language_model,name='LM_best')         
 
 
             
@@ -250,7 +265,7 @@ class XReportoV1(nn.Module):
 
        '''
         stop=False
-        if self.training:
+        if OPERATION_MODE==OperationMode.TRAINING.value:
             # Training
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
@@ -308,43 +323,7 @@ class XReportoV1(nn.Module):
                 torch.cuda.empty_cache()
 
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
-           
-        if generate_sentence:
-                object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
-                if delete:
-                    # Free GPU memory 
-                    images=images.to('cpu')
-                    # move object_detector_targets to cpu
-                    # for i in range(len(object_detector_targets)):
-                    #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
-                    #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
-                    del images
-                    # del object_detector_targets
-                    torch.cuda.empty_cache()
-                    # Stage(2) Binary Classifier
-                selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
-                if delete:
-                        # free gpu memory
-                        torch.cuda.empty_cache()
-                selected_regions=torch.ones_like(selected_regions)
-                object_detector_features = object_detector_features[selected_regions]
-                # if (index+LM_Batch_Size) >= object_detector_features.shape[0]-1:
-                #     stop=True
-                if use_beam_search:
-                    LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
-                else:
-                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
-                
-                # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
-                if delete:
-                    # Free GPU memory
-                    object_detector_features=object_detector_features.to('cpu')
-                    del object_detector_features
-                    torch.cuda.empty_cache()
-
-                return LM_sentencses,stop
-
-        else: # Validation (or inference) mode
+        if OPERATION_MODE==OperationMode.VALIDATION.value:
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
             if delete:
@@ -357,8 +336,9 @@ class XReportoV1(nn.Module):
                 del images
                 del object_detector_targets
                 torch.cuda.empty_cache()
+
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
-                return object_detector_losses,object_detector_boxes,object_detector_detected_classes
+                return object_detector_losses,0,0,0
             
             # Stage(2) Binary Classifier
             selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
@@ -370,7 +350,7 @@ class XReportoV1(nn.Module):
                 torch.cuda.empty_cache()
 
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
-                return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
+                return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
            
             # Stage(3) Language Model
             input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selected_regions, input_ids, attention_mask, object_detector_features)
@@ -388,8 +368,89 @@ class XReportoV1(nn.Module):
                 del input_ids
                 del attention_mask
                 torch.cuda.empty_cache()
+            return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
+           
+        # if generate_sentence:
+                # object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                # if delete:
+                #     # Free GPU memory 
+                #     images=images.to('cpu')
+                #     # move object_detector_targets to cpu
+                #     # for i in range(len(object_detector_targets)):
+                #     #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                #     #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                #     del images
+                #     # del object_detector_targets
+                #     torch.cuda.empty_cache()
+                #     # Stage(2) Binary Classifier
+                # selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+                # if delete:
+                #         # free gpu memory
+                #         torch.cuda.empty_cache()
+                # selected_regions=torch.ones_like(selected_regions)
+                # object_detector_features = object_detector_features[selected_regions]
+                # # if (index+LM_Batch_Size) >= object_detector_features.shape[0]-1:
+                # #     stop=True
+                # if use_beam_search:
+                #     LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
+                # else:
+                #     LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                
+                # # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+                # if delete:
+                #     # Free GPU memory
+                #     object_detector_features=object_detector_features.to('cpu')
+                #     del object_detector_features
+                #     torch.cuda.empty_cache()
 
-            return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_output[0],LM_output[1],stop
+                # return LM_sentencses,stop
+
+        # else: # Validation (or inference) mode
+        #     # Stage(1) Object Detector
+        #     object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+        #     if delete:
+        #         # Free GPU memory 
+        #         images=images.to('cpu')
+        #         # move object_detector_targets to cpu
+        #         for i in range(len(object_detector_targets)):
+        #             object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+        #             object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+        #         del images
+        #         del object_detector_targets
+        #         torch.cuda.empty_cache()
+        #     if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
+        #         return object_detector_losses,object_detector_boxes,object_detector_detected_classes,
+            
+        #     # Stage(2) Binary Classifier
+        #     selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+        #     abnormal_binary_classifier_losses,predicted_abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
+        #     if delete:
+        #         # free gpu memory
+        #         selection_classifier_targets=selection_classifier_targets.to('cpu')
+        #         del selection_classifier_targets
+        #         torch.cuda.empty_cache()
+
+        #     if MODEL_STAGE == ModelStage.CLASSIFIER.value:
+        #         return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
+           
+        #     # Stage(3) Language Model
+        #     input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selected_regions, input_ids, attention_mask, object_detector_features)
+        #     if index>=len(input_ids):
+        #         return 0,0,0,0,0,0,0,0,True
+        #     if (index+LM_Batch_Size) >= len(input_ids):
+        #         stop=True
+        #     LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+        #     if delete:
+        #         # Free GPU memory
+        #         object_detector_features=object_detector_features.to('cpu')
+        #         input_ids=input_ids.to('cpu')
+        #         attention_mask=attention_mask.to('cpu')
+        #         del object_detector_features
+        #         del input_ids
+        #         del attention_mask
+        #         torch.cuda.empty_cache()
+
+        #     return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_output[0],LM_output[1],stop
     
     def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets):
         '''

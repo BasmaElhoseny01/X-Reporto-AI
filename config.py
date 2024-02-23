@@ -7,26 +7,30 @@ class ModelStage(Enum):
     CLASSIFIER = 2
     LANGUAGE_MODEL = 3
 
-MODEL_STAGE=1
+class OperationMode(Enum):
+    TRAINING = 1
+    VALIDATION = 2
+    TESTING = 3
+# device
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
+# Training / validation / Testing
+OPERATION_MODE=2
+# Model Stage
+MODEL_STAGE=1
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
+CONTINUE_TRAIN=True # Continue training
 TRAIN_RPN=True # Tain only RPN of the object detector
-RUN = "0"
 
-# Training Configurations
+# parameters of the training process
+RUN = "0"
 EPOCHS=5
 BATCH_SIZE=1
 LM_Batch_Size=1
-
 LEARNING_RATE=0.0001
 SCHEDULAR_STEP_SIZE=1500 #
 SCHEDULAR_GAMMA=0.9
-
 # Debgging COnfigurations
 DEBUG=True
-GENERATE_REPORT=False
 
 # Modules Configurations:
 # Abnormal Binary Classifier Hyper Parameters
@@ -62,7 +66,7 @@ def log_config():
     logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
 
     logging.info(f"DEBUG: {DEBUG}")
-    logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
+    # logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
 
     logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
     logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
@@ -89,7 +93,7 @@ def get_config():
     "SCHEDULAR_STEP_SIZE": SCHEDULAR_STEP_SIZE,
     "SCHEDULAR_GAMMA": SCHEDULAR_GAMMA,
     "DEBUG": DEBUG,
-    "GENERATE_REPORT": GENERATE_REPORT,
+    # "GENERATE_REPORT": GENERATE_REPORT,
     "ABNORMAL_CLASSIFIER_POS_WEIGHT": ABNORMAL_CLASSIFIER_POS_WEIGHT,
     "REGION_SELECTION_CLASSIFIER_POS_WEIGHT": REGION_SELECTION_CLASSIFIER_POS_WEIGHT,
     "training_csv_path": training_csv_path,

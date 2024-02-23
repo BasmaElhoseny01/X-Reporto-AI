@@ -56,7 +56,7 @@ class XReportoTrainer():
         >>> # Predict and display results
         >>> trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
     """
-    def __init__(self, model:XReporto,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path):
+    def __init__(self, model:XReporto,training_csv_path: str =training_csv_path):
         '''
         inputs:
             training_csv_path (str): the path to the training csv file
@@ -77,12 +77,12 @@ class XReportoTrainer():
         # create dataset
         self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
         logging.info("Train dataset loaded")
-        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
-        logging.info("Validate dataset loaded")
+        # self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
+        # logging.info("Validate dataset loaded")
         
         # create data loader
         self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
-        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+        # self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
         logging.info("DataLoader Loaded")
 
         # initialize the best loss to a large value
@@ -118,10 +118,10 @@ class XReportoTrainer():
                     input_ids = LM_inputs['input_ids'].to(DEVICE)
                     attention_mask = LM_inputs['attention_mask'].to(DEVICE)
                     loopLength= input_ids.shape[1]
-                    Total_loss=self.language_model_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
+                    Total_loss=self.language_model_forward_pass_and_backward_pass(epoch=epoch,batch_idx=batch_idx,images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
                     epoch_loss += Total_loss
                 else:
-                    Total_loss=self.object_detector_and_classifier_forward_pass(epoch= epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+                    Total_loss=self.object_detector_and_classifier_forward_pass_and_backward_pass(epoch= epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
                     epoch_loss += Total_loss
                 # update the learning rate
                 self.lr_scheduler.step()
@@ -177,12 +177,12 @@ class XReportoTrainer():
                 logging.info(f'best epoch: {self.best_epoch}, best epoch loss: {self.best_loss:.4f}')
 
     
-    def  object_detector_and_classifier_forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
+    def  object_detector_and_classifier_forward_pass_and_backward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
             # zero the parameter gradients
             self.optimizer.zero_grad()
 
             # Forward Pass
-            object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
+            object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
             
             # Backward pass
             Total_loss=None
@@ -207,7 +207,7 @@ class XReportoTrainer():
             gc.collect()
             return Total_loss
     
-    def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int):
+    def language_model_forward_pass_and_backward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int):
         for batch in range(BATCH_SIZE):
             total_LM_losses=0
             for i in range(0,loopLength,LM_Batch_Size):
@@ -215,7 +215,7 @@ class XReportoTrainer():
                 self.optimizer.zero_grad()
 
                 # Forward Pass
-                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
+                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,batch=batch,index=i)
 
                 if stop:
                     break
@@ -624,8 +624,9 @@ def main():
     logging.info("Training X_Reporto Started")
     # Logging Configurations
     log_config()
-
-     
+    if OperationMode.TRAINING.value!=OPERATION_MODE :
+        #throw exception 
+        raise Exception("Operation Mode is not Training Mode")
     # Creating run folder
     folder_path="models/" + str(RUN)
     if not os.path.exists(folder_path):

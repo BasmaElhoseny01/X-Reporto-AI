@@ -116,3 +116,44 @@ class CustomDataset(Dataset):
 
         # print("end Tokenize")
         return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample
+
+    def collate_fn(self,batch):
+        image_shape = batch[0][0]["image"].size()
+        images = torch.empty(size=(len(batch), *image_shape))
+        object_detector_targets=[]
+        selection_classifier_targets=[]
+        abnormal_classifier_targets=[]
+        LM_targets=[]
+        input_ids=[]
+        attention_mask=[]
+        LM_inputs={}
+
+        for i in range(len(batch)):
+            (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[i]
+            # stack images
+            images[i] = object_detector_batch['image']
+            # Moving Object Detector Targets to Device
+            new_dict={}
+            new_dict['boxes']=object_detector_batch['bboxes']
+            new_dict['labels']=object_detector_batch['bbox_labels']
+            object_detector_targets.append(new_dict)
+            
+            bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal']
+            abnormal_classifier_targets.append(bbox_is_abnormal)
+
+            phrase_exist=selection_classifier_batch['bbox_phrase_exists']
+            selection_classifier_targets.append(phrase_exist)
+
+            phrase=LM_batch['label_ids']
+            LM_targets.append(phrase)
+            input_ids.append(LM_batch['input_ids'])
+            attention_mask.append(LM_batch['attention_mask'])
+
+
+        selection_classifier_targets=torch.stack(selection_classifier_targets)
+        abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
+        LM_targets=torch.stack(LM_targets)
+        LM_inputs['input_ids']=torch.stack(input_ids)
+        LM_inputs['attention_mask']=torch.stack(attention_mask)
+
+        return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
