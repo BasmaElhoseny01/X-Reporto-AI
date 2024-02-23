@@ -17,16 +17,19 @@ from src.object_detector.data_loader.custom_augmentation import CustomAugmentati
 from src.x_reporto.data_loader.tokenizer import Tokenizer
 from src.language_model.GPT2.config import Config
 class CustomDataset(Dataset):
-    def __init__(self, dataset_path: str, transform_type:str ='train',checkpoint:str='healx/gpt-2-pubmed-medium'):
+    def __init__(self, dataset_path: str, transform_type:str ='train',tokenizer:Tokenizer=None):
         self.dataset_path = dataset_path # path to csv file
         
         self.transform_type = transform_type
         self.transform = CustomAugmentation(transform_type=self.transform_type)
-        self.checkpoint=checkpoint
-        self.tokenizer = Tokenizer(self.checkpoint)
+        # read the csv file
+        # print("start reading csv file")
+        # print(dataset_path)
         self.data_info = pd.read_csv(dataset_path, header=None)
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
+        self.tokenizer =tokenizer
+
     def __len__(self):
         return len(self.data_info)
 
