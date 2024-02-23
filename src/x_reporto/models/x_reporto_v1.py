@@ -48,7 +48,12 @@ class XReportoV1(nn.Module):
             # convert the model to half precision
             # self.language_model.half()
             # self.language_model.convert_to_half()
-        if OPERATION_MODE==OperationMode.TRAINING.value:
+
+        if RECOVER==True:
+            # Don't Load any module the check point will be loaded Later :
+            logging.DEBUG("No Modules are loaded in x_reporto_v1 due to Recovery Mode")
+
+        elif OPERATION_MODE==OperationMode.TRAINING.value:
             if CONTINUE_TRAIN:
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
                         

@@ -16,7 +16,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import plot_image,save_model,save_checkpoint
+from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint
 
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
@@ -87,10 +87,9 @@ class XReportoTrainer():
 
         # initialize the best loss to a large value
         self.best_loss = float('inf')
-        self.eval_best_loss = float('inf')
         self.best_epoch = 0
 
-    def train(self):
+    def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         '''
         Train X-Reporto on the training dataset depending on the MODEL_STAGE.
         '''
@@ -98,10 +97,20 @@ class XReportoTrainer():
         logging.info("Start Training")
         self.model.train()
         total_steps=0
-        for epoch in range(EPOCHS):
-            epoch_loss = 0
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):                
+        # for epoch in range(EPOCHS):
+        for epoch in range(start_epoch, start_epoch + EPOCHS-1):
+            if epoch==start_epoch:
+                # Load loss from chkpt
+                epoch_loss=epoch_loss_init
+            else:
+                epoch_loss = 0
             
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train, start=start_batch):     
+
+                # Test Recovery
+                if epoch==3 and batch_idx==1:
+                    raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
+                  
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
@@ -649,9 +658,30 @@ def main():
     # Create an XReportoTrainer instance with the X-Reporto model
     trainer = XReportoTrainer(model=x_reporto_model)
 
+    if RECOVER:
+        # Load the state of model
+        checkpoint=load_checkpoint(run=RUN)
 
-    # # Start Training
-    trainer.train()
+        # Load Model state
+        x_reporto_model.load_state_dict(checkpoint['model_state'])
+
+        # Load scheduler_state_dict
+        trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+
+        # Load optimizer_state
+        trainer.optimizer.load_state_dict(checkpoint['optimizer_state'])
+
+        # Load best_loss
+        trainer.best_loss=checkpoint['best_loss']
+        trainer.best_epoch=checkpoint['best_epoch']
+
+        # Start Train form checkpoint ends
+        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'],start_batch=checkpoint['batch_index'])
+
+    else:
+        # No check point
+        # Start New Training
+        trainer.train()
         
 
     

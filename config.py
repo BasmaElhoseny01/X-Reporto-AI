@@ -48,6 +48,7 @@ PERIODIC_LOGGING=False
 
 # Checkpointing
 CHECKPOINT_EVERY_N=2
+RECOVER=True
 
 
 def log_config():
@@ -80,6 +81,7 @@ def log_config():
     logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
 
     logging.info(f"CHECKPOINT_EVERY_N: {CHECKPOINT_EVERY_N}")
+    logging.info(f"RECOVER: {RECOVER}")
 
 def get_config():
     # Get the Configuration dictionary to be saved in check point
