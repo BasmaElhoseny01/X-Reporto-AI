@@ -738,16 +738,16 @@ def collate_fn(batch):
         new_dict['labels']=object_detector_batch['bbox_labels']
         object_detector_targets.append(new_dict)
         
-        bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
+        bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal']
         abnormal_classifier_targets.append(bbox_is_abnormal)
 
-        phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
+        phrase_exist=selection_classifier_batch['bbox_phrase_exists']
         selection_classifier_targets.append(phrase_exist)
 
-        phrase=LM_batch['label_ids'][i]
+        phrase=LM_batch['label_ids']
         LM_targets.append(phrase)
-        input_ids.append(LM_batch['input_ids'][i])
-        attention_mask.append(LM_batch['attention_mask'][i])
+        input_ids.append(LM_batch['input_ids'])
+        attention_mask.append(LM_batch['attention_mask'])
 
 
     selection_classifier_targets=torch.stack(selection_classifier_targets)

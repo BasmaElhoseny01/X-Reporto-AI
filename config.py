@@ -11,8 +11,8 @@ MODEL_STAGE=3
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
+CONTINUE_TRAIN=True# Continue training
+TRAIN_RPN=False # Tain only RPN of the object detector
 RUN = "0"
 
 # Training Configurations

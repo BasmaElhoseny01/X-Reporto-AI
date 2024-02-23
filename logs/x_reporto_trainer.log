@@ -229,3 +229,137 @@ Original Traceback (most recent call last):
                                                                                                   ^
 NameError: name 'k' is not defined
 
+2024-02-23 14:52:15 - INFO - =================== New Run Started: 2024-02-23 14:52:15 ===================
+2024-02-23 14:52:15 - INFO - Tarning X_Reporto Started
+2024-02-23 14:52:15 - INFO - MODEL_STAGE: 3
+2024-02-23 14:52:15 - INFO - DEVICE: cuda
+2024-02-23 14:52:15 - INFO - CONTINUE_TRAIN: False
+2024-02-23 14:52:15 - INFO - TRAIN_RPN: True
+2024-02-23 14:52:15 - INFO - RUN: 0
+2024-02-23 14:52:15 - INFO - EPOCHS: 5
+2024-02-23 14:52:15 - INFO - BATCH_SIZE: 4
+2024-02-23 14:52:15 - INFO - LM_Batch_Size: 1
+2024-02-23 14:52:15 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 14:52:15 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 14:52:15 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 14:52:15 - INFO - DEBUG: True
+2024-02-23 14:52:15 - INFO - GENERATE_REPORT: False
+2024-02-23 14:52:15 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 14:52:15 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 14:52:15 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 14:52:15 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 14:52:15 - INFO - PERIODIC_LOGGING: False
+2024-02-23 14:52:15 - INFO - Folder 'models/0' already exists.
+2024-02-23 14:52:18 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 14:52:19 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 14:52:19 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 14:52:20 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/1.1" 200 0
+2024-02-23 14:52:23 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 14:52:42 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 817, in <module>
+    main()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 805, in main
+    trainer.train()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 151, in train
+    object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
+                                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\models\x_reporto_v1.py", line 289, in forward
+    object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'to'
+2024-02-23 14:56:24 - INFO - =================== New Run Started: 2024-02-23 14:56:24 ===================
+2024-02-23 14:56:24 - INFO - Tarning X_Reporto Started
+2024-02-23 14:56:24 - INFO - MODEL_STAGE: 3
+2024-02-23 14:56:24 - INFO - DEVICE: cuda
+2024-02-23 14:56:24 - INFO - CONTINUE_TRAIN: False
+2024-02-23 14:56:24 - INFO - TRAIN_RPN: False
+2024-02-23 14:56:24 - INFO - RUN: 0
+2024-02-23 14:56:24 - INFO - EPOCHS: 5
+2024-02-23 14:56:24 - INFO - BATCH_SIZE: 4
+2024-02-23 14:56:24 - INFO - LM_Batch_Size: 1
+2024-02-23 14:56:24 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 14:56:24 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 14:56:24 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 14:56:24 - INFO - DEBUG: True
+2024-02-23 14:56:24 - INFO - GENERATE_REPORT: False
+2024-02-23 14:56:24 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 14:56:24 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 14:56:24 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 14:56:24 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 14:56:24 - INFO - PERIODIC_LOGGING: False
+2024-02-23 14:56:24 - INFO - Folder 'models/0' already exists.
+2024-02-23 14:56:27 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 14:56:28 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 14:56:28 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 14:56:29 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/1.1" 200 0
+2024-02-23 14:56:31 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 14:56:47 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 817, in <module>
+    main()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 805, in main
+    trainer.train()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 151, in train
+    object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
+                                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\models\x_reporto_v1.py", line 290, in forward
+    selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\binary_classifier\models\binary_classifier_selection_region_factory.py", line 60, in forward
+    classifier_losses=self.selection_binary_classifier(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\binary_classifier\models\binary_classifier_selection_region_v1.py", line 71, in forward
+    detected_region_has_sentence = region_has_sentence[class_detected]
+                                   ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+IndexError: too many indices for tensor of dimension 1
+2024-02-23 14:59:50 - INFO - =================== New Run Started: 2024-02-23 14:59:50 ===================
+2024-02-23 14:59:50 - INFO - Tarning X_Reporto Started
+2024-02-23 14:59:50 - INFO - MODEL_STAGE: 3
+2024-02-23 14:59:50 - INFO - DEVICE: cuda
+2024-02-23 14:59:50 - INFO - CONTINUE_TRAIN: False
+2024-02-23 14:59:50 - INFO - TRAIN_RPN: False
+2024-02-23 14:59:50 - INFO - RUN: 0
+2024-02-23 14:59:50 - INFO - EPOCHS: 5
+2024-02-23 14:59:50 - INFO - BATCH_SIZE: 4
+2024-02-23 14:59:50 - INFO - LM_Batch_Size: 1
+2024-02-23 14:59:50 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 14:59:50 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 14:59:50 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 14:59:50 - INFO - DEBUG: True
+2024-02-23 14:59:50 - INFO - GENERATE_REPORT: False
+2024-02-23 14:59:50 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 14:59:50 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 14:59:50 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 14:59:50 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 14:59:50 - INFO - PERIODIC_LOGGING: False
+2024-02-23 14:59:50 - INFO - Folder 'models/0' already exists.
+2024-02-23 14:59:53 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 14:59:54 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 14:59:54 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 14:59:55 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/1.1" 200 0
+2024-02-23 14:59:58 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
