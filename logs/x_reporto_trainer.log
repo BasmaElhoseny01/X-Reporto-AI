@@ -172,3 +172,30 @@ TypeError: Affine.__init__() got an unexpected keyword argument 'keep_ratio'
 2024-02-23 14:04:38 - INFO - Folder 'models/0' already exists.
 2024-02-23 14:04:41 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
 2024-02-23 14:04:42 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 14:32:45 - INFO - =================== New Run Started: 2024-02-23 14:32:45 ===================
+2024-02-23 14:32:45 - INFO - Tarning X_Reporto Started
+2024-02-23 14:32:45 - INFO - MODEL_STAGE: 1
+2024-02-23 14:32:45 - INFO - DEVICE: cuda
+2024-02-23 14:32:45 - INFO - CONTINUE_TRAIN: False
+2024-02-23 14:32:45 - INFO - TRAIN_RPN: True
+2024-02-23 14:32:45 - INFO - RUN: 0
+2024-02-23 14:32:45 - INFO - EPOCHS: 5
+2024-02-23 14:32:45 - INFO - BATCH_SIZE: 1
+2024-02-23 14:32:45 - INFO - LM_Batch_Size: 1
+2024-02-23 14:32:45 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 14:32:45 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 14:32:45 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 14:32:45 - INFO - DEBUG: True
+2024-02-23 14:32:45 - INFO - GENERATE_REPORT: False
+2024-02-23 14:32:45 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 14:32:45 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 14:32:45 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 14:32:45 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 14:32:45 - INFO - PERIODIC_LOGGING: False
+2024-02-23 14:32:45 - INFO - Folder 'models/0' already exists.
+2024-02-23 14:32:47 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 14:32:48 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 14:32:48 - INFO - Train dataset loaded
+2024-02-23 14:32:48 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 14:32:48 - INFO - Validate dataset loaded
+2024-02-23 14:32:48 - INFO - DataLoader Loaded
