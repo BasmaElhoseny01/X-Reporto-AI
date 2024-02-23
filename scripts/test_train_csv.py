@@ -39,5 +39,5 @@ for i in tqdm(range(1,len(train))):
         print(e)
         continue 
 # save the new file
-new_train.to_csv('./datasets/new_train', index=False)
+new_train.to_csv('./datasets/new_train.csv', index=False)
 print(new_train.head())

@@ -5,6 +5,7 @@ import logging
 
 import os
 import gc
+from tqdm import tqdm
 
 # Torch
 import torch
@@ -81,7 +82,7 @@ class XReportoTrainer():
         # logging.info("Validate dataset loaded")
         
         # create data loader
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
         # self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
         logging.info("DataLoader Loaded")
 
@@ -89,6 +90,20 @@ class XReportoTrainer():
         self.best_loss = float('inf')
         self.best_epoch = 0
 
+    def test_data_loader(self):
+        '''
+        Test the data loader by iterating over the training dataset and printing the length of each batch.
+        '''
+        for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in tqdm(enumerate(self.data_loader_train)):
+            # check the length of each batch using assert with print statements
+            # check that object_detector_targets dictionary boxes and labels have the same length
+            assert len(object_detector_targets[0]['boxes']) == len(object_detector_targets[0]['labels']) , f'Batch {batch_idx + 1} has different number of boxes and labels'
+            # assert that boxes is shape (N,4)
+           
+            for i in range(len(images)):
+                assert object_detector_targets[i]['boxes'].shape[1] == 4, f'Batch {batch_idx + 1} has boxes with shape {object_detector_targets[i]["boxes"].shape}'
+            # print(f'Batch {batch_idx + 1} has {len(images)} images')
+            logging.info(f'Batch {batch_idx + 1} has {len(images)} images')
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         '''
         Train X-Reporto on the training dataset depending on the MODEL_STAGE.
@@ -566,7 +581,7 @@ class XReportoTrainer():
         
 
 def collate_fn(batch):
-
+    batch = list(filter(lambda x: x is not None, batch))
     image_shape = batch[0][0]["image"].size()
     images = torch.empty(size=(len(batch), *image_shape))
     object_detector_targets=[]

@@ -3,7 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 
 
-train = pd.read_csv('./datasets/train.csv')
+train = pd.read_csv('./datasets/new_train.csv')
 train = train.iloc[1:]
 
 # add headers to the new csv file

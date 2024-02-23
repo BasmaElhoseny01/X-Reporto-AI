@@ -16,7 +16,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / Testing
-OPERATION_MODE=2
+OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=1
 
@@ -28,7 +28,7 @@ EPOCHS=5
 BATCH_SIZE=32
 LM_Batch_Size=1
 LEARNING_RATE=0.0001
-SCHEDULAR_STEP_SIZE=1500 #
+SCHEDULAR_STEP_SIZE=750 #
 SCHEDULAR_GAMMA=0.9
 # Debgging COnfigurations
 DEBUG=True
@@ -44,10 +44,10 @@ training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/train.csv'
 
 # Logging
-PERIODIC_LOGGING=False
+PERIODIC_LOGGING=True
 
 # Checkpointing
-CHECKPOINT_EVERY_N=2
+CHECKPOINT_EVERY_N=300
 RECOVER=True
 
 
