@@ -44,24 +44,7 @@ class XReportoV1(nn.Module):
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
         if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             config = Config()
-            config.d_model = 768
-            config.d_ff1 = 768
-            config.d_ff2 = 768
-            config.d_ff3 = 768
-            config.num_layers = 12
-            config.vocab_size = 50257
-            config.max_seq_len = 1024
-            config.pretrained_model = "gpt2"
             image_config = Config()
-            image_config.d_model = 1024
-            image_config.d_ff1 = 1024
-            image_config.d_ff2 = 1024
-            image_config.d_ff3 = 768
-            image_config.num_heads = 8
-            image_config.num_layers = 6
-            image_config.vocab_size = 50257
-            image_config.max_seq_len = 1024
-            image_config.dropout = 0.1
             self.language_model = CustomGPT2(config,image_config)
             # convert the model to half precision
             # self.language_model.half()

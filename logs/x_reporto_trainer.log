@@ -363,3 +363,96 @@ IndexError: too many indices for tensor of dimension 1
 2024-02-23 14:59:54 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
 2024-02-23 14:59:55 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/1.1" 200 0
 2024-02-23 14:59:58 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 15:01:34 - INFO - =================== New Run Started: 2024-02-23 15:01:34 ===================
+2024-02-23 15:01:34 - INFO - Tarning X_Reporto Started
+2024-02-23 15:01:34 - INFO - MODEL_STAGE: 3
+2024-02-23 15:01:34 - INFO - DEVICE: cuda
+2024-02-23 15:01:34 - INFO - CONTINUE_TRAIN: True
+2024-02-23 15:01:34 - INFO - TRAIN_RPN: False
+2024-02-23 15:01:34 - INFO - RUN: 0
+2024-02-23 15:01:34 - INFO - EPOCHS: 5
+2024-02-23 15:01:34 - INFO - BATCH_SIZE: 4
+2024-02-23 15:01:34 - INFO - LM_Batch_Size: 1
+2024-02-23 15:01:34 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 15:01:34 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 15:01:34 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 15:01:34 - INFO - DEBUG: True
+2024-02-23 15:01:34 - INFO - GENERATE_REPORT: False
+2024-02-23 15:01:34 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 15:01:34 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 15:01:34 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 15:01:34 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 15:01:34 - INFO - PERIODIC_LOGGING: False
+2024-02-23 15:01:34 - INFO - Folder 'models/0' already exists.
+2024-02-23 15:01:37 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 15:01:38 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 15:01:38 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 15:01:39 - DEBUG - https://huggingface.co:443 "HEAD /gpt2/resolve/main/generation_config.json HTTP/1.1" 200 0
+2024-02-23 15:01:42 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 817, in <module>
+    main()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 798, in main
+    x_reporto_model = XReporto().create_model()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\models\x_reporto_factory.py", line 8, in create_model
+    return XReportoV1()
+           ^^^^^^^^^^^^
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\models\x_reporto_v1.py", line 96, in __init__
+    load_model(model=self.language_model,name='LM')
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\utils.py", line 285, in load_model
+    model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\nn\modules\module.py", line 2153, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for CustomGPT2:
+	Unexpected key(s) in state_dict: "blocks.0.attn.w_o.weight", "blocks.0.attn.w_o.bias", "blocks.1.attn.w_o.weight", "blocks.1.attn.w_o.bias", "blocks.2.attn.w_o.weight", "blocks.2.attn.w_o.bias", "blocks.3.attn.w_o.weight", "blocks.3.attn.w_o.bias", "blocks.4.attn.w_o.weight", "blocks.4.attn.w_o.bias", "blocks.5.attn.w_o.weight", "blocks.5.attn.w_o.bias", "blocks.6.attn.w_o.weight", "blocks.6.attn.w_o.bias", "blocks.7.attn.w_o.weight", "blocks.7.attn.w_o.bias", "blocks.8.attn.w_o.weight", "blocks.8.attn.w_o.bias", "blocks.9.attn.w_o.weight", "blocks.9.attn.w_o.bias", "blocks.10.attn.w_o.weight", "blocks.10.attn.w_o.bias", "blocks.11.attn.w_o.weight", "blocks.11.attn.w_o.bias". 
+2024-02-23 15:04:57 - INFO - =================== New Run Started: 2024-02-23 15:04:57 ===================
+2024-02-23 15:04:57 - INFO - Tarning X_Reporto Started
+2024-02-23 15:04:57 - INFO - MODEL_STAGE: 3
+2024-02-23 15:04:57 - INFO - DEVICE: cuda
+2024-02-23 15:04:57 - INFO - CONTINUE_TRAIN: False
+2024-02-23 15:04:57 - INFO - TRAIN_RPN: False
+2024-02-23 15:04:57 - INFO - RUN: 0
+2024-02-23 15:04:57 - INFO - EPOCHS: 5
+2024-02-23 15:04:57 - INFO - BATCH_SIZE: 4
+2024-02-23 15:04:57 - INFO - LM_Batch_Size: 1
+2024-02-23 15:04:57 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 15:04:57 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 15:04:57 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 15:04:57 - INFO - DEBUG: True
+2024-02-23 15:04:57 - INFO - GENERATE_REPORT: False
+2024-02-23 15:04:57 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 15:04:57 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 15:04:57 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 15:04:57 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 15:04:57 - INFO - PERIODIC_LOGGING: False
+2024-02-23 15:04:57 - INFO - Folder 'models/0' already exists.
+2024-02-23 15:05:02 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 15:05:03 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 15:05:03 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 15:05:05 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/generation_config.json HTTP/1.1" 404 0
+2024-02-23 15:05:08 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 15:05:27 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 817, in <module>
+    main()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 805, in main
+    trainer.train()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 170, in train
+    self.optimizer.step()
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\lr_scheduler.py", line 75, in wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\optimizer.py", line 385, in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\optimizer.py", line 76, in _use_grad
+    ret = func(self, *args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\adam.py", line 157, in step
+    has_complex = self._init_group(
+                  ^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\adam.py", line 113, in _init_group
+    state['exp_avg_sq'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 16.00 MiB. GPU 0 has a total capacity of 6.00 GiB of which 0 bytes is free. Of the allocated memory 5.23 GiB is allocated by PyTorch, and 64.84 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
