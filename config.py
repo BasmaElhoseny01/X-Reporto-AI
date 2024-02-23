@@ -12,7 +12,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
+TRAIN_RPN=False # Tain only RPN of the object detector
 RUN = "0"
 
 # Training Configurations

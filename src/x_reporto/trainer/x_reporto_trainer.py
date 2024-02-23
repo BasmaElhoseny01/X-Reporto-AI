@@ -214,24 +214,23 @@ class XReportoTrainer():
             gc.collect()
 
             # saving model per epoch
-            if(epoch_loss<self.best_loss) :
-                self.best_loss=epoch_loss
-                self.best_epoch=epoch
-
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 if TRAIN_RPN:
                     # Saving object_detector marked as rpn
                     logging.info("Saving object_detector_rpn_epoch "+str(epoch))
                     save_model(model=self.model.object_detector,name="object_detector_rpn_epoch_"+str(epoch))
+                    self.check_best_model(epoch,epoch_loss,"object_detector_rpn",self.model.object_detector)
                 else:
                     # Saving Object Detector
                     logging.info("Saving object_detector_epoch "+str(epoch))
                     save_model(model=self.model.object_detector,name="object_detector_epoch_"+str(epoch))
-    
+                    self.check_best_model(epoch,epoch_loss,"object_detector",self.model.object_detector)
+
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
                 # Saving Object Detector
                 print("Saving object_detector....")
                 save_model(model=self.model.object_detector,name="object_detector")
+                name="object_detector"
 
                 # Save Region Selection Classifier
                 print("Saving region_classifier....")
@@ -240,7 +239,6 @@ class XReportoTrainer():
                 # Save Abnormal Classifier
                 print("Saving abnormal_classifier....")
                 save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
-
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                 # Saving Object Detector
                 print("Saving object_detector....")
@@ -267,58 +265,19 @@ class XReportoTrainer():
                 print("\n")
                 print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
                 print("\n")
-            else:
-                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                    if TRAIN_RPN:
-                        # Saving object_detector marked as rpn
-                        print("Saving object_detector [Trained RPN]....")
-                        save_model(model=self.model.object_detector,name="object_detector_rpn_epoch"+str(epoch))
-                    else:
-                        # Saving Object Detector
-                        print("Saving object_detector....")
-                        save_model(model=self.model.object_detector,name="object_detector_epoch"+str(epoch))
-        
-                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                    # Saving Object Detector
-                    print("Saving object_detector....")
-                    save_model(model=self.model.object_detector,name="object_detector_epoch"+str(epoch))
-
-                    # Save Region Selection Classifier
-                    print("Saving region_classifier....")
-                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier_epoch"+str(epoch))
-
-                    # Save Abnormal Classifier
-                    print("Saving abnormal_classifier....")
-                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier_epoch'+str(epoch))
-
-                elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                    # Saving Object Detector
-                    print("Saving object_detector....")
-                    save_model(model=self.model.object_detector,name="object_detector_epoch"+str(epoch))
-
-                    # Save Region Selection Classifier
-                    print("Saving region_classifier....")
-                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier_epoch"+str(epoch))
-
-                    # Save Abnormal Classifier
-                    print("Saving abnormal_classifier....")
-                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier_epoch'+str(epoch))
-   
-                    #Save language model
-                    print("Saving language model....")
-                    save_model(model=self.model.language_model,name='LM_epoch'+str(epoch))
-                                    
-
-                # Logging the loss to a file
-                with open("logs/loss.txt", "a") as myfile:
-                    myfile.write(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
-                    myfile.write("\n")
-                # print the epoch loss
-                print("\n")
-                print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
-                print("\n")
-            logging.info(f'best epoch: {self.best_epoch+1}, best epoch loss: {self.best_loss:.4f}')
+        # save the best model            
         logging.info("Training Done")
+    
+    def check_best_model(self,epoch:int,epoch_loss:float,name:str,model:torch.nn.Module):
+        '''
+        Check if the current model is the best model
+        '''
+        if(epoch_loss<self.best_loss) :
+                self.best_loss=epoch_loss
+                self.best_epoch=epoch
+                save_model(model=model,name=name+"_best")
+                logging.info(f'best epoch: {self.best_epoch+1}, best epoch loss: {self.best_loss:.4f}')
+
     
     def  object_detector_and_classifier_forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
             # zero the parameter gradients
