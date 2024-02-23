@@ -1,4 +1,72 @@
+import torch
+import logging
+from enum import Enum
 
+class ModelStage(Enum):
+    OBJECT_DETECTOR = 1
+    CLASSIFIER = 2
+    LANGUAGE_MODEL = 3
+
+MODEL_STAGE=1
+DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+# Training Process Parameters
+CONTINUE_TRAIN=False# Continue training
+TRAIN_RPN=True # Tain only RPN of the object detector
+RUN = "0"
+
+# Training Configurations
+EPOCHS=5
+BATCH_SIZE=32
+# LM_Batch_Size=1
+
+LEARNING_RATE=0.0001
+SCHEDULAR_STEP_SIZE=1500 #
+SCHEDULAR_GAMMA=0.9
+
+# Debgging COnfigurations
+DEBUG=True
+# GENERATE_REPORT=False
+
+# Modules Configurations:
+# # Abnormal Binary Classifier Hyper Parameters
+# ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
+
+# # Region Selection Classifier Hyper Parameters
+# REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
+
+# Pathes to the external files
+training_csv_path: str = 'datasets/train.csv'
+validation_csv_path:str = 'datasets/train.csv'
+
+
+def log_config():
+    logging.info(f"MODEL_STAGE: {MODEL_STAGE}")
+    logging.info(f"DEVICE: {DEVICE}")
+
+    logging.info(f"CONTINUE_TRAIN: {CONTINUE_TRAIN}")
+    logging.info(f"TRAIN_RPN: {TRAIN_RPN}")
+    logging.info(f"RUN: {RUN}")
+
+    logging.info(f"EPOCHS: {EPOCHS}")
+    logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
+    # logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
+
+    logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
+    logging.info(f"SCHEDULAR_STEP_SIZE: {SCHEDULAR_STEP_SIZE}")
+    logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
+
+    logging.info(f"DEBUG: {DEBUG}")
+    # logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
+
+    # logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
+    # logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
+
+    logging.info(f"training_csv_path: {training_csv_path}")
+    logging.info(f"validation_csv_path: {validation_csv_path}")
+
+
+# By Command Line
 # import argparse
 # from enum import Enum
 # import torch
@@ -63,42 +131,3 @@
 
 
 # #>>>  python your_script.py --epochs 100 --learning_rate 0.0001 --batch_size 32 --scheduler_step_size 5 --scheduler_gamma 0.95 --debug --abnormal_pos_weight 7.5 --region_pos_weight 3.0
-
-
-
-
-from ast import Continue
-from enum import Enum
-import torch
-
-class ModelStage(Enum):
-    OBJECT_DETECTOR = 1
-    CLASSIFIER = 2
-    LANGUAGE_MODEL = 3
-
-MODEL_STAGE=1
-DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# X-Report Trainer Hyper Parameters
-EPOCHS=5 # 10
-LEARNING_RATE=0.0001
-BATCH_SIZE=32 # 
-LM_Batch_Size=1
-SCHEDULAR_STEP_SIZE=1500 #
-SCHEDULAR_GAMMA=0.9
-DEBUG=True
-GENERATE_REPORT=False
-
-# Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
-RUN = "0"
-
-# Abnormal Binary Classifier Hyper Parameters
-ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
-
-# Region Selection Classifier Hyper Parameters
-REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
-
-# pathes to the datasets
-training_csv_path: str = 'datasets/train.csv'
-validation_csv_path:str = 'datasets/train.csv'
