@@ -7,7 +7,7 @@ class ModelStage(Enum):
     CLASSIFIER = 2
     LANGUAGE_MODEL = 3
 
-MODEL_STAGE=3
+MODEL_STAGE=1
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training Process Parameters

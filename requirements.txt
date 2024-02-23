@@ -4,3 +4,4 @@ spacy-transformers
 albumentations
 torch-summary
 imagesize
+gdown

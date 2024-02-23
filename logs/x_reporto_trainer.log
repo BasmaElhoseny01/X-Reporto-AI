@@ -456,3 +456,76 @@ Traceback (most recent call last):
     state['exp_avg_sq'] = torch.zeros_like(p, memory_format=torch.preserve_format)
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 16.00 MiB. GPU 0 has a total capacity of 6.00 GiB of which 0 bytes is free. Of the allocated memory 5.23 GiB is allocated by PyTorch, and 64.84 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+2024-02-23 15:05:46 - INFO - =================== New Run Started: 2024-02-23 15:05:46 ===================
+2024-02-23 15:05:46 - INFO - Tarning X_Reporto Started
+2024-02-23 15:05:46 - INFO - MODEL_STAGE: 3
+2024-02-23 15:05:46 - INFO - DEVICE: cuda
+2024-02-23 15:05:46 - INFO - CONTINUE_TRAIN: False
+2024-02-23 15:05:46 - INFO - TRAIN_RPN: False
+2024-02-23 15:05:46 - INFO - RUN: 0
+2024-02-23 15:05:46 - INFO - EPOCHS: 5
+2024-02-23 15:05:46 - INFO - BATCH_SIZE: 1
+2024-02-23 15:05:46 - INFO - LM_Batch_Size: 1
+2024-02-23 15:05:46 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 15:05:46 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 15:05:46 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 15:05:46 - INFO - DEBUG: True
+2024-02-23 15:05:46 - INFO - GENERATE_REPORT: False
+2024-02-23 15:05:46 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 15:05:46 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 15:05:46 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 15:05:46 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 15:05:46 - INFO - PERIODIC_LOGGING: False
+2024-02-23 15:05:46 - INFO - Folder 'models/0' already exists.
+2024-02-23 15:05:51 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 15:05:52 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 15:05:52 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 0
+2024-02-23 15:05:54 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/generation_config.json HTTP/1.1" 404 0
+2024-02-23 15:05:57 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 15:06:14 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 817, in <module>
+    main()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 805, in main
+    trainer.train()
+  File "D:\Engineering\Fourth_Year\First_Term\Graduation\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 170, in train
+    self.optimizer.step()
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\lr_scheduler.py", line 75, in wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\optimizer.py", line 385, in wrapper
+    out = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\optimizer.py", line 76, in _use_grad
+    ret = func(self, *args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\adam.py", line 157, in step
+    has_complex = self._init_group(
+                  ^^^^^^^^^^^^^^^^^
+  File "D:\anaconda3\envs\pt\Lib\site-packages\torch\optim\adam.py", line 113, in _init_group
+    state['exp_avg_sq'] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 16.00 MiB. GPU 0 has a total capacity of 6.00 GiB of which 0 bytes is free. Of the allocated memory 5.23 GiB is allocated by PyTorch, and 72.03 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+2024-02-23 15:06:46 - INFO - =================== New Run Started: 2024-02-23 15:06:46 ===================
+2024-02-23 15:06:46 - INFO - Tarning X_Reporto Started
+2024-02-23 15:06:46 - INFO - MODEL_STAGE: 1
+2024-02-23 15:06:46 - INFO - DEVICE: cuda
+2024-02-23 15:06:46 - INFO - CONTINUE_TRAIN: False
+2024-02-23 15:06:46 - INFO - TRAIN_RPN: False
+2024-02-23 15:06:46 - INFO - RUN: 0
+2024-02-23 15:06:46 - INFO - EPOCHS: 5
+2024-02-23 15:06:46 - INFO - BATCH_SIZE: 1
+2024-02-23 15:06:46 - INFO - LM_Batch_Size: 1
+2024-02-23 15:06:46 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 15:06:46 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 15:06:46 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 15:06:46 - INFO - DEBUG: True
+2024-02-23 15:06:46 - INFO - GENERATE_REPORT: False
+2024-02-23 15:06:46 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 15:06:46 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 15:06:46 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 15:06:46 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 15:06:46 - INFO - PERIODIC_LOGGING: False
+2024-02-23 15:06:46 - INFO - Folder 'models/0' already exists.
+2024-02-23 15:06:49 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 15:06:49 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0

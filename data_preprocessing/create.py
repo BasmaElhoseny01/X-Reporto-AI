@@ -244,6 +244,7 @@ class DataPreprocessing:
             # skip the first line (i.e. the header line)
             next(csv_reader)
 
+            incorrect = 0
             # iterate over all rows of the given csv file (i.e. over all images), if NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES is not set to a specific value
             for row in tqdm(csv_reader, total=total_num_rows):
                 subject_id = row[1]
@@ -296,6 +297,9 @@ class DataPreprocessing:
                 bbox_is_abnormal_vars = []
 
                 width, height = imagesize.get(mimic_image_file_path)
+                scaling_factor_height = height / 224
+                scaling_factor_width = width / 224
+
 
                 # counter to see if given image contains bbox coordinates for all 29 regions
                 # if image does not bbox coordinates for 29 regions, it's still added to the train and test dataset,
@@ -310,6 +314,24 @@ class DataPreprocessing:
                     y1 = obj_dict["original_y1"]
                     x2 = obj_dict["original_x2"]
                     y2 = obj_dict["original_y2"]
+
+                    x1_normalized = obj_dict["x1"]
+                    y1_normalized = obj_dict["y1"]
+                    x2_normalized = obj_dict["x2"]
+                    y2_normalized = obj_dict["y2"]
+
+                    # get scaled bbox coordinates
+
+                    x1_true = int(x1_normalized * scaling_factor_width)
+                    y1_true = int(y1_normalized * scaling_factor_height)
+                    x2_true = int(x2_normalized * scaling_factor_width)
+                    y2_true = int(y2_normalized * scaling_factor_height)
+
+                    # check if the bbox coordinates are same as the original bbox coordinates
+                    if x1_true != x1 or y1_true != y1 or x2_true != x2 or y2_true != y2:
+                        incorrect += 1
+                        print("incorrect scaling: ",str(incorrect))
+
 
                     region_to_bbox_coordinates_dict[region_name] = [x1, y1, x2, y2]
 
