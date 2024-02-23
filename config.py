@@ -39,6 +39,9 @@ DEBUG=True
 training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/train.csv'
 
+SERVER=False
+BASH_LOGGING=True
+
 
 def log_config():
     logging.info(f"MODEL_STAGE: {MODEL_STAGE}")
@@ -64,6 +67,9 @@ def log_config():
 
     logging.info(f"training_csv_path: {training_csv_path}")
     logging.info(f"validation_csv_path: {validation_csv_path}")
+
+    logging.info(f"SERVER: {SERVER}")
+    logging.info(f"BASH_LOGGING: {BASH_LOGGING}")
 
 
 # By Command Line

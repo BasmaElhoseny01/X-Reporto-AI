@@ -3,23 +3,27 @@ import logging
 import datetime
 import os
 
-def setup_logging(log_file_path,bash=False):
-    if not os.path.exists('logs/'):
-        os.makedirs('logs/')
-        print(f"Folder logs/ created successfully.")
+def setup_logging(log_file_path,bash=False,log_folder_path=None,periodic_logger=False):
+    if log_folder_path is None: log_folder_path='logs/'
+
+    if not os.path.exists(log_folder_path):
+        os.makedirs(log_folder_path)
+        print(f"Folder {log_folder_path} created successfully.")
 
     # Configure logging
     logging.basicConfig(filename=log_file_path ,encoding='utf-8', level=logging.DEBUG,
                         format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    print("logging at ",log_file_path)
     
-    five_days_log_file_path=five_day_logger_handler()
-    # Add a second file handler to log to the second file
-    periodic_file_handler = logging.FileHandler(five_days_log_file_path, encoding='utf-8')
-    periodic_file_handler.setLevel(logging.DEBUG)  # Set the desired level for the second file
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    periodic_file_handler.setFormatter(formatter)
-    logging.getLogger().addHandler(periodic_file_handler)
-
+    if periodic_logger:
+        # Periodic Logging
+        five_days_log_file_path=five_day_logger_handler()
+        # Add a second file handler to log to the second file
+        periodic_file_handler = logging.FileHandler(five_days_log_file_path, encoding='utf-8')
+        periodic_file_handler.setLevel(logging.DEBUG)  # Set the desired level for the second file
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        periodic_file_handler.setFormatter(formatter)
+        logging.getLogger().addHandler(periodic_file_handler)
     
     if bash:
         # Create a StreamHandler to output log messages to the terminal
@@ -60,14 +64,14 @@ def five_day_logger_handler():
         creation_date = datetime.datetime.strptime(creation_date_str, '%Y-%m-%d')
     else:
         creation_date=None
-        
+
 
     # Get current date and time
     current_date = datetime.datetime.now()
 
     # Check if 5 days have passed since the creation of the newest log file
     if creation_date is None or current_date - creation_date >= datetime.timedelta(days=5):
-        print("5 days have passed since the creation of the newest log file.")
+        # print("5 days have passed since the creation of the newest log file.")
 
         # Get current date and time
         current_date = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -83,7 +87,7 @@ def five_day_logger_handler():
 
 
     else:
-        print("Less than 5 days have passed since the creation of the newest log file.")
+        # print("Less than 5 days have passed since the creation of the newest log file.")
         five_days_log_file_path=five_days_log_folder_path+'/'+newest_log_file
 
 
