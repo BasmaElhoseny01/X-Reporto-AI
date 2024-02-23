@@ -21,8 +21,7 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 from src.x_reporto.data_loader.tokenizer import Tokenizer
 
 # Utils 
-from src.utils import plot_image
-from src.utils import save_model,cuda_memory_info
+from src.utils import plot_image,save_model,save_checkpoint
 
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
@@ -103,6 +102,7 @@ class XReportoTrainer():
         # make model in training mode
         logging.info("Start Training")
         self.model.train()
+        total_steps=0
         for epoch in range(EPOCHS):
             epoch_loss = 0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):                
@@ -110,7 +110,6 @@ class XReportoTrainer():
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
-
 
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Selection Classifier
@@ -165,11 +164,16 @@ class XReportoTrainer():
                     epoch_loss += Total_loss
                 # update the learning rate
                 self.lr_scheduler.step()
-
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
-            
+                # Checkpoint
+                total_steps+=1            
+                if(total_steps%CHECKPOINT_EVERY_N ==0):
+                    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+                                    scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
+                                    best_loss=self.best_loss,best_epoch=self.best_epoch,epoch_loss=epoch_loss)
+                    total_steps=0
             # Free GPU memory 
             del Total_loss
             torch.cuda.empty_cache()
@@ -179,13 +183,13 @@ class XReportoTrainer():
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 if TRAIN_RPN:
                     # Saving object_detector marked as rpn
-                    logging.info("Saving object_detector_rpn_epoch "+str(epoch))
-                    save_model(model=self.model.object_detector,name="object_detector_rpn_epoch_"+str(epoch))
+                    logging.info("Saving object_detector_rpn_epoch "+str(epoch+1))
+                    save_model(model=self.model.object_detector,name="object_detector_rpn_epoch_"+str(epoch+1))
                     self.check_best_model(epoch,epoch_loss,"object_detector_rpn",self.model.object_detector)
                 else:
                     # Saving Object Detector
-                    logging.info("Saving object_detector_epoch "+str(epoch))
-                    save_model(model=self.model.object_detector,name="object_detector_epoch_"+str(epoch))
+                    logging.info("Saving object_detector_epoch "+str(epoch+1))
+                    save_model(model=self.model.object_detector,name="object_detector_epoch_"+str(epoch+1))
                     self.check_best_model(epoch,epoch_loss,"object_detector",self.model.object_detector)
 
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
@@ -227,6 +231,7 @@ class XReportoTrainer():
                 print("\n")
                 print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
                 print("\n")
+            
         # save the best model            
         logging.info("Training Done")
     
@@ -236,9 +241,9 @@ class XReportoTrainer():
         '''
         if(epoch_loss<self.best_loss) :
                 self.best_loss=epoch_loss
-                self.best_epoch=epoch
+                self.best_epoch=epoch+1
                 save_model(model=model,name=name+"_best")
-                logging.info(f'best epoch: {self.best_epoch+1}, best epoch loss: {self.best_loss:.4f}')
+                logging.info(f'best epoch: {self.best_epoch}, best epoch loss: {self.best_loss:.4f}')
 
     
     def  object_detector_and_classifier_forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
@@ -746,6 +751,14 @@ def main():
      
     # Creating run folder
     folder_path="models/" + str(RUN)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        logging.info(f"Folder '{folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{folder_path}' already exists.")
+
+    # Creating checkpoints folder
+    folder_path="check_points/" + str(RUN)
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
         logging.info(f"Folder '{folder_path}' created successfully.")

@@ -1,12 +1,10 @@
 import torch
 from torch import Tensor
-from typing import List, Union
+from typing import Dict, List, Union
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import patches
-
-
 from config import *
 
 
@@ -307,22 +305,33 @@ def cuda_memory_info(title=""):
     print("==========================================================================================================")
 
 
-def cuda_memory_info(title=""):
-    print("==========================================================================================================")
-    print("Memory Usage")
-    num_cuda_devices = torch.cuda.device_count()
-    for i in range(num_cuda_devices):
-        device = torch.cuda.get_device_properties(i)
-        total_memory = device.total_memory / 1024**3  # Total memory available on the device
-        allocated_memory = torch.cuda.memory_allocated(i) / 1024**3  # Memory currently in use by tensors
-        reserved_memory = torch.cuda.memory_reserved(i) / 1024**3  # Total memory reserved by PyTorch
-        remaining_memory_current = total_memory - allocated_memory  # Remaining memory that is currently available for allocation
-        remaining_memory_potential = total_memory - reserved_memory  # Remaining memory that can potentially be allocated
-        print(f"Device {i}:")
-        print(f"  Name: {device.name}")
-        print(f"  Total Memory: {total_memory:.2f} GB")
-        print(f"  Allocated Memory: {allocated_memory:.2f} GB")
-        print(f"  Reserved Memory: {reserved_memory:.2f} GB")
-        print(f"  Remaining Memory (Current): {remaining_memory_current:.2f} GB")
-        print(f"  Remaining Memory (Potential): {remaining_memory_potential:.2f} GB")
-    print("==========================================================================================================")
+def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,best_epoch:int,epoch_loss:float):
+    checkpoint={
+    "epoch":epoch,
+    "batch_index":batch_index,
+    "optimizer_state":optimizer_state,
+    "scheduler_state_dict":scheduler_state_dict,
+    "model_state":model_state,
+    "best_loss":best_loss,
+    "best_epoch":best_epoch,
+    "epoch_loss":epoch_loss,
+    "config":get_config()
+    }
+
+    # # Save Checkpoint by time 
+    # # Get the current date and time
+    # current_datetime = datetime.datetime.now()
+    # # Format the date and time to be part of the filename
+    # formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+    # # Create the filename with the formatted datetime
+    # name = f"ckpt_{formatted_datetime}"
+
+    checkpoint_path='check_points/'+str(RUN)+'/checkpoint.pth'
+    torch.save(checkpoint, checkpoint_path)
+    logging.info('Saved Check point at' + checkpoint_path)
+
+def load_checkpoint(run):
+    checkpoint_path='check_points/'+str(run)+'/checkpoint.pth'
+    logging.info('Loading Check point at' + checkpoint_path)
+    logging.error('load_checkpoint() Not Implemented')
+    pass

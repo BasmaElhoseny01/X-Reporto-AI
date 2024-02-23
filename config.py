@@ -12,7 +12,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=False # Tain only RPN of the object detector
+TRAIN_RPN=True # Tain only RPN of the object detector
 RUN = "0"
 
 # Training Configurations
@@ -40,6 +40,9 @@ validation_csv_path:str = 'datasets/train.csv'
 
 # Logging
 PERIODIC_LOGGING=False
+
+# Checkpointing
+CHECKPOINT_EVERY_N=2
 
 
 def log_config():
@@ -69,6 +72,33 @@ def log_config():
 
     logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
 
+    logging.info(f"CHECKPOINT_EVERY_N: {CHECKPOINT_EVERY_N}")
+
+def get_config():
+    # Get the Configuration dictionary to be saved in check point
+    config = {
+    "MODEL_STAGE": MODEL_STAGE,
+    "DEVICE": DEVICE,
+    "CONTINUE_TRAIN": CONTINUE_TRAIN,
+    "TRAIN_RPN": TRAIN_RPN,
+    "RUN": RUN,
+    "EPOCHS": EPOCHS,
+    "BATCH_SIZE": BATCH_SIZE,
+    "LM_Batch_Size": LM_Batch_Size,
+    "LEARNING_RATE": LEARNING_RATE,
+    "SCHEDULAR_STEP_SIZE": SCHEDULAR_STEP_SIZE,
+    "SCHEDULAR_GAMMA": SCHEDULAR_GAMMA,
+    "DEBUG": DEBUG,
+    "GENERATE_REPORT": GENERATE_REPORT,
+    "ABNORMAL_CLASSIFIER_POS_WEIGHT": ABNORMAL_CLASSIFIER_POS_WEIGHT,
+    "REGION_SELECTION_CLASSIFIER_POS_WEIGHT": REGION_SELECTION_CLASSIFIER_POS_WEIGHT,
+    "training_csv_path": training_csv_path,
+    "validation_csv_path": validation_csv_path,
+    "PERIODIC_LOGGING": PERIODIC_LOGGING,
+    "CHECKPOINT_EVERY_N":CHECKPOINT_EVERY_N,
+    }
+
+    return config
 
 # By Command Line TODO fix with new arguments :D
 # import argparse

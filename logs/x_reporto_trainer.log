@@ -529,3 +529,262 @@ torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 16.00 MiB. GP
 2024-02-23 15:06:46 - INFO - Folder 'models/0' already exists.
 2024-02-23 15:06:49 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
 2024-02-23 15:06:49 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:00:08 - INFO - =================== New Run Started: 2024-02-23 19:00:08 ===================
+2024-02-23 19:00:08 - INFO - Tarning X_Reporto Started
+2024-02-23 19:00:08 - INFO - MODEL_STAGE: 1
+2024-02-23 19:00:08 - INFO - DEVICE: cuda
+2024-02-23 19:00:08 - INFO - CONTINUE_TRAIN: False
+2024-02-23 19:00:08 - INFO - TRAIN_RPN: True
+2024-02-23 19:00:08 - INFO - RUN: 0
+2024-02-23 19:00:08 - INFO - EPOCHS: 5
+2024-02-23 19:00:08 - INFO - BATCH_SIZE: 1
+2024-02-23 19:00:08 - INFO - LM_Batch_Size: 1
+2024-02-23 19:00:08 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 19:00:08 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 19:00:08 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 19:00:08 - INFO - DEBUG: True
+2024-02-23 19:00:08 - INFO - GENERATE_REPORT: False
+2024-02-23 19:00:08 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 19:00:08 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 19:00:08 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 19:00:08 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 19:00:08 - INFO - PERIODIC_LOGGING: False
+2024-02-23 19:00:08 - INFO - CHECKPOINT_EVERY_N: 2
+2024-02-23 19:00:08 - INFO - Folder 'models/0' already exists.
+2024-02-23 19:00:08 - INFO - Folder 'check_points/0' created successfully.
+2024-02-23 19:00:15 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 19:00:16 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:00:16 - INFO - Train dataset loaded
+2024-02-23 19:00:16 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:00:16 - INFO - Validate dataset loaded
+2024-02-23 19:00:16 - INFO - DataLoader Loaded
+2024-02-23 19:00:16 - INFO - Start Training
+2024-02-23 19:00:42 - DEBUG - epoch: 1, Batch 1/2 object_detector_Loss: 0.9715 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.9715
+2024-02-23 19:00:44 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:00:45 - DEBUG - epoch: 1, Batch 2/2 object_detector_Loss: 1.1073 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.1073
+2024-02-23 19:00:45 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:00:46 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 788, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 776, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 174, in train
+    scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_state_dict(),
+                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1695, in __getattr__
+    raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+AttributeError: 'XReportoV1' object has no attribute 'state_state_dict'
+2024-02-23 19:01:35 - INFO - =================== New Run Started: 2024-02-23 19:01:35 ===================
+2024-02-23 19:01:35 - INFO - Tarning X_Reporto Started
+2024-02-23 19:01:35 - INFO - MODEL_STAGE: 1
+2024-02-23 19:01:35 - INFO - DEVICE: cuda
+2024-02-23 19:01:35 - INFO - CONTINUE_TRAIN: False
+2024-02-23 19:01:35 - INFO - TRAIN_RPN: True
+2024-02-23 19:01:35 - INFO - RUN: 0
+2024-02-23 19:01:35 - INFO - EPOCHS: 5
+2024-02-23 19:01:35 - INFO - BATCH_SIZE: 1
+2024-02-23 19:01:35 - INFO - LM_Batch_Size: 1
+2024-02-23 19:01:35 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 19:01:35 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 19:01:35 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 19:01:35 - INFO - DEBUG: True
+2024-02-23 19:01:35 - INFO - GENERATE_REPORT: False
+2024-02-23 19:01:35 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 19:01:35 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 19:01:35 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 19:01:35 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 19:01:35 - INFO - PERIODIC_LOGGING: False
+2024-02-23 19:01:35 - INFO - CHECKPOINT_EVERY_N: 2
+2024-02-23 19:01:35 - INFO - Folder 'models/0' already exists.
+2024-02-23 19:01:35 - INFO - Folder 'check_points/0' already exists.
+2024-02-23 19:01:38 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 19:01:39 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:01:39 - INFO - Train dataset loaded
+2024-02-23 19:01:40 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:01:40 - INFO - Validate dataset loaded
+2024-02-23 19:01:40 - INFO - DataLoader Loaded
+2024-02-23 19:01:40 - INFO - Start Training
+2024-02-23 19:02:03 - DEBUG - epoch: 1, Batch 1/2 object_detector_Loss: 1.0652 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0652
+2024-02-23 19:02:05 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:02:05 - DEBUG - epoch: 1, Batch 2/2 object_detector_Loss: 0.9229 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.9229
+2024-02-23 19:02:06 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:02:08 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 788, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 776, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 173, in train
+    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+  File "E:\Graduation Project\Graduation-Project-Repo\src\utils.py", line 330, in save_checkpoint
+    torch.save(checkpoint, checkpoint_path)
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 618, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 492, in _open_zipfile_writer
+    return container(name_or_buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 463, in __init__
+    super().__init__(torch._C.PyTorchFileWriter(self.name))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Parent directory /check_points does not exist.
+2024-02-23 19:03:57 - INFO - =================== New Run Started: 2024-02-23 19:03:57 ===================
+2024-02-23 19:03:57 - INFO - Tarning X_Reporto Started
+2024-02-23 19:03:57 - INFO - MODEL_STAGE: 1
+2024-02-23 19:03:57 - INFO - DEVICE: cuda
+2024-02-23 19:03:57 - INFO - CONTINUE_TRAIN: False
+2024-02-23 19:03:57 - INFO - TRAIN_RPN: True
+2024-02-23 19:03:57 - INFO - RUN: 0
+2024-02-23 19:03:57 - INFO - EPOCHS: 5
+2024-02-23 19:03:57 - INFO - BATCH_SIZE: 1
+2024-02-23 19:03:57 - INFO - LM_Batch_Size: 1
+2024-02-23 19:03:57 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 19:03:57 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 19:03:57 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 19:03:57 - INFO - DEBUG: True
+2024-02-23 19:03:57 - INFO - GENERATE_REPORT: False
+2024-02-23 19:03:57 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 19:03:57 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 19:03:57 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 19:03:57 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 19:03:57 - INFO - PERIODIC_LOGGING: False
+2024-02-23 19:03:57 - INFO - CHECKPOINT_EVERY_N: 2
+2024-02-23 19:03:57 - INFO - Folder 'models/0' already exists.
+2024-02-23 19:03:57 - INFO - Folder 'check_points/0' already exists.
+2024-02-23 19:04:00 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 19:04:01 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:04:01 - INFO - Train dataset loaded
+2024-02-23 19:04:02 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:04:02 - INFO - Validate dataset loaded
+2024-02-23 19:04:02 - INFO - DataLoader Loaded
+2024-02-23 19:04:02 - INFO - Start Training
+2024-02-23 19:04:23 - DEBUG - epoch: 1, Batch 1/2 object_detector_Loss: 1.0408 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0408
+2024-02-23 19:04:24 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:04:25 - DEBUG - epoch: 1, Batch 2/2 object_detector_Loss: 1.1184 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.1184
+2024-02-23 19:04:25 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:04:28 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 788, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 776, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 173, in train
+    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+  File "E:\Graduation Project\Graduation-Project-Repo\src\utils.py", line 331, in save_checkpoint
+    torch.save(checkpoint, checkpoint_path)
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 618, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 492, in _open_zipfile_writer
+    return container(name_or_buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 463, in __init__
+    super().__init__(torch._C.PyTorchFileWriter(self.name))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Parent directory /check_points does not exist.
+2024-02-23 19:05:03 - INFO - =================== New Run Started: 2024-02-23 19:05:03 ===================
+2024-02-23 19:05:03 - INFO - Tarning X_Reporto Started
+2024-02-23 19:05:03 - INFO - MODEL_STAGE: 1
+2024-02-23 19:05:03 - INFO - DEVICE: cuda
+2024-02-23 19:05:03 - INFO - CONTINUE_TRAIN: False
+2024-02-23 19:05:03 - INFO - TRAIN_RPN: True
+2024-02-23 19:05:03 - INFO - RUN: 0
+2024-02-23 19:05:03 - INFO - EPOCHS: 5
+2024-02-23 19:05:03 - INFO - BATCH_SIZE: 1
+2024-02-23 19:05:03 - INFO - LM_Batch_Size: 1
+2024-02-23 19:05:03 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 19:05:03 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 19:05:03 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 19:05:03 - INFO - DEBUG: True
+2024-02-23 19:05:03 - INFO - GENERATE_REPORT: False
+2024-02-23 19:05:03 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 19:05:03 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 19:05:03 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 19:05:03 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 19:05:03 - INFO - PERIODIC_LOGGING: False
+2024-02-23 19:05:03 - INFO - CHECKPOINT_EVERY_N: 2
+2024-02-23 19:05:03 - INFO - Folder 'models/0' already exists.
+2024-02-23 19:05:03 - INFO - Folder 'check_points/0' already exists.
+2024-02-23 19:05:06 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 19:05:07 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:05:07 - INFO - Train dataset loaded
+2024-02-23 19:05:08 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:05:08 - INFO - Validate dataset loaded
+2024-02-23 19:05:08 - INFO - DataLoader Loaded
+2024-02-23 19:05:08 - INFO - Start Training
+2024-02-23 19:05:26 - DEBUG - epoch: 1, Batch 1/2 object_detector_Loss: 1.0613 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0613
+2024-02-23 19:05:27 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:05:27 - DEBUG - epoch: 1, Batch 2/2 object_detector_Loss: 1.1502 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.1502
+2024-02-23 19:05:27 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:05:30 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 788, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 776, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 173, in train
+    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+  File "E:\Graduation Project\Graduation-Project-Repo\src\utils.py", line 330, in save_checkpoint
+    torch.save(checkpoint, checkpoint_path)
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 618, in save
+    with _open_zipfile_writer(f) as opened_zipfile:
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 492, in _open_zipfile_writer
+    return container(name_or_buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 463, in __init__
+    super().__init__(torch._C.PyTorchFileWriter(self.name))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Parent directory /check_points/0 does not exist.
+2024-02-23 19:06:12 - INFO - =================== New Run Started: 2024-02-23 19:06:12 ===================
+2024-02-23 19:06:12 - INFO - Tarning X_Reporto Started
+2024-02-23 19:06:12 - INFO - MODEL_STAGE: 1
+2024-02-23 19:06:12 - INFO - DEVICE: cuda
+2024-02-23 19:06:12 - INFO - CONTINUE_TRAIN: False
+2024-02-23 19:06:12 - INFO - TRAIN_RPN: True
+2024-02-23 19:06:12 - INFO - RUN: 0
+2024-02-23 19:06:12 - INFO - EPOCHS: 5
+2024-02-23 19:06:12 - INFO - BATCH_SIZE: 1
+2024-02-23 19:06:12 - INFO - LM_Batch_Size: 1
+2024-02-23 19:06:12 - INFO - LEARNING_RATE: 0.0001
+2024-02-23 19:06:12 - INFO - SCHEDULAR_STEP_SIZE: 1500
+2024-02-23 19:06:12 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-23 19:06:12 - INFO - DEBUG: True
+2024-02-23 19:06:12 - INFO - GENERATE_REPORT: False
+2024-02-23 19:06:12 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-23 19:06:12 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-23 19:06:12 - INFO - training_csv_path: datasets/train.csv
+2024-02-23 19:06:12 - INFO - validation_csv_path: datasets/train.csv
+2024-02-23 19:06:12 - INFO - PERIODIC_LOGGING: False
+2024-02-23 19:06:12 - INFO - CHECKPOINT_EVERY_N: 2
+2024-02-23 19:06:12 - INFO - Folder 'models/0' already exists.
+2024-02-23 19:06:12 - INFO - Folder 'check_points/0' already exists.
+2024-02-23 19:06:15 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-23 19:06:16 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:06:16 - INFO - Train dataset loaded
+2024-02-23 19:06:16 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-23 19:06:17 - INFO - Validate dataset loaded
+2024-02-23 19:06:17 - INFO - DataLoader Loaded
+2024-02-23 19:06:17 - INFO - Start Training
+2024-02-23 19:06:31 - DEBUG - epoch: 1, Batch 1/2 object_detector_Loss: 1.0504 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0504
+2024-02-23 19:06:32 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:06:33 - DEBUG - epoch: 1, Batch 2/2 object_detector_Loss: 1.0218 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0218
+2024-02-23 19:06:33 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:06:46 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:06:47 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-23 19:07:05 - INFO - best epoch: 1, best epoch loss: 2.0722
+2024-02-23 19:07:20 - DEBUG - epoch: 2, Batch 1/2 object_detector_Loss: 0.9793 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.9793
+2024-02-23 19:07:20 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:07:20 - DEBUG - epoch: 2, Batch 2/2 object_detector_Loss: 0.8854 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.8854
+2024-02-23 19:07:20 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:07:36 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:07:37 - INFO - Saving object_detector_rpn_epoch 2
+2024-02-23 19:07:54 - INFO - best epoch: 2, best epoch loss: 1.8648
+2024-02-23 19:08:08 - DEBUG - epoch: 3, Batch 1/2 object_detector_Loss: 1.0083 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 1.0083
+2024-02-23 19:08:08 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-23 19:08:08 - DEBUG - epoch: 3, Batch 2/2 object_detector_Loss: 0.8551 selection_classifier_Loss: 0.0000 abnormal_classifier_Loss: 0.0000  total_Loss: 0.8551
+2024-02-23 19:08:08 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-23 19:08:21 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-23 19:08:23 - INFO - Saving object_detector_rpn_epoch 3
+2024-02-23 19:08:43 - INFO - best epoch: 3, best epoch loss: 1.8634
