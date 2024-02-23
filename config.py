@@ -7,7 +7,7 @@ class ModelStage(Enum):
     CLASSIFIER = 2
     LANGUAGE_MODEL = 3
 
-MODEL_STAGE=1
+MODEL_STAGE=3
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training Process Parameters
@@ -17,7 +17,7 @@ RUN = "0"
 
 # Training Configurations
 EPOCHS=5
-BATCH_SIZE=1
+BATCH_SIZE=4
 LM_Batch_Size=1
 
 LEARNING_RATE=0.0001

@@ -729,7 +729,7 @@ def collate_fn(batch):
     LM_inputs={}
 
     for i in range(len(batch)):
-        (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[k]
+        (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[i]
         # stack images
         images[i] = object_detector_batch['image']
         # Moving Object Detector Targets to Device
