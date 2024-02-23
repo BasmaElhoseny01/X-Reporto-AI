@@ -94,20 +94,18 @@ class XReportoTrainer():
         # initialize the best loss to a large value
         self.best_loss = float('inf')
         self.eval_best_loss = float('inf')
+        self.best_epoch = 0
 
     def train(self):
         '''
         Train X-Reporto on the training dataset depending on the MODEL_STAGE.
         '''
         # make model in training mode
-        print("Training Started")
+        logging.info("Start Training")
         self.model.train()
         for epoch in range(EPOCHS):
             epoch_loss = 0
-            # for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_train):                
             for batch_idx,batch in enumerate(self.data_loader_train):                
-            
-                # sys.exit()
                 image_shape = batch[0][0]["image"].size()
                 images_batch = torch.empty(size=(len(batch), *image_shape))
                 object_detector_targets=[]
@@ -126,23 +124,11 @@ class XReportoTrainer():
                 images = images_batch.to(DEVICE)
                 length=len(images)
                 
-                #TODO: fix other targets
-
-                # images=object_detector_batch['image']
-                # # Move images to Device
-                # images = torch.stack([image.to(DEVICE) for image in images])
-                # length=len(images)
-
-                # # Moving Object Detector Targets to Device
-                # object_detector_targets=[]
-                # for i in range(len(images)):
-                #     new_dict={}
-                #     new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
-                #     new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
-                #     object_detector_targets.append(new_dict)   
-
+                #TODO: Check next two if to be on server
+                # Classifier targets
                 selection_classifier_targets=None
                 abnormal_classifier_targets=None
+
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Selection Classifier
                     # Moving Selection Classifier Targets to Device
@@ -205,89 +191,73 @@ class XReportoTrainer():
                             self.optimizer.step()
                         if DEBUG :
                           print(f'epoch.....: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-        
+                        # Free GPU memory
+                        del LM_losses
+                        del object_detector_losses
+                        del selection_classifier_losses
+                        del abnormal_binary_classifier_losses
+                        torch.cuda.empty_cache()
+                        gc.collect()
                 else:
-                    # zero the parameter gradients
-                    self.optimizer.zero_grad()
-
-                    # Forward Pass
-                    object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
-                    
-                    # Backward pass
-                    Total_loss=None
-                    object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-                    Total_loss=object_detector_losses_summation.clone()
-                    if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                        Total_loss+=selection_classifier_losses
-                        Total_loss+=abnormal_binary_classifier_losses
-        
-                    # cuda_memory_info()
-                    Total_loss.backward()
-                    # cuda_memory_info("after")
+                    Total_loss=self.object_detector_and_classifier_forward_pass(epoch= epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
                     epoch_loss += Total_loss
-
-                    # update the parameters
-                    self.optimizer.step()
-
-                    if DEBUG :
-                        print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
-                
                 # update the learning rate
                 self.lr_scheduler.step()
-                
-                # Free GPU memory
-                del LM_losses
-                del Total_loss
-                del object_detector_losses
-                del selection_classifier_losses
-                del abnormal_binary_classifier_losses
-                torch.cuda.empty_cache()
-                gc.collect()
-                # print("losses deleted")
 
-            # save the best model
-            if(epoch_loss<self.best_loss and epoch%10==0) :
+                # Get the new learning rate
+                new_lr = self.optimizer.param_groups[0]['lr']
+                logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+            
+            # Free GPU memory 
+            del Total_loss
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            # saving model per epoch
+            if(epoch_loss<self.best_loss) :
                 self.best_loss=epoch_loss
-                if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-                    if TRAIN_RPN:
-                        # Saving object_detector marked as rpn
-                        print("Saving object_detector [Trained RPN]....")
-                        save_model(model=self.model.object_detector,name="object_detector_rpn")
-                    else:
-                        # Saving Object Detector
-                        print("Saving object_detector....")
-                        save_model(model=self.model.object_detector,name="object_detector")
-        
-                elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                self.best_epoch=epoch
+
+            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+                if TRAIN_RPN:
+                    # Saving object_detector marked as rpn
+                    logging.info("Saving object_detector_rpn_epoch "+str(epoch))
+                    save_model(model=self.model.object_detector,name="object_detector_rpn_epoch_"+str(epoch))
+                else:
                     # Saving Object Detector
-                    print("Saving object_detector....")
-                    save_model(model=self.model.object_detector,name="object_detector")
+                    logging.info("Saving object_detector_epoch "+str(epoch))
+                    save_model(model=self.model.object_detector,name="object_detector_epoch_"+str(epoch))
+    
+            elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                # Saving Object Detector
+                print("Saving object_detector....")
+                save_model(model=self.model.object_detector,name="object_detector")
 
-                    # Save Region Selection Classifier
-                    print("Saving region_classifier....")
-                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
+                # Save Region Selection Classifier
+                print("Saving region_classifier....")
+                save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
 
-                    # Save Abnormal Classifier
-                    print("Saving abnormal_classifier....")
-                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
+                # Save Abnormal Classifier
+                print("Saving abnormal_classifier....")
+                save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
 
-                elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-                    # Saving Object Detector
-                    print("Saving object_detector....")
-                    save_model(model=self.model.object_detector,name="object_detector")
+            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                # Saving Object Detector
+                print("Saving object_detector....")
+                save_model(model=self.model.object_detector,name="object_detector")
 
-                    # Save Region Selection Classifier
-                    print("Saving region_classifier....")
-                    save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
+                # Save Region Selection Classifier
+                print("Saving region_classifier....")
+                save_model(model=self.model.binary_classifier_selection_region,name="region_classifier")
 
-                    # Save Abnormal Classifier
-                    print("Saving abnormal_classifier....")
-                    save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
-   
-                    #Save language model
-                    print("Saving language model....")
-                    save_model(model=self.model.language_model,name='LM')
-                                    
+                # Save Abnormal Classifier
+                print("Saving abnormal_classifier....")
+                save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
+
+                #Save language model
+                print("Saving language model....")
+                save_model(model=self.model.language_model,name='LM')
+                                
 
                 # Logging the loss to a file
                 with open("logs/loss.txt", "a") as myfile:
@@ -347,8 +317,40 @@ class XReportoTrainer():
                 print("\n")
                 print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
                 print("\n")
+            logging.info(f'best epoch: {self.best_epoch+1}, best epoch loss: {self.best_loss:.4f}')
+        logging.info("Training Done")
+    
+    def  object_detector_and_classifier_forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
+            # zero the parameter gradients
+            self.optimizer.zero_grad()
 
+            # Forward Pass
+            object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
+            
+            # Backward pass
+            Total_loss=None
+            object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
+            Total_loss=object_detector_losses_summation.clone()
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                Total_loss+=selection_classifier_losses
+                Total_loss+=abnormal_binary_classifier_losses
+            # backward pass
+            Total_loss.backward()
 
+            # epoch_loss += Total_loss
+
+            # update the parameters
+            self.optimizer.step()
+
+            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
+            # Free GPU memory
+            del LM_losses
+            del object_detector_losses
+            del selection_classifier_losses
+            del abnormal_binary_classifier_losses
+            torch.cuda.empty_cache()
+            gc.collect()
+            return Total_loss
                 
 
     def Validate(self):
@@ -803,7 +805,7 @@ def main():
 
 
     # # Start Training
-    # trainer.train()
+    trainer.train()
         
 
     
