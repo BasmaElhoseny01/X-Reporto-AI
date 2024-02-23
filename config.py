@@ -18,7 +18,7 @@ RUN = "0"
 # Training Configurations
 EPOCHS=5
 BATCH_SIZE=32
-# LM_Batch_Size=1
+LM_Batch_Size=1
 
 LEARNING_RATE=0.0001
 SCHEDULAR_STEP_SIZE=1500 #
@@ -26,7 +26,7 @@ SCHEDULAR_GAMMA=0.9
 
 # Debgging COnfigurations
 DEBUG=True
-# GENERATE_REPORT=False
+GENERATE_REPORT=False
 
 # Modules Configurations:
 # # Abnormal Binary Classifier Hyper Parameters
@@ -52,14 +52,14 @@ def log_config():
 
     logging.info(f"EPOCHS: {EPOCHS}")
     logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
-    # logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
+    logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
 
     logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
     logging.info(f"SCHEDULAR_STEP_SIZE: {SCHEDULAR_STEP_SIZE}")
     logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
 
     logging.info(f"DEBUG: {DEBUG}")
-    # logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
+    logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
 
     # logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
     # logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")

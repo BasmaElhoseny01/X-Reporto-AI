@@ -1,3 +1,36 @@
+# Logging
+from logger_setup import setup_logging
+import logging
+
+# import spacy
+# import sys
+import os
+# import gc
+# import psutil
+# import datetime
+# from transformers import GPT2Tokenizer
+
+# Torch
+import torch
+import torch.optim as optim
+from torch.utils.data import  DataLoader
+
+# Modules
+from src.x_reporto.models.x_reporto_factory import XReporto
+from src.x_reporto.data_loader.custom_dataset import CustomDataset
+from src.x_reporto.data_loader.tokenizer import Tokenizer
+
+# Utils 
+# from src.utils import plot_image
+# from src.utils import save_model,cuda_memory_info
+
+from config import RUN,PERIODIC_LOGGING,log_config
+from config import *
+
+
+
+
+
 # import gc
 # import psutil
 # # import spacy
@@ -19,90 +52,80 @@
 # from config import *
 
 
-# class XReportoTrainer():
-#     """
-#     XReportoTrainer class is responsible for training, validating, and predicting with the X-Reporto model.
+class XReportoTrainer():
+    """
+    XReportoTrainer class is responsible for training, validating, and predicting with the X-Reporto model.
 
-#     Args:
-#         training_csv_path (str): Path to the training CSV file.
-#         validation_csv_path (str): Path to the validation CSV file.
-#         model Optional[XReporto]: The X-Reporto model.If not provided, the model is loaded from a .pth file
+    Args:
+        training_csv_path (str): Path to the training CSV file.
+        validation_csv_path (str): Path to the validation CSV file.
+        model Optional[XReporto]: The X-Reporto model.If not provided, the model is loaded from a .pth file
 
-#     Methods:
-#         - train(): Train the X-Reporto model depending on the MODEL_STAGE.
-#         - validate(): Evaluate the object detector on the validation dataset.
-#         - predict_and_display(predict_path_csv=None): Predict the output and display it with golden output.
-#         - save_model(name): Save the current state of the X-Reporto model.
-#         - load_model(name): Load a pre-trained X-Reporto model.
+    Methods:
+        - train(): Train the X-Reporto model depending on the MODEL_STAGE.
+        - validate(): Evaluate the object detector on the validation dataset.
+        - predict_and_display(predict_path_csv=None): Predict the output and display it with golden output.
+        - save_model(name): Save the current state of the X-Reporto model.
+        - load_model(name): Load a pre-trained X-Reporto model.
     
-#     Examples:
-#         >>> x_reporto_model = XReporto().create_model()
+    Examples:
+        >>> x_reporto_model = XReporto().create_model()
 
-#         >>> # Create an XReportoTrainer instance with the X-Reporto model
-#         >>> trainer = XReportoTrainer(model=x_reporto_model)
+        >>> # Create an XReportoTrainer instance with the X-Reporto model
+        >>> trainer = XReportoTrainer(model=x_reporto_model)
 
-#         >>> # Alternatively, create an XReportoTrainer instance without specifying the model
-#         >>> trainer = XReportoTrainer()
+        >>> # Alternatively, create an XReportoTrainer instance without specifying the model
+        >>> trainer = XReportoTrainer()
 
-#         >>> # Train the X-Reporto model on the training dataset
-#         >>> trainer.train()
+        >>> # Train the X-Reporto model on the training dataset
+        >>> trainer.train()
 
-#         >>> # Run Validation
-#         >>> trainer.validate()
+        >>> # Run Validation
+        >>> trainer.validate()
 
-#         >>> # Predict and display results
-#         >>> trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
-#     """
-#     def __init__(self,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path,
-#                  model:XReporto = None):
-#         '''
-#         inputs:
-#             training_csv_path (str): the path to the training csv file
-#             validation_csv_path (str): the path to the validation csv file
-#             model Optional[XReporto]: the x_reporto model instance to be trained.If not provided, the model is loaded from a .pth file.
-#         '''
-#         # Model
-#         if model==None:
-#             # load the model from 
-#             self.model=XReporto().create_model()
+        >>> # Predict and display results
+        >>> trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
+    """
+    def __init__(self,model,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path):
+        '''
+        inputs:
+            training_csv_path (str): the path to the training csv file
+            validation_csv_path (str): the path to the validation csv file
+            model Optional[XReporto]: the x_reporto model instance to be trained.If not provided, the model is loaded from a .pth file.
+        '''
+        # Model
+        self.model = model
 
-#             # TODO Fix Paths
-#             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
-#                 self.load_model('object_detector')
-#             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
-#                 self.load_model('object_detector_classifier')
-#             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-#                 self.load_model('LM')
-#         else:
-#             self.model = model
+        # Move to device
+        self.model.to(DEVICE)
 
-#         # Move to device
-#         self.model.to(DEVICE)
+        # create adam optimizer
+        self.optimizer = optim.Adam(self.model.parameters(), lr= LEARNING_RATE)
 
-#         # create adam optimizer
-#         self.optimizer = optim.Adam(self.model.parameters(), lr= LEARNING_RATE)
+        # create learning rate scheduler
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
-#         # create learning rate scheduler
-#         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
+        # # create dataset
+        # TODO check this by documentation
+        self.checkpoint="healx/gpt-2-pubmed-medium"
+        self.tokenizer = Tokenizer(self.checkpoint)
 
-#         # create dataset
-#         # TODO Change to transform_type train
-#         self.checkpoint="healx/gpt-2-pubmed-medium"
-#         self.tokenizer = Tokenizer(self.checkpoint)
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train',tokenizer=self.tokenizer)
+        logging.info("Train dataset loaded",len(self.dataset_train))
+        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val',tokenizer=self.tokenizer)
+        logging.info("Validate dataset loaded",len(self.dataset_val))
 
-#         self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train',tokenizer=self.tokenizer)
-#         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val',tokenizer=self.tokenizer)
-#         print("Dataset Loaded")
+
         
-#         # create data loader
-#         # TODO suffle Training Loaders
-#         self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
-#         self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
-#         print("DataLoader Loaded")
-#         # initialize the best loss to a large value
-#         self.best_loss = float('inf')
-#         # self.best_loss = 0.3904
-#         self.eval_best_loss = float('inf')
+        # # create data loader
+        # # TODO suffle Training Loaders
+        # self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+        # self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+        # print("DataLoader Loaded")
+        # # initialize the best loss to a large value
+        # self.best_loss = float('inf')
+        # # self.best_loss = 0.3904
+        # self.eval_best_loss = float('inf')
 
 #     def train(self):
 #         '''
@@ -790,10 +813,6 @@
 # #                             global SCHEDULAR_GAMMA
 # #                            SCHEDULAR_GAMMA=float(args[6])
 
-from logger_setup import setup_logging
-from config import RUN,PERIODIC_LOGGING,log_config
-import logging
-import os
 
 def main():
     logging.info("Tarning X_Reporto Started")
@@ -810,10 +829,10 @@ def main():
         logging.info(f"Folder '{folder_path}' already exists.")
 
     # X-Reporto Trainer Object
-    # x_reporto_model = XReporto().create_model()
+    x_reporto_model = XReporto().create_model()
 
-    # # Create an XReportoTrainer instance with the X-Reporto model
-    # trainer = XReportoTrainer(model=x_reporto_model)
+    # Create an XReportoTrainer instance with the X-Reporto model
+    trainer = XReportoTrainer(model=x_reporto_model)
         
 
     
