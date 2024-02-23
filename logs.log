@@ -1,45 +1,0 @@
-/usr/lib/python3/dist-packages/torchvision/datapoints/__init__.py:12: UserWarning: The torchvision.datapoints and torchvision.transforms.v2 namespaces are still Beta. While we do not expect major breaking changes, some APIs may still change according to user feedback. Please submit any feedback you may have in this issue: https://github.com/pytorch/vision/issues/6753, and you can also check out https://github.com/pytorch/vision/issues/7319 to learn more about the APIs that we suspect might involve future changes. You can silence this warning by calling torchvision.disable_beta_transforms_warning().
-  warnings.warn(_BETA_TRANSFORMS_WARNING)
-/usr/lib/python3/dist-packages/torchvision/transforms/v2/__init__.py:54: UserWarning: The torchvision.datapoints and torchvision.transforms.v2 namespaces are still Beta. While we do not expect major breaking changes, some APIs may still change according to user feedback. Please submit any feedback you may have in this issue: https://github.com/pytorch/vision/issues/6753, and you can also check out https://github.com/pytorch/vision/issues/7319 to learn more about the APIs that we suspect might involve future changes. You can silence this warning by calling torchvision.disable_beta_transforms_warning().
-  warnings.warn(_BETA_TRANSFORMS_WARNING)
-2024-02-23 14:50:52,622 - root - INFO - =================== New Run Started: 2024-02-23 14:50:52 ===================
-2024-02-23 14:50:52,622 - root - INFO - Tarning X_Reporto Started
-2024-02-23 14:50:52,623 - root - INFO - MODEL_STAGE: 3
-2024-02-23 14:50:52,623 - root - INFO - DEVICE: cuda
-2024-02-23 14:50:52,623 - root - INFO - CONTINUE_TRAIN: False
-2024-02-23 14:50:52,623 - root - INFO - TRAIN_RPN: False
-2024-02-23 14:50:52,624 - root - INFO - RUN: 0
-2024-02-23 14:50:52,624 - root - INFO - EPOCHS: 5
-2024-02-23 14:50:52,624 - root - INFO - BATCH_SIZE: 1
-2024-02-23 14:50:52,624 - root - INFO - LM_Batch_Size: 1
-2024-02-23 14:50:52,624 - root - INFO - LEARNING_RATE: 0.0001
-2024-02-23 14:50:52,624 - root - INFO - SCHEDULAR_STEP_SIZE: 1500
-2024-02-23 14:50:52,624 - root - INFO - SCHEDULAR_GAMMA: 0.9
-2024-02-23 14:50:52,624 - root - INFO - DEBUG: True
-2024-02-23 14:50:52,624 - root - INFO - GENERATE_REPORT: False
-2024-02-23 14:50:52,624 - root - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
-2024-02-23 14:50:52,624 - root - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
-2024-02-23 14:50:52,624 - root - INFO - training_csv_path: datasets/train.csv
-2024-02-23 14:50:52,624 - root - INFO - validation_csv_path: datasets/train.csv
-2024-02-23 14:50:52,624 - root - INFO - PERIODIC_LOGGING: False
-2024-02-23 14:50:52,624 - root - INFO - Folder 'models/0' already exists.
-Downloading: "https://download.pytorch.org/models/resnet50-11ad3fa6.pth" to /home/ubuntu/.cache/torch/hub/checkpoints/resnet50-11ad3fa6.pth
-logging at  ./logs/x_reporto_trainer.log
-  0%|          | 0.00/97.8M [00:00<?, ?B/s] 39%|███▉      | 38.6M/97.8M [00:00<00:00, 404MB/s] 81%|████████  | 79.1M/97.8M [00:00<00:00, 417MB/s]100%|██████████| 97.8M/97.8M [00:00<00:00, 415MB/s]
-2024-02-23 14:50:56,621 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
-2024-02-23 14:50:56,756 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 0
-2024-02-23 14:50:56,757 - filelock - DEBUG - Attempting to acquire lock 139780317786896 on /home/ubuntu/.cache/huggingface/hub/.locks/models--healx--gpt-2-pubmed-medium/820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
-2024-02-23 14:50:56,758 - filelock - DEBUG - Lock 139780317786896 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--healx--gpt-2-pubmed-medium/820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
-2024-02-23 14:50:56,785 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "GET /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 651
-config.json:   0%|          | 0.00/651 [00:00<?, ?B/s]config.json: 100%|██████████| 651/651 [00:00<00:00, 7.67MB/s]
-2024-02-23 14:50:56,787 - filelock - DEBUG - Attempting to release lock 139780317786896 on /home/ubuntu/.cache/huggingface/hub/.locks/models--healx--gpt-2-pubmed-medium/820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
-2024-02-23 14:50:56,787 - filelock - DEBUG - Lock 139780317786896 released on /home/ubuntu/.cache/huggingface/hub/.locks/models--healx--gpt-2-pubmed-medium/820cf16cc8c4c6ef3b0b8740e68622fb8bcf4723.lock
-2024-02-23 14:50:56,814 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/config.json HTTP/1.1" 200 0
-2024-02-23 14:50:56,840 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/model.safetensors HTTP/1.1" 404 0
-2024-02-23 14:50:56,862 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/model.safetensors.index.json HTTP/1.1" 404 0
-2024-02-23 14:50:56,886 - urllib3.connectionpool - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/pytorch_model.bin HTTP/1.1" 302 0
-2024-02-23 14:50:56,887 - filelock - DEBUG - Attempting to acquire lock 139780317784352 on /home/ubuntu/.cache/huggingface/hub/.locks/models--healx--gpt-2-pubmed-medium/af9d3addb9f95a99674a62b0ac8e1b08611bc8bb3f4c320370cd8f8e8550cbf5.lock
-2024-02-23 14:50:56,888 - filelock - DEBUG - Lock 139780317784352 acquired on /home/ubuntu/.cache/huggingface/hub/.locks/models--healx--gpt-2-pubmed-medium/af9d3addb9f95a99674a62b0ac8e1b08611bc8bb3f4c320370cd8f8e8550cbf5.lock
-2024-02-23 14:50:56,890 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): cdn-lfs.huggingface.co:443
-2024-02-23 14:50:57,226 - urllib3.connectionpool - DEBUG - https://cdn-lfs.huggingface.co:443 "GET /healx/gpt-2-pubmed-medium/af9d3addb9f95a99674a62b0ac8e1b08611bc8bb3f4c320370cd8f8e8550cbf5?response-content-disposition=attachment%3B+filename*%3DUTF-8%27%27pytorch_model.bin%3B+filename%3D%22pytorch_model.bin%22%3B&response-content-type=application%2Foctet-stream&Expires=1708959056&Policy=eyJTdGF0ZW1lbnQiOlt7IkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTcwODk1OTA1Nn19LCJSZXNvdXJjZSI6Imh0dHBzOi8vY2RuLWxmcy5odWdnaW5nZmFjZS5jby9oZWFseC9ncHQtMi1wdWJtZWQtbWVkaXVtL2FmOWQzYWRkYjlmOTVhOTk2NzRhNjJiMGFjOGUxYjA4NjExYmM4YmIzZjRjMzIwMzcwY2Q4ZjhlODU1MGNiZjU~cmVzcG9uc2UtY29udGVudC1kaXNwb3NpdGlvbj0qJnJlc3BvbnNlLWNvbnRlbnQtdHlwZT0qIn1dfQ__&Signature=kGCtaUyIhLpsd-y0Mo~OIfQHVzES26bNP8pu5COC2SOkhteyPKz7as48mP43MQTHnmLStPNHJoG8U0mdQ9BiubN1qn1Otz0UfUhu4THmb2NnckH3cwVvNQv6yW9V1xUShItscOGva9Me49wr5gjBF0sZnRbvWvSwo8HQ7AyXHzWDnofwex2sch3fWbM4qiUaAhP9WUVYQ3C8-CokrsWLPAqCuP-QVayycjqrVN8TZ-lx9HhLC-UkhQKJ3CaeFvHoQGrwO3EuADLWv9HD4h-S8p46alZuwB~O3Uz93mMIIekPJi4Qs1qWejhlN0nBP2mYCavBKwVBkLx7V9NpGR9rmg__&Key-Pair-Id=KVTP0A1DKRTAX HTTP/1.1" 200 1520009912
-pytorch_model.bin:   0%|          | 0.00/1.52G [00:00<?, ?B/s]pytorch_model.bin:   1%|          | 10.5M/1.52G [00:00<00:38, 39.1MB/s]pytorch_model.bin:   1%|▏         | 21.0M/1.52G [00:00<00:41, 36.6MB/s]pytorch_model.bin:   2%|▏         | 31.5M/1.52G [00:00<00:34, 42.6MB/s]

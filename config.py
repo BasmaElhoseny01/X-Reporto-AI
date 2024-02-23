@@ -21,13 +21,11 @@ OPERATION_MODE=2
 MODEL_STAGE=1
 
 # Training Process Parameters
-CONTINUE_TRAIN=True # Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=True # Tain only RPN of the object detector
-
-# parameters of the training process
 RUN = "0"
 EPOCHS=5
-BATCH_SIZE=1
+BATCH_SIZE=32
 LM_Batch_Size=1
 LEARNING_RATE=0.0001
 SCHEDULAR_STEP_SIZE=1500 #

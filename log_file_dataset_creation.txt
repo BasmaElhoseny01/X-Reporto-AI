@@ -1,0 +1,14 @@
+train:
+	num_images_ignored_or_avoided: 1
+	num_missing_images: 0
+	num_missing_reports: 0
+	num_faulty_bboxes: 82
+	num_images_without_29_regions: 14
+
+train:
+	num_images_ignored_or_avoided: 17
+	num_missing_images: 0
+	num_missing_reports: 0
+	num_faulty_bboxes: 40872
+	num_images_without_29_regions: 7886
+
