@@ -113,19 +113,20 @@ class XReportoTrainer():
         self.model.train()
         total_steps=0
         # for epoch in range(EPOCHS):
-        for epoch in range(start_epoch, start_epoch + EPOCHS-1):
+        for epoch in range(start_epoch, start_epoch + EPOCHS):
             if epoch==start_epoch:
                 # Load loss from chkpt
                 epoch_loss=epoch_loss_init
             else:
                 epoch_loss = 0
             
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train, start=start_batch):     
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train[start_batch:,]):     
 
                 # # Test Recovery
                 # if epoch==3 and batch_idx==1:
                 #     raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
-                  
+                # TODO: Test
+                batch_idx+=start_batch
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
@@ -159,7 +160,8 @@ class XReportoTrainer():
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,best_epoch=self.best_epoch,epoch_loss=epoch_loss)
                     total_steps=0
-            # Free GPU memory 
+            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss *BATCH_SIZE:.4f} Average epoch loss : {epoch_loss/len(self.data_loader_train):.4f}')
+            # Free GPU memory
             del Total_loss
             torch.cuda.empty_cache()
             gc.collect()
@@ -198,13 +200,9 @@ class XReportoTrainer():
                 self.best_loss=epoch_loss
                 self.best_epoch=epoch+1
                 save_model(model=model,name=name+"_best")
-                logging.info(f'best epoch: {self.best_epoch}, best epoch loss: {self.best_loss:.4f}')
+                logging.info(f'best epoch: {self.best_epoch}, Total best epoch loss: {self.best_loss*BATCH_SIZE:.4f} Average epoch loss : {self.best_loss/len(self.data_loader_train):.4f}')
 
-    
     def  object_detector_and_classifier_forward_pass_and_backward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
-            # zero the parameter gradients
-            self.optimizer.zero_grad()
-
             # Forward Pass
             object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
             
@@ -215,13 +213,20 @@ class XReportoTrainer():
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                 Total_loss+=selection_classifier_losses
                 Total_loss+=abnormal_binary_classifier_losses
+
+            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
+            
             # backward pass
             Total_loss.backward()
 
-            # update the parameters
-            self.optimizer.step()
-
-            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
+            # Acculmulation Learning
+            if (batch_idx+1) %ACCUMULATION_STEPS==0:
+                # update the parameters
+                self.optimizer.step()
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
+                logging.debug(f' Update losses epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+           
             # Free GPU memory
             del LM_losses
             del object_detector_losses
@@ -235,8 +240,6 @@ class XReportoTrainer():
         for batch in range(BATCH_SIZE):
             total_LM_losses=0
             for i in range(0,loopLength,LM_Batch_Size):
-                # zero the parameter gradients
-                self.optimizer.zero_grad()
 
                 # Forward Pass
                 object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,batch=batch,index=i)
@@ -251,10 +254,21 @@ class XReportoTrainer():
                 Total_loss+=abnormal_binary_classifier_losses
                 Total_loss+=LM_losses
                 total_LM_losses+=LM_losses
+
+                logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+                
+                # backward pass
                 Total_loss.backward()
-                # update the parameters
-                self.optimizer.step()
-            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+
+                #Accumulation learning
+                if (batch_idx+1) %ACCUMULATION_STEPS==0: 
+                    # update the parameters
+                    self.optimizer.step()
+                    # zero the parameter gradients
+                    self.optimizer.zero_grad()
+                    logging.debug(f' Update losses epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+
+
             # Free GPU memory
             del LM_losses
             del object_detector_losses
