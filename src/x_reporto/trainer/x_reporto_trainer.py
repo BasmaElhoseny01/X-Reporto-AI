@@ -225,7 +225,7 @@ class XReportoTrainer():
                 self.optimizer.step()
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
-                logging.debug(f' Update losses epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                logging.debug(f' Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
            
             # Free GPU memory
             del LM_losses
@@ -266,7 +266,7 @@ class XReportoTrainer():
                     self.optimizer.step()
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
-                    logging.debug(f' Update losses epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    logging.debug(f' Update Weights at epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
 
 
             # Free GPU memory

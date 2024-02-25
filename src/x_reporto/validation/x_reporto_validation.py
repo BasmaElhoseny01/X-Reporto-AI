@@ -32,9 +32,8 @@ class XReportoValidation():
         self.model = model
         self.model.to(DEVICE)
         self.validation_csv_path = validation_csv_path
-        logging.info("Train dataset loaded")
-
         self.data_loader_val = DataLoader(dataset=CustomDataset(self.validation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
+        logging.info("Validation dataset loaded")
 
     def Validate(self):
         '''
