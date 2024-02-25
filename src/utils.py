@@ -147,7 +147,7 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
             return listboxes,unique_labels.tolist()
         return listboxes,[]
 
-def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]]):
+def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]]):
     """
     Function that draws the BBoxes on the image.
 
@@ -211,15 +211,18 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
                 )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-        plt.show()
-        cmap = plt.get_cmap("tab20b")
-        height, width = img.shape[1:]
+        save_path="assets/"+str(RUN)+"/image_"+str(img_idx+1)+"_region"+str(j)+".png"
+        plt.savefig(save_path)
+        plt.close()
+        # plt.show()
+        # cmap = plt.get_cmap("tab20b")
+        # height, width = img.shape[1:]
 
-        # Create figure and axes
-        fig, ax = plt.subplots(1, figsize=(16, 8))
+        # # Create figure and axes
+        # fig, ax = plt.subplots(1, figsize=(16, 8))
 
-        # Display the image
-        ax.imshow(img[0])
+        # # Display the image
+        # ax.imshow(img[0])
 
 def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
     """
