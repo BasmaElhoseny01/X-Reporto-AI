@@ -8,6 +8,10 @@ dataset_old_csvs
 
 # Assets
 images
+# Ignore all files in the assets folder
+assets/*
+# Except for text files
+!assets/empty.txt
 
 # Tests
 test.py
