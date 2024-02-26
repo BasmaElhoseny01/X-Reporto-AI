@@ -7,6 +7,7 @@ import os
 import gc
 from tqdm import tqdm
 
+
 # Torch
 import torch
 import torch.optim as optim
@@ -21,7 +22,6 @@ from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint
 
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
-
 
 class XReportoTrainer():
     """
@@ -83,12 +83,25 @@ class XReportoTrainer():
         
         # create data loader
         self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-        # self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
-        logging.info("DataLoader Loaded")
+        logging.info(f"DataLoader Loaded Size: {len(self.data_loader_train)}")
+        
+        self.shuffle_order =list(self.data_loader_train.sampler)
+        # print(self.shuffle_order)
 
         # initialize the best loss to a large value
         self.best_loss = float('inf')
         self.best_epoch = 0
+
+    def load_shuffle_dataloader(self,shuffle_order,start_offset):
+        batch_sampler = torch.utils.data.sampler.BatchSampler(shuffle_order[start_offset:], BATCH_SIZE, drop_last=False)
+
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn,
+                                num_workers=4,
+                                batch_sampler=batch_sampler)
+
+        self.shuffle_order=shuffle_order
+        logging.info(f"DataLoader Shuffle Order Updated :D Size:{len(self.data_loader_train)}")
+
 
     def test_data_loader(self):
         '''
@@ -104,6 +117,7 @@ class XReportoTrainer():
                 assert object_detector_targets[i]['boxes'].shape[1] == 4, f'Batch {batch_idx + 1} has boxes with shape {object_detector_targets[i]["boxes"].shape}'
             # print(f'Batch {batch_idx + 1} has {len(images)} images')
             logging.info(f'Batch {batch_idx + 1} has {len(images)} images')
+
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         '''
         Train X-Reporto on the training dataset depending on the MODEL_STAGE.
@@ -113,20 +127,26 @@ class XReportoTrainer():
         self.model.train()
         total_steps=0
         # for epoch in range(EPOCHS):
-        for epoch in range(start_epoch, start_epoch + EPOCHS-1):
+        for epoch in range(start_epoch, start_epoch + EPOCHS):
             if epoch==start_epoch:
                 # Load loss from chkpt
                 epoch_loss=epoch_loss_init
             else:
                 epoch_loss = 0
             
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train, start=start_batch):     
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train,start=start_batch):
 
-                # # Test Recovery
+                # Test Recovery
                 # if epoch==3 and batch_idx==1:
-                #     raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
-                  
+                    # print("Start Next time from")
+                    # print(object_detector_targets[1])
+                    # print(batch_idx)
+                    # raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
+                # TODO: Test
                 # Move inputs to Device
+                # print(object_detector_targets[0])
+                # print(batch_idx)
+
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
 
@@ -152,14 +172,22 @@ class XReportoTrainer():
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+
+                if (batch_idx+1)%100==0:
+                    # Every 100 Batch print Average Loss for epoch till Now
+                    logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+
                 # Checkpoint
                 total_steps+=1            
                 if(total_steps%CHECKPOINT_EVERY_N ==0):
-                    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+                    save_checkpoint(epoch=epoch,batch_index=batch_idx,shuffle_order=self.shuffle_order,optimizer_state=self.optimizer.state_dict(),
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,best_epoch=self.best_epoch,epoch_loss=epoch_loss)
                     total_steps=0
-            # Free GPU memory 
+
+               
+            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss *BATCH_SIZE:.4f} Average epoch loss : {epoch_loss/len(self.data_loader_train):.4f}')
+            # Free GPU memory
             del Total_loss
             torch.cuda.empty_cache()
             gc.collect()
@@ -198,13 +226,9 @@ class XReportoTrainer():
                 self.best_loss=epoch_loss
                 self.best_epoch=epoch+1
                 save_model(model=model,name=name+"_best")
-                logging.info(f'best epoch: {self.best_epoch}, best epoch loss: {self.best_loss:.4f}')
+                logging.info(f'best epoch: {self.best_epoch}, Total best epoch loss: {self.best_loss*BATCH_SIZE:.4f} Average epoch loss : {self.best_loss/len(self.data_loader_train):.4f}')
 
-    
     def  object_detector_and_classifier_forward_pass_and_backward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
-            # zero the parameter gradients
-            self.optimizer.zero_grad()
-
             # Forward Pass
             object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
             
@@ -215,13 +239,20 @@ class XReportoTrainer():
             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                 Total_loss+=selection_classifier_losses
                 Total_loss+=abnormal_binary_classifier_losses
+
+            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
+            
             # backward pass
             Total_loss.backward()
 
-            # update the parameters
-            self.optimizer.step()
-
-            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
+            # Acculmulation Learning
+            if (batch_idx+1) %ACCUMULATION_STEPS==0:
+                # update the parameters
+                self.optimizer.step()
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
+                logging.debug(f' Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+           
             # Free GPU memory
             del LM_losses
             del object_detector_losses
@@ -235,8 +266,6 @@ class XReportoTrainer():
         for batch in range(BATCH_SIZE):
             total_LM_losses=0
             for i in range(0,loopLength,LM_Batch_Size):
-                # zero the parameter gradients
-                self.optimizer.zero_grad()
 
                 # Forward Pass
                 object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,batch=batch,index=i)
@@ -251,10 +280,21 @@ class XReportoTrainer():
                 Total_loss+=abnormal_binary_classifier_losses
                 Total_loss+=LM_losses
                 total_LM_losses+=LM_losses
+
+                logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+                
+                # backward pass
                 Total_loss.backward()
-                # update the parameters
-                self.optimizer.step()
-            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+
+                #Accumulation learning
+                if (batch_idx+1) %ACCUMULATION_STEPS==0: 
+                    # update the parameters
+                    self.optimizer.step()
+                    # zero the parameter gradients
+                    self.optimizer.zero_grad()
+                    logging.debug(f' Update Weights at epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+
+
             # Free GPU memory
             del LM_losses
             del object_detector_losses
@@ -264,321 +304,7 @@ class XReportoTrainer():
             gc.collect()
         return Total_loss
 
-    # def Validate(self):
-    #     '''
-    #     Evaluate the X-Reporto model on the validation dataset
-    #     '''
-    #     # make model in training mode
-    #     self.model.eval()
-    #     with torch.no_grad():
-        
-    #         for epoch in range(EPOCHS):
-    #             epoch_loss=0
-    #             for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_val):
-                  
-    #                 images=object_detector_batch['image']
-
-    #                 # Move images to Device
-    #                 images = torch.stack([image.to(DEVICE) for image in images])
-
-    #                 # Moving Object Detector Targets to Device
-    #                 object_detector_targets=[]
-    #                 for i in range(len(images)):
-    #                     new_dict={}
-    #                     new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
-    #                     new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
-    #                     object_detector_targets.append(new_dict)
-                        
-    #                 selection_classifier_targets=None
-    #                 abnormal_classifier_targets=None
-    #                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
-    #                     # Selection Classifier
-    #                     # Moving Selection Classifier Targets to Device
-    #                     selection_classifier_targets=[]
-    #                     for i in range(len(images)):
-    #                         phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
-    #                         selection_classifier_targets.append(phrase_exist)
-    #                     selection_classifier_targets=torch.stack(selection_classifier_targets).to(DEVICE)
-
-    #                     # Abnormal Classifier
-    #                     # Moving Object Detector Targets to Device
-    #                     abnormal_classifier_targets=[]
-    #                     for i in range(len(images)):
-    #                         bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
-    #                         abnormal_classifier_targets.append(bbox_is_abnormal)
-    #                     abnormal_classifier_targets=torch.stack(abnormal_classifier_targets).to(DEVICE)
-    #                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                     # Language Model
-    #                     # Moving Language Model Targets to Device
-    #                     LM_targets=[]
-    #                     input_ids=[]
-    #                     attention_mask=[]
-    #                     for i in range(len(images)):
-    #                         phrase=LM_batch['label_ids'][i]
-    #                         LM_targets.append(phrase)
-    #                         input_ids.append(LM_batch['input_ids'][i])
-    #                         attention_mask.append(LM_batch['attention_mask'][i])
-    #                     LM_targets=torch.stack(LM_targets).to(DEVICE)
-    #                     input_ids=torch.stack(input_ids).to(DEVICE)
-    #                     attention_mask=torch.stack(attention_mask).to(DEVICE)
-                        
-    #                     loopLength= input_ids.shape[1]
-    #                     for batch in range(BATCH_SIZE):
-    #                         total_LM_losses=0
-    #                         for i in range(0,loopLength,LM_Batch_Size):
-
-    #                             # Forward Pass  
-    #                             object_detector_losses,_,_,selection_classifier_losses,_,abnormal_binary_classifier_losses,_,LM_losses,_,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i,i+LM_Batch_Size>=loopLength and batch+1==BATCH_SIZE)
-                                
-    #                             if stop:
-    #                                 break
-    #                             Total_loss=None
-    #                             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-    #                             Total_loss=object_detector_losses_summation.clone()
-    #                             Total_loss+=selection_classifier_losses
-    #                             Total_loss+=abnormal_binary_classifier_losses
-    #                             Total_loss+=LM_losses
-    #                             total_LM_losses+=LM_losses
-    #                             epoch_loss += Total_loss
-
-    #                         if DEBUG :
-    #                             print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-                
-    #                 else:
-    #                     # Forward Pass
-    #                     object_detector_losses,_,_,selection_classifier_losses,_,abnormal_binary_classifier_losses,_,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None,None,True)
-                        
-    #                     # Backward pass
-    #                     Total_loss=None
-    #                     object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-    #                     Total_loss=object_detector_losses_summation.clone()
-    #                     if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                         Total_loss+=selection_classifier_losses
-    #                         Total_loss+=abnormal_binary_classifier_losses
-            
-    #                     epoch_loss += Total_loss
-
-    #                     if DEBUG :
-    #                         print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
-
-    #                 Total_loss=None
-    #                 object_detector_losses_summation = object_detector_losses
-    #                 Total_loss=object_detector_losses
-    #                 if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-    #                     Total_loss+=selection_classifier_losses
-    #                     Total_loss+=abnormal_binary_classifier_losses
-    #                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                     Total_loss+=LM_losses
-
-    #                 # Free GPU memory
-    #                 Total_loss=Total_loss.to('cpu')
-    #                 # move object_detector_losses to cpu
-    #                 for key in object_detector_losses:
-    #                     object_detector_losses[key]=object_detector_losses[key].to('cpu')
-    #                 selection_classifier_losses=selection_classifier_losses.to('cpu')
-    #                 abnormal_binary_classifier_losses=abnormal_binary_classifier_losses.to('cpu')
-    #                 LM_losses=LM_losses.to('cpu')
-    #                 del LM_losses
-    #                 del Total_loss
-    #                 del object_detector_losses
-    #                 del selection_classifier_losses
-    #                 del abnormal_binary_classifier_losses
-    #                 torch.cuda.empty_cache()
-    #                 gc.collect()
-    #                 print("losses deleted")
-   
-    # def predict_and_display(self,predict_path_csv=None):
-    #     '''
-    #     Predict the output and display it with golden output.
-    #     Each image is displayed in 5 sub-images with 6 labels in each sub-image.
-    #     The golden output is dashed, and the predicted output is solid.
-
-    #     Args:
-    #         predict_path_csv (str): Path to the CSV file for prediction. (Default: None)
-    #     '''
-    #     if predict_path_csv==None:
-    #             predicted_dataloader=self.data_loader_val
-    #     else:
-    #             predicted_data = CustomDataset(dataset_path= predict_path_csv, transform_type='val')
-
-    #             # create data loader
-    #             predicted_dataloader = DataLoader(dataset=predicted_data, batch_size=1, shuffle=False, num_workers=4)
-                
-    #     # make model in Evaluation mode
-    #     self.model.eval()
-    #     with torch.no_grad():
-    #         epoch_loss=0
-    #         for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(predicted_dataloader):
-    #             # Check GPU memory usage
-                
-    #             images=object_detector_batch['image']
-
-    #             # Move images to Device
-    #             images = torch.stack([image.to(DEVICE) for image in images])
-
-    #             # Moving Object Detector Targets to Device
-    #             object_detector_targets=[]
-    #             for i in range(len(images)):
-    #                 new_dict={}
-    #                 new_dict['boxes']=object_detector_batch['bboxes'][i].to(DEVICE)
-    #                 new_dict['labels']=object_detector_batch['bbox_labels'][i].to(DEVICE)
-    #                 object_detector_targets.append(new_dict)
-                    
-    #             selection_classifier_targets=None
-    #             abnormal_classifier_targets=None
-    #             if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                 # Selection Classifier
-    #                 # Moving Selection Classifier Targets to Device
-    #                 selection_classifier_targets=[]
-    #                 for i in range(len(images)):
-    #                     phrase_exist=selection_classifier_batch['bbox_phrase_exists'][i]
-    #                     selection_classifier_targets.append(phrase_exist)
-    #                 selection_classifier_targets=torch.stack(selection_classifier_targets).to(DEVICE)
-
-    #                 # Abnormal Classifier
-    #                 # Moving Object Detector Targets to Device
-    #                 abnormal_classifier_targets=[]
-    #                 for i in range(len(images)):
-    #                     bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal'][i]
-    #                     abnormal_classifier_targets.append(bbox_is_abnormal)
-    #                 abnormal_classifier_targets=torch.stack(abnormal_classifier_targets).to(DEVICE)
-    #             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                 # Language Model
-    #                 # Moving Language Model Targets to Device
-    #                 LM_targets=[]
-    #                 input_ids=[]
-    #                 attention_mask=[]
-    #                 for i in range(len(images)):
-    #                     phrase=LM_batch['label_ids'][i]
-    #                     LM_targets.append(phrase)
-    #                     input_ids.append(LM_batch['input_ids'][i])
-    #                     attention_mask.append(LM_batch['attention_mask'][i])
-    #                 LM_targets=torch.stack(LM_targets).to(DEVICE)
-    #                 input_ids=torch.stack(input_ids).to(DEVICE)
-    #                 attention_mask=torch.stack(attention_mask).to(DEVICE)
-    #                 loopLength= input_ids.shape[1]
-    #                 for batch in range(BATCH_SIZE):
-    #                     total_LM_losses=0
-    #                     for i in range(0,loopLength,LM_Batch_Size):
-    #                         # Forward Pass
-    #                         object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_losses,LM_predict,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i,i+LM_Batch_Size>=loopLength-1)
-    #                         if stop:
-    #                             break
-    #                         print("selection looses ",selection_classifier_losses)
-    #                         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-    #                         Total_loss=object_detector_losses_summation.clone()
-    #                         Total_loss+=selection_classifier_losses
-    #                         Total_loss+=abnormal_binary_classifier_losses
-    #                         Total_loss+=LM_losses
-    #                         total_LM_losses+=LM_losses
-    #                         print(LM_predict)
-    #                         generated_sents_for_selected_regions = self.tokenizer.batch_decode(LM_predict, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-    #                         print("Generated Sentences for Selected Regions: ", generated_sents_for_selected_regions)
-    #                         # sys.exit()
-    #                         with open("logs/predictions.txt", "a") as myfile:
-    #                             # don't know the text TODO: 
-    #                             # myfile.write
-    #                             myfile.write("\n")
-
-    #                         if DEBUG :
-    #                             print(f'Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-                
-    #             else:
-    #                 # Forward Pass
-    #                 object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None,None,True)
-    #                 Total_loss=None
-    #                 object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-    #                 Total_loss=object_detector_losses_summation.clone()
-    #                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                     Total_loss+=selection_classifier_losses
-    #                     Total_loss+=abnormal_binary_classifier_losses
-    #                 epoch_loss += Total_loss
-
-    #                 if DEBUG :
-    #                     print(f' Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
-                
-    #             plot_image(images[0].cpu(),object_detector_targets[0]["labels"].tolist(),object_detector_targets[0]["boxes"].tolist(),object_detector_detected_classes[0].tolist(),object_detector_boxes[0].tolist())
-
-    #             Total_loss=None
-    #             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-    #             Total_loss=object_detector_losses_summation.clone()
-    #             if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-    #                 Total_loss+=selection_classifier_losses
-    #                 Total_loss+=abnormal_binary_classifier_losses
-    #             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                 Total_loss+=LM_losses
-                
-                
-    #             Total_loss=None
-    #             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-    #             Total_loss=object_detector_losses_summation.clone()
-    #             if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-    #                 Total_loss+=selection_classifier_losses
-    #                 Total_loss+=abnormal_binary_classifier_losses
-    #             if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-    #                 Total_loss+=LM_losses
-
-    #             if DEBUG :
-    #                 # FreeGPU gpu memory
-    #                 del Total_loss
-    #                 del object_detector_losses
-    #                 del selection_classifier_losses
-    #                 del abnormal_binary_classifier_losses
-    #                 torch.cuda.empty_cache()
-                    
-    #                 # To Test Overfitting break
-    #                 break
-
-
-    # def generate_sentences(self,predict_path_csv=None):
-    #     '''
-    #     Predict the output and display it with golden output.
-    #     Each image is displayed in 5 sub-images with 6 labels in each sub-image.
-    #     The golden output is dashed, and the predicted output is solid.
-
-    #     Args:
-    #         predict_path_csv (str): Path to the CSV file for prediction. (Default: None)
-    #     '''
-    #     if predict_path_csv==None:
-    #             predicted_dataloader=self.data_loader_val
-    #     else:
-    #             predicted_data = CustomDataset(dataset_path= predict_path_csv, transform_type='val',tokenizer=self.tokenizer)
-
-    #             # create data loader
-    #             predicted_dataloader = DataLoader(dataset=predicted_data, batch_size=1, shuffle=False, num_workers=4)
-                
-    #     # make model in Evaluation mode
-    #     self.model.eval()
-    #     with torch.no_grad():
-    #         epoch_loss=0
-    #         for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(predicted_dataloader):
-    #             # Check GPU memory usage
-    #             images=object_detector_batch['image']
-    #             reference_sentences=[]
-    #             for i in range(len(images)):
-    #                 reference_sentences.append(LM_batch['bbox_phrase'])
-                       
-    #             # Move images to Device
-    #             images = torch.stack([image.to(DEVICE) for image in images])
-    #             loopLength=29
-    #             for batch in range(BATCH_SIZE):
-    #                 for i in range(0,loopLength,LM_Batch_Size):
-    #                     # Forward Pass
-    #                     # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
-    #                     LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True,use_beam_search=True)
-    #                     tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
-    #                     for sentence in LM_sentances:
-    #                         generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
-    #                         print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
-    #                         with open("logs/predictions.txt", "a") as myfile:
-    #                             myfile.write(generated_sentence_for_selected_regions)
-    #                             myfile.write("\n")
-    #                     print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
-                        
-    #                     if stop:
-    #                         break
-                        
-        
+    
 
 def collate_fn(batch):
     batch = list(filter(lambda x: x is not None, batch))
@@ -622,28 +348,6 @@ def collate_fn(batch):
 
     return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
-# def set_data(args):
-#     # read hyper-parameters from terminal
-#     # if not set read from config.py file
-#     if (len(args)>1):
-#         global EPOCHS
-#         EPOCHS = int(args[1])
-#         if (len(args)>2):
-#             global LEARNING_RATE
-#             LEARNING_RATE=float(args[2])
-#             if (len(args)>3):
-#                 global BATCH_SIZE
-#                 BATCH_SIZE=int(args[3])
-#                 if (len(args)>4):
-#                     global MODEL_STAGE
-#                     MODEL_STAGE=int(args[4])
-#                     if (len(args)>5):
-#                         global SCHEDULAR_STEP_SIZE
-#                         SCHEDULAR_STEP_SIZE=float(args[5])
-#                         if (len(args)>6):
-#                             global SCHEDULAR_GAMMA
-#                             SCHEDULAR_GAMMA=float(args[6])
-
 def main():
     logging.info("Training X_Reporto Started")
     # Logging Configurations
@@ -680,6 +384,13 @@ def main():
         # Load Model state
         x_reporto_model.load_state_dict(checkpoint['model_state'])
 
+        # Batch to start from
+        start_batch=checkpoint['batch_index']+1
+
+        # shuffle_order For the DataLoader
+        shuffle_order=checkpoint['shuffle_order']
+        trainer.load_shuffle_dataloader(shuffle_order=shuffle_order,start_offset=start_batch*BATCH_SIZE)
+
         # Load scheduler_state_dict
         trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
@@ -690,8 +401,9 @@ def main():
         trainer.best_loss=checkpoint['best_loss']
         trainer.best_epoch=checkpoint['best_epoch']
 
+
         # Start Train form checkpoint ends
-        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=checkpoint['batch_index'])
+        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
 
     else:
         # No check point
@@ -712,26 +424,3 @@ if __name__ == '__main__':
     except Exception as e:
         # Log any exceptions that occur
         logging.exception("An error occurred",exc_info=True)
-    
-   
-
-
-    # x_reporto_model = XReporto().create_model()
-
-    # # Create an XReportoTrainer instance with the X-Reporto model
-    # trainer = XReportoTrainer(model=x_reporto_model)
-
-    # Alternatively, create an XReportoTrainer instance without specifying the model
-    # trainer = XReportoTrainer()
-
-    # # Train the X-Reporto model on the training dataset
-    # trainer.train()
-
-    # # Run Validation
-    # trainer.Validate()
-
-    # # Predict and display results
-    # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
-    # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
-    # python -m src.x_reporto.trainer.x_reporto_trainer
-    #python -m src.x_reporto.trainer.x_reporto_trainer 2>&1 | tee logs.log

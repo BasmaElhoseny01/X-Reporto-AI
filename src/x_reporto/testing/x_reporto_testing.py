@@ -16,37 +16,38 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-
+from src.utils import plot_image
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
 
 
-class XReportoValidation():
-    def __init__(self, model:XReporto,validation_csv_path:str = validation_csv_path):
+class XReportoTesting():
+    def __init__(self, model:XReporto,test_csv_path:str = test_csv_path):
         '''
-        X-Reporto Validation Class
+        X-Reporto test Class
         Args:
         model: X-Reporto Model
-        validation_csv_path: Path to the validation csv file
+        test_csv_path: Path to the test csv file
         ''' 
         self.model = model
         self.model.to(DEVICE)
-        self.validation_csv_path = validation_csv_path
-        self.data_loader_val = DataLoader(dataset=CustomDataset(self.validation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
-        logging.info("Validation dataset loaded")
+        self.test_csv_path = test_csv_path
+        self.data_loader_test = DataLoader(dataset=CustomDataset(self.test_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
+        logging.info("Test dataset loaded")
 
-    def Validate(self):
+    def testing(self):
         '''
         Evaluate the X-Reporto model on the validation dataset
         '''
         # make model in training mode
-        logging.info("Start Validation")
+        logging.info("Start Testing")
         self.model.eval()
         with torch.no_grad():
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):                
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
+                #   
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Selection Classifier
                     # Moving Selection Classifier Targets to Device
@@ -60,13 +61,16 @@ class XReportoValidation():
                     attention_mask = LM_inputs['attention_mask'].to(DEVICE)
                     loopLength= input_ids.shape[1]
                     Total_loss=self.language_model_forward_pass(batch_idx=batch_idx,images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
-                else:
-                    Total_loss=self.object_detector_and_classifier_forward_pass(batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+                elif ModelStage.CLASSIFIER.value==MODEL_STAGE or ModelStage.OBJECT_DETECTOR.value==MODEL_STAGE:
+                    Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions=self.object_detector_and_classifier_forward_pass(batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+                    for i in range(images.shape[0]):
+                        plot_image(images[i].cpu(),i,object_detector_targets[i]["labels"].tolist(),object_detector_targets[i]["boxes"].tolist(),object_detector_detected_classes[i].tolist(),object_detector_boxes[i].tolist())
+                    logging.info("Saving image")
             # Free GPU memory 
             del Total_loss
             torch.cuda.empty_cache()
             gc.collect()  
-        logging.info("Vaildation Done")
+        logging.info("Testing Done")
         
     def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,batch_idx:int,loopLength:int,LM_Batch_Size:int):
         for batch in range(BATCH_SIZE):
@@ -100,8 +104,7 @@ class XReportoValidation():
     def  object_detector_and_classifier_forward_pass(self,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
 
             # Forward Pass
-            object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
-            
+            object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,_,_,_= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
             # Backward pass
             Total_loss=None
             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
@@ -118,7 +121,7 @@ class XReportoValidation():
             del abnormal_binary_classifier_losses
             torch.cuda.empty_cache()
             gc.collect()
-            return Total_loss
+            return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
 
 def collate_fn(batch):
         image_shape = batch[0][0]["image"].size()
@@ -161,30 +164,30 @@ def collate_fn(batch):
 
         return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
-
+   
 
 def main():
     
     logging.info(" X_Reporto Started")
     # Logging Configurations
     log_config()
-    if OperationMode.VALIDATION.value!=OPERATION_MODE :
-        raise Exception("Operation Mode is not Validation Mode")
+    if OperationMode.TESTING.value!=OPERATION_MODE :
+        raise Exception("Operation Mode is not Testing Mode")
    
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
 
     # Create an XReportoTrainer instance with the X-Reporto model
-    validator = XReportoValidation(model=x_reporto_model)
+    validator = XReportoTesting(model=x_reporto_model)
 
 
     # # Start Training
-    validator.Validate()
+    validator.testing()
         
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
-    setup_logging(log_file_path='./logs/x_reporto_validator.log',bash=True,periodic_logger=PERIODIC_LOGGING)
+    setup_logging(log_file_path='./logs/x_reporto_Tester.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
     try:
         # The main script runs here

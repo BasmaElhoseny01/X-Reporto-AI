@@ -147,7 +147,7 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
             return listboxes,unique_labels.tolist()
         return listboxes,[]
 
-def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]]):
+def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]]):
     """
     Function that draws the BBoxes on the image.
 
@@ -211,15 +211,18 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
                 )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-        plt.show()
-        cmap = plt.get_cmap("tab20b")
-        height, width = img.shape[1:]
+        save_path="assets/"+str(RUN)+"/image_"+str(img_idx+1)+"_region"+str(j)+".png"
+        plt.savefig(save_path)
+        plt.close()
+        # plt.show()
+        # cmap = plt.get_cmap("tab20b")
+        # height, width = img.shape[1:]
 
-        # Create figure and axes
-        fig, ax = plt.subplots(1, figsize=(16, 8))
+        # # Create figure and axes
+        # fig, ax = plt.subplots(1, figsize=(16, 8))
 
-        # Display the image
-        ax.imshow(img[0])
+        # # Display the image
+        # ax.imshow(img[0])
 
 def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
     """
@@ -305,7 +308,7 @@ def cuda_memory_info(title=""):
     print("==========================================================================================================")
 
 
-def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,best_epoch:int,epoch_loss:float):
+def save_checkpoint(epoch:int,batch_index:int,shuffle_order:List,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,best_epoch:int,epoch_loss:float):
     checkpoint={
     "model_state":model_state, #
     "scheduler_state_dict":scheduler_state_dict, #
@@ -315,6 +318,7 @@ def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_sta
     "epoch":epoch,#
     "epoch_loss":epoch_loss,#
     "batch_index":batch_index,#
+    'shuffle_order': shuffle_order,
     # "config":get_config()
     }
 

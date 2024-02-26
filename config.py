@@ -26,6 +26,9 @@ TRAIN_RPN=True # Tain only RPN of the object detector
 RUN = "0"
 EPOCHS=5
 BATCH_SIZE=32
+#   TODO: change to 64
+EFFECTIVE_BATCH_SIZE = 64
+ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=0.0001
 SCHEDULAR_STEP_SIZE=750 #
@@ -42,6 +45,7 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 # Pathes to the external files
 training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/train.csv'
+test_csv_path:str = 'datasets/train.csv'
 
 # Logging
 PERIODIC_LOGGING=True
@@ -49,6 +53,9 @@ PERIODIC_LOGGING=True
 # Checkpointing
 CHECKPOINT_EVERY_N=300
 RECOVER=True
+
+
+
 
 
 def log_config():
@@ -63,6 +70,8 @@ def log_config():
     logging.info(f"RUN: {RUN}")
     logging.info(f"EPOCHS: {EPOCHS}")
     logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
+    logging.info(f"EFFECTIVE_BATCH_SIZE: {EFFECTIVE_BATCH_SIZE}")
+    logging.info(f"ACCUMULATION_STEPS: {ACCUMULATION_STEPS}")
     logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
 
     logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
@@ -94,6 +103,8 @@ def get_config():
     "RUN": RUN,
     "EPOCHS": EPOCHS,
     "BATCH_SIZE": BATCH_SIZE,
+    "EFFECTIVE_BATCH_SIZE": EFFECTIVE_BATCH_SIZE,
+    "ACCUMULATION_STEPS": ACCUMULATION_STEPS,
     "LM_Batch_Size": LM_Batch_Size,
     "LEARNING_RATE": LEARNING_RATE,
     "SCHEDULAR_STEP_SIZE": SCHEDULAR_STEP_SIZE,
