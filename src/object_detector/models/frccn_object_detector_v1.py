@@ -183,8 +183,8 @@ class FrcnnObjectDetectorV1(nn.Module):
                 "top_region_features"
             }
         """
-        if targets is not None:
-            self._check_targets(targets)
+        # if targets is not None:
+        #     self._check_targets(targets)
 
         # Features extracted from backbone feature map is 16*16 depth is 2048 [batch_size x 2048 x 16 x 16]
         features=self.backbone(images)

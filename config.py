@@ -21,14 +21,14 @@ OPERATION_MODE=1
 MODEL_STAGE=1
 
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
-RUN = "0"
-EPOCHS=5
-BATCH_SIZE=32
+CONTINUE_TRAIN=True# Continue training
+TRAIN_RPN=False # Tain only RPN of the object detector
+RUN = "1"
+EPOCHS=2
+BATCH_SIZE=16
 LM_Batch_Size=1
-LEARNING_RATE=0.0001
-SCHEDULAR_STEP_SIZE=750 #
+LEARNING_RATE=0.00006
+SCHEDULAR_STEP_SIZE=4000 #
 SCHEDULAR_GAMMA=0.9
 # Debgging COnfigurations
 DEBUG=True
@@ -47,8 +47,8 @@ validation_csv_path:str = 'datasets/train.csv'
 PERIODIC_LOGGING=True
 
 # Checkpointing
-CHECKPOINT_EVERY_N=300
-RECOVER=True
+CHECKPOINT_EVERY_N=1000
+RECOVER=False
 
 
 def log_config():
