@@ -172,6 +172,11 @@ class XReportoTrainer():
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+
+                if (batch_idx+1)%100==0:
+                    # Every 100 Batch print Average Loss for epoch till Now
+                    logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+
                 # Checkpoint
                 total_steps+=1            
                 if(total_steps%CHECKPOINT_EVERY_N ==0):
@@ -179,6 +184,8 @@ class XReportoTrainer():
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,best_epoch=self.best_epoch,epoch_loss=epoch_loss)
                     total_steps=0
+
+               
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss *BATCH_SIZE:.4f} Average epoch loss : {epoch_loss/len(self.data_loader_train):.4f}')
             # Free GPU memory
             del Total_loss
