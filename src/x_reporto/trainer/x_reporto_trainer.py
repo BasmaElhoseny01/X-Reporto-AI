@@ -7,6 +7,8 @@ import os
 import gc
 from tqdm import tqdm
 
+import sys
+
 
 # Torch
 import torch
@@ -18,7 +20,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint
+from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker
 
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
@@ -82,9 +84,11 @@ class XReportoTrainer():
         # logging.info("Validate dataset loaded")
         
         # create data loader
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-        logging.info(f"DataLoader Loaded Size: {len(self.data_loader_train)}")
-
+        g = torch.Generator()
+        g.manual_seed(SEED)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, worker_init_fn=seed_worker, generator=g)
+        logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
+      
         # initialize the best loss to a large value
         self.best_loss = float('inf')
         self.best_epoch = 0
@@ -134,6 +138,8 @@ class XReportoTrainer():
                 # Move inputs to Device
                 # print(object_detector_targets[0])
                 # print(batch_idx)
+                print(images[0,:,200:250,200:250])
+                sys.exit()
 
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]

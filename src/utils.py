@@ -3,10 +3,11 @@ from torch import Tensor
 from typing import Dict, List, Union
 
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 from matplotlib import patches
-from config import *
 
+from config import *
 
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """
@@ -338,3 +339,9 @@ def load_checkpoint(run):
     logging.info('Loading Check point at' + checkpoint_path)
     checkpoint = torch.load(checkpoint_path)
     return checkpoint
+
+def seed_worker(worker_id):
+    """To preserve reproducibility for the randomly shuffled train loader."""
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
