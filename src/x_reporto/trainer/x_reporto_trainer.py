@@ -84,23 +84,11 @@ class XReportoTrainer():
         # create data loader
         self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
         logging.info(f"DataLoader Loaded Size: {len(self.data_loader_train)}")
-        
-        self.shuffle_order =list(self.data_loader_train.sampler)
-        # print(self.shuffle_order)
 
         # initialize the best loss to a large value
         self.best_loss = float('inf')
         self.best_epoch = 0
 
-    def load_shuffle_dataloader(self,shuffle_order,start_offset):
-        batch_sampler = torch.utils.data.sampler.BatchSampler(shuffle_order[start_offset:], BATCH_SIZE, drop_last=False)
-
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn,
-                                num_workers=4,
-                                batch_sampler=batch_sampler)
-
-        self.shuffle_order=shuffle_order
-        logging.info(f"DataLoader Shuffle Order Updated :D Size:{len(self.data_loader_train)}")
 
 
     def test_data_loader(self):
@@ -180,7 +168,7 @@ class XReportoTrainer():
                 # Checkpoint
                 total_steps+=1            
                 if(total_steps%CHECKPOINT_EVERY_N ==0):
-                    save_checkpoint(epoch=epoch,batch_index=batch_idx,shuffle_order=self.shuffle_order,optimizer_state=self.optimizer.state_dict(),
+                    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,best_epoch=self.best_epoch,epoch_loss=epoch_loss)
                     total_steps=0
@@ -386,10 +374,6 @@ def main():
 
         # Batch to start from
         start_batch=checkpoint['batch_index']+1
-
-        # shuffle_order For the DataLoader
-        shuffle_order=checkpoint['shuffle_order']
-        trainer.load_shuffle_dataloader(shuffle_order=shuffle_order,start_offset=start_batch*BATCH_SIZE)
 
         # Load scheduler_state_dict
         trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
