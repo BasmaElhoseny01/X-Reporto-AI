@@ -3,10 +3,11 @@ from torch import Tensor
 from typing import Dict, List, Union
 
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 from matplotlib import patches
-from config import *
 
+from config import *
 
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """
@@ -308,7 +309,7 @@ def cuda_memory_info(title=""):
     print("==========================================================================================================")
 
 
-def save_checkpoint(epoch:int,batch_index:int,shuffle_order:List,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,epoch_loss:float):
+def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,epoch_loss:float):
     checkpoint={
     "model_state":model_state, #
     "scheduler_state_dict":scheduler_state_dict, #
@@ -317,7 +318,6 @@ def save_checkpoint(epoch:int,batch_index:int,shuffle_order:List,optimizer_state
     "epoch":epoch,#
     "epoch_loss":epoch_loss,#
     "batch_index":batch_index,#
-    'shuffle_order': shuffle_order,
     # "config":get_config()
     }
 
@@ -338,3 +338,9 @@ def load_checkpoint(run):
     logging.info('Loading Check point at' + checkpoint_path)
     checkpoint = torch.load(checkpoint_path)
     return checkpoint
+
+def seed_worker(worker_id):
+    """To preserve reproducibility for the randomly shuffled train loader."""
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)

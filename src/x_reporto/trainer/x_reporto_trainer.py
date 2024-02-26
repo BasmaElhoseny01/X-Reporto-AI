@@ -18,7 +18,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint
+from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker
 
 from config import *
 
@@ -77,33 +77,22 @@ class XReportoTrainer():
 
         # create dataset
         self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
-        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         logging.info("Train dataset loaded")
-        # self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
-        # logging.info("Validate dataset loaded")
-        
-        # create data loader
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-        # TODO: Test
-        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
+        logging.info("Validation dataset loaded")
 
-        logging.info(f"DataLoader Loaded Size: {len(self.data_loader_train)}")
-        
-        self.shuffle_order =list(self.data_loader_train.sampler)
-        # print(self.shuffle_order)
+        # create data loader
+        g = torch.Generator()
+        g.manual_seed(SEED)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4, worker_init_fn=seed_worker, generator=g)
+        logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
+      
+        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
 
         # initialize the best loss to a large value
         self.best_loss = float('inf')
 
-    def load_shuffle_dataloader(self,shuffle_order,start_offset):
-        batch_sampler = torch.utils.data.sampler.BatchSampler(shuffle_order[start_offset:], BATCH_SIZE, drop_last=False)
-
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn,
-                                num_workers=4,
-                                batch_sampler=batch_sampler)
-
-        self.shuffle_order=shuffle_order
-        logging.info(f"DataLoader Shuffle Order Updated :D Size:{len(self.data_loader_train)}")
 
     def test_data_loader(self):
         '''
@@ -135,8 +124,10 @@ class XReportoTrainer():
                 epoch_loss=epoch_loss_init
             else:
                 epoch_loss = 0
-            
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train,start=start_batch):
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):
+
+                if batch_idx < start_batch:
+                    continue  # Skip batches until reaching the desired starting batch number
 
                 # Test Recovery
                 # if epoch==3 and batch_idx==1:
@@ -193,7 +184,7 @@ class XReportoTrainer():
                 # Checkpoint
                 total_steps+=1            
                 if(total_steps%CHECKPOINT_EVERY_N ==0):
-                    save_checkpoint(epoch=epoch,batch_index=batch_idx,shuffle_order=self.shuffle_order,optimizer_state=self.optimizer.state_dict(),
+                    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,epoch_loss=epoch_loss)
                     total_steps=0
@@ -407,10 +398,6 @@ def main():
 
         # Batch to start from
         start_batch=checkpoint['batch_index']+1
-
-        # shuffle_order For the DataLoader
-        shuffle_order=checkpoint['shuffle_order']
-        trainer.load_shuffle_dataloader(shuffle_order=shuffle_order,start_offset=start_batch*BATCH_SIZE)
 
         # Load scheduler_state_dict
         trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
