@@ -143,7 +143,7 @@ class XReportoV1(nn.Module):
 
             
 
-    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch:Optional[int]=None,index:Optional[int]=None,delete:Optional[bool]= False,generate_sentence :Optional[bool]=False,use_beam_search :Optional[bool] = False):
+    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch:Optional[int]=None,index:Optional[int]=None,delete:Optional[bool]= False,generate_sentence :Optional[bool]=False,use_beam_search :Optional[bool] = False,validate_during_training:Optional[bool]=False):
         '''
         Forward pass through the X-ReportoV1 model.
 
@@ -269,7 +269,7 @@ class XReportoV1(nn.Module):
 
        '''
         stop=False
-        if OPERATION_MODE==OperationMode.TRAINING.value:
+        if OPERATION_MODE==OperationMode.TRAINING.value and self.training:
             # Training
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
@@ -327,7 +327,8 @@ class XReportoV1(nn.Module):
                 torch.cuda.empty_cache()
 
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
-        if OPERATION_MODE==OperationMode.VALIDATION.value:
+       
+        if OPERATION_MODE==OperationMode.VALIDATION.value or validate_during_training:
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
             if delete:

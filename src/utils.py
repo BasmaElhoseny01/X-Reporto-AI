@@ -309,13 +309,12 @@ def cuda_memory_info(title=""):
     print("==========================================================================================================")
 
 
-def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,best_epoch:int,epoch_loss:float):
+def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,epoch_loss:float):
     checkpoint={
     "model_state":model_state, #
     "scheduler_state_dict":scheduler_state_dict, #
     "optimizer_state":optimizer_state,#
     "best_loss":best_loss, #
-    "best_epoch":best_epoch,#
     "epoch":epoch,#
     "epoch_loss":epoch_loss,#
     "batch_index":batch_index,#

@@ -106,7 +106,7 @@ class XReportoValidation():
             Total_loss=None
             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
             Total_loss=object_detector_losses_summation.clone()
-            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value:
                 Total_loss+=selection_classifier_losses
                 Total_loss+=abnormal_binary_classifier_losses
 
