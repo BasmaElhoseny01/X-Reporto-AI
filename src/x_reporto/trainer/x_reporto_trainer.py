@@ -69,10 +69,10 @@ class XReportoTrainer():
         self.model.to(DEVICE)
 
         # create adam optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), lr= LEARNING_RATE)
+        self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
+        self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
 
         # create dataset
         self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
@@ -171,7 +171,7 @@ class XReportoTrainer():
                     logging.debug(f' Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
                     
                 # update the learning rate
-                self.lr_scheduler.step()
+                self.lr_scheduler.step(Total_loss)
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
@@ -195,10 +195,8 @@ class XReportoTrainer():
             gc.collect()
             # validate the model
             self.model.eval()
-            change_operation_mode(OperationMode.VALIDATION.value)
             validation_loss= self.validate_during_training()  #sechdule the learning rate
             self.model.train()
-            change_operation_mode(OperationMode.TRAINING.value)
 
             # saving model per epoch
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
@@ -226,7 +224,7 @@ class XReportoTrainer():
         save_model(model=model,name=name+"_epoch_"+str(epoch+1))
         self.check_best_model(epoch,validation_loss,name,model)  
 
-    def check_best_model(self,epoch:int,batch_idx:int,validation_loss:float,name:str,model:torch.nn.Module):
+    def check_best_model(self,epoch:int,validation_loss:float,name:str,model:torch.nn.Module):
         '''
         Check if the current model is the best model
         '''
