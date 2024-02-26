@@ -7,6 +7,7 @@ import os
 import gc
 from tqdm import tqdm
 
+from torch.utils.tensorboard import SummaryWriter
 
 # Torch
 import torch
@@ -56,7 +57,7 @@ class XReportoTrainer():
         >>> # Predict and display results
         >>> trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
     """
-    def __init__(self, model:XReporto,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path):
+    def __init__(self, model:XReporto,tensor_board_writer:SummaryWriter,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path):
         '''
         inputs:
             training_csv_path (str): the path to the training csv file
@@ -64,6 +65,8 @@ class XReportoTrainer():
             model Optional[XReporto]: the x_reporto model instance to be trained.If not provided, the model is loaded from a .pth file.
         '''
         self.model = model
+
+        self.tensor_board_writer=tensor_board_writer
 
         # Move to device
         self.model.to(DEVICE)
@@ -159,7 +162,7 @@ class XReportoTrainer():
                 else:
                     Total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
                     epoch_loss += Total_loss
-
+            
                 # backward pass
                 Total_loss.backward()
                 # Acculmulation Learning
@@ -175,6 +178,9 @@ class XReportoTrainer():
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+               
+                self.tensor_board_writer.add_scalar('Learning Rate Epoch' + str(epoch),new_lr,batch_idx+1)
+
 
                 if (batch_idx+1)%100==0:
                     # Every 100 Batch print Average Loss for epoch till Now
@@ -233,10 +239,14 @@ class XReportoTrainer():
                 save_model(model=model,name=name+"_best")
                 logging.info(f"Best Model Updated: {name}_best at epoch {epoch+1} with Average validation loss: {self.best_loss:.4f}")
 
-    def  object_detector_and_classifier_forward_pass(self,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,validate_during_training:bool=False):
+    def  object_detector_and_classifier_forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,validate_during_training:bool=False):
         # Forward Pass
         object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
         
+        logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+        self.tensor_board_writer.add_scalar('Object Detector Loss (Per Batch) Epoch' + str(epoch),object_detector_losses_summation,batch_idx+1)
+
+
         Total_loss=None
         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
         Total_loss=object_detector_losses_summation.clone()
@@ -380,11 +390,21 @@ def main():
     else:
         logging.info(f"Folder '{folder_path}' already exists.")
 
+    # Creating tensorboard folder
+    folder_path="tensor_boards/" + str(RUN)
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        logging.info(f"Folder '{folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{folder_path}' already exists.")
+
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
 
+    tensor_board_writer=SummaryWriter(folder_path)
+
     # Create an XReportoTrainer instance with the X-Reporto model
-    trainer = XReportoTrainer(model=x_reporto_model)
+    trainer = XReportoTrainer(model=x_reporto_model,tensor_board_writer=tensor_board_writer)
 
     if RECOVER:
         # Load the state of model

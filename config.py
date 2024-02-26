@@ -23,7 +23,7 @@ MODEL_STAGE=1
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
-RUN = "0"
+RUN = "1"
 EPOCHS=5
 BATCH_SIZE=1
 #   TODO: change to 64
