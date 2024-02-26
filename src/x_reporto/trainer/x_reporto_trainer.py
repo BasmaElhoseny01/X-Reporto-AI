@@ -244,17 +244,15 @@ class XReportoTrainer():
         # Forward Pass
         object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
         
-
-
         Total_loss=None
         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
         Total_loss=object_detector_losses_summation.clone()
         if MODEL_STAGE==ModelStage.CLASSIFIER.value:
             Total_loss+=selection_classifier_losses
             Total_loss+=abnormal_binary_classifier_losses
-
-        logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
-        self.tensor_board_writer.add_scalar('Epoch'+str(epoch+1)+'/Object Detector Loss (Per Batch)',object_detector_losses_summation,batch_idx+1)
+        if not validate_during_training:
+            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
+            self.tensor_board_writer.add_scalar('Epoch'+str(epoch+1)+'/Object Detector Loss (Per Batch)',object_detector_losses_summation,batch_idx+1)
         
         del LM_losses
         del object_detector_losses
@@ -319,12 +317,13 @@ class XReportoTrainer():
                     loopLength= input_ids.shape[1]
                     validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
                 else:
-                    total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,mages=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+                    total_loss=self.object_detector_and_classifier_forward_pass(epoch=-1,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
                     validation_total_loss+=total_loss
             # arverge validation_total_loss
             validation_total_loss/=(len(self.data_loader_train))
             # update the learning rate according to the validation loss if decrease
             self.lr_scheduler.step(validation_total_loss)
+            logging.info(f'Validation Total Loss: {validation_total_loss:.4f}')
             return validation_total_loss
             
             
