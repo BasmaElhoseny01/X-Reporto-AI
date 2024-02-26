@@ -712,3 +712,1222 @@ TypeError: unhashable type: 'dict'
 2024-02-26 22:39:12 - INFO - Epoch 1/5, Total epoch Loss: 2.1393 Average epoch loss : 1.0697
 2024-02-26 22:39:37 - INFO - Saving object_detector_rpn_epoch 1
 2024-02-26 22:39:52 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 0.8557
+2024-02-26 23:03:16 - INFO - =================== New Run Started: 2024-02-26 23:03:16 ===================
+2024-02-26 23:03:16 - INFO - Training X_Reporto Started
+2024-02-26 23:03:16 - INFO - DEVICE: cuda
+2024-02-26 23:03:16 - INFO - OPERATION_MODE: 1
+2024-02-26 23:03:16 - INFO - MODEL_STAGE: 1
+2024-02-26 23:03:16 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:03:16 - INFO - TRAIN_RPN: True
+2024-02-26 23:03:16 - INFO - RUN: 0
+2024-02-26 23:03:16 - INFO - EPOCHS: 5
+2024-02-26 23:03:16 - INFO - BATCH_SIZE: 2
+2024-02-26 23:03:16 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 23:03:16 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 23:03:16 - INFO - LM_Batch_Size: 1
+2024-02-26 23:03:16 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:03:16 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:03:16 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:03:16 - INFO - DEBUG: True
+2024-02-26 23:03:16 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:03:16 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:03:16 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:03:16 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:03:16 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:03:16 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:03:16 - INFO - RECOVER: False
+2024-02-26 23:03:16 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:03:16 - INFO - Folder 'check_points/0' created successfully.
+2024-02-26 23:03:19 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 23:03:20 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:03:20 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:03:20 - INFO - Train dataset loaded
+2024-02-26 23:03:20 - INFO - DataLoader Loaded Size: 100
+2024-02-26 23:03:20 - INFO - Start Training
+2024-02-26 23:03:55 - DEBUG -  Update Weights at  epoch: 1, Batch 1/100 
+2024-02-26 23:03:55 - INFO - Epoch 1/5, Batch 1/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:56 - DEBUG -  Update Weights at  epoch: 1, Batch 2/100 
+2024-02-26 23:03:56 - INFO - Epoch 1/5, Batch 2/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:56 - DEBUG -  Update Weights at  epoch: 1, Batch 3/100 
+2024-02-26 23:03:56 - INFO - Epoch 1/5, Batch 3/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:56 - DEBUG -  Update Weights at  epoch: 1, Batch 4/100 
+2024-02-26 23:03:56 - INFO - Epoch 1/5, Batch 4/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:57 - DEBUG -  Update Weights at  epoch: 1, Batch 5/100 
+2024-02-26 23:03:57 - INFO - Epoch 1/5, Batch 5/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:57 - DEBUG -  Update Weights at  epoch: 1, Batch 6/100 
+2024-02-26 23:03:57 - INFO - Epoch 1/5, Batch 6/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:57 - DEBUG -  Update Weights at  epoch: 1, Batch 7/100 
+2024-02-26 23:03:57 - INFO - Epoch 1/5, Batch 7/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:57 - DEBUG -  Update Weights at  epoch: 1, Batch 8/100 
+2024-02-26 23:03:57 - INFO - Epoch 1/5, Batch 8/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:58 - DEBUG -  Update Weights at  epoch: 1, Batch 9/100 
+2024-02-26 23:03:58 - INFO - Epoch 1/5, Batch 9/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:58 - DEBUG -  Update Weights at  epoch: 1, Batch 10/100 
+2024-02-26 23:03:58 - INFO - Epoch 1/5, Batch 10/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:58 - DEBUG -  Update Weights at  epoch: 1, Batch 11/100 
+2024-02-26 23:03:58 - INFO - Epoch 1/5, Batch 11/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:59 - DEBUG -  Update Weights at  epoch: 1, Batch 12/100 
+2024-02-26 23:03:59 - INFO - Epoch 1/5, Batch 12/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:59 - DEBUG -  Update Weights at  epoch: 1, Batch 13/100 
+2024-02-26 23:03:59 - INFO - Epoch 1/5, Batch 13/100, Learning Rate: 0.0001000000
+2024-02-26 23:03:59 - DEBUG -  Update Weights at  epoch: 1, Batch 14/100 
+2024-02-26 23:03:59 - INFO - Epoch 1/5, Batch 14/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:00 - DEBUG -  Update Weights at  epoch: 1, Batch 15/100 
+2024-02-26 23:04:00 - INFO - Epoch 1/5, Batch 15/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:00 - DEBUG -  Update Weights at  epoch: 1, Batch 16/100 
+2024-02-26 23:04:00 - INFO - Epoch 1/5, Batch 16/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:00 - DEBUG -  Update Weights at  epoch: 1, Batch 17/100 
+2024-02-26 23:04:00 - INFO - Epoch 1/5, Batch 17/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:00 - DEBUG -  Update Weights at  epoch: 1, Batch 18/100 
+2024-02-26 23:04:00 - INFO - Epoch 1/5, Batch 18/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:01 - DEBUG -  Update Weights at  epoch: 1, Batch 19/100 
+2024-02-26 23:04:01 - INFO - Epoch 1/5, Batch 19/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:01 - DEBUG -  Update Weights at  epoch: 1, Batch 20/100 
+2024-02-26 23:04:01 - INFO - Epoch 1/5, Batch 20/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:01 - DEBUG -  Update Weights at  epoch: 1, Batch 21/100 
+2024-02-26 23:04:01 - INFO - Epoch 1/5, Batch 21/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:02 - DEBUG -  Update Weights at  epoch: 1, Batch 22/100 
+2024-02-26 23:04:02 - INFO - Epoch 1/5, Batch 22/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:02 - DEBUG -  Update Weights at  epoch: 1, Batch 23/100 
+2024-02-26 23:04:02 - INFO - Epoch 1/5, Batch 23/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:02 - DEBUG -  Update Weights at  epoch: 1, Batch 24/100 
+2024-02-26 23:04:02 - INFO - Epoch 1/5, Batch 24/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:03 - DEBUG -  Update Weights at  epoch: 1, Batch 25/100 
+2024-02-26 23:04:03 - INFO - Epoch 1/5, Batch 25/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:03 - DEBUG -  Update Weights at  epoch: 1, Batch 26/100 
+2024-02-26 23:04:03 - INFO - Epoch 1/5, Batch 26/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:03 - DEBUG -  Update Weights at  epoch: 1, Batch 27/100 
+2024-02-26 23:04:03 - INFO - Epoch 1/5, Batch 27/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:03 - DEBUG -  Update Weights at  epoch: 1, Batch 28/100 
+2024-02-26 23:04:03 - INFO - Epoch 1/5, Batch 28/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:04 - DEBUG -  Update Weights at  epoch: 1, Batch 29/100 
+2024-02-26 23:04:04 - INFO - Epoch 1/5, Batch 29/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:04 - DEBUG -  Update Weights at  epoch: 1, Batch 30/100 
+2024-02-26 23:04:04 - INFO - Epoch 1/5, Batch 30/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:04 - DEBUG -  Update Weights at  epoch: 1, Batch 31/100 
+2024-02-26 23:04:04 - INFO - Epoch 1/5, Batch 31/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:05 - DEBUG -  Update Weights at  epoch: 1, Batch 32/100 
+2024-02-26 23:04:05 - INFO - Epoch 1/5, Batch 32/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:05 - DEBUG -  Update Weights at  epoch: 1, Batch 33/100 
+2024-02-26 23:04:05 - INFO - Epoch 1/5, Batch 33/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:05 - DEBUG -  Update Weights at  epoch: 1, Batch 34/100 
+2024-02-26 23:04:05 - INFO - Epoch 1/5, Batch 34/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:06 - DEBUG -  Update Weights at  epoch: 1, Batch 35/100 
+2024-02-26 23:04:06 - INFO - Epoch 1/5, Batch 35/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:06 - DEBUG -  Update Weights at  epoch: 1, Batch 36/100 
+2024-02-26 23:04:06 - INFO - Epoch 1/5, Batch 36/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:06 - DEBUG -  Update Weights at  epoch: 1, Batch 37/100 
+2024-02-26 23:04:06 - INFO - Epoch 1/5, Batch 37/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:06 - DEBUG -  Update Weights at  epoch: 1, Batch 38/100 
+2024-02-26 23:04:06 - INFO - Epoch 1/5, Batch 38/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:07 - DEBUG -  Update Weights at  epoch: 1, Batch 39/100 
+2024-02-26 23:04:07 - INFO - Epoch 1/5, Batch 39/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:07 - DEBUG -  Update Weights at  epoch: 1, Batch 40/100 
+2024-02-26 23:04:07 - INFO - Epoch 1/5, Batch 40/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:07 - DEBUG -  Update Weights at  epoch: 1, Batch 41/100 
+2024-02-26 23:04:07 - INFO - Epoch 1/5, Batch 41/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:08 - DEBUG -  Update Weights at  epoch: 1, Batch 42/100 
+2024-02-26 23:04:08 - INFO - Epoch 1/5, Batch 42/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:08 - DEBUG -  Update Weights at  epoch: 1, Batch 43/100 
+2024-02-26 23:04:08 - INFO - Epoch 1/5, Batch 43/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:08 - DEBUG -  Update Weights at  epoch: 1, Batch 44/100 
+2024-02-26 23:04:08 - INFO - Epoch 1/5, Batch 44/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:09 - DEBUG -  Update Weights at  epoch: 1, Batch 45/100 
+2024-02-26 23:04:09 - INFO - Epoch 1/5, Batch 45/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:09 - DEBUG -  Update Weights at  epoch: 1, Batch 46/100 
+2024-02-26 23:04:09 - INFO - Epoch 1/5, Batch 46/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:09 - DEBUG -  Update Weights at  epoch: 1, Batch 47/100 
+2024-02-26 23:04:09 - INFO - Epoch 1/5, Batch 47/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:10 - DEBUG -  Update Weights at  epoch: 1, Batch 48/100 
+2024-02-26 23:04:10 - INFO - Epoch 1/5, Batch 48/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:10 - DEBUG -  Update Weights at  epoch: 1, Batch 49/100 
+2024-02-26 23:04:10 - INFO - Epoch 1/5, Batch 49/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:10 - DEBUG -  Update Weights at  epoch: 1, Batch 50/100 
+2024-02-26 23:04:10 - INFO - Epoch 1/5, Batch 50/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:10 - DEBUG -  Update Weights at  epoch: 1, Batch 51/100 
+2024-02-26 23:04:10 - INFO - Epoch 1/5, Batch 51/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:11 - DEBUG -  Update Weights at  epoch: 1, Batch 52/100 
+2024-02-26 23:04:11 - INFO - Epoch 1/5, Batch 52/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:11 - DEBUG -  Update Weights at  epoch: 1, Batch 53/100 
+2024-02-26 23:04:11 - INFO - Epoch 1/5, Batch 53/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:11 - DEBUG -  Update Weights at  epoch: 1, Batch 54/100 
+2024-02-26 23:04:11 - INFO - Epoch 1/5, Batch 54/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:12 - DEBUG -  Update Weights at  epoch: 1, Batch 55/100 
+2024-02-26 23:04:12 - INFO - Epoch 1/5, Batch 55/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:12 - DEBUG -  Update Weights at  epoch: 1, Batch 56/100 
+2024-02-26 23:04:12 - INFO - Epoch 1/5, Batch 56/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:12 - DEBUG -  Update Weights at  epoch: 1, Batch 57/100 
+2024-02-26 23:04:12 - INFO - Epoch 1/5, Batch 57/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:13 - DEBUG -  Update Weights at  epoch: 1, Batch 58/100 
+2024-02-26 23:04:13 - INFO - Epoch 1/5, Batch 58/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:13 - DEBUG -  Update Weights at  epoch: 1, Batch 59/100 
+2024-02-26 23:04:13 - INFO - Epoch 1/5, Batch 59/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:13 - DEBUG -  Update Weights at  epoch: 1, Batch 60/100 
+2024-02-26 23:04:13 - INFO - Epoch 1/5, Batch 60/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:13 - DEBUG -  Update Weights at  epoch: 1, Batch 61/100 
+2024-02-26 23:04:13 - INFO - Epoch 1/5, Batch 61/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:14 - DEBUG -  Update Weights at  epoch: 1, Batch 62/100 
+2024-02-26 23:04:14 - INFO - Epoch 1/5, Batch 62/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:14 - DEBUG -  Update Weights at  epoch: 1, Batch 63/100 
+2024-02-26 23:04:14 - INFO - Epoch 1/5, Batch 63/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:14 - DEBUG -  Update Weights at  epoch: 1, Batch 64/100 
+2024-02-26 23:04:14 - INFO - Epoch 1/5, Batch 64/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:15 - DEBUG -  Update Weights at  epoch: 1, Batch 65/100 
+2024-02-26 23:04:15 - INFO - Epoch 1/5, Batch 65/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:15 - DEBUG -  Update Weights at  epoch: 1, Batch 66/100 
+2024-02-26 23:04:15 - INFO - Epoch 1/5, Batch 66/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:15 - DEBUG -  Update Weights at  epoch: 1, Batch 67/100 
+2024-02-26 23:04:15 - INFO - Epoch 1/5, Batch 67/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:16 - DEBUG -  Update Weights at  epoch: 1, Batch 68/100 
+2024-02-26 23:04:16 - INFO - Epoch 1/5, Batch 68/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:16 - DEBUG -  Update Weights at  epoch: 1, Batch 69/100 
+2024-02-26 23:04:16 - INFO - Epoch 1/5, Batch 69/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:16 - DEBUG -  Update Weights at  epoch: 1, Batch 70/100 
+2024-02-26 23:04:16 - INFO - Epoch 1/5, Batch 70/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:16 - DEBUG -  Update Weights at  epoch: 1, Batch 71/100 
+2024-02-26 23:04:16 - INFO - Epoch 1/5, Batch 71/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:17 - DEBUG -  Update Weights at  epoch: 1, Batch 72/100 
+2024-02-26 23:04:17 - INFO - Epoch 1/5, Batch 72/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:17 - DEBUG -  Update Weights at  epoch: 1, Batch 73/100 
+2024-02-26 23:04:17 - INFO - Epoch 1/5, Batch 73/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:17 - DEBUG -  Update Weights at  epoch: 1, Batch 74/100 
+2024-02-26 23:04:17 - INFO - Epoch 1/5, Batch 74/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:18 - DEBUG -  Update Weights at  epoch: 1, Batch 75/100 
+2024-02-26 23:04:18 - INFO - Epoch 1/5, Batch 75/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:18 - DEBUG -  Update Weights at  epoch: 1, Batch 76/100 
+2024-02-26 23:04:18 - INFO - Epoch 1/5, Batch 76/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:18 - DEBUG -  Update Weights at  epoch: 1, Batch 77/100 
+2024-02-26 23:04:18 - INFO - Epoch 1/5, Batch 77/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:19 - DEBUG -  Update Weights at  epoch: 1, Batch 78/100 
+2024-02-26 23:04:19 - INFO - Epoch 1/5, Batch 78/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:19 - DEBUG -  Update Weights at  epoch: 1, Batch 79/100 
+2024-02-26 23:04:19 - INFO - Epoch 1/5, Batch 79/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:19 - DEBUG -  Update Weights at  epoch: 1, Batch 80/100 
+2024-02-26 23:04:19 - INFO - Epoch 1/5, Batch 80/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:19 - DEBUG -  Update Weights at  epoch: 1, Batch 81/100 
+2024-02-26 23:04:19 - INFO - Epoch 1/5, Batch 81/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:20 - DEBUG -  Update Weights at  epoch: 1, Batch 82/100 
+2024-02-26 23:04:20 - INFO - Epoch 1/5, Batch 82/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:20 - DEBUG -  Update Weights at  epoch: 1, Batch 83/100 
+2024-02-26 23:04:20 - INFO - Epoch 1/5, Batch 83/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:20 - DEBUG -  Update Weights at  epoch: 1, Batch 84/100 
+2024-02-26 23:04:20 - INFO - Epoch 1/5, Batch 84/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:21 - DEBUG -  Update Weights at  epoch: 1, Batch 85/100 
+2024-02-26 23:04:21 - INFO - Epoch 1/5, Batch 85/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:21 - DEBUG -  Update Weights at  epoch: 1, Batch 86/100 
+2024-02-26 23:04:21 - INFO - Epoch 1/5, Batch 86/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:21 - DEBUG -  Update Weights at  epoch: 1, Batch 87/100 
+2024-02-26 23:04:21 - INFO - Epoch 1/5, Batch 87/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:21 - DEBUG -  Update Weights at  epoch: 1, Batch 88/100 
+2024-02-26 23:04:21 - INFO - Epoch 1/5, Batch 88/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:22 - DEBUG -  Update Weights at  epoch: 1, Batch 89/100 
+2024-02-26 23:04:22 - INFO - Epoch 1/5, Batch 89/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:22 - DEBUG -  Update Weights at  epoch: 1, Batch 90/100 
+2024-02-26 23:04:22 - INFO - Epoch 1/5, Batch 90/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:22 - DEBUG -  Update Weights at  epoch: 1, Batch 91/100 
+2024-02-26 23:04:22 - INFO - Epoch 1/5, Batch 91/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:23 - DEBUG -  Update Weights at  epoch: 1, Batch 92/100 
+2024-02-26 23:04:23 - INFO - Epoch 1/5, Batch 92/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:23 - DEBUG -  Update Weights at  epoch: 1, Batch 93/100 
+2024-02-26 23:04:23 - INFO - Epoch 1/5, Batch 93/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:23 - DEBUG -  Update Weights at  epoch: 1, Batch 94/100 
+2024-02-26 23:04:23 - INFO - Epoch 1/5, Batch 94/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:24 - DEBUG -  Update Weights at  epoch: 1, Batch 95/100 
+2024-02-26 23:04:24 - INFO - Epoch 1/5, Batch 95/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:24 - DEBUG -  Update Weights at  epoch: 1, Batch 96/100 
+2024-02-26 23:04:24 - INFO - Epoch 1/5, Batch 96/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:24 - DEBUG -  Update Weights at  epoch: 1, Batch 97/100 
+2024-02-26 23:04:24 - INFO - Epoch 1/5, Batch 97/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:24 - DEBUG -  Update Weights at  epoch: 1, Batch 98/100 
+2024-02-26 23:04:24 - INFO - Epoch 1/5, Batch 98/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:25 - DEBUG -  Update Weights at  epoch: 1, Batch 99/100 
+2024-02-26 23:04:25 - INFO - Epoch 1/5, Batch 99/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:25 - DEBUG -  Update Weights at  epoch: 1, Batch 100/100 
+2024-02-26 23:04:25 - INFO - Epoch 1/5, Batch 100/100, Learning Rate: 0.0001000000
+2024-02-26 23:04:25 - INFO - [Every 100 Batch]: Epoch 1/5, Batch 100/100, Average Cumulative Epoch Loss : 0.6178
+2024-02-26 23:04:26 - INFO - Epoch 1/5, Total epoch Loss: 61.7757 Average epoch loss : 0.6178
+2024-02-26 23:05:09 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 23:05:11 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 440, in <module>
+    main()
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 430, in main
+    trainer.train()
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 216, in train
+    self.save_model(model=self.model.object_detector,name="object_detector_rpn",epoch=epoch,validation_loss=validation_loss)
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 236, in save_model
+    self.check_best_model(epoch,validation_loss,name,model)
+TypeError: XReportoTrainer.check_best_model() missing 1 required positional argument: 'model'
+2024-02-26 23:08:20 - INFO - =================== New Run Started: 2024-02-26 23:08:20 ===================
+2024-02-26 23:08:20 - INFO - Training X_Reporto Started
+2024-02-26 23:08:20 - INFO - DEVICE: cuda
+2024-02-26 23:08:20 - INFO - OPERATION_MODE: 1
+2024-02-26 23:08:20 - INFO - MODEL_STAGE: 1
+2024-02-26 23:08:20 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:08:20 - INFO - TRAIN_RPN: True
+2024-02-26 23:08:20 - INFO - RUN: 0
+2024-02-26 23:08:20 - INFO - EPOCHS: 5
+2024-02-26 23:08:20 - INFO - BATCH_SIZE: 4
+2024-02-26 23:08:20 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 23:08:20 - INFO - ACCUMULATION_STEPS: 0
+2024-02-26 23:08:20 - INFO - LM_Batch_Size: 1
+2024-02-26 23:08:20 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:08:20 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:08:20 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:08:20 - INFO - DEBUG: True
+2024-02-26 23:08:20 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:08:20 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:08:20 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:08:20 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:08:20 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:08:20 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:08:20 - INFO - RECOVER: False
+2024-02-26 23:08:20 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:08:20 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 23:08:22 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 23:08:24 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:08:24 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:08:24 - INFO - Train dataset loaded
+2024-02-26 23:08:24 - INFO - DataLoader Loaded Size: 50
+2024-02-26 23:08:24 - INFO - Start Training
+2024-02-26 23:08:55 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 440, in <module>
+    main()
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 430, in main
+    trainer.train()
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 175, in train
+    if (batch_idx+1) %ACCUMULATION_STEPS==0:
+       ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+ZeroDivisionError: integer modulo by zero
+2024-02-26 23:09:40 - INFO - =================== New Run Started: 2024-02-26 23:09:40 ===================
+2024-02-26 23:09:40 - INFO - Training X_Reporto Started
+2024-02-26 23:09:40 - INFO - DEVICE: cuda
+2024-02-26 23:09:40 - INFO - OPERATION_MODE: 1
+2024-02-26 23:09:40 - INFO - MODEL_STAGE: 1
+2024-02-26 23:09:40 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:09:40 - INFO - TRAIN_RPN: False
+2024-02-26 23:09:40 - INFO - RUN: 0
+2024-02-26 23:09:40 - INFO - EPOCHS: 5
+2024-02-26 23:09:40 - INFO - BATCH_SIZE: 1
+2024-02-26 23:09:40 - INFO - EFFECTIVE_BATCH_SIZE: 8
+2024-02-26 23:09:40 - INFO - ACCUMULATION_STEPS: 8
+2024-02-26 23:09:40 - INFO - LM_Batch_Size: 1
+2024-02-26 23:09:40 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:09:40 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:09:40 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:09:40 - INFO - DEBUG: True
+2024-02-26 23:09:40 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:09:40 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:09:40 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:09:40 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:09:40 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:09:40 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:09:40 - INFO - RECOVER: False
+2024-02-26 23:09:40 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:09:40 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 23:09:41 - INFO - Loading object_detector [Trained RPN]....
+2024-02-26 23:09:44 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 23:09:49 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:09:49 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:09:49 - INFO - Train dataset loaded
+2024-02-26 23:09:49 - INFO - DataLoader Loaded Size: 200
+2024-02-26 23:09:49 - INFO - Start Training
+2024-02-26 23:10:22 - INFO - Epoch 1/5, Batch 1/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:22 - INFO - Epoch 1/5, Batch 2/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:23 - INFO - Epoch 1/5, Batch 3/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:23 - INFO - Epoch 1/5, Batch 4/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:23 - INFO - Epoch 1/5, Batch 5/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:24 - INFO - Epoch 1/5, Batch 6/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:24 - INFO - Epoch 1/5, Batch 7/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:24 - DEBUG -  Update Weights at  epoch: 1, Batch 8/200 
+2024-02-26 23:10:24 - INFO - Epoch 1/5, Batch 8/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:25 - INFO - Epoch 1/5, Batch 9/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:25 - INFO - Epoch 1/5, Batch 10/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:25 - INFO - Epoch 1/5, Batch 11/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:26 - INFO - Epoch 1/5, Batch 12/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:26 - INFO - Epoch 1/5, Batch 13/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:26 - INFO - Epoch 1/5, Batch 14/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:27 - INFO - Epoch 1/5, Batch 15/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:27 - DEBUG -  Update Weights at  epoch: 1, Batch 16/200 
+2024-02-26 23:10:27 - INFO - Epoch 1/5, Batch 16/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:28 - INFO - Epoch 1/5, Batch 17/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:28 - INFO - Epoch 1/5, Batch 18/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:28 - INFO - Epoch 1/5, Batch 19/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:29 - INFO - Epoch 1/5, Batch 20/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:29 - INFO - Epoch 1/5, Batch 21/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:29 - INFO - Epoch 1/5, Batch 22/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:30 - INFO - Epoch 1/5, Batch 23/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:30 - DEBUG -  Update Weights at  epoch: 1, Batch 24/200 
+2024-02-26 23:10:30 - INFO - Epoch 1/5, Batch 24/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:30 - INFO - Epoch 1/5, Batch 25/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:31 - INFO - Epoch 1/5, Batch 26/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:31 - INFO - Epoch 1/5, Batch 27/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:31 - INFO - Epoch 1/5, Batch 28/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:32 - INFO - Epoch 1/5, Batch 29/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:32 - INFO - Epoch 1/5, Batch 30/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:33 - INFO - Epoch 1/5, Batch 31/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:33 - DEBUG -  Update Weights at  epoch: 1, Batch 32/200 
+2024-02-26 23:10:33 - INFO - Epoch 1/5, Batch 32/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:33 - INFO - Epoch 1/5, Batch 33/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:34 - INFO - Epoch 1/5, Batch 34/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:34 - INFO - Epoch 1/5, Batch 35/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:34 - INFO - Epoch 1/5, Batch 36/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:35 - INFO - Epoch 1/5, Batch 37/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:35 - INFO - Epoch 1/5, Batch 38/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:36 - INFO - Epoch 1/5, Batch 39/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:36 - DEBUG -  Update Weights at  epoch: 1, Batch 40/200 
+2024-02-26 23:10:36 - INFO - Epoch 1/5, Batch 40/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:36 - INFO - Epoch 1/5, Batch 41/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:37 - INFO - Epoch 1/5, Batch 42/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:37 - INFO - Epoch 1/5, Batch 43/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:38 - INFO - Epoch 1/5, Batch 44/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:38 - INFO - Epoch 1/5, Batch 45/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:38 - INFO - Epoch 1/5, Batch 46/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:39 - INFO - Epoch 1/5, Batch 47/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:39 - DEBUG -  Update Weights at  epoch: 1, Batch 48/200 
+2024-02-26 23:10:39 - INFO - Epoch 1/5, Batch 48/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:39 - INFO - Epoch 1/5, Batch 49/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:40 - INFO - Epoch 1/5, Batch 50/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:40 - INFO - Epoch 1/5, Batch 51/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:41 - INFO - Epoch 1/5, Batch 52/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:41 - INFO - Epoch 1/5, Batch 53/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:41 - INFO - Epoch 1/5, Batch 54/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:42 - INFO - Epoch 1/5, Batch 55/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:42 - DEBUG -  Update Weights at  epoch: 1, Batch 56/200 
+2024-02-26 23:10:42 - INFO - Epoch 1/5, Batch 56/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:42 - INFO - Epoch 1/5, Batch 57/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:43 - INFO - Epoch 1/5, Batch 58/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:43 - INFO - Epoch 1/5, Batch 59/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:44 - INFO - Epoch 1/5, Batch 60/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:44 - INFO - Epoch 1/5, Batch 61/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:44 - INFO - Epoch 1/5, Batch 62/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:45 - INFO - Epoch 1/5, Batch 63/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:45 - DEBUG -  Update Weights at  epoch: 1, Batch 64/200 
+2024-02-26 23:10:45 - INFO - Epoch 1/5, Batch 64/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:45 - INFO - Epoch 1/5, Batch 65/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:46 - INFO - Epoch 1/5, Batch 66/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:46 - INFO - Epoch 1/5, Batch 67/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:47 - INFO - Epoch 1/5, Batch 68/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:47 - INFO - Epoch 1/5, Batch 69/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:48 - INFO - Epoch 1/5, Batch 70/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:48 - INFO - Epoch 1/5, Batch 71/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:48 - DEBUG -  Update Weights at  epoch: 1, Batch 72/200 
+2024-02-26 23:10:48 - INFO - Epoch 1/5, Batch 72/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:49 - INFO - Epoch 1/5, Batch 73/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:49 - INFO - Epoch 1/5, Batch 74/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:49 - INFO - Epoch 1/5, Batch 75/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:50 - INFO - Epoch 1/5, Batch 76/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:50 - INFO - Epoch 1/5, Batch 77/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:51 - INFO - Epoch 1/5, Batch 78/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:51 - INFO - Epoch 1/5, Batch 79/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:51 - DEBUG -  Update Weights at  epoch: 1, Batch 80/200 
+2024-02-26 23:10:51 - INFO - Epoch 1/5, Batch 80/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:52 - INFO - Epoch 1/5, Batch 81/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:52 - INFO - Epoch 1/5, Batch 82/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:53 - INFO - Epoch 1/5, Batch 83/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:53 - INFO - Epoch 1/5, Batch 84/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:53 - INFO - Epoch 1/5, Batch 85/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:54 - INFO - Epoch 1/5, Batch 86/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:54 - INFO - Epoch 1/5, Batch 87/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:54 - DEBUG -  Update Weights at  epoch: 1, Batch 88/200 
+2024-02-26 23:10:54 - INFO - Epoch 1/5, Batch 88/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:55 - INFO - Epoch 1/5, Batch 89/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:55 - INFO - Epoch 1/5, Batch 90/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:56 - INFO - Epoch 1/5, Batch 91/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:56 - INFO - Epoch 1/5, Batch 92/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:57 - INFO - Epoch 1/5, Batch 93/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:57 - INFO - Epoch 1/5, Batch 94/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:57 - INFO - Epoch 1/5, Batch 95/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:58 - DEBUG -  Update Weights at  epoch: 1, Batch 96/200 
+2024-02-26 23:10:58 - INFO - Epoch 1/5, Batch 96/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:58 - INFO - Epoch 1/5, Batch 97/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:59 - INFO - Epoch 1/5, Batch 98/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:59 - INFO - Epoch 1/5, Batch 99/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:59 - INFO - Epoch 1/5, Batch 100/200, Learning Rate: 0.0001000000
+2024-02-26 23:10:59 - INFO - [Every 100 Batch]: Epoch 1/5, Batch 100/200, Average Cumulative Epoch Loss : 3.7582
+2024-02-26 23:11:00 - INFO - Epoch 1/5, Batch 101/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:00 - INFO - Epoch 1/5, Batch 102/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:00 - INFO - Epoch 1/5, Batch 103/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:01 - DEBUG -  Update Weights at  epoch: 1, Batch 104/200 
+2024-02-26 23:11:01 - INFO - Epoch 1/5, Batch 104/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:01 - INFO - Epoch 1/5, Batch 105/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:02 - INFO - Epoch 1/5, Batch 106/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:02 - INFO - Epoch 1/5, Batch 107/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:02 - INFO - Epoch 1/5, Batch 108/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:03 - INFO - Epoch 1/5, Batch 109/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:03 - INFO - Epoch 1/5, Batch 110/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:03 - INFO - Epoch 1/5, Batch 111/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:04 - DEBUG -  Update Weights at  epoch: 1, Batch 112/200 
+2024-02-26 23:11:04 - INFO - Epoch 1/5, Batch 112/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:04 - INFO - Epoch 1/5, Batch 113/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:05 - INFO - Epoch 1/5, Batch 114/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:05 - INFO - Epoch 1/5, Batch 115/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:05 - INFO - Epoch 1/5, Batch 116/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:06 - INFO - Epoch 1/5, Batch 117/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:06 - INFO - Epoch 1/5, Batch 118/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:06 - INFO - Epoch 1/5, Batch 119/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:07 - DEBUG -  Update Weights at  epoch: 1, Batch 120/200 
+2024-02-26 23:11:07 - INFO - Epoch 1/5, Batch 120/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:07 - INFO - Epoch 1/5, Batch 121/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:08 - INFO - Epoch 1/5, Batch 122/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:08 - INFO - Epoch 1/5, Batch 123/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:08 - INFO - Epoch 1/5, Batch 124/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:09 - INFO - Epoch 1/5, Batch 125/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:09 - INFO - Epoch 1/5, Batch 126/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:10 - INFO - Epoch 1/5, Batch 127/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:10 - DEBUG -  Update Weights at  epoch: 1, Batch 128/200 
+2024-02-26 23:11:10 - INFO - Epoch 1/5, Batch 128/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:11 - INFO - Epoch 1/5, Batch 129/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:11 - INFO - Epoch 1/5, Batch 130/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:12 - INFO - Epoch 1/5, Batch 131/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:12 - INFO - Epoch 1/5, Batch 132/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:12 - INFO - Epoch 1/5, Batch 133/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:13 - INFO - Epoch 1/5, Batch 134/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:13 - INFO - Epoch 1/5, Batch 135/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:14 - DEBUG -  Update Weights at  epoch: 1, Batch 136/200 
+2024-02-26 23:11:14 - INFO - Epoch 1/5, Batch 136/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:14 - INFO - Epoch 1/5, Batch 137/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:15 - INFO - Epoch 1/5, Batch 138/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:15 - INFO - Epoch 1/5, Batch 139/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:15 - INFO - Epoch 1/5, Batch 140/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:16 - INFO - Epoch 1/5, Batch 141/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:16 - INFO - Epoch 1/5, Batch 142/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:16 - INFO - Epoch 1/5, Batch 143/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:17 - DEBUG -  Update Weights at  epoch: 1, Batch 144/200 
+2024-02-26 23:11:17 - INFO - Epoch 1/5, Batch 144/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:17 - INFO - Epoch 1/5, Batch 145/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:18 - INFO - Epoch 1/5, Batch 146/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:18 - INFO - Epoch 1/5, Batch 147/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:18 - INFO - Epoch 1/5, Batch 148/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:19 - INFO - Epoch 1/5, Batch 149/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:19 - INFO - Epoch 1/5, Batch 150/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:19 - INFO - Epoch 1/5, Batch 151/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:20 - DEBUG -  Update Weights at  epoch: 1, Batch 152/200 
+2024-02-26 23:11:20 - INFO - Epoch 1/5, Batch 152/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:20 - INFO - Epoch 1/5, Batch 153/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:21 - INFO - Epoch 1/5, Batch 154/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:21 - INFO - Epoch 1/5, Batch 155/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:21 - INFO - Epoch 1/5, Batch 156/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:22 - INFO - Epoch 1/5, Batch 157/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:22 - INFO - Epoch 1/5, Batch 158/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:22 - INFO - Epoch 1/5, Batch 159/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:23 - DEBUG -  Update Weights at  epoch: 1, Batch 160/200 
+2024-02-26 23:11:23 - INFO - Epoch 1/5, Batch 160/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:23 - INFO - Epoch 1/5, Batch 161/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:24 - INFO - Epoch 1/5, Batch 162/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:24 - INFO - Epoch 1/5, Batch 163/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:24 - INFO - Epoch 1/5, Batch 164/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:25 - INFO - Epoch 1/5, Batch 165/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:25 - INFO - Epoch 1/5, Batch 166/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:25 - INFO - Epoch 1/5, Batch 167/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:26 - DEBUG -  Update Weights at  epoch: 1, Batch 168/200 
+2024-02-26 23:11:26 - INFO - Epoch 1/5, Batch 168/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:26 - INFO - Epoch 1/5, Batch 169/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:27 - INFO - Epoch 1/5, Batch 170/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:27 - INFO - Epoch 1/5, Batch 171/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:27 - INFO - Epoch 1/5, Batch 172/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:28 - INFO - Epoch 1/5, Batch 173/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:28 - INFO - Epoch 1/5, Batch 174/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:28 - INFO - Epoch 1/5, Batch 175/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:29 - DEBUG -  Update Weights at  epoch: 1, Batch 176/200 
+2024-02-26 23:11:29 - INFO - Epoch 1/5, Batch 176/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:29 - INFO - Epoch 1/5, Batch 177/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:30 - INFO - Epoch 1/5, Batch 178/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:30 - INFO - Epoch 1/5, Batch 179/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:30 - INFO - Epoch 1/5, Batch 180/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:31 - INFO - Epoch 1/5, Batch 181/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:31 - INFO - Epoch 1/5, Batch 182/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:31 - INFO - Epoch 1/5, Batch 183/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:32 - DEBUG -  Update Weights at  epoch: 1, Batch 184/200 
+2024-02-26 23:11:32 - INFO - Epoch 1/5, Batch 184/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:32 - INFO - Epoch 1/5, Batch 185/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:32 - INFO - Epoch 1/5, Batch 186/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:33 - INFO - Epoch 1/5, Batch 187/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:33 - INFO - Epoch 1/5, Batch 188/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:34 - INFO - Epoch 1/5, Batch 189/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:34 - INFO - Epoch 1/5, Batch 190/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:34 - INFO - Epoch 1/5, Batch 191/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:35 - DEBUG -  Update Weights at  epoch: 1, Batch 192/200 
+2024-02-26 23:11:35 - INFO - Epoch 1/5, Batch 192/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:35 - INFO - Epoch 1/5, Batch 193/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:35 - INFO - Epoch 1/5, Batch 194/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:36 - INFO - Epoch 1/5, Batch 195/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:36 - INFO - Epoch 1/5, Batch 196/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:36 - INFO - Epoch 1/5, Batch 197/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:37 - INFO - Epoch 1/5, Batch 198/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:37 - INFO - Epoch 1/5, Batch 199/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:38 - DEBUG -  Update Weights at  epoch: 1, Batch 200/200 
+2024-02-26 23:11:38 - INFO - Epoch 1/5, Batch 200/200, Learning Rate: 0.0001000000
+2024-02-26 23:11:38 - INFO - [Every 100 Batch]: Epoch 1/5, Batch 200/200, Average Cumulative Epoch Loss : 3.3227
+2024-02-26 23:11:39 - INFO - Epoch 1/5, Total epoch Loss: 664.5363 Average epoch loss : 3.3227
+2024-02-26 23:12:45 - INFO - Saving object_detector_epoch 1
+2024-02-26 23:12:50 - INFO - Best Model Updated: object_detector_best at epoch 1 with Average validation loss: 2.9462
+2024-02-26 23:13:15 - INFO - Epoch 2/5, Batch 1/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:15 - INFO - Epoch 2/5, Batch 2/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:16 - INFO - Epoch 2/5, Batch 3/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:16 - INFO - Epoch 2/5, Batch 4/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:17 - INFO - Epoch 2/5, Batch 5/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:17 - INFO - Epoch 2/5, Batch 6/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:17 - INFO - Epoch 2/5, Batch 7/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:18 - DEBUG -  Update Weights at  epoch: 2, Batch 8/200 
+2024-02-26 23:13:18 - INFO - Epoch 2/5, Batch 8/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:18 - INFO - Epoch 2/5, Batch 9/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:18 - INFO - Epoch 2/5, Batch 10/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:19 - INFO - Epoch 2/5, Batch 11/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:19 - INFO - Epoch 2/5, Batch 12/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:20 - INFO - Epoch 2/5, Batch 13/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:20 - INFO - Epoch 2/5, Batch 14/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:21 - INFO - Epoch 2/5, Batch 15/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:21 - DEBUG -  Update Weights at  epoch: 2, Batch 16/200 
+2024-02-26 23:13:21 - INFO - Epoch 2/5, Batch 16/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:21 - INFO - Epoch 2/5, Batch 17/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:22 - INFO - Epoch 2/5, Batch 18/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:22 - INFO - Epoch 2/5, Batch 19/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:23 - INFO - Epoch 2/5, Batch 20/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:23 - INFO - Epoch 2/5, Batch 21/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:24 - INFO - Epoch 2/5, Batch 22/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:24 - INFO - Epoch 2/5, Batch 23/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:25 - DEBUG -  Update Weights at  epoch: 2, Batch 24/200 
+2024-02-26 23:13:25 - INFO - Epoch 2/5, Batch 24/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:25 - INFO - Epoch 2/5, Batch 25/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:25 - INFO - Epoch 2/5, Batch 26/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:26 - INFO - Epoch 2/5, Batch 27/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:26 - INFO - Epoch 2/5, Batch 28/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:27 - INFO - Epoch 2/5, Batch 29/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:27 - INFO - Epoch 2/5, Batch 30/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:27 - INFO - Epoch 2/5, Batch 31/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:28 - DEBUG -  Update Weights at  epoch: 2, Batch 32/200 
+2024-02-26 23:13:28 - INFO - Epoch 2/5, Batch 32/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:28 - INFO - Epoch 2/5, Batch 33/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:29 - INFO - Epoch 2/5, Batch 34/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:29 - INFO - Epoch 2/5, Batch 35/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:30 - INFO - Epoch 2/5, Batch 36/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:30 - INFO - Epoch 2/5, Batch 37/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:30 - INFO - Epoch 2/5, Batch 38/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:31 - INFO - Epoch 2/5, Batch 39/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:31 - DEBUG -  Update Weights at  epoch: 2, Batch 40/200 
+2024-02-26 23:13:31 - INFO - Epoch 2/5, Batch 40/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:32 - INFO - Epoch 2/5, Batch 41/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:32 - INFO - Epoch 2/5, Batch 42/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:32 - INFO - Epoch 2/5, Batch 43/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:33 - INFO - Epoch 2/5, Batch 44/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:33 - INFO - Epoch 2/5, Batch 45/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:33 - INFO - Epoch 2/5, Batch 46/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:34 - INFO - Epoch 2/5, Batch 47/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:34 - DEBUG -  Update Weights at  epoch: 2, Batch 48/200 
+2024-02-26 23:13:34 - INFO - Epoch 2/5, Batch 48/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:35 - INFO - Epoch 2/5, Batch 49/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:35 - INFO - Epoch 2/5, Batch 50/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:36 - INFO - Epoch 2/5, Batch 51/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:36 - INFO - Epoch 2/5, Batch 52/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:36 - INFO - Epoch 2/5, Batch 53/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:37 - INFO - Epoch 2/5, Batch 54/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:37 - INFO - Epoch 2/5, Batch 55/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:38 - DEBUG -  Update Weights at  epoch: 2, Batch 56/200 
+2024-02-26 23:13:38 - INFO - Epoch 2/5, Batch 56/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:38 - INFO - Epoch 2/5, Batch 57/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:38 - INFO - Epoch 2/5, Batch 58/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:39 - INFO - Epoch 2/5, Batch 59/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:39 - INFO - Epoch 2/5, Batch 60/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:39 - INFO - Epoch 2/5, Batch 61/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:40 - INFO - Epoch 2/5, Batch 62/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:40 - INFO - Epoch 2/5, Batch 63/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:41 - DEBUG -  Update Weights at  epoch: 2, Batch 64/200 
+2024-02-26 23:13:41 - INFO - Epoch 2/5, Batch 64/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:41 - INFO - Epoch 2/5, Batch 65/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:41 - INFO - Epoch 2/5, Batch 66/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:42 - INFO - Epoch 2/5, Batch 67/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:42 - INFO - Epoch 2/5, Batch 68/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:42 - INFO - Epoch 2/5, Batch 69/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:43 - INFO - Epoch 2/5, Batch 70/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:43 - INFO - Epoch 2/5, Batch 71/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:44 - DEBUG -  Update Weights at  epoch: 2, Batch 72/200 
+2024-02-26 23:13:44 - INFO - Epoch 2/5, Batch 72/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:44 - INFO - Epoch 2/5, Batch 73/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:45 - INFO - Epoch 2/5, Batch 74/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:45 - INFO - Epoch 2/5, Batch 75/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:46 - INFO - Epoch 2/5, Batch 76/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:46 - INFO - Epoch 2/5, Batch 77/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:46 - INFO - Epoch 2/5, Batch 78/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:47 - INFO - Epoch 2/5, Batch 79/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:47 - DEBUG -  Update Weights at  epoch: 2, Batch 80/200 
+2024-02-26 23:13:47 - INFO - Epoch 2/5, Batch 80/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:48 - INFO - Epoch 2/5, Batch 81/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:48 - INFO - Epoch 2/5, Batch 82/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:48 - INFO - Epoch 2/5, Batch 83/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:49 - INFO - Epoch 2/5, Batch 84/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:49 - INFO - Epoch 2/5, Batch 85/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:49 - INFO - Epoch 2/5, Batch 86/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:50 - INFO - Epoch 2/5, Batch 87/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:50 - DEBUG -  Update Weights at  epoch: 2, Batch 88/200 
+2024-02-26 23:13:50 - INFO - Epoch 2/5, Batch 88/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:51 - INFO - Epoch 2/5, Batch 89/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:51 - INFO - Epoch 2/5, Batch 90/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:52 - INFO - Epoch 2/5, Batch 91/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:52 - INFO - Epoch 2/5, Batch 92/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:52 - INFO - Epoch 2/5, Batch 93/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:53 - INFO - Epoch 2/5, Batch 94/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:53 - INFO - Epoch 2/5, Batch 95/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:54 - DEBUG -  Update Weights at  epoch: 2, Batch 96/200 
+2024-02-26 23:13:54 - INFO - Epoch 2/5, Batch 96/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:54 - INFO - Epoch 2/5, Batch 97/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:55 - INFO - Epoch 2/5, Batch 98/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:55 - INFO - Epoch 2/5, Batch 99/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:55 - INFO - Epoch 2/5, Batch 100/200, Learning Rate: 0.0001000000
+2024-02-26 23:13:55 - INFO - [Every 100 Batch]: Epoch 2/5, Batch 100/200, Average Cumulative Epoch Loss : 2.3351
+2024-02-26 23:14:01 - INFO - Saved Check point atcheck_points/0/checkpoint.pth
+2024-02-26 23:14:02 - INFO - Epoch 2/5, Batch 101/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:02 - INFO - Epoch 2/5, Batch 102/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:03 - INFO - Epoch 2/5, Batch 103/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:04 - DEBUG -  Update Weights at  epoch: 2, Batch 104/200 
+2024-02-26 23:14:04 - INFO - Epoch 2/5, Batch 104/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:04 - INFO - Epoch 2/5, Batch 105/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:04 - INFO - Epoch 2/5, Batch 106/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:05 - INFO - Epoch 2/5, Batch 107/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:05 - INFO - Epoch 2/5, Batch 108/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:06 - INFO - Epoch 2/5, Batch 109/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:06 - INFO - Epoch 2/5, Batch 110/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:06 - INFO - Epoch 2/5, Batch 111/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:07 - DEBUG -  Update Weights at  epoch: 2, Batch 112/200 
+2024-02-26 23:14:07 - INFO - Epoch 2/5, Batch 112/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:08 - INFO - Epoch 2/5, Batch 113/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:08 - INFO - Epoch 2/5, Batch 114/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:09 - INFO - Epoch 2/5, Batch 115/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:09 - INFO - Epoch 2/5, Batch 116/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:10 - INFO - Epoch 2/5, Batch 117/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:10 - INFO - Epoch 2/5, Batch 118/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:10 - INFO - Epoch 2/5, Batch 119/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:11 - DEBUG -  Update Weights at  epoch: 2, Batch 120/200 
+2024-02-26 23:14:11 - INFO - Epoch 2/5, Batch 120/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:11 - INFO - Epoch 2/5, Batch 121/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:12 - INFO - Epoch 2/5, Batch 122/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:12 - INFO - Epoch 2/5, Batch 123/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:13 - INFO - Epoch 2/5, Batch 124/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:13 - INFO - Epoch 2/5, Batch 125/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:13 - INFO - Epoch 2/5, Batch 126/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:14 - INFO - Epoch 2/5, Batch 127/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:14 - DEBUG -  Update Weights at  epoch: 2, Batch 128/200 
+2024-02-26 23:14:14 - INFO - Epoch 2/5, Batch 128/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:15 - INFO - Epoch 2/5, Batch 129/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:15 - INFO - Epoch 2/5, Batch 130/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:15 - INFO - Epoch 2/5, Batch 131/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:16 - INFO - Epoch 2/5, Batch 132/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:16 - INFO - Epoch 2/5, Batch 133/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:17 - INFO - Epoch 2/5, Batch 134/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:17 - INFO - Epoch 2/5, Batch 135/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:18 - DEBUG -  Update Weights at  epoch: 2, Batch 136/200 
+2024-02-26 23:14:18 - INFO - Epoch 2/5, Batch 136/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:18 - INFO - Epoch 2/5, Batch 137/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:19 - INFO - Epoch 2/5, Batch 138/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:19 - INFO - Epoch 2/5, Batch 139/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:19 - INFO - Epoch 2/5, Batch 140/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:20 - INFO - Epoch 2/5, Batch 141/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:20 - INFO - Epoch 2/5, Batch 142/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:21 - INFO - Epoch 2/5, Batch 143/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:23 - DEBUG -  Update Weights at  epoch: 2, Batch 144/200 
+2024-02-26 23:14:23 - INFO - Epoch 2/5, Batch 144/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:23 - INFO - Epoch 2/5, Batch 145/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:24 - INFO - Epoch 2/5, Batch 146/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:24 - INFO - Epoch 2/5, Batch 147/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:25 - INFO - Epoch 2/5, Batch 148/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:25 - INFO - Epoch 2/5, Batch 149/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:25 - INFO - Epoch 2/5, Batch 150/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:26 - INFO - Epoch 2/5, Batch 151/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:26 - DEBUG -  Update Weights at  epoch: 2, Batch 152/200 
+2024-02-26 23:14:26 - INFO - Epoch 2/5, Batch 152/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:27 - INFO - Epoch 2/5, Batch 153/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:27 - INFO - Epoch 2/5, Batch 154/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:28 - INFO - Epoch 2/5, Batch 155/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:28 - INFO - Epoch 2/5, Batch 156/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:28 - INFO - Epoch 2/5, Batch 157/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:29 - INFO - Epoch 2/5, Batch 158/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:29 - INFO - Epoch 2/5, Batch 159/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:30 - DEBUG -  Update Weights at  epoch: 2, Batch 160/200 
+2024-02-26 23:14:30 - INFO - Epoch 2/5, Batch 160/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:30 - INFO - Epoch 2/5, Batch 161/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:31 - INFO - Epoch 2/5, Batch 162/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:31 - INFO - Epoch 2/5, Batch 163/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:31 - INFO - Epoch 2/5, Batch 164/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:32 - INFO - Epoch 2/5, Batch 165/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:32 - INFO - Epoch 2/5, Batch 166/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:32 - INFO - Epoch 2/5, Batch 167/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:33 - DEBUG -  Update Weights at  epoch: 2, Batch 168/200 
+2024-02-26 23:14:33 - INFO - Epoch 2/5, Batch 168/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:33 - INFO - Epoch 2/5, Batch 169/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:34 - INFO - Epoch 2/5, Batch 170/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:34 - INFO - Epoch 2/5, Batch 171/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:35 - INFO - Epoch 2/5, Batch 172/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:35 - INFO - Epoch 2/5, Batch 173/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:35 - INFO - Epoch 2/5, Batch 174/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:36 - INFO - Epoch 2/5, Batch 175/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:36 - DEBUG -  Update Weights at  epoch: 2, Batch 176/200 
+2024-02-26 23:14:36 - INFO - Epoch 2/5, Batch 176/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:37 - INFO - Epoch 2/5, Batch 177/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:37 - INFO - Epoch 2/5, Batch 178/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:37 - INFO - Epoch 2/5, Batch 179/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:38 - INFO - Epoch 2/5, Batch 180/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:38 - INFO - Epoch 2/5, Batch 181/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:39 - INFO - Epoch 2/5, Batch 182/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:39 - INFO - Epoch 2/5, Batch 183/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:40 - DEBUG -  Update Weights at  epoch: 2, Batch 184/200 
+2024-02-26 23:14:40 - INFO - Epoch 2/5, Batch 184/200, Learning Rate: 0.0001000000
+2024-02-26 23:14:40 - INFO - Epoch 2/5, Batch 185/200, Learning Rate: 0.0001000000
+2024-02-26 23:15:22 - INFO - =================== New Run Started: 2024-02-26 23:15:22 ===================
+2024-02-26 23:15:22 - INFO - Training X_Reporto Started
+2024-02-26 23:15:22 - INFO - DEVICE: cuda
+2024-02-26 23:15:22 - INFO - OPERATION_MODE: 1
+2024-02-26 23:15:22 - INFO - MODEL_STAGE: 1
+2024-02-26 23:15:22 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:15:22 - INFO - TRAIN_RPN: False
+2024-02-26 23:15:22 - INFO - RUN: 0
+2024-02-26 23:15:22 - INFO - EPOCHS: 5
+2024-02-26 23:15:22 - INFO - BATCH_SIZE: 1
+2024-02-26 23:15:22 - INFO - EFFECTIVE_BATCH_SIZE: 8
+2024-02-26 23:15:22 - INFO - ACCUMULATION_STEPS: 8
+2024-02-26 23:15:22 - INFO - LM_Batch_Size: 1
+2024-02-26 23:15:22 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:15:22 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:15:22 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:15:22 - INFO - DEBUG: True
+2024-02-26 23:15:22 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:15:22 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:15:22 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:15:22 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:15:22 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:15:22 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:15:22 - INFO - RECOVER: False
+2024-02-26 23:15:22 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:15:22 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 23:15:24 - INFO - Loading object_detector [Trained RPN]....
+2024-02-26 23:15:26 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 23:15:27 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:15:27 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:15:27 - INFO - Train dataset loaded
+2024-02-26 23:15:27 - INFO - DataLoader Loaded Size: 200
+2024-02-26 23:15:28 - INFO - Start Training
+2024-02-26 23:16:03 - INFO - Epoch 1/5, Batch 1/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:03 - INFO - Epoch 1/5, Batch 2/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:03 - INFO - Epoch 1/5, Batch 3/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:04 - INFO - Epoch 1/5, Batch 4/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:04 - INFO - Epoch 1/5, Batch 5/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:04 - INFO - Epoch 1/5, Batch 6/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:05 - INFO - Epoch 1/5, Batch 7/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:05 - DEBUG -  Update Weights at  epoch: 1, Batch 8/200 
+2024-02-26 23:16:05 - INFO - Epoch 1/5, Batch 8/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:05 - INFO - Epoch 1/5, Batch 9/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:06 - INFO - Epoch 1/5, Batch 10/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:06 - INFO - Epoch 1/5, Batch 11/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:07 - INFO - Epoch 1/5, Batch 12/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:07 - INFO - Epoch 1/5, Batch 13/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:07 - INFO - Epoch 1/5, Batch 14/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:08 - INFO - Epoch 1/5, Batch 15/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:08 - DEBUG -  Update Weights at  epoch: 1, Batch 16/200 
+2024-02-26 23:16:08 - INFO - Epoch 1/5, Batch 16/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:09 - INFO - Epoch 1/5, Batch 17/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:09 - INFO - Epoch 1/5, Batch 18/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:10 - INFO - Epoch 1/5, Batch 19/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:10 - INFO - Epoch 1/5, Batch 20/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:10 - INFO - Epoch 1/5, Batch 21/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:11 - INFO - Epoch 1/5, Batch 22/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:11 - INFO - Epoch 1/5, Batch 23/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:11 - DEBUG -  Update Weights at  epoch: 1, Batch 24/200 
+2024-02-26 23:16:11 - INFO - Epoch 1/5, Batch 24/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:12 - INFO - Epoch 1/5, Batch 25/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:12 - INFO - Epoch 1/5, Batch 26/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:12 - INFO - Epoch 1/5, Batch 27/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:13 - INFO - Epoch 1/5, Batch 28/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:13 - INFO - Epoch 1/5, Batch 29/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:13 - INFO - Epoch 1/5, Batch 30/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:14 - INFO - Epoch 1/5, Batch 31/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:14 - DEBUG -  Update Weights at  epoch: 1, Batch 32/200 
+2024-02-26 23:16:14 - INFO - Epoch 1/5, Batch 32/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:14 - INFO - Epoch 1/5, Batch 33/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:15 - INFO - Epoch 1/5, Batch 34/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:15 - INFO - Epoch 1/5, Batch 35/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:16 - INFO - Epoch 1/5, Batch 36/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:16 - INFO - Epoch 1/5, Batch 37/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:16 - INFO - Epoch 1/5, Batch 38/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:17 - INFO - Epoch 1/5, Batch 39/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:17 - DEBUG -  Update Weights at  epoch: 1, Batch 40/200 
+2024-02-26 23:16:17 - INFO - Epoch 1/5, Batch 40/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:17 - INFO - Epoch 1/5, Batch 41/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:18 - INFO - Epoch 1/5, Batch 42/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:18 - INFO - Epoch 1/5, Batch 43/200, Learning Rate: 0.0001000000
+2024-02-26 23:16:18 - INFO - Epoch 1/5, Batch 44/200, Learning Rate: 0.0001000000
+2024-02-26 23:17:14 - INFO - =================== New Run Started: 2024-02-26 23:17:14 ===================
+2024-02-26 23:17:14 - INFO - Training X_Reporto Started
+2024-02-26 23:17:14 - INFO - DEVICE: cuda
+2024-02-26 23:17:14 - INFO - OPERATION_MODE: 1
+2024-02-26 23:17:14 - INFO - MODEL_STAGE: 1
+2024-02-26 23:17:14 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:17:14 - INFO - TRAIN_RPN: False
+2024-02-26 23:17:14 - INFO - RUN: 0
+2024-02-26 23:17:14 - INFO - EPOCHS: 5
+2024-02-26 23:17:14 - INFO - BATCH_SIZE: 1
+2024-02-26 23:17:14 - INFO - EFFECTIVE_BATCH_SIZE: 8
+2024-02-26 23:17:14 - INFO - ACCUMULATION_STEPS: 8
+2024-02-26 23:17:14 - INFO - LM_Batch_Size: 1
+2024-02-26 23:17:14 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:17:14 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:17:14 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:17:14 - INFO - DEBUG: True
+2024-02-26 23:17:14 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:17:14 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:17:14 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:17:14 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:17:14 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:17:14 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:17:14 - INFO - RECOVER: False
+2024-02-26 23:17:14 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:17:14 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 23:17:16 - INFO - Loading object_detector [Trained RPN]....
+2024-02-26 23:17:17 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 23:17:19 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:17:19 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:17:19 - INFO - Train dataset loaded
+2024-02-26 23:17:19 - INFO - DataLoader Loaded Size: 200
+2024-02-26 23:17:19 - INFO - Start Training
+2024-02-26 23:25:19 - INFO - =================== New Run Started: 2024-02-26 23:25:19 ===================
+2024-02-26 23:25:19 - INFO - Training X_Reporto Started
+2024-02-26 23:25:19 - INFO - DEVICE: cuda
+2024-02-26 23:25:19 - INFO - OPERATION_MODE: 1
+2024-02-26 23:25:19 - INFO - MODEL_STAGE: 1
+2024-02-26 23:25:19 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:25:19 - INFO - TRAIN_RPN: False
+2024-02-26 23:25:19 - INFO - RUN: 0
+2024-02-26 23:25:19 - INFO - EPOCHS: 5
+2024-02-26 23:25:19 - INFO - BATCH_SIZE: 1
+2024-02-26 23:25:19 - INFO - EFFECTIVE_BATCH_SIZE: 8
+2024-02-26 23:25:19 - INFO - ACCUMULATION_STEPS: 8
+2024-02-26 23:25:19 - INFO - LM_Batch_Size: 1
+2024-02-26 23:25:19 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:25:19 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:25:19 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:25:19 - INFO - DEBUG: True
+2024-02-26 23:25:19 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:25:19 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:25:19 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:25:19 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:25:19 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:25:19 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:25:19 - INFO - RECOVER: False
+2024-02-26 23:25:19 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:25:19 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 23:25:21 - INFO - Loading object_detector [Trained RPN]....
+2024-02-26 23:25:22 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 441, in <module>
+    main()
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 399, in main
+    trainer = XReportoTrainer(model=x_reporto_model)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 76, in __init__
+    self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=FACTOR_LR_SCHEDULER, patience=PATIENCE_LR_SCHEDULER, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
+                                                                                                ^^^^^^^^^^^^^^^^^^^
+NameError: name 'FACTOR_LR_SCHEDULER' is not defined
+2024-02-26 23:26:05 - INFO - =================== New Run Started: 2024-02-26 23:26:05 ===================
+2024-02-26 23:26:05 - INFO - Training X_Reporto Started
+2024-02-26 23:26:05 - INFO - DEVICE: cuda
+2024-02-26 23:26:05 - INFO - OPERATION_MODE: 1
+2024-02-26 23:26:05 - INFO - MODEL_STAGE: 1
+2024-02-26 23:26:05 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:26:05 - INFO - TRAIN_RPN: False
+2024-02-26 23:26:05 - INFO - RUN: 0
+2024-02-26 23:26:05 - INFO - EPOCHS: 5
+2024-02-26 23:26:05 - INFO - BATCH_SIZE: 1
+2024-02-26 23:26:05 - INFO - EFFECTIVE_BATCH_SIZE: 8
+2024-02-26 23:26:05 - INFO - ACCUMULATION_STEPS: 8
+2024-02-26 23:26:05 - INFO - LM_Batch_Size: 1
+2024-02-26 23:26:05 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:26:05 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:26:05 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:26:05 - INFO - DEBUG: True
+2024-02-26 23:26:05 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:26:05 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:26:05 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:26:05 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:26:05 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:26:05 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:26:05 - INFO - RECOVER: False
+2024-02-26 23:26:05 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:26:05 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 23:26:06 - INFO - Loading object_detector [Trained RPN]....
+2024-02-26 23:26:07 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 23:26:08 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:26:08 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:26:08 - INFO - Train dataset loaded
+2024-02-26 23:26:08 - INFO - DataLoader Loaded Size: 200
+2024-02-26 23:26:08 - INFO - Start Training
+2024-02-26 23:26:35 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 441, in <module>
+    main()
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 431, in main
+    trainer.train()
+  File "C:\Users\engah\Downloads\GP\Graduation-Project\src\x_reporto\trainer\x_reporto_trainer.py", line 184, in train
+    self.lr_scheduler.step()
+TypeError: ReduceLROnPlateau.step() missing 1 required positional argument: 'metrics'
+2024-02-26 23:27:47 - INFO - =================== New Run Started: 2024-02-26 23:27:47 ===================
+2024-02-26 23:27:47 - INFO - Training X_Reporto Started
+2024-02-26 23:27:47 - INFO - DEVICE: cuda
+2024-02-26 23:27:47 - INFO - OPERATION_MODE: 1
+2024-02-26 23:27:47 - INFO - MODEL_STAGE: 1
+2024-02-26 23:27:47 - INFO - CONTINUE_TRAIN: False
+2024-02-26 23:27:47 - INFO - TRAIN_RPN: False
+2024-02-26 23:27:47 - INFO - RUN: 0
+2024-02-26 23:27:47 - INFO - EPOCHS: 5
+2024-02-26 23:27:47 - INFO - BATCH_SIZE: 1
+2024-02-26 23:27:47 - INFO - EFFECTIVE_BATCH_SIZE: 8
+2024-02-26 23:27:47 - INFO - ACCUMULATION_STEPS: 8
+2024-02-26 23:27:47 - INFO - LM_Batch_Size: 1
+2024-02-26 23:27:47 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 23:27:47 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 23:27:47 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 23:27:47 - INFO - DEBUG: True
+2024-02-26 23:27:47 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 23:27:47 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 23:27:47 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 23:27:47 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 23:27:47 - INFO - PERIODIC_LOGGING: False
+2024-02-26 23:27:47 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 23:27:47 - INFO - RECOVER: False
+2024-02-26 23:27:47 - INFO - Folder 'models/0' already exists.
+2024-02-26 23:27:47 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 23:27:49 - INFO - Loading object_detector [Trained RPN]....
+2024-02-26 23:27:50 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 23:27:51 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:27:51 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 23:27:51 - INFO - Train dataset loaded
+2024-02-26 23:27:51 - INFO - DataLoader Loaded Size: 200
+2024-02-26 23:27:51 - INFO - Start Training
+2024-02-26 23:28:13 - INFO - Epoch 1/5, Batch 1/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:13 - INFO - Epoch 1/5, Batch 2/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:13 - INFO - Epoch 1/5, Batch 3/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:14 - INFO - Epoch 1/5, Batch 4/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:14 - INFO - Epoch 1/5, Batch 5/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:14 - INFO - Epoch 1/5, Batch 6/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:14 - INFO - Epoch 1/5, Batch 7/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:15 - DEBUG -  Update Weights at  epoch: 1, Batch 8/200 
+2024-02-26 23:28:15 - INFO - Epoch 1/5, Batch 8/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:15 - INFO - Epoch 1/5, Batch 9/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:15 - INFO - Epoch 1/5, Batch 10/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:15 - INFO - Epoch 1/5, Batch 11/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:16 - INFO - Epoch 1/5, Batch 12/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:16 - INFO - Epoch 1/5, Batch 13/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:16 - INFO - Epoch 1/5, Batch 14/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:17 - INFO - Epoch 1/5, Batch 15/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:17 - DEBUG -  Update Weights at  epoch: 1, Batch 16/200 
+2024-02-26 23:28:17 - INFO - Epoch 1/5, Batch 16/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:17 - INFO - Epoch 1/5, Batch 17/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:17 - INFO - Epoch 1/5, Batch 18/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:18 - INFO - Epoch 1/5, Batch 19/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:18 - INFO - Epoch 1/5, Batch 20/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:19 - INFO - Epoch 1/5, Batch 21/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:19 - INFO - Epoch 1/5, Batch 22/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:19 - INFO - Epoch 1/5, Batch 23/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:19 - DEBUG -  Update Weights at  epoch: 1, Batch 24/200 
+2024-02-26 23:28:19 - INFO - Epoch 1/5, Batch 24/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:20 - INFO - Epoch 1/5, Batch 25/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:20 - INFO - Epoch 1/5, Batch 26/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:20 - INFO - Epoch 1/5, Batch 27/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:20 - INFO - Epoch 1/5, Batch 28/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:21 - INFO - Epoch 1/5, Batch 29/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:21 - INFO - Epoch 1/5, Batch 30/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:21 - INFO - Epoch 1/5, Batch 31/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:21 - DEBUG -  Update Weights at  epoch: 1, Batch 32/200 
+2024-02-26 23:28:21 - INFO - Epoch 1/5, Batch 32/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:22 - INFO - Epoch 1/5, Batch 33/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:22 - INFO - Epoch 1/5, Batch 34/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:22 - INFO - Epoch 1/5, Batch 35/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:22 - INFO - Epoch 1/5, Batch 36/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:23 - INFO - Epoch 1/5, Batch 37/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:23 - INFO - Epoch 1/5, Batch 38/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:23 - INFO - Epoch 1/5, Batch 39/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:23 - DEBUG -  Update Weights at  epoch: 1, Batch 40/200 
+2024-02-26 23:28:23 - INFO - Epoch 1/5, Batch 40/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:24 - INFO - Epoch 1/5, Batch 41/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:24 - INFO - Epoch 1/5, Batch 42/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:24 - INFO - Epoch 1/5, Batch 43/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:24 - INFO - Epoch 1/5, Batch 44/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:25 - INFO - Epoch 1/5, Batch 45/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:25 - INFO - Epoch 1/5, Batch 46/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:25 - INFO - Epoch 1/5, Batch 47/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:25 - DEBUG -  Update Weights at  epoch: 1, Batch 48/200 
+2024-02-26 23:28:25 - INFO - Epoch 1/5, Batch 48/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:26 - INFO - Epoch 1/5, Batch 49/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:26 - INFO - Epoch 1/5, Batch 50/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:26 - INFO - Epoch 1/5, Batch 51/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:26 - INFO - Epoch 1/5, Batch 52/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:27 - INFO - Epoch 1/5, Batch 53/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:27 - INFO - Epoch 1/5, Batch 54/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:27 - INFO - Epoch 1/5, Batch 55/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:27 - DEBUG -  Update Weights at  epoch: 1, Batch 56/200 
+2024-02-26 23:28:27 - INFO - Epoch 1/5, Batch 56/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:28 - INFO - Epoch 1/5, Batch 57/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:28 - INFO - Epoch 1/5, Batch 58/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:29 - INFO - Epoch 1/5, Batch 59/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:29 - INFO - Epoch 1/5, Batch 60/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:29 - INFO - Epoch 1/5, Batch 61/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:29 - INFO - Epoch 1/5, Batch 62/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:30 - INFO - Epoch 1/5, Batch 63/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:30 - DEBUG -  Update Weights at  epoch: 1, Batch 64/200 
+2024-02-26 23:28:30 - INFO - Epoch 1/5, Batch 64/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:30 - INFO - Epoch 1/5, Batch 65/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:30 - INFO - Epoch 1/5, Batch 66/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:31 - INFO - Epoch 1/5, Batch 67/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:31 - INFO - Epoch 1/5, Batch 68/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:31 - INFO - Epoch 1/5, Batch 69/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:31 - INFO - Epoch 1/5, Batch 70/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:32 - INFO - Epoch 1/5, Batch 71/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:32 - DEBUG -  Update Weights at  epoch: 1, Batch 72/200 
+2024-02-26 23:28:32 - INFO - Epoch 1/5, Batch 72/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:32 - INFO - Epoch 1/5, Batch 73/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:32 - INFO - Epoch 1/5, Batch 74/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:33 - INFO - Epoch 1/5, Batch 75/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:33 - INFO - Epoch 1/5, Batch 76/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:33 - INFO - Epoch 1/5, Batch 77/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:33 - INFO - Epoch 1/5, Batch 78/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:34 - INFO - Epoch 1/5, Batch 79/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:34 - DEBUG -  Update Weights at  epoch: 1, Batch 80/200 
+2024-02-26 23:28:34 - INFO - Epoch 1/5, Batch 80/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:34 - INFO - Epoch 1/5, Batch 81/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:35 - INFO - Epoch 1/5, Batch 82/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:35 - INFO - Epoch 1/5, Batch 83/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:35 - INFO - Epoch 1/5, Batch 84/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:35 - INFO - Epoch 1/5, Batch 85/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:36 - INFO - Epoch 1/5, Batch 86/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:36 - INFO - Epoch 1/5, Batch 87/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:36 - DEBUG -  Update Weights at  epoch: 1, Batch 88/200 
+2024-02-26 23:28:36 - INFO - Epoch 1/5, Batch 88/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:36 - INFO - Epoch 1/5, Batch 89/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:37 - INFO - Epoch 1/5, Batch 90/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:37 - INFO - Epoch 1/5, Batch 91/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:37 - INFO - Epoch 1/5, Batch 92/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:37 - INFO - Epoch 1/5, Batch 93/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:38 - INFO - Epoch 1/5, Batch 94/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:38 - INFO - Epoch 1/5, Batch 95/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:38 - DEBUG -  Update Weights at  epoch: 1, Batch 96/200 
+2024-02-26 23:28:38 - INFO - Epoch 1/5, Batch 96/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:38 - INFO - Epoch 1/5, Batch 97/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:39 - INFO - Epoch 1/5, Batch 98/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:39 - INFO - Epoch 1/5, Batch 99/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:39 - INFO - Epoch 1/5, Batch 100/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:39 - INFO - [Every 100 Batch]: Epoch 1/5, Batch 100/200, Average Cumulative Epoch Loss : 3.8081
+2024-02-26 23:28:39 - INFO - Epoch 1/5, Batch 101/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:40 - INFO - Epoch 1/5, Batch 102/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:40 - INFO - Epoch 1/5, Batch 103/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:40 - DEBUG -  Update Weights at  epoch: 1, Batch 104/200 
+2024-02-26 23:28:40 - INFO - Epoch 1/5, Batch 104/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:41 - INFO - Epoch 1/5, Batch 105/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:41 - INFO - Epoch 1/5, Batch 106/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:41 - INFO - Epoch 1/5, Batch 107/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:41 - INFO - Epoch 1/5, Batch 108/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:42 - INFO - Epoch 1/5, Batch 109/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:42 - INFO - Epoch 1/5, Batch 110/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:42 - INFO - Epoch 1/5, Batch 111/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:42 - DEBUG -  Update Weights at  epoch: 1, Batch 112/200 
+2024-02-26 23:28:42 - INFO - Epoch 1/5, Batch 112/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:43 - INFO - Epoch 1/5, Batch 113/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:43 - INFO - Epoch 1/5, Batch 114/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:43 - INFO - Epoch 1/5, Batch 115/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:43 - INFO - Epoch 1/5, Batch 116/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:44 - INFO - Epoch 1/5, Batch 117/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:44 - INFO - Epoch 1/5, Batch 118/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:44 - INFO - Epoch 1/5, Batch 119/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:44 - DEBUG -  Update Weights at  epoch: 1, Batch 120/200 
+2024-02-26 23:28:45 - INFO - Epoch 1/5, Batch 120/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:45 - INFO - Epoch 1/5, Batch 121/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:45 - INFO - Epoch 1/5, Batch 122/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:45 - INFO - Epoch 1/5, Batch 123/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:46 - INFO - Epoch 1/5, Batch 124/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:46 - INFO - Epoch 1/5, Batch 125/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:46 - INFO - Epoch 1/5, Batch 126/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:46 - INFO - Epoch 1/5, Batch 127/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:47 - DEBUG -  Update Weights at  epoch: 1, Batch 128/200 
+2024-02-26 23:28:47 - INFO - Epoch 1/5, Batch 128/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:47 - INFO - Epoch 1/5, Batch 129/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:47 - INFO - Epoch 1/5, Batch 130/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:48 - INFO - Epoch 1/5, Batch 131/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:48 - INFO - Epoch 1/5, Batch 132/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:48 - INFO - Epoch 1/5, Batch 133/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:48 - INFO - Epoch 1/5, Batch 134/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:49 - INFO - Epoch 1/5, Batch 135/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:49 - DEBUG -  Update Weights at  epoch: 1, Batch 136/200 
+2024-02-26 23:28:49 - INFO - Epoch 1/5, Batch 136/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:49 - INFO - Epoch 1/5, Batch 137/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:49 - INFO - Epoch 1/5, Batch 138/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:50 - INFO - Epoch 1/5, Batch 139/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:50 - INFO - Epoch 1/5, Batch 140/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:50 - INFO - Epoch 1/5, Batch 141/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:50 - INFO - Epoch 1/5, Batch 142/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:51 - INFO - Epoch 1/5, Batch 143/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:51 - DEBUG -  Update Weights at  epoch: 1, Batch 144/200 
+2024-02-26 23:28:51 - INFO - Epoch 1/5, Batch 144/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:51 - INFO - Epoch 1/5, Batch 145/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:52 - INFO - Epoch 1/5, Batch 146/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:52 - INFO - Epoch 1/5, Batch 147/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:52 - INFO - Epoch 1/5, Batch 148/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:52 - INFO - Epoch 1/5, Batch 149/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:53 - INFO - Epoch 1/5, Batch 150/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:53 - INFO - Epoch 1/5, Batch 151/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:53 - DEBUG -  Update Weights at  epoch: 1, Batch 152/200 
+2024-02-26 23:28:53 - INFO - Epoch 1/5, Batch 152/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:53 - INFO - Epoch 1/5, Batch 153/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:54 - INFO - Epoch 1/5, Batch 154/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:54 - INFO - Epoch 1/5, Batch 155/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:54 - INFO - Epoch 1/5, Batch 156/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:55 - INFO - Epoch 1/5, Batch 157/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:55 - INFO - Epoch 1/5, Batch 158/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:55 - INFO - Epoch 1/5, Batch 159/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:55 - DEBUG -  Update Weights at  epoch: 1, Batch 160/200 
+2024-02-26 23:28:55 - INFO - Epoch 1/5, Batch 160/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:56 - INFO - Epoch 1/5, Batch 161/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:56 - INFO - Epoch 1/5, Batch 162/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:56 - INFO - Epoch 1/5, Batch 163/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:56 - INFO - Epoch 1/5, Batch 164/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:57 - INFO - Epoch 1/5, Batch 165/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:57 - INFO - Epoch 1/5, Batch 166/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:57 - INFO - Epoch 1/5, Batch 167/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:57 - DEBUG -  Update Weights at  epoch: 1, Batch 168/200 
+2024-02-26 23:28:58 - INFO - Epoch 1/5, Batch 168/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:58 - INFO - Epoch 1/5, Batch 169/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:58 - INFO - Epoch 1/5, Batch 170/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:58 - INFO - Epoch 1/5, Batch 171/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:59 - INFO - Epoch 1/5, Batch 172/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:59 - INFO - Epoch 1/5, Batch 173/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:59 - INFO - Epoch 1/5, Batch 174/200, Learning Rate: 0.0001000000
+2024-02-26 23:28:59 - INFO - Epoch 1/5, Batch 175/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:00 - DEBUG -  Update Weights at  epoch: 1, Batch 176/200 
+2024-02-26 23:29:00 - INFO - Epoch 1/5, Batch 176/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:00 - INFO - Epoch 1/5, Batch 177/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:00 - INFO - Epoch 1/5, Batch 178/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:00 - INFO - Epoch 1/5, Batch 179/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:01 - INFO - Epoch 1/5, Batch 180/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:01 - INFO - Epoch 1/5, Batch 181/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:01 - INFO - Epoch 1/5, Batch 182/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:02 - INFO - Epoch 1/5, Batch 183/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:02 - DEBUG -  Update Weights at  epoch: 1, Batch 184/200 
+2024-02-26 23:29:02 - INFO - Epoch 1/5, Batch 184/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:02 - INFO - Epoch 1/5, Batch 185/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:02 - INFO - Epoch 1/5, Batch 186/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:03 - INFO - Epoch 1/5, Batch 187/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:03 - INFO - Epoch 1/5, Batch 188/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:03 - INFO - Epoch 1/5, Batch 189/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:04 - INFO - Epoch 1/5, Batch 190/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:04 - INFO - Epoch 1/5, Batch 191/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:04 - DEBUG -  Update Weights at  epoch: 1, Batch 192/200 
+2024-02-26 23:29:04 - INFO - Epoch 1/5, Batch 192/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:04 - INFO - Epoch 1/5, Batch 193/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:05 - INFO - Epoch 1/5, Batch 194/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:05 - INFO - Epoch 1/5, Batch 195/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:05 - INFO - Epoch 1/5, Batch 196/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:05 - INFO - Epoch 1/5, Batch 197/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:06 - INFO - Epoch 1/5, Batch 198/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:06 - INFO - Epoch 1/5, Batch 199/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:06 - DEBUG -  Update Weights at  epoch: 1, Batch 200/200 
+2024-02-26 23:29:06 - INFO - Epoch 1/5, Batch 200/200, Learning Rate: 0.0001000000
+2024-02-26 23:29:06 - INFO - [Every 100 Batch]: Epoch 1/5, Batch 200/200, Average Cumulative Epoch Loss : 3.3393
+2024-02-26 23:29:07 - INFO - Epoch 1/5, Total epoch Loss: 667.8505 Average epoch loss : 3.3393
+2024-02-26 23:30:04 - INFO - Saving object_detector_epoch 1
+2024-02-26 23:30:06 - INFO - Best Model Updated: object_detector_best at epoch 1 with Average validation loss: 2.9887

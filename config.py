@@ -22,17 +22,19 @@ MODEL_STAGE=1
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
+TRAIN_RPN=False # Tain only RPN of the object detector
 RUN = "0"
 EPOCHS=5
-BATCH_SIZE=2
+BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 2
+EFFECTIVE_BATCH_SIZE = 8
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=0.0001
 SCHEDULAR_STEP_SIZE=750 #
 SCHEDULAR_GAMMA=0.9
+THRESHOLD_LR_SCHEDULER=1e-4
+COOLDOWN_LR_SCHEDULER= 1
 # Debgging COnfigurations
 DEBUG=True
 
