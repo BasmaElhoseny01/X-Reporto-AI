@@ -2,6 +2,7 @@
 All datasets
 datasets
 dataset_old_csvs
+logs
 
 # All modules
 *.pth
