@@ -7,8 +7,6 @@ import os
 import gc
 from tqdm import tqdm
 
-import sys
-
 
 # Torch
 import torch
@@ -125,8 +123,10 @@ class XReportoTrainer():
                 epoch_loss=epoch_loss_init
             else:
                 epoch_loss = 0
-            
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train,start=start_batch):
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):
+
+                if batch_idx < start_batch:
+                    continue  # Skip batches until reaching the desired starting batch number
 
                 # Test Recovery
                 # if epoch==3 and batch_idx==1:
@@ -138,8 +138,6 @@ class XReportoTrainer():
                 # Move inputs to Device
                 # print(object_detector_targets[0])
                 # print(batch_idx)
-                print(images[0,:,200:250,200:250])
-                sys.exit()
 
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
