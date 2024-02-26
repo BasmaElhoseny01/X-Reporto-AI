@@ -26,11 +26,12 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s]: %(message)s")
 log = logging.getLogger(__name__)
 
 
-NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
+# NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
+NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 200
 
 
 class DataPreprocessing:
-    def __init__(self,train_only = True,fix_bboxes = True):
+    def __init__(self,train_only = False,valid_only = False,fix_bboxes = True):
         self.path_chest_imagenome = path_chest_imagenome
         self.path_mimic_cxr = path_mimic_cxr
         self.path_mimic_cxr_jpg = path_mimic_cxr_jpg
@@ -40,6 +41,8 @@ class DataPreprocessing:
             self.image_ids_to_avoid = self.get_images_to_avoid()
             if train_only:
                 self.csv_files_dict = self.get_train_files()
+            elif valid_only:
+                self.csv_files_dict = self.get_val_files()
             else:
                 self.csv_files_dict = self.get_train_val_test_csv_files()
     def get_train_files(self):
@@ -54,6 +57,10 @@ class DataPreprocessing:
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
         return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["train", "valid", "test"]}
+    def get_val_files(self):
+        """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
+        path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
+        return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["valid"]} 
     def get_images_to_avoid(self):
         image_ids_to_avoid = set()
 
@@ -68,7 +75,7 @@ class DataPreprocessing:
                 image_ids_to_avoid.add(image_id)
 
         return image_ids_to_avoid
-    def create_new_csv_files(self):
+    def create_new_csv_files(self,check_images = False):
         if os.path.exists(self.path_full_dataset):
             log.error(f"Full dataset folder already exists at {self.path_full_dataset}.")
             log.error("Delete dataset folder or rename variable path_full_dataset in src/path_datasets_and_weights.py before running script to create new folder!")
@@ -76,12 +83,12 @@ class DataPreprocessing:
 
         os.mkdir(self.path_full_dataset)
         for dataset, path_csv_file in self.csv_files_dict.items():
-            self.create_new_csv_file(dataset, path_csv_file)
+            self.create_new_csv_file(dataset, path_csv_file,check_images=check_images)
 
-    def create_new_csv_file(self, dataset, path_csv_file):
+    def create_new_csv_file(self, dataset, path_csv_file,check_images = False):
         log.info(f"Creating new {dataset}.csv file...")
 
-        csv_rows = self.get_rows(dataset, path_csv_file, self.image_ids_to_avoid)
+        csv_rows = self.get_rows(dataset, path_csv_file, self.image_ids_to_avoid,check_images=check_images)
 
         self.write_rows_in_new_csv_file(dataset, csv_rows)
 
@@ -214,7 +221,7 @@ class DataPreprocessing:
 
             return sum(1 for row in csv_reader)
     
-    def get_rows(self, dataset: str, path_csv_file: str, image_ids_to_avoid: set) -> list[list]:
+    def get_rows(self, dataset: str, path_csv_file: str, image_ids_to_avoid: set,check_images:bool = False) -> list[list]:
         
         csv_rows = []
         num_rows_created = 0
@@ -265,9 +272,9 @@ class DataPreprocessing:
                 image_file_path = row[4].replace(".dcm", ".jpg")
                 mimic_image_file_path = os.path.join(self.path_mimic_cxr_jpg, image_file_path)
 
-                # if not os.path.exists(mimic_image_file_path):
-                #     missing_images.append(mimic_image_file_path)
-                #     continue
+                if not os.path.exists(mimic_image_file_path) and check_images:
+                    missing_images.append(mimic_image_file_path)
+                    continue
 
                 # for the validation and test sets, we only want to include images that have corresponding reference reports with "findings" sections
                 if dataset in ["valid", "test"]:
@@ -587,7 +594,8 @@ def get_image_dimensions(image_path):
         print("An error occurred:", e)
 
 if __name__=="__main__":
-    data=DataPreprocessing()
-    # data.create_new_csv_files()
-    data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
+    data=DataPreprocessing(train_only=False,valid_only=True,fix_bboxes=False)
+    check_images = False
+    data.create_new_csv_files(check_images=check_images)
+    # data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
     

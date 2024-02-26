@@ -162,7 +162,7 @@ def collate_fn(batch):
 
         return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
-   
+
 
 def main():
     
