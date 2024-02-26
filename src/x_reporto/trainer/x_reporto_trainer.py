@@ -7,6 +7,7 @@ import os
 import gc
 from tqdm import tqdm
 
+
 # Torch
 import torch
 import torch.optim as optim
@@ -21,7 +22,6 @@ from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint
 
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
-
 
 class XReportoTrainer():
     """
@@ -83,12 +83,25 @@ class XReportoTrainer():
         
         # create data loader
         self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-        # self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
-        logging.info("DataLoader Loaded")
+        logging.info(f"DataLoader Loaded Size: {len(self.data_loader_train)}")
+        
+        self.shuffle_order =list(self.data_loader_train.sampler)
+        # print(self.shuffle_order)
 
         # initialize the best loss to a large value
         self.best_loss = float('inf')
         self.best_epoch = 0
+
+    def load_shuffle_dataloader(self,shuffle_order,start_offset):
+        batch_sampler = torch.utils.data.sampler.BatchSampler(shuffle_order[start_offset:], BATCH_SIZE, drop_last=False)
+
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn,
+                                num_workers=4,
+                                batch_sampler=batch_sampler)
+
+        self.shuffle_order=shuffle_order
+        logging.info(f"DataLoader Shuffle Order Updated :D Size:{len(self.data_loader_train)}")
+
 
     def test_data_loader(self):
         '''
@@ -104,6 +117,7 @@ class XReportoTrainer():
                 assert object_detector_targets[i]['boxes'].shape[1] == 4, f'Batch {batch_idx + 1} has boxes with shape {object_detector_targets[i]["boxes"].shape}'
             # print(f'Batch {batch_idx + 1} has {len(images)} images')
             logging.info(f'Batch {batch_idx + 1} has {len(images)} images')
+
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         '''
         Train X-Reporto on the training dataset depending on the MODEL_STAGE.
@@ -120,14 +134,19 @@ class XReportoTrainer():
             else:
                 epoch_loss = 0
             
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train[start_batch:,]):     
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train,start=start_batch):
 
-                # # Test Recovery
+                # Test Recovery
                 # if epoch==3 and batch_idx==1:
-                #     raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
+                    # print("Start Next time from")
+                    # print(object_detector_targets[1])
+                    # print(batch_idx)
+                    # raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
                 # TODO: Test
-                batch_idx+=start_batch
                 # Move inputs to Device
+                # print(object_detector_targets[0])
+                # print(batch_idx)
+
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
 
@@ -156,7 +175,7 @@ class XReportoTrainer():
                 # Checkpoint
                 total_steps+=1            
                 if(total_steps%CHECKPOINT_EVERY_N ==0):
-                    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+                    save_checkpoint(epoch=epoch,batch_index=batch_idx,shuffle_order=self.shuffle_order,optimizer_state=self.optimizer.state_dict(),
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,best_epoch=self.best_epoch,epoch_loss=epoch_loss)
                     total_steps=0
@@ -694,6 +713,13 @@ def main():
         # Load Model state
         x_reporto_model.load_state_dict(checkpoint['model_state'])
 
+        # Batch to start from
+        start_batch=checkpoint['batch_index']+1
+
+        # shuffle_order For the DataLoader
+        shuffle_order=checkpoint['shuffle_order']
+        trainer.load_shuffle_dataloader(shuffle_order=shuffle_order,start_offset=start_batch*BATCH_SIZE)
+
         # Load scheduler_state_dict
         trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
@@ -704,8 +730,9 @@ def main():
         trainer.best_loss=checkpoint['best_loss']
         trainer.best_epoch=checkpoint['best_epoch']
 
+
         # Start Train form checkpoint ends
-        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=checkpoint['batch_index'])
+        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
 
     else:
         # No check point
