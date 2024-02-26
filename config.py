@@ -22,12 +22,12 @@ MODEL_STAGE=1
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=False # Tain only RPN of the object detector
+TRAIN_RPN=True # Tain only RPN of the object detector
 RUN = "1"
 EPOCHS=5
 BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 2
+EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=0.00006
@@ -48,7 +48,7 @@ validation_csv_path:str = 'datasets/train.csv'
 test_csv_path:str = 'datasets/train.csv'
 
 # Logging
-PERIODIC_LOGGING=False
+PERIODIC_LOGGING=True
 
 CHECKPOINT_EVERY_N=300
 RECOVER=False

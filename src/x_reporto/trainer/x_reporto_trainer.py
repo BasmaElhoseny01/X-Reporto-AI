@@ -19,7 +19,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker
+from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker,empty_folder
 
 from config import *
 
@@ -160,7 +160,7 @@ class XReportoTrainer():
                     Total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
                     epoch_loss += Total_loss
                 else:
-                    Total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+                    Total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
                     epoch_loss += Total_loss
             
                 # backward pass
@@ -179,7 +179,8 @@ class XReportoTrainer():
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
                
-                self.tensor_board_writer.add_scalar('Learning Rate Epoch' + str(epoch),new_lr,batch_idx+1)
+                self.tensor_board_writer.add_scalar('Epoch'+str(epoch+1)+'/Learning Rate',new_lr,batch_idx+1)
+
 
 
                 if (batch_idx+1)%100==0:
@@ -243,8 +244,6 @@ class XReportoTrainer():
         # Forward Pass
         object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
         
-        logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-        self.tensor_board_writer.add_scalar('Object Detector Loss (Per Batch) Epoch' + str(epoch),object_detector_losses_summation,batch_idx+1)
 
 
         Total_loss=None
@@ -253,6 +252,10 @@ class XReportoTrainer():
         if MODEL_STAGE==ModelStage.CLASSIFIER.value:
             Total_loss+=selection_classifier_losses
             Total_loss+=abnormal_binary_classifier_losses
+
+        logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
+        self.tensor_board_writer.add_scalar('Epoch'+str(epoch+1)+'/Object Detector Loss (Per Batch)',object_detector_losses_summation,batch_idx+1)
+        
         del LM_losses
         del object_detector_losses
         del selection_classifier_losses
@@ -316,7 +319,7 @@ class XReportoTrainer():
                     loopLength= input_ids.shape[1]
                     validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
                 else:
-                    total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+                    total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,mages=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
                     validation_total_loss+=total_loss
             # arverge validation_total_loss
             validation_total_loss/=(len(self.data_loader_train))
@@ -391,12 +394,13 @@ def main():
         logging.info(f"Folder '{folder_path}' already exists.")
 
     # Creating tensorboard folder
-    folder_path="tensor_boards/" + str(RUN)
+    folder_path="./tensor_boards/" + str(RUN)
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
         logging.info(f"Folder '{folder_path}' created successfully.")
     else:
         logging.info(f"Folder '{folder_path}' already exists.")
+        empty_folder(folder_path)
 
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
