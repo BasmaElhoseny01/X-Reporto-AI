@@ -202,13 +202,17 @@ class FrcnnObjectDetectorV1(nn.Module):
         proposals, proposal_losses = self.rpn(images, features, targets)
 
 
-        if self.training and TRAIN_RPN:
+        if TRAIN_RPN:
             # Turn Off Object ROI output 
             detector_losses={}
             outputs = {}
             outputs["features"]=None
             outputs["class_detected"] = None
-
+            outputs["class_detected"] = None
+            outputs["detections"]={}
+            outputs["detections"]["top_region_boxes"]=None
+            outputs["class_detected"] = None
+            outputs["features"]=None
         else:
             detections  = self.roi_heads(features, proposals, images.image_sizes, targets)
             detector_losses =detections["detector_losses"]

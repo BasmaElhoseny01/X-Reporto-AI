@@ -25,9 +25,9 @@ CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=True # Tain only RPN of the object detector
 RUN = "0"
 EPOCHS=5
-BATCH_SIZE=32
+BATCH_SIZE=2
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 64
+EFFECTIVE_BATCH_SIZE = 2
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=0.0001
@@ -48,13 +48,15 @@ validation_csv_path:str = 'datasets/train.csv'
 test_csv_path:str = 'datasets/train.csv'
 
 # Logging
-PERIODIC_LOGGING=True
+PERIODIC_LOGGING=False
 
 # Checkpointing
 CHECKPOINT_EVERY_N=300
-RECOVER=True
-
-
+RECOVER=False
+ 
+def change_operation_mode(mode):
+    global OPERATION_MODE
+    OPERATION_MODE = mode
 
 
 

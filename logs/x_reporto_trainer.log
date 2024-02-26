@@ -1,0 +1,714 @@
+2024-02-26 21:17:52 - INFO - =================== New Run Started: 2024-02-26 21:17:52 ===================
+2024-02-26 21:17:52 - INFO - Training X_Reporto Started
+2024-02-26 21:17:52 - INFO - DEVICE: cuda
+2024-02-26 21:17:52 - INFO - OPERATION_MODE: 1
+2024-02-26 21:17:52 - INFO - MODEL_STAGE: 1
+2024-02-26 21:17:52 - INFO - CONTINUE_TRAIN: False
+2024-02-26 21:17:52 - INFO - TRAIN_RPN: True
+2024-02-26 21:17:52 - INFO - RUN: 0
+2024-02-26 21:17:52 - INFO - EPOCHS: 5
+2024-02-26 21:17:52 - INFO - BATCH_SIZE: 2
+2024-02-26 21:17:52 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 21:17:52 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 21:17:52 - INFO - LM_Batch_Size: 1
+2024-02-26 21:17:52 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 21:17:52 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 21:17:52 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 21:17:52 - INFO - DEBUG: True
+2024-02-26 21:17:52 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 21:17:52 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 21:17:52 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 21:17:52 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 21:17:52 - INFO - PERIODIC_LOGGING: False
+2024-02-26 21:17:52 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 21:17:52 - INFO - RECOVER: False
+2024-02-26 21:17:52 - INFO - Folder 'models/0' already exists.
+2024-02-26 21:17:52 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 21:17:55 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 21:17:57 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:17:58 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:17:58 - INFO - Train dataset loaded
+2024-02-26 21:17:58 - INFO - DataLoader Loaded Size: 2
+2024-02-26 21:17:58 - INFO - Start Training
+2024-02-26 21:18:34 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 21:18:34 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:18:36 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 21:18:36 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:18:38 - INFO - Epoch 1/5, Total epoch Loss: 4.4125 Average epoch loss : 2.2063
+2024-02-26 21:19:04 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 21:19:20 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 4.5272
+2024-02-26 21:19:40 - DEBUG -  Update Weights at  epoch: 2, Batch 1/2 
+2024-02-26 21:19:40 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:19:40 - DEBUG -  Update Weights at  epoch: 2, Batch 2/2 
+2024-02-26 21:19:40 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:19:42 - INFO - Epoch 2/5, Total epoch Loss: 3.7569 Average epoch loss : 1.8785
+2024-02-26 21:20:03 - INFO - Saving object_detector_rpn_epoch 2
+2024-02-26 21:20:19 - INFO - Best Model Updated: object_detector_rpn_best at epoch 2 with Average validation loss: 4.4460
+2024-02-26 21:20:39 - DEBUG -  Update Weights at  epoch: 3, Batch 1/2 
+2024-02-26 21:20:39 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:20:40 - DEBUG -  Update Weights at  epoch: 3, Batch 2/2 
+2024-02-26 21:20:40 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:20:42 - INFO - Epoch 3/5, Total epoch Loss: 3.5357 Average epoch loss : 1.7679
+2024-02-26 21:21:08 - INFO - Saving object_detector_rpn_epoch 3
+2024-02-26 21:21:24 - INFO - Best Model Updated: object_detector_rpn_best at epoch 3 with Average validation loss: 4.4483
+2024-02-26 21:21:48 - DEBUG -  Update Weights at  epoch: 4, Batch 1/2 
+2024-02-26 21:21:48 - INFO - Epoch 4/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:21:49 - DEBUG -  Update Weights at  epoch: 4, Batch 2/2 
+2024-02-26 21:21:49 - INFO - Epoch 4/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:21:51 - INFO - Epoch 4/5, Total epoch Loss: 3.3075 Average epoch loss : 1.6537
+2024-02-26 21:22:15 - INFO - Saving object_detector_rpn_epoch 4
+2024-02-26 21:22:31 - INFO - Best Model Updated: object_detector_rpn_best at epoch 4 with Average validation loss: 4.5113
+2024-02-26 21:22:55 - DEBUG -  Update Weights at  epoch: 5, Batch 1/2 
+2024-02-26 21:22:55 - INFO - Epoch 5/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:22:55 - DEBUG -  Update Weights at  epoch: 5, Batch 2/2 
+2024-02-26 21:22:55 - INFO - Epoch 5/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:22:57 - INFO - Epoch 5/5, Total epoch Loss: 3.0353 Average epoch loss : 1.5176
+2024-02-26 21:24:53 - INFO - =================== New Run Started: 2024-02-26 21:24:53 ===================
+2024-02-26 21:24:53 - INFO - Training X_Reporto Started
+2024-02-26 21:24:53 - INFO - DEVICE: cuda
+2024-02-26 21:24:53 - INFO - OPERATION_MODE: 1
+2024-02-26 21:24:53 - INFO - MODEL_STAGE: 1
+2024-02-26 21:24:53 - INFO - CONTINUE_TRAIN: False
+2024-02-26 21:24:53 - INFO - TRAIN_RPN: True
+2024-02-26 21:24:53 - INFO - RUN: 0
+2024-02-26 21:24:53 - INFO - EPOCHS: 5
+2024-02-26 21:24:53 - INFO - BATCH_SIZE: 2
+2024-02-26 21:24:53 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 21:24:53 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 21:24:53 - INFO - LM_Batch_Size: 1
+2024-02-26 21:24:53 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 21:24:53 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 21:24:53 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 21:24:53 - INFO - DEBUG: True
+2024-02-26 21:24:53 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 21:24:53 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 21:24:53 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 21:24:53 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 21:24:53 - INFO - PERIODIC_LOGGING: False
+2024-02-26 21:24:53 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 21:24:53 - INFO - RECOVER: False
+2024-02-26 21:24:53 - INFO - Folder 'models/0' already exists.
+2024-02-26 21:24:53 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 21:24:56 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 21:25:14 - DEBUG - Starting new HTTPS connection (2): huggingface.co:443
+2024-02-26 21:25:21 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:25:21 - INFO - Train dataset loaded
+2024-02-26 21:25:21 - INFO - DataLoader Loaded Size: 2
+2024-02-26 21:25:21 - INFO - Start Training
+2024-02-26 21:25:58 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 21:25:58 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:26:00 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 21:26:00 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:26:03 - INFO - Epoch 1/5, Total epoch Loss: 4.4678 Average epoch loss : 1.1170
+2024-02-26 21:26:31 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 21:26:47 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 4.4245
+2024-02-26 21:27:09 - DEBUG -  Update Weights at  epoch: 2, Batch 1/2 
+2024-02-26 21:27:09 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:27:10 - DEBUG -  Update Weights at  epoch: 2, Batch 2/2 
+2024-02-26 21:27:10 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:27:12 - INFO - Epoch 2/5, Total epoch Loss: 3.6002 Average epoch loss : 0.9001
+2024-02-26 21:27:37 - INFO - Saving object_detector_rpn_epoch 2
+2024-02-26 21:27:53 - INFO - Best Model Updated: object_detector_rpn_best at epoch 2 with Average validation loss: 4.2633
+2024-02-26 21:28:15 - DEBUG -  Update Weights at  epoch: 3, Batch 1/2 
+2024-02-26 21:28:15 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:28:15 - DEBUG -  Update Weights at  epoch: 3, Batch 2/2 
+2024-02-26 21:28:15 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:28:17 - INFO - Epoch 3/5, Total epoch Loss: 3.4807 Average epoch loss : 0.8702
+2024-02-26 21:28:40 - INFO - Saving object_detector_rpn_epoch 3
+2024-02-26 21:28:55 - INFO - Best Model Updated: object_detector_rpn_best at epoch 3 with Average validation loss: 4.2904
+2024-02-26 21:29:16 - DEBUG -  Update Weights at  epoch: 4, Batch 1/2 
+2024-02-26 21:29:16 - INFO - Epoch 4/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:29:17 - DEBUG -  Update Weights at  epoch: 4, Batch 2/2 
+2024-02-26 21:29:17 - INFO - Epoch 4/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:29:18 - INFO - Epoch 4/5, Total epoch Loss: 3.4227 Average epoch loss : 0.8557
+2024-02-26 21:29:41 - INFO - Saving object_detector_rpn_epoch 4
+2024-02-26 21:29:56 - INFO - Best Model Updated: object_detector_rpn_best at epoch 4 with Average validation loss: 4.3575
+2024-02-26 21:30:19 - DEBUG -  Update Weights at  epoch: 5, Batch 1/2 
+2024-02-26 21:30:19 - INFO - Epoch 5/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:30:20 - DEBUG -  Update Weights at  epoch: 5, Batch 2/2 
+2024-02-26 21:30:20 - INFO - Epoch 5/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:30:21 - INFO - Epoch 5/5, Total epoch Loss: 3.2765 Average epoch loss : 0.8191
+2024-02-26 21:30:45 - INFO - Saving object_detector_rpn_epoch 5
+2024-02-26 21:31:00 - INFO - Best Model Updated: object_detector_rpn_best at epoch 5 with Average validation loss: 4.3494
+2024-02-26 21:31:00 - INFO - Training Done
+2024-02-26 21:36:27 - INFO - =================== New Run Started: 2024-02-26 21:36:27 ===================
+2024-02-26 21:36:27 - INFO - Training X_Reporto Started
+2024-02-26 21:36:27 - INFO - DEVICE: cuda
+2024-02-26 21:36:27 - INFO - OPERATION_MODE: 1
+2024-02-26 21:36:27 - INFO - MODEL_STAGE: 1
+2024-02-26 21:36:27 - INFO - CONTINUE_TRAIN: False
+2024-02-26 21:36:27 - INFO - TRAIN_RPN: True
+2024-02-26 21:36:27 - INFO - RUN: 0
+2024-02-26 21:36:27 - INFO - EPOCHS: 5
+2024-02-26 21:36:27 - INFO - BATCH_SIZE: 2
+2024-02-26 21:36:27 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 21:36:27 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 21:36:27 - INFO - LM_Batch_Size: 1
+2024-02-26 21:36:27 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 21:36:27 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 21:36:27 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 21:36:27 - INFO - DEBUG: True
+2024-02-26 21:36:27 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 21:36:27 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 21:36:27 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 21:36:27 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 21:36:27 - INFO - PERIODIC_LOGGING: False
+2024-02-26 21:36:27 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 21:36:27 - INFO - RECOVER: False
+2024-02-26 21:36:27 - INFO - Folder 'models/0' already exists.
+2024-02-26 21:36:27 - INFO - Folder 'check_points/0' created successfully.
+2024-02-26 21:36:32 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 21:36:32 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:36:33 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:36:33 - INFO - Train dataset loaded
+2024-02-26 21:36:33 - INFO - DataLoader Loaded Size: 2
+2024-02-26 21:36:33 - INFO - Start Training
+2024-02-26 21:37:08 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 21:37:08 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:37:10 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 21:37:10 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:37:11 - INFO - Epoch 1/5, Total epoch Loss: 4.1941 Average epoch loss : 1.0485
+2024-02-26 21:37:40 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 21:37:56 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 4.6041
+2024-02-26 21:38:23 - DEBUG -  Update Weights at  epoch: 2, Batch 1/2 
+2024-02-26 21:38:23 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:38:24 - DEBUG -  Update Weights at  epoch: 2, Batch 2/2 
+2024-02-26 21:38:24 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:38:26 - INFO - Epoch 2/5, Total epoch Loss: 3.7786 Average epoch loss : 0.9447
+2024-02-26 21:38:51 - INFO - Saving object_detector_rpn_epoch 2
+2024-02-26 21:39:06 - INFO - Best Model Updated: object_detector_rpn_best at epoch 2 with Average validation loss: 4.4828
+2024-02-26 21:39:35 - DEBUG -  Update Weights at  epoch: 3, Batch 1/2 
+2024-02-26 21:39:35 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:39:35 - DEBUG -  Update Weights at  epoch: 3, Batch 2/2 
+2024-02-26 21:39:35 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:39:37 - INFO - Epoch 3/5, Total epoch Loss: 3.4541 Average epoch loss : 0.8635
+2024-02-26 21:40:01 - INFO - Saving object_detector_rpn_epoch 3
+2024-02-26 21:40:18 - INFO - Best Model Updated: object_detector_rpn_best at epoch 3 with Average validation loss: 4.5313
+2024-02-26 21:40:39 - DEBUG -  Update Weights at  epoch: 4, Batch 1/2 
+2024-02-26 21:40:39 - INFO - Epoch 4/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:40:39 - DEBUG -  Update Weights at  epoch: 4, Batch 2/2 
+2024-02-26 21:40:39 - INFO - Epoch 4/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:40:41 - INFO - Epoch 4/5, Total epoch Loss: 3.3458 Average epoch loss : 0.8364
+2024-02-26 21:41:03 - INFO - Saving object_detector_rpn_epoch 4
+2024-02-26 21:41:19 - INFO - Best Model Updated: object_detector_rpn_best at epoch 4 with Average validation loss: 4.4725
+2024-02-26 21:41:41 - DEBUG -  Update Weights at  epoch: 5, Batch 1/2 
+2024-02-26 21:41:41 - INFO - Epoch 5/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:41:42 - DEBUG -  Update Weights at  epoch: 5, Batch 2/2 
+2024-02-26 21:41:42 - INFO - Epoch 5/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:41:44 - INFO - Epoch 5/5, Total epoch Loss: 3.0000 Average epoch loss : 0.7500
+2024-02-26 21:42:05 - INFO - Saving object_detector_rpn_epoch 5
+2024-02-26 21:42:21 - INFO - Best Model Updated: object_detector_rpn_best at epoch 5 with Average validation loss: 4.5617
+2024-02-26 21:42:21 - INFO - Training Done
+2024-02-26 21:45:37 - INFO - =================== New Run Started: 2024-02-26 21:45:37 ===================
+2024-02-26 21:45:37 - INFO - Training X_Reporto Started
+2024-02-26 21:45:37 - INFO - DEVICE: cuda
+2024-02-26 21:45:37 - INFO - OPERATION_MODE: 1
+2024-02-26 21:45:37 - INFO - MODEL_STAGE: 1
+2024-02-26 21:45:37 - INFO - CONTINUE_TRAIN: False
+2024-02-26 21:45:37 - INFO - TRAIN_RPN: True
+2024-02-26 21:45:37 - INFO - RUN: 0
+2024-02-26 21:45:37 - INFO - EPOCHS: 5
+2024-02-26 21:45:37 - INFO - BATCH_SIZE: 2
+2024-02-26 21:45:37 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 21:45:37 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 21:45:37 - INFO - LM_Batch_Size: 1
+2024-02-26 21:45:37 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 21:45:37 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 21:45:37 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 21:45:37 - INFO - DEBUG: True
+2024-02-26 21:45:37 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 21:45:37 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 21:45:37 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 21:45:37 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 21:45:37 - INFO - PERIODIC_LOGGING: False
+2024-02-26 21:45:37 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 21:45:37 - INFO - RECOVER: False
+2024-02-26 21:45:37 - INFO - Folder 'models/0' already exists.
+2024-02-26 21:45:37 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 21:45:40 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 21:45:41 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:45:41 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:45:42 - INFO - Train dataset loaded
+2024-02-26 21:45:42 - INFO - DataLoader Loaded Size: 2
+2024-02-26 21:45:42 - INFO - Start Training
+2024-02-26 21:46:16 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 21:46:16 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:46:18 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 21:46:18 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:46:46 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 21:47:02 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 4.5080
+2024-02-26 21:47:25 - DEBUG -  Update Weights at  epoch: 2, Batch 1/2 
+2024-02-26 21:47:25 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:47:26 - DEBUG -  Update Weights at  epoch: 2, Batch 2/2 
+2024-02-26 21:47:26 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:47:48 - INFO - Saving object_detector_rpn_epoch 2
+2024-02-26 21:48:03 - INFO - Best Model Updated: object_detector_rpn_best at epoch 2 with Average validation loss: 4.4635
+2024-02-26 21:48:27 - DEBUG -  Update Weights at  epoch: 3, Batch 1/2 
+2024-02-26 21:48:27 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:48:27 - DEBUG -  Update Weights at  epoch: 3, Batch 2/2 
+2024-02-26 21:48:27 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:48:50 - INFO - Saving object_detector_rpn_epoch 3
+2024-02-26 21:49:06 - INFO - Best Model Updated: object_detector_rpn_best at epoch 3 with Average validation loss: 4.4106
+2024-02-26 21:49:28 - DEBUG -  Update Weights at  epoch: 4, Batch 1/2 
+2024-02-26 21:49:28 - INFO - Epoch 4/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:49:29 - DEBUG -  Update Weights at  epoch: 4, Batch 2/2 
+2024-02-26 21:49:29 - INFO - Epoch 4/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:49:55 - INFO - Saving object_detector_rpn_epoch 4
+2024-02-26 21:50:11 - INFO - Best Model Updated: object_detector_rpn_best at epoch 4 with Average validation loss: 4.4182
+2024-02-26 21:50:31 - DEBUG -  Update Weights at  epoch: 5, Batch 1/2 
+2024-02-26 21:50:31 - INFO - Epoch 5/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:50:31 - DEBUG -  Update Weights at  epoch: 5, Batch 2/2 
+2024-02-26 21:50:31 - INFO - Epoch 5/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:50:57 - INFO - Saving object_detector_rpn_epoch 5
+2024-02-26 21:51:12 - INFO - Best Model Updated: object_detector_rpn_best at epoch 5 with Average validation loss: 4.3872
+2024-02-26 21:51:12 - INFO - Training Done
+2024-02-26 21:57:20 - INFO - =================== New Run Started: 2024-02-26 21:57:20 ===================
+2024-02-26 21:57:20 - INFO - Training X_Reporto Started
+2024-02-26 21:57:20 - INFO - DEVICE: cuda
+2024-02-26 21:57:20 - INFO - OPERATION_MODE: 1
+2024-02-26 21:57:20 - INFO - MODEL_STAGE: 1
+2024-02-26 21:57:20 - INFO - CONTINUE_TRAIN: False
+2024-02-26 21:57:20 - INFO - TRAIN_RPN: True
+2024-02-26 21:57:20 - INFO - RUN: 0
+2024-02-26 21:57:20 - INFO - EPOCHS: 5
+2024-02-26 21:57:20 - INFO - BATCH_SIZE: 2
+2024-02-26 21:57:20 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 21:57:20 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 21:57:20 - INFO - LM_Batch_Size: 1
+2024-02-26 21:57:20 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 21:57:20 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 21:57:20 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 21:57:20 - INFO - DEBUG: True
+2024-02-26 21:57:20 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 21:57:20 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 21:57:20 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 21:57:20 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 21:57:20 - INFO - PERIODIC_LOGGING: False
+2024-02-26 21:57:20 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 21:57:20 - INFO - RECOVER: False
+2024-02-26 21:57:20 - INFO - Folder 'models/0' already exists.
+2024-02-26 21:57:20 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 21:57:23 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 21:57:23 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:57:24 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 21:57:24 - INFO - Train dataset loaded
+2024-02-26 21:57:24 - INFO - DataLoader Loaded Size: 2
+2024-02-26 21:57:24 - INFO - Start Training
+2024-02-26 21:57:59 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 21:57:59 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:58:00 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 21:58:00 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:58:02 - INFO - Epoch 1/5, Total epoch Loss: 2.1724 Average epoch loss : 1.0862
+2024-02-26 21:58:28 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 21:58:44 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 4.5528
+2024-02-26 21:59:12 - DEBUG -  Update Weights at  epoch: 2, Batch 1/2 
+2024-02-26 21:59:12 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 21:59:13 - DEBUG -  Update Weights at  epoch: 2, Batch 2/2 
+2024-02-26 21:59:13 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 21:59:15 - INFO - Epoch 2/5, Total epoch Loss: 1.6930 Average epoch loss : 0.8465
+2024-02-26 21:59:40 - INFO - Saving object_detector_rpn_epoch 2
+2024-02-26 21:59:56 - INFO - Best Model Updated: object_detector_rpn_best at epoch 2 with Average validation loss: 4.5945
+2024-02-26 22:00:20 - DEBUG -  Update Weights at  epoch: 3, Batch 1/2 
+2024-02-26 22:00:20 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:00:20 - DEBUG -  Update Weights at  epoch: 3, Batch 2/2 
+2024-02-26 22:00:20 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:00:22 - INFO - Epoch 3/5, Total epoch Loss: 1.9681 Average epoch loss : 0.9841
+2024-02-26 22:00:51 - INFO - Saving object_detector_rpn_epoch 3
+2024-02-26 22:01:08 - INFO - Best Model Updated: object_detector_rpn_best at epoch 3 with Average validation loss: 4.5833
+2024-02-26 22:01:30 - DEBUG -  Update Weights at  epoch: 4, Batch 1/2 
+2024-02-26 22:01:30 - INFO - Epoch 4/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:01:30 - DEBUG -  Update Weights at  epoch: 4, Batch 2/2 
+2024-02-26 22:01:30 - INFO - Epoch 4/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:01:32 - INFO - Epoch 4/5, Total epoch Loss: 1.6333 Average epoch loss : 0.8167
+2024-02-26 22:04:33 - INFO - =================== New Run Started: 2024-02-26 22:04:33 ===================
+2024-02-26 22:04:33 - INFO - Training X_Reporto Started
+2024-02-26 22:04:33 - INFO - DEVICE: cuda
+2024-02-26 22:04:33 - INFO - OPERATION_MODE: 1
+2024-02-26 22:04:33 - INFO - MODEL_STAGE: 1
+2024-02-26 22:04:33 - INFO - CONTINUE_TRAIN: False
+2024-02-26 22:04:33 - INFO - TRAIN_RPN: True
+2024-02-26 22:04:33 - INFO - RUN: 0
+2024-02-26 22:04:33 - INFO - EPOCHS: 5
+2024-02-26 22:04:33 - INFO - BATCH_SIZE: 2
+2024-02-26 22:04:33 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 22:04:33 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 22:04:33 - INFO - LM_Batch_Size: 1
+2024-02-26 22:04:33 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 22:04:33 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 22:04:33 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 22:04:33 - INFO - DEBUG: True
+2024-02-26 22:04:33 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 22:04:33 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 22:04:33 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 22:04:33 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 22:04:33 - INFO - PERIODIC_LOGGING: False
+2024-02-26 22:04:33 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 22:04:33 - INFO - RECOVER: False
+2024-02-26 22:04:33 - INFO - Folder 'models/0' already exists.
+2024-02-26 22:04:33 - INFO - Folder 'check_points/0' created successfully.
+2024-02-26 22:04:37 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 22:04:38 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:04:38 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:04:38 - INFO - Train dataset loaded
+2024-02-26 22:04:38 - INFO - DataLoader Loaded Size: 2
+2024-02-26 22:04:38 - INFO - Start Training
+2024-02-26 22:05:20 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 22:05:20 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:05:22 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 22:05:22 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:05:24 - INFO - Epoch 1/5, Total epoch Loss: 2.2104 Average epoch loss : 1.1052
+2024-02-26 22:05:56 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 22:06:12 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 4.4607
+2024-02-26 22:06:43 - DEBUG -  Update Weights at  epoch: 2, Batch 1/2 
+2024-02-26 22:06:43 - INFO - Epoch 2/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:06:44 - DEBUG -  Update Weights at  epoch: 2, Batch 2/2 
+2024-02-26 22:06:44 - INFO - Epoch 2/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:06:46 - INFO - Epoch 2/5, Total epoch Loss: 1.8826 Average epoch loss : 0.9413
+2024-02-26 22:07:10 - INFO - Saving object_detector_rpn_epoch 2
+2024-02-26 22:07:26 - INFO - Best Model Updated: object_detector_rpn_best at epoch 2 with Average validation loss: 4.5114
+2024-02-26 22:07:54 - DEBUG -  Update Weights at  epoch: 3, Batch 1/2 
+2024-02-26 22:07:54 - INFO - Epoch 3/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:07:54 - DEBUG -  Update Weights at  epoch: 3, Batch 2/2 
+2024-02-26 22:07:54 - INFO - Epoch 3/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:07:55 - INFO - Epoch 3/5, Total epoch Loss: 1.7314 Average epoch loss : 0.8657
+2024-02-26 22:08:16 - INFO - Saving object_detector_rpn_epoch 3
+2024-02-26 22:08:32 - INFO - Best Model Updated: object_detector_rpn_best at epoch 3 with Average validation loss: 4.5253
+2024-02-26 22:08:56 - DEBUG -  Update Weights at  epoch: 4, Batch 1/2 
+2024-02-26 22:08:56 - INFO - Epoch 4/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:08:57 - DEBUG -  Update Weights at  epoch: 4, Batch 2/2 
+2024-02-26 22:08:57 - INFO - Epoch 4/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:08:58 - INFO - Epoch 4/5, Total epoch Loss: 1.5626 Average epoch loss : 0.7813
+2024-02-26 22:09:20 - INFO - Saving object_detector_rpn_epoch 4
+2024-02-26 22:09:39 - INFO - Best Model Updated: object_detector_rpn_best at epoch 4 with Average validation loss: 4.4704
+2024-02-26 22:10:01 - DEBUG -  Update Weights at  epoch: 5, Batch 1/2 
+2024-02-26 22:10:01 - INFO - Epoch 5/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:10:02 - DEBUG -  Update Weights at  epoch: 5, Batch 2/2 
+2024-02-26 22:10:02 - INFO - Epoch 5/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:10:04 - INFO - Epoch 5/5, Total epoch Loss: 1.4198 Average epoch loss : 0.7099
+2024-02-26 22:10:27 - INFO - Saving object_detector_rpn_epoch 5
+2024-02-26 22:10:43 - INFO - Best Model Updated: object_detector_rpn_best at epoch 5 with Average validation loss: 4.4714
+2024-02-26 22:10:43 - INFO - Training Done
+2024-02-26 22:23:02 - INFO - =================== New Run Started: 2024-02-26 22:23:02 ===================
+2024-02-26 22:23:02 - INFO - Training X_Reporto Started
+2024-02-26 22:23:02 - INFO - DEVICE: cuda
+2024-02-26 22:23:02 - INFO - OPERATION_MODE: 1
+2024-02-26 22:23:02 - INFO - MODEL_STAGE: 1
+2024-02-26 22:23:02 - INFO - CONTINUE_TRAIN: False
+2024-02-26 22:23:02 - INFO - TRAIN_RPN: True
+2024-02-26 22:23:02 - INFO - RUN: 0
+2024-02-26 22:23:02 - INFO - EPOCHS: 5
+2024-02-26 22:23:02 - INFO - BATCH_SIZE: 2
+2024-02-26 22:23:02 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 22:23:02 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 22:23:02 - INFO - LM_Batch_Size: 1
+2024-02-26 22:23:02 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 22:23:02 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 22:23:02 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 22:23:02 - INFO - DEBUG: True
+2024-02-26 22:23:02 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 22:23:02 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 22:23:02 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 22:23:02 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 22:23:02 - INFO - PERIODIC_LOGGING: False
+2024-02-26 22:23:02 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 22:23:02 - INFO - RECOVER: False
+2024-02-26 22:23:02 - INFO - Folder 'models/0' already exists.
+2024-02-26 22:23:02 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 22:23:04 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 22:23:05 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:23:06 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:23:06 - INFO - Train dataset loaded
+2024-02-26 22:23:06 - INFO - DataLoader Loaded Size: 2
+2024-02-26 22:23:06 - INFO - Start Training
+2024-02-26 22:23:41 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 22:23:41 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:23:43 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 22:23:43 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:23:44 - INFO - Epoch 1/5, Total epoch Loss: 2.1229 Average epoch loss : 1.0615
+2024-02-26 22:24:12 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 445, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 433, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 210, in train
+    validation_loss= self.validate_during_training()  #sechdule the learning rate
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 322, in validate_during_training
+    total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 251, in object_detector_and_classifier_forward_pass
+    object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
+                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\models\x_reporto_v1.py", line 334, in forward
+    object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\object_detector\models\object_detector_factory.py", line 88, in forward
+    object_detector_boxes=object_detector_predictions['detections'] ["top_region_boxes"]# [batch size x 29 x 4]
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+KeyError: 'detections'
+2024-02-26 22:26:01 - INFO - =================== New Run Started: 2024-02-26 22:26:01 ===================
+2024-02-26 22:26:01 - INFO - Training X_Reporto Started
+2024-02-26 22:26:01 - INFO - DEVICE: cuda
+2024-02-26 22:26:01 - INFO - OPERATION_MODE: 1
+2024-02-26 22:26:01 - INFO - MODEL_STAGE: 1
+2024-02-26 22:26:01 - INFO - CONTINUE_TRAIN: False
+2024-02-26 22:26:01 - INFO - TRAIN_RPN: True
+2024-02-26 22:26:01 - INFO - RUN: 0
+2024-02-26 22:26:01 - INFO - EPOCHS: 5
+2024-02-26 22:26:01 - INFO - BATCH_SIZE: 2
+2024-02-26 22:26:01 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 22:26:01 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 22:26:01 - INFO - LM_Batch_Size: 1
+2024-02-26 22:26:01 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 22:26:01 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 22:26:01 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 22:26:01 - INFO - DEBUG: True
+2024-02-26 22:26:01 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 22:26:01 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 22:26:01 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 22:26:01 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 22:26:01 - INFO - PERIODIC_LOGGING: False
+2024-02-26 22:26:01 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 22:26:01 - INFO - RECOVER: False
+2024-02-26 22:26:01 - INFO - Folder 'models/0' already exists.
+2024-02-26 22:26:01 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 22:26:04 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 22:26:05 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:26:05 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:26:05 - INFO - Train dataset loaded
+2024-02-26 22:26:05 - INFO - DataLoader Loaded Size: 2
+2024-02-26 22:26:05 - INFO - Start Training
+2024-02-26 22:26:43 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 22:26:43 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:26:44 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 22:26:44 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:26:46 - INFO - Epoch 1/5, Total epoch Loss: 2.1891 Average epoch loss : 1.0945
+2024-02-26 22:27:10 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 445, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 433, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 210, in train
+    validation_loss= self.validate_during_training()  #sechdule the learning rate
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 322, in validate_during_training
+    total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 251, in object_detector_and_classifier_forward_pass
+    object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
+                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\models\x_reporto_v1.py", line 334, in forward
+    object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\object_detector\models\object_detector_factory.py", line 88, in forward
+    object_detector_boxes=object_detector_predictions['detections'] ["top_region_boxes"]# [batch size x 29 x 4]
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'NoneType' object is not subscriptable
+2024-02-26 22:35:06 - INFO - =================== New Run Started: 2024-02-26 22:35:06 ===================
+2024-02-26 22:35:06 - INFO - Training X_Reporto Started
+2024-02-26 22:35:06 - INFO - DEVICE: cuda
+2024-02-26 22:35:06 - INFO - OPERATION_MODE: 1
+2024-02-26 22:35:06 - INFO - MODEL_STAGE: 1
+2024-02-26 22:35:06 - INFO - CONTINUE_TRAIN: False
+2024-02-26 22:35:06 - INFO - TRAIN_RPN: True
+2024-02-26 22:35:06 - INFO - RUN: 0
+2024-02-26 22:35:06 - INFO - EPOCHS: 5
+2024-02-26 22:35:06 - INFO - BATCH_SIZE: 2
+2024-02-26 22:35:06 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 22:35:06 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 22:35:06 - INFO - LM_Batch_Size: 1
+2024-02-26 22:35:06 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 22:35:06 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 22:35:06 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 22:35:06 - INFO - DEBUG: True
+2024-02-26 22:35:06 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 22:35:06 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 22:35:06 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 22:35:06 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 22:35:06 - INFO - PERIODIC_LOGGING: False
+2024-02-26 22:35:06 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 22:35:06 - INFO - RECOVER: False
+2024-02-26 22:35:06 - INFO - Folder 'models/0' already exists.
+2024-02-26 22:35:06 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 22:35:09 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 22:35:09 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:35:10 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:35:10 - INFO - Train dataset loaded
+2024-02-26 22:35:10 - INFO - DataLoader Loaded Size: 2
+2024-02-26 22:35:10 - INFO - Start Training
+2024-02-26 22:35:50 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 22:35:50 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:35:52 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 22:35:52 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:35:54 - INFO - Epoch 1/5, Total epoch Loss: 2.2434 Average epoch loss : 1.1217
+2024-02-26 22:36:19 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 445, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 433, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 210, in train
+    validation_loss= self.validate_during_training()  #sechdule the learning rate
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 322, in validate_during_training
+    total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 251, in object_detector_and_classifier_forward_pass
+    object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
+                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\models\x_reporto_v1.py", line 334, in forward
+    object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\object_detector\models\object_detector_factory.py", line 88, in forward
+    object_detector_boxes=object_detector_predictions['detections'] ["top_region_boxes"]# [batch size x 29 x 4]
+                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'top_region_boxes'
+2024-02-26 22:36:49 - INFO - =================== New Run Started: 2024-02-26 22:36:49 ===================
+2024-02-26 22:36:49 - INFO - Training X_Reporto Started
+2024-02-26 22:36:49 - INFO - DEVICE: cuda
+2024-02-26 22:36:49 - INFO - OPERATION_MODE: 1
+2024-02-26 22:36:49 - INFO - MODEL_STAGE: 1
+2024-02-26 22:36:49 - INFO - CONTINUE_TRAIN: False
+2024-02-26 22:36:49 - INFO - TRAIN_RPN: True
+2024-02-26 22:36:49 - INFO - RUN: 0
+2024-02-26 22:36:49 - INFO - EPOCHS: 5
+2024-02-26 22:36:49 - INFO - BATCH_SIZE: 2
+2024-02-26 22:36:49 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 22:36:49 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 22:36:49 - INFO - LM_Batch_Size: 1
+2024-02-26 22:36:49 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 22:36:49 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 22:36:49 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 22:36:49 - INFO - DEBUG: True
+2024-02-26 22:36:49 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 22:36:49 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 22:36:49 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 22:36:49 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 22:36:49 - INFO - PERIODIC_LOGGING: False
+2024-02-26 22:36:49 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 22:36:49 - INFO - RECOVER: False
+2024-02-26 22:36:49 - INFO - Folder 'models/0' already exists.
+2024-02-26 22:36:49 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 22:36:52 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 22:36:53 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:36:53 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:36:53 - INFO - Train dataset loaded
+2024-02-26 22:36:53 - INFO - DataLoader Loaded Size: 2
+2024-02-26 22:36:53 - INFO - Start Training
+2024-02-26 22:37:29 - ERROR - An error occurred
+Traceback (most recent call last):
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 445, in <module>
+    main()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 433, in main
+    trainer.train()
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 169, in train
+    Total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\trainer\x_reporto_trainer.py", line 251, in object_detector_and_classifier_forward_pass
+    object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
+                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\x_reporto\models\x_reporto_v1.py", line 275, in forward
+    object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                                                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\object_detector\models\object_detector_factory.py", line 78, in forward
+    object_detector_losses, object_detector_predictions =self.object_detector(images,targets)
+                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Roaming\Python\Python311\site-packages\torch\nn\modules\module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\Graduation Project\Graduation-Project-Repo\src\object_detector\models\frccn_object_detector_v1.py", line 212, in forward
+    outputs["detections"]={{}}
+                          ^^^^
+TypeError: unhashable type: 'dict'
+2024-02-26 22:38:30 - INFO - =================== New Run Started: 2024-02-26 22:38:30 ===================
+2024-02-26 22:38:30 - INFO - Training X_Reporto Started
+2024-02-26 22:38:30 - INFO - DEVICE: cuda
+2024-02-26 22:38:30 - INFO - OPERATION_MODE: 1
+2024-02-26 22:38:30 - INFO - MODEL_STAGE: 1
+2024-02-26 22:38:30 - INFO - CONTINUE_TRAIN: False
+2024-02-26 22:38:30 - INFO - TRAIN_RPN: True
+2024-02-26 22:38:30 - INFO - RUN: 0
+2024-02-26 22:38:30 - INFO - EPOCHS: 5
+2024-02-26 22:38:30 - INFO - BATCH_SIZE: 2
+2024-02-26 22:38:30 - INFO - EFFECTIVE_BATCH_SIZE: 2
+2024-02-26 22:38:30 - INFO - ACCUMULATION_STEPS: 1
+2024-02-26 22:38:30 - INFO - LM_Batch_Size: 1
+2024-02-26 22:38:30 - INFO - LEARNING_RATE: 0.0001
+2024-02-26 22:38:30 - INFO - SCHEDULAR_STEP_SIZE: 750
+2024-02-26 22:38:30 - INFO - SCHEDULAR_GAMMA: 0.9
+2024-02-26 22:38:30 - INFO - DEBUG: True
+2024-02-26 22:38:30 - INFO - ABNORMAL_CLASSIFIER_POS_WEIGHT: 6.0
+2024-02-26 22:38:30 - INFO - REGION_SELECTION_CLASSIFIER_POS_WEIGHT: 2.24
+2024-02-26 22:38:30 - INFO - training_csv_path: datasets/train.csv
+2024-02-26 22:38:30 - INFO - validation_csv_path: datasets/train.csv
+2024-02-26 22:38:30 - INFO - PERIODIC_LOGGING: False
+2024-02-26 22:38:30 - INFO - CHECKPOINT_EVERY_N: 300
+2024-02-26 22:38:30 - INFO - RECOVER: False
+2024-02-26 22:38:30 - INFO - Folder 'models/0' already exists.
+2024-02-26 22:38:30 - INFO - Folder 'check_points/0' already exists.
+2024-02-26 22:38:33 - DEBUG - Starting new HTTPS connection (1): huggingface.co:443
+2024-02-26 22:38:34 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:38:34 - DEBUG - https://huggingface.co:443 "HEAD /healx/gpt-2-pubmed-medium/resolve/main/tokenizer_config.json HTTP/1.1" 200 0
+2024-02-26 22:38:35 - INFO - Train dataset loaded
+2024-02-26 22:38:35 - INFO - DataLoader Loaded Size: 2
+2024-02-26 22:38:35 - INFO - Start Training
+2024-02-26 22:39:08 - DEBUG -  Update Weights at  epoch: 1, Batch 1/2 
+2024-02-26 22:39:08 - INFO - Epoch 1/5, Batch 1/2, Learning Rate: 0.0001000000
+2024-02-26 22:39:11 - DEBUG -  Update Weights at  epoch: 1, Batch 2/2 
+2024-02-26 22:39:11 - INFO - Epoch 1/5, Batch 2/2, Learning Rate: 0.0001000000
+2024-02-26 22:39:12 - INFO - Epoch 1/5, Total epoch Loss: 2.1393 Average epoch loss : 1.0697
+2024-02-26 22:39:37 - INFO - Saving object_detector_rpn_epoch 1
+2024-02-26 22:39:52 - INFO - Best Model Updated: object_detector_rpn_best at epoch 1 with Average validation loss: 0.8557
