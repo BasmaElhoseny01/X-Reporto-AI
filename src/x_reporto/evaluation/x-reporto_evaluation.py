@@ -16,13 +16,15 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-
+from src.utils import empty_folder
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
+from torch.utils.tensorboard import SummaryWriter
+
 
 
 class XReportoEvaluation():
-    def __init__(self, model:XReporto,validation_csv_path:str = validation_csv_path):
+    def __init__(self, model:XReporto,validation_csv_path:str = validation_csv_path,tensor_board_writer:SummaryWriter=None):
         '''
         X-Reporto Validation Class
         Args:
@@ -33,6 +35,7 @@ class XReportoEvaluation():
         self.model.to(DEVICE)
         self.validation_csv_path = validation_csv_path
         self.data_loader_val = DataLoader(dataset=CustomDataset(self.validation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
+        self.tensor_board_writer=tensor_board_writer
         logging.info("Validation dataset loaded")
 
 
@@ -43,6 +46,10 @@ class XReportoEvaluation():
             validation_total_loss,obj_detector_scores,_,_,_ = self.validate_during_evalute_object_detection_and_classifier()
             print(f"Validation Total Loss: {validation_total_loss:.4f}")
             print(f"Average IOU: {obj_detector_scores['avg_iou']:.4f}")
+            self.tensor_board_writer.add_text('Evalaution Metrics/Average IOU',str(obj_detector_scores['avg_iou']))
+            self.tensor_board_writer.add_text('Evalaution Metrics/Avgerage Num_detected_regions_per_image',str(obj_detector_scores['avg_num_detected_regions_per_image']))
+
+
 
 
     def update_object_detector_metrics(self,obj_detector_scores, detections, image_targets, class_detected):
@@ -247,6 +254,18 @@ def collate_fn(batch):
 
         return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
+def init_working_space():
+
+    # Creating tensorboard folder
+    tensor_board_folder_path="./tensor_boards" + str(RUN)+ "/eval"
+    if not os.path.exists(tensor_board_folder_path):
+        os.makedirs(tensor_board_folder_path)
+        logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
+        empty_folder(tensor_board_folder_path)
+
+    return tensor_board_folder_path
 def main():
     
     logging.info(" X_Reporto Started")
@@ -255,13 +274,16 @@ def main():
     if OperationMode.EVALUATION.value!=OPERATION_MODE :
         raise Exception("Operation Mode is not Evaluation Mode")
     
+    # Tensor Board
+    tensor_board_folder_path=init_working_space()
+    tensor_board_writer=SummaryWriter(tensor_board_folder_path)
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
 
     # Create an XReportoTrainer instance with the X-Reporto model
-    validator = XReportoEvaluation(model=x_reporto_model)
+    validator = XReportoEvaluation(model=x_reporto_model,tensor_board_writer=tensor_board_writer)
 
-    # # Start Training
+    # Start Training
     validator.evaluate()
         
 
