@@ -2,7 +2,6 @@
 from logger_setup import setup_logging
 import logging
 
-
 import os
 import gc
 from tqdm import tqdm
@@ -20,7 +19,6 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
 from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker,empty_folder
-
 from config import *
 
 class XReportoTrainer():
@@ -118,17 +116,16 @@ class XReportoTrainer():
         # make model in training mode
         logging.info("Start Training")
         self.model.train()
+
         total_steps=0
-        # for epoch in range(EPOCHS):
         for epoch in range(start_epoch, start_epoch + EPOCHS):
             if epoch==start_epoch:
-                # Load loss from chkpt
+                # Loaded loss from chkpt
                 epoch_loss=epoch_loss_init
             else:
                 epoch_loss = 0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):
                 if batch_idx < start_batch:
-                    print(batch_idx)
                     continue  # Skip batches until reaching the desired starting batch number
 
                 # Test Recovery
@@ -171,20 +168,26 @@ class XReportoTrainer():
                     self.optimizer.step()
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
-                    logging.debug(f' Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    logging.debug(f'[Accumlative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
                     
                 
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
+
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
-               
-                self.tensor_board_writer.add_scalar('Epoch'+str(epoch+1)+'/Learning Rate',new_lr,batch_idx+1)
+                # [Tensor Board]: Learning Rate
+                self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
 
 
                 if (batch_idx+1)%100==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+                   
+                    # [Tensor Board]: Epoch Average loss Object Detector
+                    self.tensor_board_writer.add_scalar('Epoch Average Loss(Every 100 Step)',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
+            
+
 
                 # Checkpoint
                 total_steps+=1            
@@ -262,7 +265,13 @@ class XReportoTrainer():
             Total_loss+=abnormal_binary_classifier_losses
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
-            self.tensor_board_writer.add_scalar('Epoch'+str(epoch+1)+'/Object Detector Loss (Per Batch)',object_detector_losses_summation,batch_idx+1)
+          
+            # [Tensor Board]: Object Detector Avg Batch Loss
+            self.tensor_board_writer.add_scalar('Object Detector Avg Batch Loss',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Total Batch Loss
+            self.tensor_board_writer.add_scalar('Avg Batch Total Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
+
+       
         if validate_during_training:
             logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
         
@@ -381,6 +390,35 @@ def collate_fn(batch):
 
     return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
+def init_working_space():
+    # Creating run folder
+    models_folder_path="models/" + str(RUN)
+    if not os.path.exists(models_folder_path):
+        os.makedirs(models_folder_path)
+        logging.info(f"Folder '{models_folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{models_folder_path}' already exists.")
+
+    # Creating checkpoints folder
+    ck_folder_path="check_points/" + str(RUN)
+    if not os.path.exists(ck_folder_path):
+        os.makedirs(ck_folder_path)
+        logging.info(f"Folder '{ck_folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{ck_folder_path}' already exists.")
+
+    # Creating tensorboard folder
+    tensor_board_folder_path="./tensor_boards/" + str(RUN) + "/train"
+    if not os.path.exists(tensor_board_folder_path):
+        os.makedirs(tensor_board_folder_path)
+        logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
+        empty_folder(tensor_board_folder_path)
+
+    return models_folder_path,ck_folder_path,tensor_board_folder_path
+
+
 def main():
     logging.info("Training X_Reporto Started")
     # Logging Configurations
@@ -388,35 +426,14 @@ def main():
     if OperationMode.TRAINING.value!=OPERATION_MODE :
         #throw exception 
         raise Exception("Operation Mode is not Training Mode")
-    # Creating run folder
-    folder_path="models/" + str(RUN)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        logging.info(f"Folder '{folder_path}' created successfully.")
-    else:
-        logging.info(f"Folder '{folder_path}' already exists.")
-
-    # Creating checkpoints folder
-    folder_path="check_points/" + str(RUN)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        logging.info(f"Folder '{folder_path}' created successfully.")
-    else:
-        logging.info(f"Folder '{folder_path}' already exists.")
-
-    # Creating tensorboard folder
-    folder_path="./tensor_boards/" + str(RUN)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        logging.info(f"Folder '{folder_path}' created successfully.")
-    else:
-        logging.info(f"Folder '{folder_path}' already exists.")
-        empty_folder(folder_path)
-
+    
+    _,_,tensor_board_folder_path=init_working_space()
+    
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
 
-    tensor_board_writer=SummaryWriter(folder_path)
+    # Tensor Board
+    tensor_board_writer=SummaryWriter(tensor_board_folder_path)
 
     # Create an XReportoTrainer instance with the X-Reporto model
     trainer = XReportoTrainer(model=x_reporto_model,tensor_board_writer=tensor_board_writer)
@@ -448,9 +465,7 @@ def main():
         # No check point
         # Start New Training
         trainer.train()
-        
-
-    
+            
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
     setup_logging(log_file_path='./logs/x_reporto_trainer.log',bash=True,periodic_logger=PERIODIC_LOGGING)
@@ -461,4 +476,5 @@ if __name__ == '__main__':
     except Exception as e:
         # Log any exceptions that occur
         logging.exception("An error occurred",exc_info=True)
+
 # python -m src.x_reporto.trainer.x_reporto_trainer
