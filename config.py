@@ -21,18 +21,21 @@ OPERATION_MODE=1
 MODEL_STAGE=1
 
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
+CONTINUE_TRAIN=True# Continue training
 TRAIN_RPN=True # Tain only RPN of the object detector
 RUN = "1"
-EPOCHS=5
-BATCH_SIZE=1
+EPOCHS=10
+BATCH_SIZE=32
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
-LEARNING_RATE=0.00006
-SCHEDULAR_STEP_SIZE=4000 #
-SCHEDULAR_GAMMA=0.9
+LEARNING_RATE=1e-3
+SCHEDULAR_STEP_SIZE=2 #
+SCHEDULAR_GAMMA=0.7
+THRESHOLD_LR_SCHEDULER=1e-4
+COOLDOWN_LR_SCHEDULER= 1
+
 # Debgging COnfigurations
 DEBUG=True
 
@@ -44,8 +47,8 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # Pathes to the external files
 training_csv_path: str = 'datasets/train.csv'
-validation_csv_path:str = 'datasets/train.csv'
-test_csv_path:str = 'datasets/train.csv'
+validation_csv_path:str = 'datasets/valid.csv'
+test_csv_path:str = 'datasets/valid.csv'
 
 # Logging
 PERIODIC_LOGGING=True
@@ -55,9 +58,6 @@ RECOVER=False
  
 SEED=31
 
-
-THRESHOLD_LR_SCHEDULER=1e-4
-COOLDOWN_LR_SCHEDULER= 1
 
 def log_config():
     logging.info(f"DEVICE: {DEVICE}")

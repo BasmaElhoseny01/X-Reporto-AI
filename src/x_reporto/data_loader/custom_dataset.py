@@ -57,8 +57,13 @@ class CustomDataset(Dataset):
 
             # get the bbox_labels
             bbox_phrases = self.data_info.iloc[idx, 6]
-            bbox_phrases = eval(bbox_phrases)
-
+        
+            try:
+                # convert the string representation of labels into list
+                bbox_phrases = eval(bbox_phrases)
+            except Exception as e:
+                # create a list of empty strings of size 29
+                bbox_phrases = [""] * 29
             # get the bbox_labels
             bbox_phrase_exists = self.data_info.iloc[idx, 7]
             # get the bbox_labels
@@ -99,7 +104,10 @@ class CustomDataset(Dataset):
 
             #language_model_targets
             language_model_sample={}
-            tokenize_phrase = self.tokenizer(bbox_phrases)  
+            try:
+                tokenize_phrase = self.tokenizer(bbox_phrases)
+            except Exception as e:
+                tokenize_phrase = self.tokenizer([""] * 29)
             # print(tokenize_phrase)
             # sys.exit()
             # print("start Tokenize")
@@ -118,7 +126,8 @@ class CustomDataset(Dataset):
 
             # print("end Tokenize")
             return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample
-        except Exception :
+        except Exception as e:
+            print(e)
             return None
 
     def collate_fn(self,batch):
