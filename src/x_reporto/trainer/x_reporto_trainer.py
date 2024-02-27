@@ -216,6 +216,9 @@ class XReportoTrainer():
                 if TRAIN_RPN:
                     # Saving object_detector marked as rpn
                     self.save_model(model=self.model.object_detector,name="object_detector_rpn",epoch=epoch,validation_loss=validation_loss)
+                elif TRAIN_ROI:
+                    # Saving object_detector marked as roi
+                    self.save_model(model=self.model.object_detector,name="object_detector_roi",epoch=epoch,validation_loss=validation_loss)
                 else:
                      self.save_model(model=self.model.object_detector,name="object_detector",epoch=epoch,validation_loss=validation_loss)
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:

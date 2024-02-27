@@ -21,11 +21,13 @@ OPERATION_MODE=1
 MODEL_STAGE=1
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
+CONTINUE_TRAIN=False# Continue training
+TRAIN_RPN=False # Tain only RPN of the object detector
+TRAIN_ROI=True # Train only ROI of the object detector
 RUN = "1"
 EPOCHS=10
 BATCH_SIZE=32
+# BATCH_SIZE=1
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
@@ -48,6 +50,7 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 # Pathes to the external files
 training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/valid.csv'
+# validation_csv_path:str = 'datasets/train.csv'
 test_csv_path:str = 'datasets/valid.csv'
 
 # Logging
