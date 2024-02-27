@@ -4,6 +4,8 @@ from typing import Dict, List, Union
 
 import numpy as np
 import random
+import os
+
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
@@ -344,3 +346,21 @@ def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
+
+
+def empty_folder(folder_path):
+    # Check if the folder exists
+    if os.path.exists(folder_path):
+        # Remove all files and subdirectories within the folder
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                logging.error(f"Failed to delete {file_path}. Reason: {e}")
+        logging.info(f"Folder '{folder_path}' emptied successfully.")
+    else:
+        logging.info(f"Folder '{folder_path}' does not exist.")

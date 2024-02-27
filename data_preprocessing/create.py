@@ -26,8 +26,8 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s]: %(message)s")
 log = logging.getLogger(__name__)
 
 
-# NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
-NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 200
+NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
+# NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 200
 
 
 class DataPreprocessing:
@@ -303,7 +303,7 @@ class DataPreprocessing:
                 bbox_phrase_exist_vars = []
                 bbox_is_abnormal_vars = []
 
-                # width, height = imagesize.get(mimic_image_file_path)
+                width, height = imagesize.get(mimic_image_file_path)
                 # scaling_factor_height = height / 224
                 # scaling_factor_width = width / 224
 
@@ -354,20 +354,20 @@ class DataPreprocessing:
                     bbox_coords = region_to_bbox_coordinates_dict.get(anatomical_region, None)
 
                     # if there are no bbox coordinates or they are faulty, then don't add them to image information
-                    if bbox_coords is None :
-                        num_faulty_bboxes += 1
-                    # if bbox_coords is None or self.coordinates_faulty(height, width, *bbox_coords):
+                    # if bbox_coords is None :
                     #     num_faulty_bboxes += 1
+                    if bbox_coords is None or self.coordinates_faulty(height, width, *bbox_coords):
+                        num_faulty_bboxes += 1
                     else:
                         x1, y1, x2, y2 = bbox_coords
 
                         # it is possible that the bbox is only partially inside the image height and width (if e.g. x1 < 0, whereas x2 > 0)
                         # to prevent these cases from raising an exception, we set the coordinates to 0 if coordinate < 0, set to width if x-coordinate > width
                         # and set to height if y-coordinate > height
-                        # x1 = self.check_coordinate(x1, width)
-                        # y1 = self.check_coordinate(y1, height)
-                        # x2 = self.check_coordinate(x2, width)
-                        # y2 = self.check_coordinate(y2, height)
+                        x1 = self.check_coordinate(x1, width)
+                        y1 = self.check_coordinate(y1, height)
+                        x2 = self.check_coordinate(x2, width)
+                        y2 = self.check_coordinate(y2, height)
 
                         bbox_coords = [x1, y1, x2, y2]
 
@@ -595,7 +595,7 @@ def get_image_dimensions(image_path):
 
 if __name__=="__main__":
     data=DataPreprocessing(train_only=False,valid_only=True,fix_bboxes=False)
-    check_images = False
+    check_images = True
     data.create_new_csv_files(check_images=check_images)
     # data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
     

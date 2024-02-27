@@ -58,6 +58,9 @@ class XReportoV1(nn.Module):
                         
                         logging.info("Loading object_detector [Trained RPN]....")
                         load_model(model=self.object_detector,name='object_detector_rpn_best')
+                elif MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_ROI:
+                    logging.info("Loading object_detector [Trained ROI]....")
+                    load_model(model=self.object_detector,name='object_detector_roi_best')
                 else:
                     # Load full object detector
                     logging.info("Loading object_detector .....")
@@ -92,9 +95,12 @@ class XReportoV1(nn.Module):
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                     if TRAIN_RPN:
                         pass
-                    else:
+                    elif TRAIN_ROI:
                         logging.info("Loading object_detector [Trained RPN]....")
                         load_model(model=self.object_detector,name='object_detector_rpn_best')
+                    else:
+                        logging.info("Loading object_detector [Trained RPN]....")
+                        load_model(model=self.object_detector,name='object_detector_roi_best')
                     
 
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
