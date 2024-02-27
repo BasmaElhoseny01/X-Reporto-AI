@@ -5,3 +5,4 @@ albumentations
 torch-summary
 imagesize
 gdown
+tensorboard

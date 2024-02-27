@@ -1,6 +1,11 @@
 import torch
 import logging
+import os
 from enum import Enum
+
+# Suppress TensorFlow INFO level logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+
 
 class ModelStage(Enum):
     OBJECT_DETECTOR = 1
@@ -18,23 +23,28 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / Testing
-OPERATION_MODE=1
+OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=1
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
-RUN = "0"
-EPOCHS=5
-BATCH_SIZE=2
+TRAIN_RPN=False # Tain only RPN of the object detector
+TRAIN_ROI=False # Train only ROI of the object detector
+RUN = "1"
+EPOCHS=2
+BATCH_SIZE=1
+# BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 2
+EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
-LEARNING_RATE=0.0001
-SCHEDULAR_STEP_SIZE=750 #
-SCHEDULAR_GAMMA=0.9
+LEARNING_RATE=1e-3
+SCHEDULAR_STEP_SIZE=2 #
+SCHEDULAR_GAMMA=0.7
+THRESHOLD_LR_SCHEDULER=1e-4
+COOLDOWN_LR_SCHEDULER= 1
+
 # Debgging COnfigurations
 DEBUG=True
 
@@ -45,21 +55,17 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # Pathes to the external files
-training_csv_path: str = 'datasets/train.csv'
-validation_csv_path:str = 'datasets/train.csv'
-test_csv_path:str = 'datasets/train.csv'
+training_csv_path = 'datasets/train-small.csv'
+validation_csv_path = 'datasets/train-small.csv'
+test_csv_path = 'datasets/train-small.csv'
 
 # Logging
 PERIODIC_LOGGING=False
 
-# Checkpointing
 CHECKPOINT_EVERY_N=300
 RECOVER=False
  
-def change_operation_mode(mode):
-    global OPERATION_MODE
-    OPERATION_MODE = mode
-
+SEED=31
 
 
 def log_config():

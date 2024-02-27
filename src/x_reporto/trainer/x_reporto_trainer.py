@@ -2,11 +2,11 @@
 from logger_setup import setup_logging
 import logging
 
-
 import os
 import gc
 from tqdm import tqdm
 
+from torch.utils.tensorboard import SummaryWriter
 
 # Torch
 import torch
@@ -18,8 +18,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint
-
+from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker,empty_folder
 from config import *
 
 class XReportoTrainer():
@@ -56,7 +55,7 @@ class XReportoTrainer():
         >>> # Predict and display results
         >>> trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
     """
-    def __init__(self, model:XReporto,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path):
+    def __init__(self, model:XReporto,tensor_board_writer:SummaryWriter,training_csv_path: str =training_csv_path,validation_csv_path:str = validation_csv_path):
         '''
         inputs:
             training_csv_path (str): the path to the training csv file
@@ -65,50 +64,41 @@ class XReportoTrainer():
         '''
         self.model = model
 
+        self.tensor_board_writer=tensor_board_writer
+
         # Move to device
         self.model.to(DEVICE)
 
         # create adam optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), lr= LEARNING_RATE)
+        self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
+        self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
 
         # create dataset
         self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
-        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         logging.info("Train dataset loaded")
-        # self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
-        # logging.info("Validate dataset loaded")
-        
-        # create data loader
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-        # TODO: Test
-        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
+        logging.info("Validation dataset loaded")
 
-        logging.info(f"DataLoader Loaded Size: {len(self.data_loader_train)}")
-        
-        self.shuffle_order =list(self.data_loader_train.sampler)
-        # print(self.shuffle_order)
+        # create data loader
+        g = torch.Generator()
+        g.manual_seed(SEED)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, worker_init_fn=seed_worker, generator=g)
+        logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
+      
+        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
+        logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
 
         # initialize the best loss to a large value
         self.best_loss = float('inf')
 
-    def load_shuffle_dataloader(self,shuffle_order,start_offset):
-        batch_sampler = torch.utils.data.sampler.BatchSampler(shuffle_order[start_offset:], BATCH_SIZE, drop_last=False)
-
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn,
-                                num_workers=4,
-                                batch_sampler=batch_sampler)
-
-        self.shuffle_order=shuffle_order
-        logging.info(f"DataLoader Shuffle Order Updated :D Size:{len(self.data_loader_train)}")
 
     def test_data_loader(self):
         '''
         Test the data loader by iterating over the training dataset and printing the length of each batch.
         '''
-        for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in tqdm(enumerate(self.data_loader_train)):
+        for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in tqdm(enumerate(self.data_loader_val)):
             # check the length of each batch using assert with print statements
             # check that object_detector_targets dictionary boxes and labels have the same length
             assert len(object_detector_targets[0]['boxes']) == len(object_detector_targets[0]['labels']) , f'Batch {batch_idx + 1} has different number of boxes and labels'
@@ -126,16 +116,17 @@ class XReportoTrainer():
         # make model in training mode
         logging.info("Start Training")
         self.model.train()
+
         total_steps=0
-        # for epoch in range(EPOCHS):
         for epoch in range(start_epoch, start_epoch + EPOCHS):
             if epoch==start_epoch:
-                # Load loss from chkpt
+                # Loaded loss from chkpt
                 epoch_loss=epoch_loss_init
             else:
                 epoch_loss = 0
-            
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train,start=start_batch):
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):
+                if batch_idx < start_batch:
+                    continue  # Skip batches until reaching the desired starting batch number
 
                 # Test Recovery
                 # if epoch==3 and batch_idx==1:
@@ -166,9 +157,9 @@ class XReportoTrainer():
                     Total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
                     epoch_loss += Total_loss
                 else:
-                    Total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+                    Total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
                     epoch_loss += Total_loss
-
+            
                 # backward pass
                 Total_loss.backward()
                 # Acculmulation Learning
@@ -177,43 +168,60 @@ class XReportoTrainer():
                     self.optimizer.step()
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
-                    logging.debug(f' Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    logging.debug(f'[Accumlative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
                     
-                # update the learning rate
-                self.lr_scheduler.step()
+                
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
+
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+                # [Tensor Board]: Learning Rate
+                self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
+
+
 
                 if (batch_idx+1)%100==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+                   
+                    # [Tensor Board]: Epoch Average loss Object Detector
+                    self.tensor_board_writer.add_scalar('Epoch Average Loss(Every 100 Step)',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
+            
+
 
                 # Checkpoint
                 total_steps+=1            
                 if(total_steps%CHECKPOINT_EVERY_N ==0):
-                    save_checkpoint(epoch=epoch,batch_index=batch_idx,shuffle_order=self.shuffle_order,optimizer_state=self.optimizer.state_dict(),
+                    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,epoch_loss=epoch_loss)
                     total_steps=0
                
-            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss:.4f} Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            # logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss:.4f} Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            
+            # update the learning rate
+            # self.lr_scheduler.step(epoch_loss/(len(self.data_loader_train)))
             # Free GPU memory
-            del Total_loss
-            torch.cuda.empty_cache()
-            gc.collect()
-            # validate the model
-            self.model.eval()
-            change_operation_mode(OperationMode.VALIDATION.value)
+            # del Total_loss
+            # torch.cuda.empty_cache()
+            # gc.collect()
+            # # validate the model
+            # self.model.eval()
+            # try:
             validation_loss= self.validate_during_training()  #sechdule the learning rate
-            self.model.train()
-            change_operation_mode(OperationMode.TRAINING.value)
+            # except Exception:
+            #     validation_loss=0
+            #     print("Error here can't validate on data")
+            self.model.train()                        
 
             # saving model per epoch
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 if TRAIN_RPN:
                     # Saving object_detector marked as rpn
                     self.save_model(model=self.model.object_detector,name="object_detector_rpn",epoch=epoch,validation_loss=validation_loss)
+                elif TRAIN_ROI:
+                    # Saving object_detector marked as roi
+                    self.save_model(model=self.model.object_detector,name="object_detector_roi",epoch=epoch,validation_loss=validation_loss)
                 else:
                      self.save_model(model=self.model.object_detector,name="object_detector",epoch=epoch,validation_loss=validation_loss)
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
@@ -223,7 +231,8 @@ class XReportoTrainer():
                 self.save_model(model=self.model.binary_classifier_region_abnormal,name="abnormal_classifier",epoch=epoch,validation_loss=validation_loss)
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                 #Save language model
-                self.save_model(model=self.model.language_model,name='LM',epoch=epoch,validation_loss=validation_loss)                               
+                self.save_model(model=self.model.language_model,name='LM',epoch=epoch,validation_loss=validation_loss)       
+            
         # save the best model            
         logging.info("Training Done")
     
@@ -235,7 +244,7 @@ class XReportoTrainer():
         save_model(model=model,name=name+"_epoch_"+str(epoch+1))
         self.check_best_model(epoch,validation_loss,name,model)  
 
-    def check_best_model(self,epoch:int,batch_idx:int,validation_loss:float,name:str,model:torch.nn.Module):
+    def check_best_model(self,epoch:int,validation_loss:float,name:str,model:torch.nn.Module):
         '''
         Check if the current model is the best model
         '''
@@ -244,7 +253,7 @@ class XReportoTrainer():
                 save_model(model=model,name=name+"_best")
                 logging.info(f"Best Model Updated: {name}_best at epoch {epoch+1} with Average validation loss: {self.best_loss:.4f}")
 
-    def  object_detector_and_classifier_forward_pass(self,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,validate_during_training:bool=False):
+    def  object_detector_and_classifier_forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,validate_during_training:bool=False):
         # Forward Pass
         object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
         
@@ -254,6 +263,18 @@ class XReportoTrainer():
         if MODEL_STAGE==ModelStage.CLASSIFIER.value:
             Total_loss+=selection_classifier_losses
             Total_loss+=abnormal_binary_classifier_losses
+        if not validate_during_training:
+            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
+          
+            # [Tensor Board]: Object Detector Avg Batch Loss
+            self.tensor_board_writer.add_scalar('Object Detector Avg Batch Loss',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Total Batch Loss
+            self.tensor_board_writer.add_scalar('Avg Batch Total Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
+
+       
+        if validate_during_training:
+            logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
+        
         del LM_losses
         del object_detector_losses
         del selection_classifier_losses
@@ -317,12 +338,13 @@ class XReportoTrainer():
                     loopLength= input_ids.shape[1]
                     validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
                 else:
-                    total_loss=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+                    total_loss=self.object_detector_and_classifier_forward_pass(epoch=-1,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
                     validation_total_loss+=total_loss
             # arverge validation_total_loss
-            validation_total_loss/=(len(self.data_loader_train))
+            validation_total_loss/=(len(self.data_loader_val))
             # update the learning rate according to the validation loss if decrease
             self.lr_scheduler.step(validation_total_loss)
+            logging.info(f'Validation Total Loss: {validation_total_loss:.4f}')
             return validation_total_loss
             
             
@@ -368,6 +390,35 @@ def collate_fn(batch):
 
     return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
+def init_working_space():
+    # Creating run folder
+    models_folder_path="models/" + str(RUN)
+    if not os.path.exists(models_folder_path):
+        os.makedirs(models_folder_path)
+        logging.info(f"Folder '{models_folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{models_folder_path}' already exists.")
+
+    # Creating checkpoints folder
+    ck_folder_path="check_points/" + str(RUN)
+    if not os.path.exists(ck_folder_path):
+        os.makedirs(ck_folder_path)
+        logging.info(f"Folder '{ck_folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{ck_folder_path}' already exists.")
+
+    # Creating tensorboard folder
+    tensor_board_folder_path="./tensor_boards/" + str(RUN) + "/train"
+    if not os.path.exists(tensor_board_folder_path):
+        os.makedirs(tensor_board_folder_path)
+        logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
+    else:
+        logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
+        empty_folder(tensor_board_folder_path)
+
+    return models_folder_path,ck_folder_path,tensor_board_folder_path
+
+
 def main():
     logging.info("Training X_Reporto Started")
     # Logging Configurations
@@ -375,27 +426,17 @@ def main():
     if OperationMode.TRAINING.value!=OPERATION_MODE :
         #throw exception 
         raise Exception("Operation Mode is not Training Mode")
-    # Creating run folder
-    folder_path="models/" + str(RUN)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        logging.info(f"Folder '{folder_path}' created successfully.")
-    else:
-        logging.info(f"Folder '{folder_path}' already exists.")
-
-    # Creating checkpoints folder
-    folder_path="check_points/" + str(RUN)
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        logging.info(f"Folder '{folder_path}' created successfully.")
-    else:
-        logging.info(f"Folder '{folder_path}' already exists.")
-
+    
+    _,_,tensor_board_folder_path=init_working_space()
+    
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
 
+    # Tensor Board
+    tensor_board_writer=SummaryWriter(tensor_board_folder_path)
+
     # Create an XReportoTrainer instance with the X-Reporto model
-    trainer = XReportoTrainer(model=x_reporto_model)
+    trainer = XReportoTrainer(model=x_reporto_model,tensor_board_writer=tensor_board_writer)
 
     if RECOVER:
         # Load the state of model
@@ -407,10 +448,6 @@ def main():
         # Batch to start from
         start_batch=checkpoint['batch_index']+1
 
-        # shuffle_order For the DataLoader
-        shuffle_order=checkpoint['shuffle_order']
-        trainer.load_shuffle_dataloader(shuffle_order=shuffle_order,start_offset=start_batch*BATCH_SIZE)
-
         # Load scheduler_state_dict
         trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
@@ -420,7 +457,7 @@ def main():
         # Load best_loss
         trainer.best_loss=checkpoint['best_loss']
 
-
+        # trainer.test_data_loader()
         # Start Train form checkpoint ends
         trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
 
@@ -428,9 +465,7 @@ def main():
         # No check point
         # Start New Training
         trainer.train()
-        
-
-    
+            
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
     setup_logging(log_file_path='./logs/x_reporto_trainer.log',bash=True,periodic_logger=PERIODIC_LOGGING)
@@ -441,3 +476,5 @@ if __name__ == '__main__':
     except Exception as e:
         # Log any exceptions that occur
         logging.exception("An error occurred",exc_info=True)
+
+# python -m src.x_reporto.trainer.x_reporto_trainer
