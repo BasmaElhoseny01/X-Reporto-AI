@@ -26,18 +26,18 @@ OPERATION_MODE=3
 MODEL_STAGE=1
 
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=False # Tain only RPN of the object detector
+CONTINUE_TRAIN=True# Continue training
+TRAIN_RPN=True # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 RUN = "1"
-EPOCHS=2
-BATCH_SIZE=1
+EPOCHS=1
+BATCH_SIZE=32
 # BATCH_SIZE=1
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
-LEARNING_RATE=1e-3
+LEARNING_RATE=0.0005
 SCHEDULAR_STEP_SIZE=2 #
 SCHEDULAR_GAMMA=0.7
 THRESHOLD_LR_SCHEDULER=1e-4
@@ -53,9 +53,10 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # Pathes to the external files
-training_csv_path = 'datasets/train-small.csv'
-validation_csv_path = 'datasets/train-small.csv'
-test_csv_path = 'datasets/train-small.csv'
+training_csv_path = 'datasets/train.csv'
+validation_csv_path = 'datasets/valid.csv'
+# validation_csv_path:str = 'datasets/train.csv'
+test_csv_path:str = 'datasets/valid.csv'
 
 # Logging
 PERIODIC_LOGGING=False

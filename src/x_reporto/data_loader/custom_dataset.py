@@ -13,7 +13,7 @@ from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from torchvision.transforms import v2
 import ast
-from src.object_detector.data_loader.custom_augmentation import CustomAugmentation
+from src.x_reporto.data_loader.custom_augmentation import CustomAugmentation
 from src.x_reporto.data_loader.tokenizer import Tokenizer
 from src.language_model.GPT2.config import Config
 class CustomDataset(Dataset):
@@ -42,7 +42,10 @@ class CustomDataset(Dataset):
             img_path = os.path.join(os.getcwd(), img_path)
             img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
             assert img is not None, f"Image at {img_path} is None"
-            
+
+            # # print image size
+            # print("image: "+str(idx),img.shape)
+            # print("image: "+str(idx),img_path)  
             # get the bounding boxes
             bboxes = self.data_info.iloc[idx, 4]
 
