@@ -303,7 +303,8 @@ class DataPreprocessing:
                 bbox_phrase_exist_vars = []
                 bbox_is_abnormal_vars = []
 
-                width, height = imagesize.get(mimic_image_file_path)
+                if check_images:
+                    width, height = imagesize.get(mimic_image_file_path)
                 # scaling_factor_height = height / 224
                 # scaling_factor_width = width / 224
 
@@ -356,7 +357,7 @@ class DataPreprocessing:
                     # if there are no bbox coordinates or they are faulty, then don't add them to image information
                     # if bbox_coords is None :
                     #     num_faulty_bboxes += 1
-                    if bbox_coords is None or self.coordinates_faulty(height, width, *bbox_coords):
+                    if check_images and (bbox_coords is None or self.coordinates_faulty(height, width, *bbox_coords)):
                         num_faulty_bboxes += 1
                     else:
                         x1, y1, x2, y2 = bbox_coords
@@ -364,10 +365,11 @@ class DataPreprocessing:
                         # it is possible that the bbox is only partially inside the image height and width (if e.g. x1 < 0, whereas x2 > 0)
                         # to prevent these cases from raising an exception, we set the coordinates to 0 if coordinate < 0, set to width if x-coordinate > width
                         # and set to height if y-coordinate > height
-                        x1 = self.check_coordinate(x1, width)
-                        y1 = self.check_coordinate(y1, height)
-                        x2 = self.check_coordinate(x2, width)
-                        y2 = self.check_coordinate(y2, height)
+                        if check_images:
+                            x1 = self.check_coordinate(x1, width)
+                            y1 = self.check_coordinate(y1, height)
+                            x2 = self.check_coordinate(x2, width)
+                            y2 = self.check_coordinate(y2, height)
 
                         bbox_coords = [x1, y1, x2, y2]
 
