@@ -19,7 +19,6 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
 from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker,empty_folder
-
 from config import *
 
 class XReportoTrainer():
@@ -409,7 +408,7 @@ def init_working_space():
         logging.info(f"Folder '{ck_folder_path}' already exists.")
 
     # Creating tensorboard folder
-    tensor_board_folder_path="./tensor_boards/" + str(RUN)
+    tensor_board_folder_path="./tensor_boards/" + str(RUN) + "/train"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
@@ -433,6 +432,7 @@ def main():
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
 
+    # Tensor Board
     tensor_board_writer=SummaryWriter(tensor_board_folder_path)
 
     # Create an XReportoTrainer instance with the X-Reporto model
@@ -476,4 +476,5 @@ if __name__ == '__main__':
     except Exception as e:
         # Log any exceptions that occur
         logging.exception("An error occurred",exc_info=True)
+
 # python -m src.x_reporto.trainer.x_reporto_trainer

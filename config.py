@@ -21,13 +21,13 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / Testing
-OPERATION_MODE=1
+OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=1
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
+TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 RUN = "1"
 EPOCHS=2
@@ -53,9 +53,9 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # Pathes to the external files
-training_csv_path: str = 'datasets/train-small.csv'
-validation_csv_path:str = 'datasets/train-small.csv'
-# test_csv_path:str = 'datasets/valid.csv'
+training_csv_path = 'datasets/train-small.csv'
+validation_csv_path = 'datasets/train-small.csv'
+test_csv_path = 'datasets/train-small.csv'
 
 # Logging
 PERIODIC_LOGGING=False
