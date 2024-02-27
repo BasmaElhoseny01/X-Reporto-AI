@@ -374,6 +374,47 @@ class XReportoV1(nn.Module):
                 del attention_mask
                 torch.cuda.empty_cache()
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
+        
+        if OPERATION_MODE==OperationMode.EVALUATION.value:
+            # Stage(1) Object Detector
+            object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+            if delete:
+                # Free GPU memory 
+                images=images.to('cpu')
+                # move object_detector_targets to cpu
+                for i in range(len(object_detector_targets)):
+                    object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                    object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                del images
+                del object_detector_targets
+                torch.cuda.empty_cache()
+            if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
+                return object_detector_losses,object_detector_boxes,object_detector_detected_classes,None,None,None,None,None,None,None
+            
+            # Stage(2) Binary Classifier
+            selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+            abnormal_binary_classifier_losses,predicted_abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
+            if delete:
+                # free gpu memory
+                selection_classifier_targets=selection_classifier_targets.to('cpu')
+                del selection_classifier_targets
+                torch.cuda.empty_cache()
+
+            if MODEL_STAGE == ModelStage.CLASSIFIER.value:
+                return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,None,None,None
+            
+            # # Stage(3) Language Model
+            # input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selected_regions, input_ids, attention_mask, object_detector_features)
+            # if index>=len(input_ids):
+            #     return 0,0,0,0,0,0,0,0,True
+            # if (index+LM_Batch_Size) >= len(input_ids):
+            #     stop=True
+            # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+            # if delete:
+            #     # Free GPU memory
+            #     object_detector_features=object_detector_features.to('cpu')
+            #     input_ids=input_ids.to('cpu')
+
         if OPERATION_MODE==OperationMode.TESTING.value:
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
