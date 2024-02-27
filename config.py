@@ -1,6 +1,11 @@
 import torch
 import logging
+import os
 from enum import Enum
+
+# Suppress TensorFlow INFO level logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+
 
 class ModelStage(Enum):
     OBJECT_DETECTOR = 1
@@ -22,14 +27,14 @@ MODEL_STAGE=1
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training
-TRAIN_RPN=False # Tain only RPN of the object detector
-TRAIN_ROI=True # Train only ROI of the object detector
+TRAIN_RPN=True # Tain only RPN of the object detector
+TRAIN_ROI=False # Train only ROI of the object detector
 RUN = "1"
-EPOCHS=10
-BATCH_SIZE=32
+EPOCHS=2
+BATCH_SIZE=1
 # BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 64
+EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=1e-3
@@ -48,13 +53,12 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # Pathes to the external files
-training_csv_path: str = 'datasets/train.csv'
-validation_csv_path:str = 'datasets/valid.csv'
-# validation_csv_path:str = 'datasets/train.csv'
-test_csv_path:str = 'datasets/valid.csv'
+training_csv_path: str = 'datasets/train-small.csv'
+validation_csv_path:str = 'datasets/train-small.csv'
+# test_csv_path:str = 'datasets/valid.csv'
 
 # Logging
-PERIODIC_LOGGING=True
+PERIODIC_LOGGING=False
 
 CHECKPOINT_EVERY_N=300
 RECOVER=False
