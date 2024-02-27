@@ -26,9 +26,9 @@ OPERATION_MODE=3
 MODEL_STAGE=1
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
-TRAIN_RPN=True # Tain only RPN of the object detector
-TRAIN_ROI=False # Train only ROI of the object detector
+CONTINUE_TRAIN=False# Continue training
+TRAIN_RPN=False # Tain only RPN of the object detector
+TRAIN_ROI=True # Train only ROI of the object detector
 RUN = "1"
 EPOCHS=1
 BATCH_SIZE=32
@@ -37,7 +37,7 @@ BATCH_SIZE=32
 EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
-LEARNING_RATE=0.0005
+LEARNING_RATE=0.001
 SCHEDULAR_STEP_SIZE=2 #
 SCHEDULAR_GAMMA=0.7
 THRESHOLD_LR_SCHEDULER=1e-4
