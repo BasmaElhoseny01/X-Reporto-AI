@@ -40,7 +40,10 @@ class CustomDataset(Dataset):
             # read the image with parent path of current folder + image path
             # img_path = os.path.join("datasets/", img_path)
             img_path = os.path.join(os.getcwd(), img_path)
+            # Fix Problem of \
+            img_path = img_path.replace("\\", "/")
             img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
+
             assert img is not None, f"Image at {img_path} is None"
 
             # # print image size
@@ -171,5 +174,5 @@ class CustomDataset(Dataset):
         LM_targets=torch.stack(LM_targets)
         LM_inputs['input_ids']=torch.stack(input_ids)
         LM_inputs['attention_mask']=torch.stack(attention_mask)
-
+        print("inside Custon dataset")
         return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets

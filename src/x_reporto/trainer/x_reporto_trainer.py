@@ -2,6 +2,8 @@
 from logger_setup import setup_logging
 import logging
 
+from datetime import datetime
+
 import os
 import gc
 from tqdm import tqdm
@@ -173,7 +175,6 @@ class XReportoTrainer():
                 
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
-
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
                 # [Tensor Board]: Learning Rate
                 self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
@@ -184,8 +185,8 @@ class XReportoTrainer():
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                    
-                    # [Tensor Board]: Epoch Average loss Object Detector
-                    self.tensor_board_writer.add_scalar('Epoch Average Loss(Every 100 Step)',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
+                    # [Tensor Board]: Epoch Average loss
+                    self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 100 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
             
 
 
@@ -198,6 +199,8 @@ class XReportoTrainer():
                     total_steps=0
                
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss:.4f} Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            # [Tensor Board]: Epoch Average loss
+            self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
             
             # update the learning rate
             # self.lr_scheduler.step(epoch_loss/(len(self.data_loader_train)))
@@ -264,17 +267,22 @@ class XReportoTrainer():
         if MODEL_STAGE==ModelStage.CLASSIFIER.value:
             Total_loss+=selection_classifier_losses
             Total_loss+=abnormal_binary_classifier_losses
+      
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
           
-            # [Tensor Board]: Object Detector Avg Batch Loss
-            self.tensor_board_writer.add_scalar('Object Detector Avg Batch Loss',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
-            # [Tensor Board]: Total Batch Loss
-            self.tensor_board_writer.add_scalar('Avg Batch Total Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
-
+            # [Tensor Board]: Avg Batch Loss Object Detector 
+            self.tensor_board_writer.add_scalar('Avg Batch Losses/Object Detector',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Avg Batch Loss Total 
+            self.tensor_board_writer.add_scalar('Avg Batch Losses/Total',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
        
         if validate_during_training:
             logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
+            
+            # [Tensor Board]: Avg Batch Loss Object Detector 
+            self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]/Object Detector',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Avg Batch Loss Total 
+            self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]/Total',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
         
         del LM_losses
         del object_detector_losses
@@ -409,13 +417,13 @@ def init_working_space():
         logging.info(f"Folder '{ck_folder_path}' already exists.")
 
     # Creating tensorboard folder
-    tensor_board_folder_path="./tensor_boards/" + str(RUN) + "/train"
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    tensor_board_folder_path="./tensor_boards/" + str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
     else:
         logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
-        empty_folder(tensor_board_folder_path)
 
     return models_folder_path,ck_folder_path,tensor_board_folder_path
 
