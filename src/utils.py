@@ -179,11 +179,11 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
     region_colors = ["b", "g", "r", "c", "m", "y"]
 
     images_list=[]
-    
     for j in range(0,5):
         for i in range(j*6,j*6+5):
-            if labels[i]:
-                box = boxes[i]
+            if i in labels:
+                idx=labels.index(i)
+                box = boxes[idx]
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -197,7 +197,6 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
                     facecolor="none",  # Set facecolor to none
                     linestyle="dashed",
                 )
-                
                 # Add the patch to the Axes
                 ax.add_patch(rect)
             if predicted_labels[i]:
