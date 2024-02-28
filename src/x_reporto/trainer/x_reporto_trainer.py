@@ -197,18 +197,22 @@ class XReportoTrainer():
                                     best_loss=self.best_loss,epoch_loss=epoch_loss)
                     total_steps=0
                
-            # logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss:.4f} Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss:.4f} Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+<<<<<<< HEAD
+=======
             
             # update the learning rate
             # self.lr_scheduler.step(epoch_loss/(len(self.data_loader_train)))
+>>>>>>> 6c093e3 (finish trainning)
             # Free GPU memory
-            # del Total_loss
-            # torch.cuda.empty_cache()
-            # gc.collect()
-            # # validate the model
-            # self.model.eval()
+            del Total_loss
+            torch.cuda.empty_cache()
+            gc.collect()
+            # validate the model
+            self.model.eval()
             # try:
             validation_loss= self.validate_during_training()  #sechdule the learning rate
+            
             # except Exception:
             #     validation_loss=0
             #     print("Error here can't validate on data")

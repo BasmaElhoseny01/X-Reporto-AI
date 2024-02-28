@@ -17,7 +17,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import empty_folder
+from src.utils import empty_folder, plot_single_image
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
 
@@ -58,24 +58,24 @@ class XReportoTesting():
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_test):                
                 # Move inputs to Device
                 images = images.to(DEVICE)
-                object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
+                # object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
                 #   
-                if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+                # if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Selection Classifier
                     # Moving Selection Classifier Targets to Device
-                    selection_classifier_targets = selection_classifier_targets.to(DEVICE)
-                    abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
+                    # selection_classifier_targets = selection_classifier_targets.to(DEVICE)
+                    # abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Language Model
                     # Moving Language Model Targets to Device
-                    LM_targets = LM_targets.to(DEVICE)
+                    # LM_targets = LM_targets.to(DEVICE)
                     input_ids = LM_inputs['input_ids'].to(DEVICE)
                     attention_mask = LM_inputs['attention_mask'].to(DEVICE)
                     loopLength= input_ids.shape[1]
-                    Total_loss=self.language_model_forward_pass(batch_idx=batch_idx,images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
+                    Total_loss=self.language_model_forward_pass(batch_idx=batch_idx,images=images,input_ids=input_ids,attention_mask=attention_mask,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
                 elif ModelStage.CLASSIFIER.value==MODEL_STAGE or ModelStage.OBJECT_DETECTOR.value==MODEL_STAGE:
                    
-                    Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions=self.object_detector_and_classifier_forward_pass(batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+                    Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions=self.object_detector_and_classifier_forward_pass(batch_idx=batch_idx,images=images)
                     self.computer_model_metrics(object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions)
                     
             # Free GPU memory 
@@ -120,10 +120,10 @@ class XReportoTesting():
         #     gc.collect()
         # return Total_loss
 
-    def  object_detector_and_classifier_forward_pass(self,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
+    def  object_detector_and_classifier_forward_pass(self,images:torch.Tensor):
 
             # Forward Pass
-            object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,_,_,_= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
+            object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,_,_,_= self.model(images,None,None, None ,None,None,None)
             
             # In object Detector Mode
             if selection_classifier_losses is None : selection_classifier_losses=0.0
@@ -137,12 +137,13 @@ class XReportoTesting():
                 Total_loss+=selection_classifier_losses
                 Total_loss+=abnormal_binary_classifier_losses
            
-            logging.debug(f'Batch {batch_idx + 1}/{len(self.dataset_test)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')            
-           
-            # [Tensor Board]: Object Detector Avg Batch Loss
-            self.tensor_board_writer.add_scalar('Object Detector Avg Batch Loss',object_detector_losses_summation,batch_idx)
-            # [Tensor Board]: Total Batch Loss
-            self.tensor_board_writer.add_scalar('Avg Batch Total Losses',Total_loss,batch_idx)
+            logging.debug(f'object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')            
+           #TODO plot image in tensor board
+            plot_single_image(images=images, boxes=object_detector_boxes)
+            # # [Tensor Board]: Object Detector Avg Batch Loss
+            # self.tensor_board_writer.add_scalar('Object Detector Avg Batch Loss',object_detector_losses_summation,batch_idx)
+            # # [Tensor Board]: Total Batch Loss
+            # self.tensor_board_writer.add_scalar('Avg Batch Total Losses',Total_loss,batch_idx)
 
 
             # Free GPU memory

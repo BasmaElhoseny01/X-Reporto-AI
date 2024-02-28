@@ -26,12 +26,12 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s]: %(message)s")
 log = logging.getLogger(__name__)
 
 
-NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
-# NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 200
+# NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
+NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 1000
 
 
 class DataPreprocessing:
-    def __init__(self,train_only = False,valid_only = False,fix_bboxes = True):
+    def __init__(self,train_only = False,valid_only = False,test_only = False,fix_bboxes = True):
         self.path_chest_imagenome = path_chest_imagenome
         self.path_mimic_cxr = path_mimic_cxr
         self.path_mimic_cxr_jpg = path_mimic_cxr_jpg
@@ -43,6 +43,8 @@ class DataPreprocessing:
                 self.csv_files_dict = self.get_train_files()
             elif valid_only:
                 self.csv_files_dict = self.get_val_files()
+            elif test_only:
+                self.csv_files_dict = self.get_test_files()
             else:
                 self.csv_files_dict = self.get_train_val_test_csv_files()
     def get_train_files(self):
@@ -61,6 +63,10 @@ class DataPreprocessing:
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
         return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["valid"]} 
+    def get_test_files(self):
+        """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
+        path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
+        return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["test"]}
     def get_images_to_avoid(self):
         image_ids_to_avoid = set()
 
@@ -322,32 +328,6 @@ class DataPreprocessing:
                     x2 = obj_dict["original_x2"]
                     y2 = obj_dict["original_y2"]
 
-                    # x1_normalized = obj_dict["x1"]
-                    # y1_normalized = obj_dict["y1"]
-                    # x2_normalized = obj_dict["x2"]
-                    # y2_normalized = obj_dict["y2"]
-
-                    # scale = 0
-                    # if scaling_factor_width < scaling_factor_height:
-                    #     scale = scaling_factor_width
-                    # else:
-                    #     scale = scaling_factor_height
-                    # # get scaled bbox coordinates
-                    # x1_true = int(x1_normalized * scale)
-                    # y1_true = int(y1_normalized * scale)
-                    # x2_true = int(x2_normalized * scale)
-                    # y2_true = int(y2_normalized * scale)
-                    # padding = (height - width)/(2)
-                    # x1_true = int(x1_normalized * scaling_factor_height - padding -3)
-                    # y1_true = int(y1_normalized * scaling_factor_height)
-                    # x2_true = int(x2_normalized * scaling_factor_height - padding -3) 
-                    # y2_true = int(y2_normalized * scaling_factor_height)
-
-                    # # check if the bbox coordinates are same as the original bbox coordinates
-                    # if x1_true != x1 or y1_true != y1 or x2_true != x2 or y2_true != y2:
-                    #     incorrect += 1
-                    #     print("incorrect scaling: ",str(incorrect))
-                    #     print("x1 = ",x1," x1_scale = ",x1_true, " y1 = ",y1,"  y1_scale = ",y1_true, " x2 = ",x2," x2_scale = ",x2_true," y2 = ",y2," y2_scale = ",y2_true )
 
                     region_to_bbox_coordinates_dict[region_name] = [x1, y1, x2, y2]
 
@@ -596,7 +576,7 @@ def get_image_dimensions(image_path):
         print("An error occurred:", e)
 
 if __name__=="__main__":
-    data=DataPreprocessing(train_only=False,valid_only=True,fix_bboxes=False)
+    data=DataPreprocessing(train_only=False,valid_only=False,test_only = True,fix_bboxes=False)
     check_images = True
     data.create_new_csv_files(check_images=check_images)
     # data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")

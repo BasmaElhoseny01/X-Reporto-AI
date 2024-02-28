@@ -129,7 +129,7 @@ class XReportoV1(nn.Module):
                         # if  GENERATE_REPORT:
                         #     load_model(model=self.language_model,name='LM_best')
 
-        elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.TESTING.value:
+        elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.TESTING.value or OPERATION_MODE==OperationMode.EVALUATION.value:
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 logging.info("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector_best')
@@ -395,7 +395,7 @@ class XReportoV1(nn.Module):
                 del object_detector_targets
                 torch.cuda.empty_cache()
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
-                return object_detector_losses,object_detector_boxes,object_detector_detected_classes,None,None,None,None,None,None,None
+                return object_detector_losses,object_detector_boxes,object_detector_detected_classes,0,None,0,None,None,None,None
             
             # Stage(2) Binary Classifier
             selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)

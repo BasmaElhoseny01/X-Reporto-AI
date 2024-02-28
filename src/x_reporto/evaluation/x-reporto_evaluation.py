@@ -1,4 +1,7 @@
 # Logging
+import sys
+
+import numpy as np
 from logger_setup import setup_logging
 import logging
 
@@ -16,7 +19,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import empty_folder
+from src.utils import empty_folder,plot_image
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
 from torch.utils.tensorboard import SummaryWriter
@@ -24,19 +27,19 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 class XReportoEvaluation():
-    def __init__(self, model:XReporto,validation_csv_path:str = validation_csv_path,tensor_board_writer:SummaryWriter=None):
+    def __init__(self, model:XReporto,evaluation_csv_path:str = evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
         '''
         X-Reporto Validation Class
         Args:
         model: X-Reporto Model
-        validation_csv_path: Path to the validation csv file
+        evaluation_csv_path: Path to the validation csv file
         ''' 
         self.model = model
         self.model.to(DEVICE)
-        self.validation_csv_path = validation_csv_path
-        self.data_loader_val = DataLoader(dataset=CustomDataset(self.validation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
+        self.evaluation_csv_path = evaluation_csv_path
+        self.data_loader_val = DataLoader(dataset=CustomDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
         self.tensor_board_writer=tensor_board_writer
-        logging.info("Validation dataset loaded")
+        logging.info("Evalution dataset loaded")
 
 
 
@@ -73,13 +76,13 @@ class XReportoEvaluation():
         def compute_intersection_and_union_area_per_region(detections, targets, class_detected):
             # pred_boxes is of shape [batch_size x 29 x 4] and contains the predicted region boxes with the highest score (i.e. top-1)
             # they are sorted in the 2nd dimension, meaning the 1st of the 29 boxes corresponds to the 1st region/class,
-            # the 2nd to the 2nd class and so on
+     
             pred_boxes = detections
-
             # targets is a list of dicts, with each dict containing the key "boxes" that contain the gt boxes of a single image
             # gt_boxes is of shape [batch_size x 29 x 4]
-            gt_boxes = torch.stack([t["bboxes"] for t in targets], dim=0)
-
+            gt_boxes = torch.stack([t for t in targets[0]['boxes']], dim=0)
+            # print("gt_boxes[..., 0]",gt_boxes[..., 0])
+            # print("pred_boxes[..., 0]",pred_boxes[..., 0])
             # below tensors are of shape [batch_size x 29]
             x0_max = torch.maximum(pred_boxes[..., 0], gt_boxes[..., 0])
             y0_max = torch.maximum(pred_boxes[..., 1], gt_boxes[..., 1])
@@ -119,6 +122,38 @@ class XReportoEvaluation():
         obj_detector_scores["sum_region_detected"] += region_detected_batch
         obj_detector_scores["sum_intersection_area_per_region"] += intersection_area_per_region_batch
         obj_detector_scores["sum_union_area_per_region"] += union_area_per_region_batch
+    
+    def draw_tensor_board(self,batch_idx,images,object_detector):
+        # print(object_detector)
+        obj_detector_scores=object_detector["obj_detector_scores"] #Dic
+
+        object_detector_gold=object_detector['object_detector_targets']
+
+        object_detector_boxes=object_detector['object_detector_boxes'].cpu()
+        object_detector_detected_classes=object_detector['object_detector_detected_classes'].cpu()
+
+        id=1
+        # Draw Batch Images
+        for i,image in enumerate(images):
+            image=image.cpu()
+            # Ima
+            regions=plot_image(image,None,object_detector_gold[i]['labels'].cpu().tolist() ,object_detector_gold[i]['boxes'].cpu().tolist(),object_detector_detected_classes[i].tolist(),object_detector_boxes[i].tolist())
+            for j,region in enumerate(regions):
+           
+                # convert region to tensor
+                region = region.astype(np.uint8)
+
+                # convert numpy array to PyTorch tensor
+                region_tensor = torch.from_numpy(region)
+
+                # make sure the tensor has the shape (C, H, W)
+                region_tensor = region_tensor.permute(2, 0, 1)
+
+                self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(id), region_tensor, global_step=j+1)
+
+            id+=1
+
+
 
     def validate_during_evalute_object_detection_and_classifier(self):
         '''
@@ -128,7 +163,7 @@ class XReportoEvaluation():
         obj_detector_scores["sum_intersection_area_per_region"] = torch.zeros(29, device=DEVICE)
         obj_detector_scores["sum_union_area_per_region"] = torch.zeros(29, device=DEVICE)
         obj_detector_scores["sum_region_detected"] = torch.zeros(29, device=DEVICE)
-
+        self.model.eval()
         with torch.no_grad():
             # validate the model
             logging.info("Validation the model")
@@ -137,15 +172,29 @@ class XReportoEvaluation():
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
+                # if object_detector_targets[0]['boxes'].shape[0] != 29:
+                #     continue
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value :
                     # Selection Classifier
                     # Moving Selection Classifier Targets to Device
                     selection_classifier_targets = selection_classifier_targets.to(DEVICE)
                     abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
-                Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions=self.object_detector_and_classifier_forward_pass(images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+                Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions=self.object_detector_and_classifier_forward_pass(batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
+                
+                # [Tensor Board]
+                object_detector={
+                    "obj_detector_scores":obj_detector_scores,
+                    "object_detector_targets":object_detector_targets,
+                    "object_detector_boxes":object_detector_boxes,
+                    "object_detector_detected_classes":object_detector_detected_classes,
+
+                }
+                self.draw_tensor_board(batch_idx,images,object_detector)
+
                 validation_total_loss+=Total_loss
                 #evaluate the model
                 logging.info("Evaluating the model")
+
                 self.update_object_detector_metrics(obj_detector_scores, object_detector_boxes, object_detector_targets, object_detector_detected_classes)
             
             # arverge validation_total_loss
@@ -257,7 +306,7 @@ def collate_fn(batch):
 def init_working_space():
 
     # Creating tensorboard folder
-    tensor_board_folder_path="./tensor_boards" + str(RUN)+ "/eval"
+    tensor_board_folder_path="./tensor_boards/" + str(RUN)+ "/eval"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
@@ -300,3 +349,4 @@ if __name__ == '__main__':
     
 
      
+# python -m src.x_reporto.evaluation.x-reporto_evaluation
