@@ -173,7 +173,7 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
     cmap = plt.get_cmap("tab20b")
     height, width = img.shape[1:]
     # Create figure and axes
-    fig, ax = plt.subplots(1, figsize=(256, 128))
+    fig, ax = plt.subplots(1, figsize=(16, 8))
     # Display the image
     ax.imshow(img[0])
     region_colors = [
