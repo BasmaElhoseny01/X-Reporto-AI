@@ -7,6 +7,7 @@ dataset_old_csvs
 logs/
 !logs/empty.txt
 
+logs/*
 # Tensor Board
 tensor_boards/
 !tensor_boards/empty.txt
