@@ -3,6 +3,8 @@ from logger_setup import setup_logging
 import logging
 from tqdm import tqdm
 
+from datetime import datetime
+
 import torch
 import torchvision.transforms as transforms
 import torchvision
@@ -111,10 +113,8 @@ class EXploreData():
             img = to_tensor(img)
 
             # [Tensor Board]: 
-            self.tensor_board_writer.add_image(f'RawImages/{index}', img)
+            self.tensor_board_writer.add_image(f'{index}', img)
 
-        sys.exit()
-        # # write to tensorboard
 
 
             # # get the bounding boxes
@@ -196,7 +196,8 @@ def main():
     logging.info(f"csv_path: {csv_path}")
 
     # Creating tensorboard folder
-    tensor_board_folder_path="./tensor_boards/data"
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    tensor_board_folder_path=f"./tensor_boards/data_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
@@ -210,6 +211,7 @@ def main():
     # Create an XReportoTrainer instance with the X-Reporto model
     explorer = EXploreData(tensor_board_writer=tensor_board_writer,csv_path=csv_path)
 
+    # Show Images read from csv
     explorer.show_csv_sample_images()
 
 
