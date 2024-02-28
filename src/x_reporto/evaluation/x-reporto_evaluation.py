@@ -50,6 +50,12 @@ class XReportoEvaluation():
             # print(f"Validation Total Loss: {validation_total_loss:.4f}")
             # print(f"Average IOU: {obj_detector_scores['avg_iou']:.4f}")
 
+            # [Tensor Board]: Metric IOU
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Average IOU',obj_detector_scores['avg_iou'],global_step=0)
+            # [Tensor Board]: Metric Num_detected_regions_per_image
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
+
+
         
 
     def update_object_detector_metrics(self,obj_detector_scores, detections, image_targets, class_detected):
@@ -122,13 +128,6 @@ class XReportoEvaluation():
     
     def draw_tensor_board(self,batch_idx,images,object_detector):
         # print(object_detector)
-        obj_detector_scores=object_detector["obj_detector_scores"] #Dic
-
-        # [Tensor Board]: Metric IOU
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Average IOU',obj_detector_scores['avg_iou'],global_step=0)
-        # [Tensor Board]: Metric Num_detected_regions_per_image
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
-
 
         object_detector_gold=object_detector['object_detector_targets']
         object_detector_boxes=object_detector['object_detector_boxes'].cpu()
@@ -185,7 +184,6 @@ class XReportoEvaluation():
                 
                 # [Tensor Board]
                 object_detector={
-                    "obj_detector_scores":obj_detector_scores,
                     "object_detector_targets":object_detector_targets,
                     "object_detector_boxes":object_detector_boxes,
                     "object_detector_detected_classes":object_detector_detected_classes,

@@ -70,7 +70,7 @@ def five_day_logger_handler():
     current_date = datetime.datetime.now()
 
     # Check if 5 days have passed since the creation of the newest log file
-    if creation_date is None or current_date - creation_date >= datetime.timedelta(days=5):
+    if creation_date is None or current_date - creation_date >= datetime.timedelta(days=1):
         # print("5 days have passed since the creation of the newest log file.")
 
         # Get current date and time
