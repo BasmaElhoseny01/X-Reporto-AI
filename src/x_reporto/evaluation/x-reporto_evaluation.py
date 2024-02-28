@@ -151,7 +151,7 @@ class XReportoEvaluation():
 
                 self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(id), region_tensor, global_step=j+1)
 
-                id+=1
+            id+=1
 
 
 
@@ -349,3 +349,4 @@ if __name__ == '__main__':
     
 
      
+# python -m src.x_reporto.evaluation.x-reporto_evaluation
