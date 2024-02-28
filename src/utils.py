@@ -177,6 +177,9 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
     # Display the image
     ax.imshow(img[0])
     region_colors = ["b", "g", "r", "c", "m", "y"]
+
+    images_list=[]
+    
     for j in range(0,5):
         for i in range(j*6,j*6+5):
             if labels[i]:
@@ -214,9 +217,22 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
                 )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-        save_path="assets/"+str(RUN)+"/image_"+str(img_idx+1)+"_region"+str(j)+".png"
-        plt.savefig(save_path)
-        plt.close()
+                
+        # images_list.append(ax)
+        # convert ax to image
+        fig.canvas.draw()
+        img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+        img  = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        images_list.append(img)
+        # plt.show()
+        
+
+        
+    return images_list
+    # save_path="assets/"+str(RUN)+"/image_"+str(img_idx+1)+"_region"+str(j)+".png"
+        # plt.savefig(save_path)
+        # plt.close()
+                
         # plt.show()
         # cmap = plt.get_cmap("tab20b")
         # height, width = img.shape[1:]

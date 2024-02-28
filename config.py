@@ -22,18 +22,18 @@ class OperationMode(Enum):
 # device
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-# Training / validation / Testing
+# Training / validation / EVALUATION / Testing 
 OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=1
 
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
+CONTINUE_TRAIN=True# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
-TRAIN_ROI=True # Train only ROI of the object detector
-RUN = "1"
+TRAIN_ROI=False # Train only ROI of the object detector
+RUN = "0"
 EPOCHS=1
-BATCH_SIZE=32
+BATCH_SIZE=2
 # BATCH_SIZE=1
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 1
@@ -57,8 +57,8 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 # Pathes to the external files
 training_csv_path = 'datasets/train.csv'
 validation_csv_path = 'datasets/valid.csv'
-# validation_csv_path:str = 'datasets/train.csv'
-test_csv_path:str = 'datasets/valid.csv'
+evaluation_csv_path = 'datasets/eval.csv'
+test_csv_path:str = 'datasets/test.csv'
 
 # Logging
 PERIODIC_LOGGING=False
@@ -197,3 +197,5 @@ def get_config():
 
 
 # #>>>  python your_script.py --epochs 100 --learning_rate 0.0001 --batch_size 32 --scheduler_step_size 5 --scheduler_gamma 0.95 --debug --abnormal_pos_weight 7.5 --region_pos_weight 3.0
+# src.x_reporto.validation.x_reporto_validation
+# src.x_reporto.evaluation.x-reporto_evaluation
