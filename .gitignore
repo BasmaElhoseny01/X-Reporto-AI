@@ -2,7 +2,14 @@
 All datasets
 datasets
 dataset_old_csvs
-logs
+
+# Logs
+logs/
+!logs/empty.txt
+
+# Tensor Board
+tensor_boards/
+!tensor_boards/empty.txt
 
 # All modules
 *.pth
