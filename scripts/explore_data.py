@@ -1,30 +1,31 @@
 # Logging
 from logger_setup import setup_logging
 import logging
-from tqdm import tqdm
 
 from datetime import datetime
+
+import os
+import argparse
+import sys
+import cv2
+import pandas as pd 
+import numpy as np
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 import torch
 import torchvision.transforms as transforms
 import torchvision
-from src.utils import empty_folder
+from torchvision.transforms.functional import to_tensor
+
+
 
 
 from torch.utils.data import  DataLoader
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
-from torch.utils.tensorboard import SummaryWriter
-import os
 from config import PERIODIC_LOGGING
-import argparse
-import sys
-from torchvision.transforms.functional import to_tensor
 
-import cv2
-import pandas as pd 
-import numpy as np
-
-
+from torch.utils.tensorboard import SummaryWriter
 
 # Set the random seed for reproducibility
 torch.manual_seed(42)
@@ -32,6 +33,18 @@ torch.manual_seed(42)
 
 
     
+# helper function to show an image
+# (used in the `plot_classes_preds` function below)
+def matplotlib_imshow(img, one_channel=False):
+    if one_channel:
+        img = img.mean(dim=0)
+    img = img / 2 + 0.5     # unnormalize
+    npimg = img.numpy()
+    if one_channel:
+        plt.imshow(npimg, cmap="Greys")
+    else:
+        plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.show()
 
 class EXploreData():
     def __init__(self,tensor_board_writer:SummaryWriter,csv_path: str):
@@ -71,31 +84,9 @@ class EXploreData():
         self.random_data=data_info.iloc[self.random_indices-1]
 
 
-        
 
-
-
-
-
-        
-    
-        
-    # def show_data_loader_sample_images(self):
-
-    #     # images,labels=next(dataiter)  # Get First Batch
-    #     for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in tqdm(enumerate(self.dataloader)):
-    #         print("batch_idx",batch_idx)
-    #         # create grid of images
-    #         img_grid = torchvision.utils.make_grid(images,nrow=4)
-
-    #         # write to tensorboard
-    #         self.tensor_board_writer.add_image('', img_grid)
-
-    # def show_dataset_sample_images(self):
-    #     for indx,
-        
-
-    def show_csv_sample_images(self):    
+    def show_csv_sample_images(self):          
+        i=0
         for index in self.random_indices:
             index=index.item()
 
@@ -109,7 +100,7 @@ class EXploreData():
             # read the image with parent path of current folder + image path
             img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
             assert img is not None, f"Image at {img_path} is None"
-            
+         
             img = to_tensor(img)
 
             # [Tensor Board]: 
@@ -123,14 +114,31 @@ class EXploreData():
             # bboxes = eval(bboxes)
 
 
-    
+
+        
 
 
 
 
 
+ 
+        
+    def show_data_loader_sample_images(self):
+        pass
+       #     # images,labels=next(dataiter)  # Get First Batch
+        #     for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in tqdm(enumerate(self.dataloader)):
+        #         print("batch_idx",batch_idx)
+        #         # create grid of images
+        #         img_grid = torchvision.utils.make_grid(images,nrow=4)
 
-    
+        #         # write to tensorboard
+        #  ``       self.tensor_board_writer.add_image('', img_grid)
+
+    def show_dataset_sample_images(self):
+        pass
+        # for indx,
+
+
 
 
 
@@ -203,7 +211,6 @@ def main():
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
     else:
         logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
-        empty_folder(tensor_board_folder_path)
     
     # Tensor Board
     tensor_board_writer=SummaryWriter(tensor_board_folder_path)
@@ -213,8 +220,6 @@ def main():
 
     # Show Images read from csv
     explorer.show_csv_sample_images()
-
-
     
 
 
