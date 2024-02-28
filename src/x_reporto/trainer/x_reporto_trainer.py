@@ -198,12 +198,9 @@ class XReportoTrainer():
                     total_steps=0
                
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss:.4f} Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
-<<<<<<< HEAD
-=======
             
             # update the learning rate
             # self.lr_scheduler.step(epoch_loss/(len(self.data_loader_train)))
->>>>>>> 6c093e3 (finish trainning)
             # Free GPU memory
             del Total_loss
             torch.cuda.empty_cache()

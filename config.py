@@ -31,9 +31,9 @@ MODEL_STAGE=1
 CONTINUE_TRAIN=True# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
-RUN = "1"
+RUN = "0"
 EPOCHS=10
-BATCH_SIZE=16
+BATCH_SIZE=1
 # BATCH_SIZE=1
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 64
