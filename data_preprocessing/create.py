@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 
 
 # NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
-NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 1000
+NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 100
 
 
 class DataPreprocessing:
@@ -576,7 +576,7 @@ def get_image_dimensions(image_path):
         print("An error occurred:", e)
 
 if __name__=="__main__":
-    data=DataPreprocessing(train_only=False,valid_only=False,test_only = True,fix_bboxes=False)
+    data=DataPreprocessing(train_only=False,valid_only=False,test_only = False,fix_bboxes=False)
     check_images = True
     data.create_new_csv_files(check_images=check_images)
     # data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
