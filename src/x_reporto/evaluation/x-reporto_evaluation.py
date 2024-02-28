@@ -1,13 +1,13 @@
 # Logging
-import sys
-
 import numpy as np
 from logger_setup import setup_logging
 import logging
 
+from datetime import datetime
 
 import os
 import gc
+import sys
 
 # Torch
 import torch
@@ -19,7 +19,7 @@ from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
 
 # Utils 
-from src.utils import empty_folder,plot_image
+from src.utils import plot_image
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
 from torch.utils.tensorboard import SummaryWriter
@@ -47,13 +47,10 @@ class XReportoEvaluation():
         #validate the model
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:
             validation_total_loss,obj_detector_scores,_,_,_ = self.validate_during_evalute_object_detection_and_classifier()
-            print(f"Validation Total Loss: {validation_total_loss:.4f}")
-            print(f"Average IOU: {obj_detector_scores['avg_iou']:.4f}")
-            self.tensor_board_writer.add_text('Evalaution Metrics/Average IOU',str(obj_detector_scores['avg_iou']))
-            self.tensor_board_writer.add_text('Evalaution Metrics/Avgerage Num_detected_regions_per_image',str(obj_detector_scores['avg_num_detected_regions_per_image']))
+            # print(f"Validation Total Loss: {validation_total_loss:.4f}")
+            # print(f"Average IOU: {obj_detector_scores['avg_iou']:.4f}")
 
-
-
+        
 
     def update_object_detector_metrics(self,obj_detector_scores, detections, image_targets, class_detected):
         def compute_box_area(box):
@@ -127,12 +124,17 @@ class XReportoEvaluation():
         # print(object_detector)
         obj_detector_scores=object_detector["obj_detector_scores"] #Dic
 
-        object_detector_gold=object_detector['object_detector_targets']
+        # [Tensor Board]: Metric IOU
+        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Average IOU',obj_detector_scores['avg_iou'],global_step=0)
+        # [Tensor Board]: Metric Num_detected_regions_per_image
+        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
 
+
+        object_detector_gold=object_detector['object_detector_targets']
         object_detector_boxes=object_detector['object_detector_boxes'].cpu()
         object_detector_detected_classes=object_detector['object_detector_detected_classes'].cpu()
 
-        id=1
+        img_id=1
         # Draw Batch Images
         for i,image in enumerate(images):
             image=image.cpu()
@@ -148,10 +150,10 @@ class XReportoEvaluation():
 
                 # make sure the tensor has the shape (C, H, W)
                 region_tensor = region_tensor.permute(2, 0, 1)
+                # [Tensor Board]: Evaluation Image With Boxes
+                self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
 
-                self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(id), region_tensor, global_step=j+1)
-
-            id+=1
+            img_id+=1
 
 
 
@@ -212,33 +214,34 @@ class XReportoEvaluation():
             return validation_total_loss,obj_detector_scores,None,None,None
         
     def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,batch_idx:int,loopLength:int,LM_Batch_Size:int):
-        for batch in range(BATCH_SIZE):
-            total_LM_losses=0
-            for i in range(0,loopLength,LM_Batch_Size):
+        pass
+        # for batch in range(BATCH_SIZE):
+        #     total_LM_losses=0
+        #     for i in range(0,loopLength,LM_Batch_Size):
                 
-                # Forward Pass
-                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
+        #         # Forward Pass
+        #         object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
 
-                if stop:
-                    break
-                # Backward pass
-                Total_loss=None
-                object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-                Total_loss=object_detector_losses_summation.clone()
-                Total_loss+=selection_classifier_losses
-                Total_loss+=abnormal_binary_classifier_losses
-                Total_loss+=LM_losses
-                total_LM_losses+=LM_losses
+        #         if stop:
+        #             break
+        #         # Backward pass
+        #         Total_loss=None
+        #         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
+        #         Total_loss=object_detector_losses_summation.clone()
+        #         Total_loss+=selection_classifier_losses
+        #         Total_loss+=abnormal_binary_classifier_losses
+        #         Total_loss+=LM_losses
+        #         total_LM_losses+=LM_losses
 
-            logging.debug(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-            # Free GPU memory
-            del LM_losses
-            del object_detector_losses
-            del selection_classifier_losses
-            del abnormal_binary_classifier_losses
-            torch.cuda.empty_cache()
-            gc.collect()
-        return Total_loss
+        #     logging.debug(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+        #     # Free GPU memory
+        #     del LM_losses
+        #     del object_detector_losses
+        #     del selection_classifier_losses
+        #     del abnormal_binary_classifier_losses
+        #     torch.cuda.empty_cache()
+        #     gc.collect()
+        # return Total_loss
 
     def  object_detector_and_classifier_forward_pass(self,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
 
@@ -261,6 +264,8 @@ class XReportoEvaluation():
             torch.cuda.empty_cache()
             gc.collect()
             return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
+
+
 
 def collate_fn(batch):
         image_shape = batch[0][0]["image"].size()
@@ -306,15 +311,16 @@ def collate_fn(batch):
 def init_working_space():
 
     # Creating tensorboard folder
-    tensor_board_folder_path="./tensor_boards/" + str(RUN)+ "/eval"
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    tensor_board_folder_path="./tensor_boards/" + str(RUN)+ f"/eval_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
     else:
         logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
-        empty_folder(tensor_board_folder_path)
 
     return tensor_board_folder_path
+
 def main():
     
     logging.info(" X_Reporto Started")
@@ -326,14 +332,15 @@ def main():
     # Tensor Board
     tensor_board_folder_path=init_working_space()
     tensor_board_writer=SummaryWriter(tensor_board_folder_path)
+
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
 
     # Create an XReportoTrainer instance with the X-Reporto model
-    validator = XReportoEvaluation(model=x_reporto_model,tensor_board_writer=tensor_board_writer)
+    evaluator = XReportoEvaluation(model=x_reporto_model,tensor_board_writer=tensor_board_writer)
 
     # Start Training
-    validator.evaluate()
+    evaluator.evaluate()
         
 
 if __name__ == '__main__':
