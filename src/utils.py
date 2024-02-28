@@ -176,7 +176,13 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
     fig, ax = plt.subplots(1, figsize=(256, 128))
     # Display the image
     ax.imshow(img[0])
-    region_colors = ["b", "g", "r", "c", "m", "y"]
+    region_colors = [
+        "blue", "green", "red", "cyan", "magenta", "yellow", 
+        "orange", "purple", "lime", "pink", "teal", "lavender", 
+        "brown", "beige", "maroon", "mint", "coral", "olive", 
+        "navy", "grey", "black", "white", "indigo", "turquoise", 
+        "salmon", "khaki", "gold", "violet", "tan"
+    ]
 
     images_list=[]
     for j in range(0,5):
@@ -192,7 +198,7 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[((i-j*6)%5)],
+                    edgecolor=region_colors[(i-j*6-1)%29],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="dashed",
@@ -209,7 +215,7 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[(i-j*6)%5],
+                    edgecolor=region_colors[(i-j*6)%29],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="solid",

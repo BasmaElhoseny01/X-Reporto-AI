@@ -171,6 +171,7 @@ class XReportoEvaluation():
             validation_total_loss=0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):
                 # Move inputs to Device
+                print("hreeee")
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
                 # if object_detector_targets[0]['boxes'].shape[0] != 29:
