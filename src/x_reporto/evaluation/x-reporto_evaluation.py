@@ -111,20 +111,29 @@ class XReportoEvaluation():
 
             union_area = (pred_area + gt_area) - intersection_area
 
+            # calculate IOU using the intersection and union areas
+            Iou = intersection_area / union_area
+
+            # sum up the values along the batch dimension (the values will divided by each other later to get the averages)
+            Iou = torch.sum(Iou, dim=0)
+                
             # sum up the values along the batch dimension (the values will divided by each other later to get the averages)
             intersection_area = torch.sum(intersection_area, dim=0)
             union_area = torch.sum(union_area, dim=0)
 
-            return intersection_area, union_area
+            return intersection_area, union_area, Iou
 
         # sum up detections for each region
         region_detected_batch = torch.sum(class_detected, dim=0)
 
-        intersection_area_per_region_batch, union_area_per_region_batch = compute_intersection_and_union_area_per_region(detections, image_targets, class_detected)
+        intersection_area_per_region_batch, union_area_per_region_batch,iou_per_region = compute_intersection_and_union_area_per_region(detections, image_targets, class_detected)
 
         obj_detector_scores["sum_region_detected"] += region_detected_batch
         obj_detector_scores["sum_intersection_area_per_region"] += intersection_area_per_region_batch
         obj_detector_scores["sum_union_area_per_region"] += union_area_per_region_batch
+        obj_detector_scores["sum_iou_per_region"] += iou_per_region
+        # print iou
+        print("iou: ",iou_per_region)
     
     def draw_tensor_board(self,batch_idx,images,object_detector):
         # print(object_detector)
@@ -164,6 +173,7 @@ class XReportoEvaluation():
         obj_detector_scores["sum_intersection_area_per_region"] = torch.zeros(29, device=DEVICE)
         obj_detector_scores["sum_union_area_per_region"] = torch.zeros(29, device=DEVICE)
         obj_detector_scores["sum_region_detected"] = torch.zeros(29, device=DEVICE)
+        obj_detector_scores["sum_iou_per_region"] = torch.zeros(29, device=DEVICE)
         self.model.eval()
         with torch.no_grad():
             # validate the model
