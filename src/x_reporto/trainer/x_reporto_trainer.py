@@ -7,6 +7,7 @@ from datetime import datetime
 import os
 import gc
 from tqdm import tqdm
+import sys
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -22,6 +23,7 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 # Utils 
 from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker,empty_folder
 from config import *
+
 
 class XReportoTrainer():
     """
@@ -149,6 +151,7 @@ class XReportoTrainer():
                     # Moving Selection Classifier Targets to Device
                     selection_classifier_targets = selection_classifier_targets.to(DEVICE)
                     abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
+                
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Language Model
                     # Moving Language Model Targets to Device
@@ -440,6 +443,7 @@ def main():
     
     # X-Reporto Trainer Object
     x_reporto_model = XReporto().create_model()
+    
 
     # Tensor Board
     tensor_board_writer=SummaryWriter(tensor_board_folder_path)
@@ -474,6 +478,9 @@ def main():
         # No check point
         # Start New Training
         trainer.train()
+
+        # TODO Remove
+        sys.exit()
             
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
