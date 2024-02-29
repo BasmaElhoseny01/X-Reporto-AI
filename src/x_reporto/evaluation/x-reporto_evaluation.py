@@ -49,9 +49,10 @@ class XReportoEvaluation():
             validation_total_loss,obj_detector_scores,_,_,_ = self.validate_during_evalute_object_detection_and_classifier()
             # print(f"Validation Total Loss: {validation_total_loss:.4f}")
             # print(f"Average IOU: {obj_detector_scores['avg_iou']:.4f}")
-            obj_detector_scores["sum_iou_per_region"]
 
-            for region_indx, score in enumerate(obj_detector_scores):
+            correct_iou = obj_detector_scores["sum_iou_per_region"] / obj_detector_scores["sum_region_detected"]
+            
+            for region_indx, score in enumerate(correct_iou):
                 # [Tensor Board]: Metric IOU
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1)
 
@@ -139,7 +140,7 @@ class XReportoEvaluation():
         obj_detector_scores["sum_union_area_per_region"] += union_area_per_region_batch
         obj_detector_scores["sum_iou_per_region"] += iou_per_region
         # print iou
-        print("iou: ",iou_per_region)
+        # print("iou: ",iou_per_region)
     
     def draw_tensor_board(self,batch_idx,images,object_detector):
         # print(object_detector)

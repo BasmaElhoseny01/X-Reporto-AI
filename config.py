@@ -23,23 +23,26 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
 # Model Stage
-MODEL_STAGE=1
+MODEL_STAGE=2
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
-RUN = "0"
-EPOCHS=1
-BATCH_SIZE=1
+
+FREEZE_OBJECT_DETECTOR=True
+
+RUN = "3"
+EPOCHS=3
+BATCH_SIZE=16
 # BATCH_SIZE=1
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
-LEARNING_RATE=0.00007
+LEARNING_RATE=0.00005
 SCHEDULAR_STEP_SIZE=1 #
 SCHEDULAR_GAMMA=0.75
 THRESHOLD_LR_SCHEDULER=1e-4
@@ -55,7 +58,8 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # Pathes to the external files
-training_csv_path = 'datasets/train.csv'
+# training_csv_path = 'datasets/train.csv'
+training_csv_path = 'datasets/train-100.csv'
 validation_csv_path = 'datasets/valid.csv'
 evaluation_csv_path = 'datasets/test-1000.csv'
 # TODO Fix
@@ -79,6 +83,9 @@ def log_config():
 
     logging.info(f"CONTINUE_TRAIN: {CONTINUE_TRAIN}")
     logging.info(f"TRAIN_RPN: {TRAIN_RPN}")
+    logging.info(f"TRAIN_ROI: {TRAIN_ROI}")
+
+    logging.info(f"FREEZE_OBJECT_DETECTOR: {FREEZE_OBJECT_DETECTOR}")
 
     logging.info(f"RUN: {RUN}")
     logging.info(f"EPOCHS: {EPOCHS}")
@@ -113,6 +120,8 @@ def get_config():
     "MODEL_STAGE": MODEL_STAGE,
     "CONTINUE_TRAIN": CONTINUE_TRAIN,
     "TRAIN_RPN": TRAIN_RPN,
+    "TRAIN_ROI": TRAIN_ROI,
+    "FREEZE_OBJECT_DETECTOR": FREEZE_OBJECT_DETECTOR,
     "RUN": RUN,
     "EPOCHS": EPOCHS,
     "BATCH_SIZE": BATCH_SIZE,

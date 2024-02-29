@@ -40,6 +40,7 @@ class XReportoV1(nn.Module):
         if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
+        
         if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             config = Config()
             image_config = Config()
@@ -56,8 +57,8 @@ class XReportoV1(nn.Module):
             if CONTINUE_TRAIN:
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
                         
-                        logging.info("Loading object_detector [Trained RPN]....")
-                        load_model(model=self.object_detector,name='object_detector_rpn_best')
+                    logging.info("Loading object_detector [Trained RPN]....")
+                    load_model(model=self.object_detector,name='object_detector_rpn_best')
                 elif MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_ROI:
                     logging.info("Loading object_detector [Trained ROI]....")
                     load_model(model=self.object_detector,name='object_detector_roi_best')
@@ -75,10 +76,13 @@ class XReportoV1(nn.Module):
                     logging.info("Loading abnormal_classifier .....")
                     load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
 
-                    # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
-                    for param in self.object_detector.object_detector.parameters():
-                        param.requires_grad = False
-                        
+                    if FREEZE_OBJECT_DETECTOR:
+                        # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
+                        for param in self.object_detector.object_detector.parameters():
+                            param.requires_grad = False
+                        logging.info("All object_detector paramets are Frozen")         
+                    else: logging.info("All object_detector paramets are Trainable")      
+    
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Load Language Model to continue training
                     logging.info("Loading language_model .....")
@@ -107,9 +111,13 @@ class XReportoV1(nn.Module):
                     # Load the object_detector to continue training
                     logging.info("Loading object_detector .....")
                     load_model(model=self.object_detector,name='object_detector_best')
-                    # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
-                    for param in self.object_detector.object_detector.parameters():
-                        param.requires_grad = False
+
+                    if FREEZE_OBJECT_DETECTOR:
+                        # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
+                        for param in self.object_detector.object_detector.parameters():
+                            param.requires_grad = False
+                        logging.info("All object_detector paramets are Frozen")         
+                    else: logging.info("All object_detector paramets are Trainable")         
 
 
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :

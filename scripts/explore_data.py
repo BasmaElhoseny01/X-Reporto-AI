@@ -205,7 +205,7 @@ def main():
 
     # Creating tensorboard folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    tensor_board_folder_path=f"./tensor_boards/data_{current_datetime}"
+    tensor_board_folder_path=f"./tensor_boards/data/data_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
