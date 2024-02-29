@@ -131,18 +131,13 @@ class XReportoTrainer():
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):
                 if batch_idx < start_batch:
                     continue  # Skip batches until reaching the desired starting batch number
-
                 # Test Recovery
                 # if epoch==3 and batch_idx==1:
                     # print("Start Next time from")
                     # print(object_detector_targets[1])
                     # print(batch_idx)
                     # raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
-                # TODO: Test
                 # Move inputs to Device
-                # print(object_detector_targets[0])
-                # print(batch_idx)
-
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
 
@@ -164,9 +159,10 @@ class XReportoTrainer():
                 else:
                     Total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
                     epoch_loss += Total_loss
-            
+        
                 # backward pass
                 Total_loss.backward()
+                
                 # Acculmulation Learning
                 if (batch_idx+1) %ACCUMULATION_STEPS==0:
                     # update the parameters
@@ -182,45 +178,40 @@ class XReportoTrainer():
                 # [Tensor Board]: Learning Rate
                 self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
-
-
                 if (batch_idx+1)%100==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                    
                     # [Tensor Board]: Epoch Average loss
                     self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 100 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
-            
 
-
-                # Checkpoint
+                # Checkpoint every N steps inside epoches
                 total_steps+=1            
-                if(total_steps%CHECKPOINT_EVERY_N ==0):
+                if(total_steps%CHECKPOINT_EVERY_N == 0):
                     save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
                                     scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
                                     best_loss=self.best_loss,epoch_loss=epoch_loss)
                     total_steps=0
-               
-            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Total epoch Loss: {epoch_loss:.4f} Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            
+            # [Logging]: Average Loss for epoch where each image is seen once
+            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
             # [Tensor Board]: Epoch Average loss
             self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
             
-            # update the learning rate
-            # self.lr_scheduler.step(epoch_loss/(len(self.data_loader_train)))
             # Free GPU memory
             del Total_loss
             torch.cuda.empty_cache()
             gc.collect()
-            # validate the model
-            self.model.eval()
-            # try:
-            validation_loss= self.validate_during_training()  #sechdule the learning rate
             
-            # except Exception:
-            #     validation_loss=0
-            #     print("Error here can't validate on data")
-            self.model.train()                        
-
+            # validate the model no touch :)
+            self.model.eval()
+            validation_average_loss= self.validate_during_training(epoch=epoch) 
+            logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
+            self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
+            self.model.train()             
+                       
+            sys.exit()
+            
             # saving model per epoch
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 if TRAIN_RPN:
@@ -261,8 +252,9 @@ class XReportoTrainer():
                 logging.info(f"Best Model Updated: {name}_best at epoch {epoch+1} with Average validation loss: {self.best_loss:.4f}")
 
     def  object_detector_and_classifier_forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,validate_during_training:bool=False):
+    
         # Forward Pass
-        object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
+        object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,_= self.model(images=images,input_ids=None,attention_mask=None,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=validate_during_training)
         
         Total_loss=None
         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
@@ -276,18 +268,25 @@ class XReportoTrainer():
           
             # [Tensor Board]: Avg Batch Loss Object Detector 
             self.tensor_board_writer.add_scalar('Avg Batch Losses/Object Detector',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Avg Batch Loss Selection Classifier
+            self.tensor_board_writer.add_scalar('Avg Batch Losses/Selection Classifier',selection_classifier_losses,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Avg Batch Loss Abnormal Classifier
+            self.tensor_board_writer.add_scalar('Avg Batch Losses/Abnormal Classifier',abnormal_binary_classifier_losses,epoch * len(self.data_loader_train) + batch_idx)
             # [Tensor Board]: Avg Batch Loss Total 
             self.tensor_board_writer.add_scalar('Avg Batch Losses/Total',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
        
         if validate_during_training:
             logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
-            
             # [Tensor Board]: Avg Batch Loss Object Detector 
             self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]/Object Detector',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Avg Batch Loss Selection Classifier
+            self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]/Selection Classifier',selection_classifier_losses,epoch * len(self.data_loader_train) + batch_idx)
+            # [Tensor Board]: Avg Batch Loss Abnormal Classifier
+            self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]/Abnormal Classifier',abnormal_binary_classifier_losses,epoch * len(self.data_loader_train) + batch_idx)
             # [Tensor Board]: Avg Batch Loss Total 
             self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]/Total',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
         
-        del LM_losses
+
         del object_detector_losses
         del selection_classifier_losses
         del abnormal_binary_classifier_losses
@@ -325,7 +324,7 @@ class XReportoTrainer():
             gc.collect()
         return Total_loss
 
-    def validate_during_training(self):
+    def validate_during_training(self,epoch):
         '''
         Validate the model during training
         '''
@@ -350,13 +349,13 @@ class XReportoTrainer():
                     loopLength= input_ids.shape[1]
                     validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
                 else:
-                    total_loss=self.object_detector_and_classifier_forward_pass(epoch=-1,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
+                    total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
                     validation_total_loss+=total_loss
             # arverge validation_total_loss
             validation_total_loss/=(len(self.data_loader_val))
+            
             # update the learning rate according to the validation loss if decrease
             self.lr_scheduler.step(validation_total_loss)
-            logging.info(f'Validation Total Loss: {validation_total_loss:.4f}')
             return validation_total_loss
             
             
