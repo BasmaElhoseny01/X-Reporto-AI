@@ -49,9 +49,15 @@ class XReportoEvaluation():
             validation_total_loss,obj_detector_scores,_,_,_ = self.validate_during_evalute_object_detection_and_classifier()
             # print(f"Validation Total Loss: {validation_total_loss:.4f}")
             # print(f"Average IOU: {obj_detector_scores['avg_iou']:.4f}")
+            obj_detector_scores["sum_iou_per_region"]
+
+            for region_indx, score in enumerate(obj_detector_scores):
+                # [Tensor Board]: Metric IOU
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1)
+
 
             # [Tensor Board]: Metric IOU
-            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Average IOU',obj_detector_scores['avg_iou'],global_step=0)
+            # self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Average IOU',obj_detector_scores['avg_iou'],global_step=0)
             # [Tensor Board]: Metric Num_detected_regions_per_image
             self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
 
@@ -219,7 +225,7 @@ class XReportoEvaluation():
             sum_region_detected = obj_detector_scores["sum_region_detected"]
             obj_detector_scores["avg_num_detected_regions_per_image"] = torch.sum(sum_region_detected / len(self.data_loader_val)).item()
             obj_detector_scores["avg_detections_per_region"] = (sum_region_detected / len(self.data_loader_val)).tolist()
-
+            # obj_detector_scores["sum_iou_per_region"]
             return validation_total_loss,obj_detector_scores,None,None,None
         
     def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,batch_idx:int,loopLength:int,LM_Batch_Size:int):
