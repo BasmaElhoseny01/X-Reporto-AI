@@ -214,20 +214,20 @@ class XReportoTrainer():
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 if TRAIN_RPN:
                     # Saving object_detector marked as rpn
-                    self.save_model(model=self.model.object_detector,name="object_detector_rpn",epoch=epoch,validation_loss=validation_loss)
+                    self.save_model(model=self.model.object_detector,name="object_detector_rpn",epoch=epoch,validation_loss=validation_average_loss)
                 elif TRAIN_ROI:
                     # Saving object_detector marked as roi
-                    self.save_model(model=self.model.object_detector,name="object_detector_roi",epoch=epoch,validation_loss=validation_loss)
+                    self.save_model(model=self.model.object_detector,name="object_detector_roi",epoch=epoch,validation_loss=validation_average_loss)
                 else:
-                     self.save_model(model=self.model.object_detector,name="object_detector",epoch=epoch,validation_loss=validation_loss)
+                     self.save_model(model=self.model.object_detector,name="object_detector",epoch=epoch,validation_loss=validation_average_loss)
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
                 # Save Region Selection Classifier
-                self.save_model(model=self.model.binary_classifier_selection_region,name="region_classifier",epoch=epoch,validation_loss=validation_loss)
+                self.save_model(model=self.model.binary_classifier_selection_region,name="region_classifier",epoch=epoch,validation_loss=validation_average_loss)
                 # Save Abnormal Classifier
-                self.save_model(model=self.model.binary_classifier_region_abnormal,name="abnormal_classifier",epoch=epoch,validation_loss=validation_loss)
+                self.save_model(model=self.model.binary_classifier_region_abnormal,name="abnormal_classifier",epoch=epoch,validation_loss=validation_average_loss)
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                 #Save language model
-                self.save_model(model=self.model.language_model,name='LM',epoch=epoch,validation_loss=validation_loss)       
+                self.save_model(model=self.model.language_model,name='LM',epoch=epoch,validation_loss=validation_average_loss)       
             
         # save the best model            
         logging.info("Training Done")
@@ -477,7 +477,7 @@ def main():
         trainer.train()
 
         # TODO Remove
-        sys.exit()
+        #sys.exit()
             
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
