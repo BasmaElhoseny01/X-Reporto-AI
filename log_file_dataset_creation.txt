@@ -20968,3 +20968,10 @@ test:
 	num_faulty_bboxes: 9
 	num_images_without_29_regions: 3
 
+valid:
+	num_images_ignored_or_avoided: 0
+	num_missing_images: 0
+	num_missing_reports: 0
+	num_faulty_bboxes: 14
+	num_images_without_29_regions: 6
+

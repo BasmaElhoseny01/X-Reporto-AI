@@ -244,7 +244,7 @@ class XReportoTrainer():
         '''
         Check if the current model is the best model
         '''
-        if(validation_loss<self.best_loss) :
+        if(validation_loss<=self.best_loss) :
                 self.best_loss=validation_loss
                 save_model(model=model,name=name+"_best")
                 logging.info(f"Best Model Updated: {name}_best at epoch {epoch+1} with Average validation loss: {self.best_loss:.4f}")

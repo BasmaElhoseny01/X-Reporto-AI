@@ -31,7 +31,7 @@ NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 100
 
 
 class DataPreprocessing:
-    def __init__(self,train_only = False,valid_only = False,test_only = False,fix_bboxes = True):
+    def __init__(self,train_only = False,valid_only = False,test_only = False,valid_test_only = False,fix_bboxes = True):
         self.path_chest_imagenome = path_chest_imagenome
         self.path_mimic_cxr = path_mimic_cxr
         self.path_mimic_cxr_jpg = path_mimic_cxr_jpg
@@ -45,6 +45,8 @@ class DataPreprocessing:
                 self.csv_files_dict = self.get_val_files()
             elif test_only:
                 self.csv_files_dict = self.get_test_files()
+            elif valid_test_only:
+                self.csv_files_dict = self.get_val_test_csv_files()
             else:
                 self.csv_files_dict = self.get_train_val_test_csv_files()
     def get_train_files(self):
@@ -67,6 +69,10 @@ class DataPreprocessing:
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
         return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["test"]}
+    def get_val_test_csv_files(self):
+        """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
+        path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
+        return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["valid", "test"]}
     def get_images_to_avoid(self):
         image_ids_to_avoid = set()
 
@@ -183,8 +189,8 @@ class DataPreprocessing:
             if region_name not in ANATOMICAL_REGIONS:
                 continue
             #TODO: remove
-            # phrases = self.convert_phrases_to_single_string(attribute["phrases"], sentence_tokenizer)
-            phrases = None
+            phrases = self.convert_phrases_to_single_string(attribute["phrases"], sentence_tokenizer)
+            # phrases = None
             is_abnormal = self.determine_if_abnormal(attribute["attributes"])
 
             attributes_dict[region_name] = (phrases, is_abnormal)
@@ -576,7 +582,7 @@ def get_image_dimensions(image_path):
         print("An error occurred:", e)
 
 if __name__=="__main__":
-    data=DataPreprocessing(train_only=False,valid_only=False,test_only = False,fix_bboxes=False)
+    data=DataPreprocessing(train_only=False,valid_only=True,test_only = False,valid_test_only=False,fix_bboxes=False)
     check_images = True
     data.create_new_csv_files(check_images=check_images)
     # data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
