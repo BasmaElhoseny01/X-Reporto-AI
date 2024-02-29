@@ -42,7 +42,79 @@ class XReportoEvaluation():
         logging.info("Evalution dataset loaded")
 
 
+    def compute_IOU(self,pred_box, target_box):
+        '''
+        Function to compute the Intersection over Union (IOU) of two boxes.
 
+        inputs:
+
+            pred_box: predicted box (Format [xmin, ymin, xmax, ymax])
+            target_box: target box (Format [xmin, ymin, xmax, ymax])
+        '''
+        if pred_box is None or target_box is None:
+            return 0
+
+        # compute the intersection area
+        x1 = max(pred_box[0], target_box[0])
+        y1 = max(pred_box[1], target_box[1])
+        x2 = min(pred_box[2], target_box[2])
+        y2 = min(pred_box[3], target_box[3])
+        intersection_area = max(0, x2 - x1) * max(0, y2 - y1)
+
+        # compute the union area
+        pred_box_area = (pred_box[2] - pred_box[0]) * (pred_box[3] - pred_box[1])
+        target_box_area = (target_box[2] - target_box[0]) * (target_box[3] - target_box[1])
+        union_area = pred_box_area + target_box_area - intersection_area
+
+        # compute the IOU 0 (no overlap) -> 1 totally overlap
+        iou = intersection_area / union_area
+        return iou
+
+    def compute_confusion_metric(self,pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
+        '''
+        Function to compute the precision.
+
+        inputs:
+            pred_boxes: list of predicted boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+            pred_labels: list of predicted labels (Format [N] => N times label)
+            target_boxes: list of target boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+            target_labels: list of target labels (Format [N] => N times label)
+            iou_threshold: threshold to consider a prediction to be correct
+        '''
+        # compute the number of true positive detections
+        num_true_positive = 0
+        num_false_positive = 0
+        num_false_negative = 0
+        index = 1
+        # for each predicted box
+        for pred_box, pred_label in zip(pred_boxes, pred_labels):
+            # for each target box
+            if pred_label != 0 and index in target_labels:
+                if self.compute_IOU(pred_box, target_boxes[index-1]) > iou_threshold:
+                    # increment the number of true positive detections
+                    num_true_positive += 1
+                else:
+                    num_false_positive += 1
+            elif pred_label != 0 and index not in target_labels:
+                num_false_positive += 1
+            elif pred_label == 0 and index in target_labels:
+                num_false_negative += 1
+            # increment the index
+            index += 1            
+
+        return num_true_positive, num_false_positive, num_false_negative
+
+    def compute_confusion_metric_per_batch(self,pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
+        num_true_positive = 0
+        num_false_positive = 0
+        num_false_negative = 0
+        for i in range(len(pred_boxes)):
+            true_positive, false_positive, false_negative = self.compute_confusion_metric(pred_boxes[i], pred_labels[i], target_boxes[i], target_labels[i], iou_threshold)
+            num_true_positive += true_positive
+            num_false_positive += false_positive
+            num_false_negative += false_negative
+        logging.debug(f"True Positive: {num_true_positive}, False Positive: {num_false_positive}, False Negative: {num_false_negative}")
+        return num_true_positive, num_false_positive, num_false_negative
     def evaluate(self):
         #validate the model
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:
@@ -181,6 +253,9 @@ class XReportoEvaluation():
         obj_detector_scores["sum_union_area_per_region"] = torch.zeros(29, device=DEVICE)
         obj_detector_scores["sum_region_detected"] = torch.zeros(29, device=DEVICE)
         obj_detector_scores["sum_iou_per_region"] = torch.zeros(29, device=DEVICE)
+        obj_detector_scores["true_positive"] = 0
+        obj_detector_scores["false_positive"] = 0
+        obj_detector_scores["false_negative"] = 0
         self.model.eval()
         with torch.no_grad():
             # validate the model
@@ -214,7 +289,13 @@ class XReportoEvaluation():
                 logging.info("Evaluating the model")
 
                 self.update_object_detector_metrics(obj_detector_scores, object_detector_boxes, object_detector_targets, object_detector_detected_classes)
-            
+                # compute the confusion metric
+                true_positive, false_positive, false_negative = self.compute_confusion_metric_per_batch(object_detector_boxes, object_detector_detected_classes, object_detector_targets[0]['boxes'], object_detector_targets[0]['labels'])
+                obj_detector_scores["true_positive"] += true_positive
+                obj_detector_scores["false_positive"] += false_positive
+                obj_detector_scores["false_negative"] += false_negative
+
+                logging.debug(f"True Positive: {obj_detector_scores["true_positive"]}, False Positive: {obj_detector_scores["false_positive"]}, False Negative: {obj_detector_scores["false_negative"]}")
             # arverge validation_total_loss
             validation_total_loss/=(len(self.data_loader_val))
 
