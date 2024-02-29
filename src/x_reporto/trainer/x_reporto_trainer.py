@@ -209,8 +209,6 @@ class XReportoTrainer():
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
             self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
             self.model.train()             
-                       
-            sys.exit()
             
             # saving model per epoch
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
