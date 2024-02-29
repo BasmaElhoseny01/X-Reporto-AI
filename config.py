@@ -60,7 +60,8 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 # Pathes to the external files
 # training_csv_path = 'datasets/train.csv'
 training_csv_path = 'datasets/train-100.csv'
-validation_csv_path = 'datasets/valid.csv'
+validation_csv_path = 'datasets/valid-100.csv'
+#validation_csv_path = 'datasets/valid.csv'
 evaluation_csv_path = 'datasets/test-1000.csv'
 # TODO Fix
 # evaluation_csv_path = 'datasets/eval.csv'
