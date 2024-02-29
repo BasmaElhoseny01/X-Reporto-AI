@@ -302,6 +302,8 @@ class XReportoEvaluation():
             #     # Region Selection Classifier
             #     region_selection_classifier_targets=region_selection_classifier['targets']
             #     region_selection_classifier_prediction=region_selection_classifier['predicted']
+                    
+            # Fix
             #     region_selection_plot=plot_image_NEW(image,None,
             #                                          object_detector_gold[i]['labels'].cpu().tolist() ,object_detector_gold[i]['boxes'].cpu().tolist(),
             #                                          region_selection_classifier_targets.cpu().tolist(),
@@ -317,12 +319,14 @@ class XReportoEvaluation():
             #     # Upnormal Selection Classifier
             #     abnormal_region_classifier_targets=abnormal_region_classifier['targets']
             #     abnormal_region_classifier_prediction=abnormal_region_classifier['predicted']
+                
 
-            #     abnormal_region_plot=plot_image_NEW(image,None,
-            #                                          object_detector_gold[i]['labels'].cpu().tolist() ,object_detector_gold[i]['boxes'].cpu().tolist(),
-            #                                          abnormal_region_classifier_targets.cpu().tolist(),
-            #                                          object_detector_detected_classes[i].tolist(),object_detector_boxes[i].tolist(),
-            #                                          abnormal_region_classifier_prediction.cpu().tolist())
+            # abnormal_region_plot=plot_image(image,None,
+            #                                 abnormal_region_classifier_targets.cpu().tolist(),
+            #                                 object_detector_gold[i]['boxes'].cpu().tolist(),
+            #                                 abnormal_region_classifier_prediction.cpu().tolist()),
+            #                                 object_detector_detected_classes[i].tolist(),object_detector_boxes[i].tolist(),
+            #                                 selected_region=True)
 
 
             #     # TODO Fix LIke PLot above

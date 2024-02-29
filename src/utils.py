@@ -150,7 +150,7 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
             return listboxes,unique_labels.tolist()
         return listboxes,[]
 
-def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]],selected_region:bool=False):
+def plot_image(img: np.ndarray,img_idx:int, labels: List[int|bool], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]],selected_region:bool=False):
     """
     Function that draws the BBoxes on the image.
 
