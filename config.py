@@ -23,7 +23,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=1
+OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=2
 
@@ -35,7 +35,7 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=True
 
 RUN = "3"
-EPOCHS=3
+EPOCHS=1
 BATCH_SIZE=16
 # BATCH_SIZE=1
 #   TODO: change to 64
@@ -66,7 +66,7 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 training_csv_path = 'datasets/train-100.csv'
 validation_csv_path = 'datasets/valid-100.csv'
 #validation_csv_path = 'datasets/valid.csv'
-evaluation_csv_path = 'datasets/test-1000.csv'
+evaluation_csv_path = 'datasets/eval-2.csv'
 # TODO Fix
 # evaluation_csv_path = 'datasets/eval.csv'
 test_csv_path:str = 'datasets/test.csv'
