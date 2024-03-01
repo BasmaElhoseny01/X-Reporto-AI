@@ -55,8 +55,8 @@ class BinaryClassifierRegionAbnormalV1(nn.Module):
             - predicted_abnormal_regions(Tensor): Boolean Tensor of shape [batch_size x 29] 
               Indicating predicted abnormal regions.
         '''
-        # logits of shape [batch_size x 29]
-        logits = self.binary_classifier(region_features).squeeze(dim=-1)
+        # logits of shape [batch_size x 29 x 1024]
+        logits = self.binary_classifier(region_features).squeeze(dim=-1) # (batch_size x 29 x 1024) ->
 
         loss=None
         if region_is_abnormal is not None:

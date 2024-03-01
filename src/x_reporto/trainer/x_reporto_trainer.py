@@ -227,6 +227,10 @@ class XReportoTrainer():
                 self.save_model(model=self.model.binary_classifier_selection_region,name="region_classifier",epoch=epoch,validation_loss=validation_average_loss)
                 # Save Abnormal Classifier
                 self.save_model(model=self.model.binary_classifier_region_abnormal,name="abnormal_classifier",epoch=epoch,validation_loss=validation_average_loss)
+                # if not freeze object detector
+                if not FREEZE_OBJECT_DETECTOR:
+                    # Save object detector
+                    self.save_model(model=self.model.object_detector,name="object_detector",epoch=epoch,validation_loss=validation_average_loss)
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                 #Save language model
                 self.save_model(model=self.model.language_model,name='LM',epoch=epoch,validation_loss=validation_average_loss)       
@@ -258,10 +262,10 @@ class XReportoTrainer():
         
         Total_loss=None
         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-        Total_loss=object_detector_losses_summation.clone()
+        Total_loss=object_detector_losses_summation.clone() * OBJECT_DETECTOR_WEIGHT
         if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-            Total_loss+=selection_classifier_losses
-            Total_loss+=abnormal_binary_classifier_losses
+            Total_loss+=selection_classifier_losses * REGION_SELECTION_CLASSIFIER_WEIGHT
+            Total_loss+=abnormal_binary_classifier_losses * ABNORMAL_CLASSIFIER_WEIGHT
       
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
