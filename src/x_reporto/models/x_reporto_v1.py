@@ -354,7 +354,8 @@ class XReportoV1(nn.Module):
                     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
                     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
                 del images
-                del object_detector_targets
+                #TODO: should be removed ?
+                # del object_detector_targets
                 torch.cuda.empty_cache()
             
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:

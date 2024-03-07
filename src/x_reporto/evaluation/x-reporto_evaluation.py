@@ -85,31 +85,70 @@ class XReportoEvaluation():
         num_true_positive = 0
         num_false_positive = 0
         num_false_negative = 0
-        index = 1
         # for each predicted box
         for pred_box, pred_label in zip(pred_boxes, pred_labels):
             # for each target box
-            if pred_label != 0 and index in target_labels:
-                if self.compute_IOU(pred_box, target_boxes[index-1]) > iou_threshold:
+            if pred_label != 0 and pred_label in target_labels:
+                # get the index of the target box
+                index = target_labels.index(pred_label)
+                if self.compute_IOU(pred_box, target_boxes[index]) > iou_threshold:
                     # increment the number of true positive detections
                     num_true_positive += 1
                 else:
                     num_false_positive += 1
-            elif pred_label != 0 and index not in target_labels:
+            elif pred_label != 0 and pred_label not in target_labels:
                 num_false_positive += 1
-            elif pred_label == 0 and index in target_labels:
+            elif pred_label == 0 and pred_label in target_labels:
                 num_false_negative += 1
-            # increment the index
-            index += 1            
-
         return num_true_positive, num_false_positive, num_false_negative
 
-    def compute_confusion_metric_per_batch(self,pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
+    # def compute_confusion_metric(self,pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
+    #     '''
+    #     Function to compute the precision.
+
+    #     inputs:
+    #         pred_boxes: list of predicted boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+    #         pred_labels: list of predicted labels (Format [N] => N times label)
+    #         target_boxes: list of target boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
+    #         target_labels: list of target labels (Format [N] => N times label)
+    #         iou_threshold: threshold to consider a prediction to be correct
+    #     '''
+    #     # compute the number of true positive detections
+    #     num_true_positive = 0
+    #     num_false_positive = 0
+    #     num_false_negative = 0
+    #     index = 1
+    #     # for each predicted box
+    #     for pred_box, pred_label in zip(pred_boxes, pred_labels):
+    #         # for each target box
+    #         if pred_label != 0 and index in target_labels:
+    #             if self.compute_IOU(pred_box, target_boxes[index-1]) > iou_threshold:
+    #                 # increment the number of true positive detections
+    #                 num_true_positive += 1
+    #             else:
+    #                 num_false_positive += 1
+    #         elif pred_label != 0 and index not in target_labels:
+    #             num_false_positive += 1
+    #         elif pred_label == 0 and index in target_labels:
+    #             num_false_negative += 1
+    #         # increment the index
+    #         index += 1            
+
+    #     return num_true_positive, num_false_positive, num_false_negative
+
+    def compute_confusion_metric_per_batch(self,pred_boxes,pred_labels, targets, iou_threshold=0.5):
         num_true_positive = 0
         num_false_positive = 0
         num_false_negative = 0
+        # print type of targets
+        print("type of targets is: ",type(targets))
+        # logging the type of targets
+        logging.debug(f"type of targets is: {type(targets)}")
+
         for i in range(len(pred_boxes)):
-            true_positive, false_positive, false_negative = self.compute_confusion_metric(pred_boxes[i], pred_labels[i], target_boxes[i], target_labels[i], iou_threshold)
+            target_labels = targets[i]['labels']
+            target_boxes = targets[i]['boxes']
+            true_positive, false_positive, false_negative = self.compute_confusion_metric(pred_boxes[i], pred_labels[i], target_boxes, target_labels, iou_threshold)
             num_true_positive += true_positive
             num_false_positive += false_positive
             num_false_negative += false_negative
@@ -125,7 +164,6 @@ class XReportoEvaluation():
             print("obj_detector_scores avg_iou",obj_detector_scores["avg_iou"])
             print("region_selection_scores",region_selection_scores)
             print("region_abnormal_scores",region_abnormal_scores)
-            sys.exit()
             correct_iou = obj_detector_scores["sum_iou_per_region"] / obj_detector_scores["sum_region_detected"]
             
             for region_indx, score in enumerate(correct_iou):
@@ -419,7 +457,9 @@ class XReportoEvaluation():
                 # update scores for object detector metrics
                 self.update_object_detector_metrics(obj_detector_scores, object_detector_boxes, object_detector_targets, object_detector_detected_classes)
                     # compute the confusion metric
-                true_positive, false_positive, false_negative = self.compute_confusion_metric_per_batch(object_detector_boxes, object_detector_detected_classes, object_detector_targets[0]['boxes'], object_detector_targets[0]['labels'])
+                # log batch index
+                logging.debug(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
+                true_positive, false_positive, false_negative = self.compute_confusion_metric_per_batch(object_detector_boxes, object_detector_detected_classes, object_detector_targets)
                 obj_detector_scores["true_positive"] += true_positive
                 obj_detector_scores["false_positive"] += false_positive
                 obj_detector_scores["false_negative"] += false_negative
@@ -488,25 +528,25 @@ class XReportoEvaluation():
 
     def  object_detector_and_classifier_forward_pass(self,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
 
-            # Forward Pass
-            object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,_,_,_= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
-            
-            # Backward pass
-            Total_loss=None
-            object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-            Total_loss=object_detector_losses_summation.clone()
-            if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                Total_loss+=selection_classifier_losses
-                Total_loss+=abnormal_binary_classifier_losses
+        # Forward Pass
+        object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,_,_,_= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
+        
+        # Backward pass
+        Total_loss=None
+        object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
+        Total_loss=object_detector_losses_summation.clone()
+        if MODEL_STAGE==ModelStage.CLASSIFIER.value:
+            Total_loss+=selection_classifier_losses
+            Total_loss+=abnormal_binary_classifier_losses
 
-            logging.debug(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
-            # Free GPU memory
-            del object_detector_losses
-            del selection_classifier_losses
-            del abnormal_binary_classifier_losses
-            torch.cuda.empty_cache()
-            gc.collect()
-            return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
+        logging.debug(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
+        # Free GPU memory
+        del object_detector_losses
+        del selection_classifier_losses
+        del abnormal_binary_classifier_losses
+        torch.cuda.empty_cache()
+        gc.collect()
+        return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
 
 
 
