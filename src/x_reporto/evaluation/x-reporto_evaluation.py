@@ -166,14 +166,25 @@ class XReportoEvaluation():
             print("region_abnormal_scores",region_abnormal_scores)
             correct_iou = obj_detector_scores["sum_iou_per_region"] / obj_detector_scores["sum_region_detected"]
             
+            
             for region_indx, score in enumerate(correct_iou):
                 # [Tensor Board]: Metric IOU
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1)
+            
 
             # [Tensor Board]: Metric IOU
             # self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Average IOU',obj_detector_scores['avg_iou'],global_step=0)
             # [Tensor Board]: Metric Num_detected_regions_per_image
             self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
+
+            # add true positive, false positive, and false negative to tensor board
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/True Positive',obj_detector_scores['true_positive'],global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/False Positive',obj_detector_scores['false_positive'],global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/False Negative',obj_detector_scores['false_negative'],global_step=0)
+            # add precision, recall, and f1 score to tensor board
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Precision',obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive']),global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Recall',obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative']),global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/F1-Score',2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative']))),global_step=0)
             
             if MODEL_STAGE==ModelStage.CLASSIFIER.value:
                 # [Tensor Board]: Metric Region Selection
@@ -185,6 +196,7 @@ class XReportoEvaluation():
                     self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region_Selection_Classifier/F1-Score',region_selection_scores[subset]['f1'],global_step=i)
                     self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region_Selection_Classifier/Precision',region_selection_scores[subset]['precision'],global_step=i)
                     self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region_Selection_Classifier/Recall',region_selection_scores[subset]['recall'],global_step=i)
+
                                 
 
     def update_region_abnormal_metrics(self,region_abnormal_scores, predicted_abnormal_regions, region_is_abnormal, class_detected):
