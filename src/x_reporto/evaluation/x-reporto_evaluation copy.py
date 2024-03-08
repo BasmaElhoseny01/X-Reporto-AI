@@ -517,7 +517,7 @@ class XReportoEvaluation():
     
 
 
-    ########################################################### General FUunctions ##########################################
+    ########################################################### General Fuunctions ##########################################
     def initalize_scorces(self):
         '''
         initalize_scorces
@@ -579,10 +579,10 @@ class XReportoEvaluation():
                     # [Tensor Board]: Evaluation Image With Boxes
                     self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
 
-            # if MODEL_STAGE==ModelStage.CLASSIFIER.value :
-            #     # Region Selection Classifier
-            #     region_selection_classifier_targets=region_selection_classifier['targets']
-            #     region_selection_classifier_prediction=region_selection_classifier['predicted']
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value :
+                # Region Selection Classifier
+                region_selection_classifier_targets=region_selection_classifier['targets']
+                region_selection_classifier_prediction=region_selection_classifier['predicted']
                     
             # Fix
             #     region_selection_plot=plot_image_NEW(image,None,
@@ -597,9 +597,9 @@ class XReportoEvaluation():
             #     # [Tensor Board]: Evaluation Image With Boxes
             #     self.tensor_board_writer.add_image(f'/Region Selection Classifier/'+str(batch_idx)+'_'+str(img_id), region_selection_tensor, global_step=0)
 
-            #     # Upnormal Selection Classifier
-            #     abnormal_region_classifier_targets=abnormal_region_classifier['targets']
-            #     abnormal_region_classifier_prediction=abnormal_region_classifier['predicted']
+                # Upnormal Selection Classifier
+                abnormal_region_classifier_targets=abnormal_region_classifier['targets']
+                abnormal_region_classifier_prediction=abnormal_region_classifier['predicted']
                 
 
             # abnormal_region_plot=plot_image(image,None,
