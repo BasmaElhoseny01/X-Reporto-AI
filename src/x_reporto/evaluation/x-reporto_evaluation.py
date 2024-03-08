@@ -587,11 +587,14 @@ class XReportoEvaluation():
                 # logging.info(object_detector_boxes[i].tolist())
 
                 region_selection_plot=plot_image(image,None,
-                                            labels=region_selection_classifier_targets[i].cpu().tolist(),
+                                            labels=object_detector_gold[i]['labels'].cpu().tolist(),
                                             boxes=object_detector_gold[i]['boxes'].cpu().tolist(),
                                             predicted_labels=region_selection_classifier_prediction[i].cpu().tolist(),
                                             predicted_boxes=object_detector_boxes[i].tolist(),
-                                            selected_region=True)
+                                            selected_region=True,
+                                            target_regions=region_selection_classifier_targets[i].cpu().tolist()
+                                            )
+                
 
                 for j,region in enumerate(region_selection_plot):
                     # convert region to tensor
