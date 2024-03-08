@@ -43,10 +43,10 @@ EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=0.0004
-SCHEDULAR_STEP_SIZE=1 #
-SCHEDULAR_GAMMA=0.8
-THRESHOLD_LR_SCHEDULER=1e-4
-COOLDOWN_LR_SCHEDULER= 0
+SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
+SCHEDULAR_GAMMA=0.8 # value multiply lr with
+THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only focus on significant changes
+COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
 # Weights of each model
 

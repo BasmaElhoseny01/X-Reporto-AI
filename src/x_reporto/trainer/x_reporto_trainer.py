@@ -24,6 +24,15 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker,empty_folder
 from config import *
 
+Last_Loss=0
+def Threshold_Schecdular(Current_Loss:float):
+
+    if Last_Loss - Current_Loss < THRESHOLD_LR_SCHEDULER:
+        LEARNING_RATE = LEARNING_RATE * SCHEDULAR_GAMMA
+
+    Last_Loss = Current_Loss
+
+
 
 class XReportoTrainer():
     """
@@ -77,8 +86,8 @@ class XReportoTrainer():
         self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
 
         # create learning rate scheduler
-        # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
+        self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
+        # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
         
         
         # create dataset
@@ -359,8 +368,8 @@ class XReportoTrainer():
             validation_total_loss/=(len(self.data_loader_val))
             
             # update the learning rate according to the validation loss if decrease
-            # self.lr_scheduler.step(validation_total_loss)
-            self.lr_scheduler.step()
+            self.lr_scheduler.step(validation_total_loss)
+            # self.lr_scheduler.step()
 
             return validation_total_loss
             
