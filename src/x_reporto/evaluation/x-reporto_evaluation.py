@@ -54,9 +54,7 @@ class XReportoEvaluation():
             
             # [Tensor Board] Update the Board by the scalers for that Run
             self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores)
-            logging.info(region_selection_scores)
-            logging.info(region_abnormal_scores)
-
+           
     def validate_and_evalute_object_detection_and_classifier(self):
         '''
         validate_during_evalute_object_detection_and_classifier
@@ -124,7 +122,7 @@ class XReportoEvaluation():
                 }
                 # [Tensor Board] Draw the Predictions of this batch
                 #TODO: uncomment
-                # self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
+                self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
 
                 validation_total_loss+=Total_loss
                 
@@ -581,12 +579,12 @@ class XReportoEvaluation():
                 # Region Selection Classifier
                 region_selection_classifier_targets=region_selection_classifier['targets']
                 region_selection_classifier_prediction=region_selection_classifier['predicted']
-                # print(len(region_selection_classifier_targets[i].cpu().tolist()))
-                # print(region_selection_classifier_targets.shape) #16*29
-                # print(len(region_selection_classifier_prediction.cpu().tolist()))
-                # print("region_selection_classifier_prediction",region_selection_classifier_prediction.shape) #16*29 bool
-                # print(len(object_detector_boxes[i].tolist()))
-                # sys.exit()
+
+                # logging.info(region_selection_classifier_targets[i].cpu().tolist())
+                # logging.info(region_selection_classifier_prediction[i].cpu().tolist())
+
+                # logging.info(object_detector_gold[i]['boxes'].cpu().tolist())
+                # logging.info(object_detector_boxes[i].tolist())
 
                 region_selection_plot=plot_image(image,None,
                                             labels=region_selection_classifier_targets[i].cpu().tolist(),
@@ -609,17 +607,12 @@ class XReportoEvaluation():
                     if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
                         self.tensor_board_writer.add_image(f'Region Selection Classifier/'+str(batch_idx)+'_'+str(img_id), region_selection_tensor, global_step=j+1)            
           
+                # sys.exit()
     
                 # Upnormal Selection Classifier
                 abnormal_region_classifier_targets=abnormal_region_classifier['targets']
                 abnormal_region_classifier_prediction=abnormal_region_classifier['predicted']
 
-                # print(abnormal_region_classifier_targets.shape)
-                # print(object_detector_gold.shape)
-                # print(abnormal_region_classifier_prediction.shape)
-                # print(object_detector_boxes.shape)
-                # print(abnormal_region_classifier_prediction.cpu().tolist())
-                # print(len(object_detector_boxes[i].tolist()))
                 
                 abnormal_region_plot=plot_image(image,None,
                                                 labels=abnormal_region_classifier_targets[i].cpu().tolist(),
