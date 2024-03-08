@@ -216,19 +216,17 @@ class XReportoEvaluation():
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Abnormal_Classifier/All_F1-Score',region_abnormal_scores["all"]["f1"],global_step=0)
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Abnormal_Classifier/ALl_Precision',region_abnormal_scores["all"]["precision"],global_step=0)
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Abnormal_Classifier/All_Recall',region_abnormal_scores["all"]["recall"],global_step=0)
-
+              
                 # [Tensor Board]: Metric Per Region
                 for region_indx in range(29):
-                    self.tensor_board_writer.add_scalar(f'Region_({region_indx+1})_Metric/Region_Selection_F1-Score',region_selection_scores["f1"][region_indx],global_step=0)
-                    self.tensor_board_writer.add_scalar(f'Region_({region_indx+1})_Metric/Region_Selection_Precison',region_selection_scores["precision"][region_indx],global_step=0)
-                    self.tensor_board_writer.add_scalar(f'Region_({region_indx+1})_Metric/Region_Selection_Recall',region_selection_scores["recall"][region_indx],global_step=0)
+                    self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_F1-Score',region_selection_scores["f1"][region_indx],global_step=region_indx+1)
+                    self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_Precison',region_selection_scores["precision"][region_indx],global_step=region_indx+1)
+                    self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_Recall',region_selection_scores["recall"][region_indx],global_step=region_indx+1)
 
-                    self.tensor_board_writer.add_scalar(f'Region_({region_indx+1})_Metric/Abnormal_F1-Score',region_abnormal_scores["f1"][region_indx],global_step=0)
-                    self.tensor_board_writer.add_scalar(f'Region_({region_indx+1})_Metric/Abnormal_Selection_Precison',region_abnormal_scores["precision"][region_indx],global_step=0)
-                    self.tensor_board_writer.add_scalar(f'Region_({region_indx+1})_Metric/Abnormal_Selection_Recall',region_abnormal_scores["recall"][region_indx],global_step=0)
-
-                
-                                
+                    self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_F1-Score',region_abnormal_scores["f1"][region_indx],global_step=region_indx+1)
+                    self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Precison',region_abnormal_scores["precision"][region_indx],global_step=region_indx+1)
+                    self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Recall',region_abnormal_scores["recall"][region_indx],global_step=region_indx+1)
+                            
 
     def update_region_abnormal_metrics(self,region_abnormal_scores, predicted_abnormal_regions, region_is_abnormal, class_detected):
         """
