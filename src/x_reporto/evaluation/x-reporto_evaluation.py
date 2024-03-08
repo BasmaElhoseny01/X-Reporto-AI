@@ -44,8 +44,7 @@ class XReportoEvaluation():
 
     def evaluate(self):
         #validate the model
-        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:
-            
+        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:            
             validation_total_loss,obj_detector_scores,region_selection_scores,region_abnormal_scores = self.validate_and_evalute_object_detection_and_classifier()
             
             print("validation_total_loss",validation_total_loss)
@@ -77,11 +76,10 @@ class XReportoEvaluation():
         region_abnormal_scores["false_positive"]=torch.zeros(29, device=DEVICE)
         region_abnormal_scores["false_negative"]=torch.zeros(29, device=DEVICE)
 
-
         self.model.eval()
         with torch.no_grad():
             # validate the model
-            logging.info("Validating the model")
+            logging.info("Evaluating the model")
             validation_total_loss=0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,_,_) in enumerate(self.data_loader_val):
                 # Move inputs to Device
@@ -94,7 +92,7 @@ class XReportoEvaluation():
                     abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
                 
                 Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions=self.object_detector_and_classifier_forward_pass(batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
-                
+                        
                 # [Tensor Board] Draw BBoxes
                 object_detector={
                     "object_detector_targets":object_detector_targets,
@@ -112,8 +110,7 @@ class XReportoEvaluation():
                     "predicted":predicted_abnormal_regions
                 }
                 # [Tensor Board] Draw the Predictions of this batch
-                self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
-
+                # self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
 
                 validation_total_loss+=Total_loss
                 
@@ -126,7 +123,8 @@ class XReportoEvaluation():
                 obj_detector_scores["true_positive"] += true_positive
                 obj_detector_scores["false_positive"] += false_positive
                 obj_detector_scores["false_negative"] += false_negative
-                logging.debug(f"True Positive: {obj_detector_scores["true_positive"]}, False Positive: {obj_detector_scores["false_positive"]}, False Negative: {obj_detector_scores["false_negative"]}")
+                # ERROR
+                # logging.debug(f"True Positive: {obj_detector_scores["true_positive"]}, False Positive: {obj_detector_scores["false_positive"]}, False Negative: {obj_detector_scores["false_negative"]}")
 
                 # update scores for Classifiers metrics
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value:
@@ -551,11 +549,10 @@ class XReportoEvaluation():
         '''
         Add images to tensorboard
         '''
-        # print(object_detector)
-
         object_detector_gold=object_detector['object_detector_targets']
         object_detector_boxes=object_detector['object_detector_boxes'].cpu()
         object_detector_detected_classes=object_detector['object_detector_detected_classes'].cpu()
+
 
         img_id=1
         # Draw Batch Images
@@ -563,58 +560,69 @@ class XReportoEvaluation():
             image=image.cpu()
             # Image
             # Plot Object Detector
-            if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value :
-                regions=plot_image(image,None,object_detector_gold[i]['labels'].cpu().tolist() ,object_detector_gold[i]['boxes'].cpu().tolist(),object_detector_detected_classes[i].tolist(),object_detector_boxes[i].tolist())
-                for j,region in enumerate(regions):
-            
-                    # convert region to tensor
-                    region = region.astype(np.uint8)
+            # if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value :
+            regions=plot_image(image,None,object_detector_gold[i]['labels'].cpu().tolist() ,object_detector_gold[i]['boxes'].cpu().tolist(),object_detector_detected_classes[i].tolist(),object_detector_boxes[i].tolist())
+            for j,region in enumerate(regions):
+        
+                # convert region to tensor
+                region = region.astype(np.uint8)
 
-                    # convert numpy array to PyTorch tensor
-                    region_tensor = torch.from_numpy(region)
+                # convert numpy array to PyTorch tensor
+                region_tensor = torch.from_numpy(region)
 
-                    # make sure the tensor has the shape (C, H, W)
-                    region_tensor = region_tensor.permute(2, 0, 1)
+                # make sure the tensor has the shape (C, H, W)
+                region_tensor = region_tensor.permute(2, 0, 1)
 
-                    # [Tensor Board]: Evaluation Image With Boxes
-                    self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
-
+                # [Tensor Board]: Evaluation Image With Boxes
+                self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
+        
             if MODEL_STAGE==ModelStage.CLASSIFIER.value :
                 # TODO Check
                 # Region Selection Classifier
                 region_selection_classifier_targets=region_selection_classifier['targets']
                 region_selection_classifier_prediction=region_selection_classifier['predicted']
+                # print(len(region_selection_classifier_targets.cpu().tolist()))
+                # print(len(object_detector_gold[i]['boxes'].cpu().tolist()))
+                # print(len(region_selection_classifier_prediction.cpu().tolist()))
+                # print(len(object_detector_boxes[i].tolist()))
+                # sys.exit()
 
-                region_selection_plot=plot_image(image,None,
-                                            region_selection_classifier_targets.cpu().tolist(),
-                                            object_detector_gold[i]['boxes'].cpu().tolist(),
-                                            region_selection_classifier_prediction.cpu().tolist(),
-                                            object_detector_detected_classes[i].tolist(),
-                                            object_detector_boxes[i].tolist(),
-                                            selected_region=True)
+                # region_selection_plot=plot_image(image,None,
+                #                             labels=region_selection_classifier_targets.cpu().tolist(),
+                #                             boxes=object_detector_gold[i]['boxes'].cpu().tolist(),
+                #                             predicted_labels=region_selection_classifier_prediction.cpu().tolist(),
+                #                             predicted_boxes=object_detector_boxes[i].tolist(),
+                #                             selected_region=True)
+                # logging.info(f"{len(region_selection_plot)}")
+                # logging.info("End")
+                # sys.exit()
                     
-                region_selection_tensor=region_selection_plot
-                # [Tensor Board]: Evaluation Image With Boxes
-                self.tensor_board_writer.add_image(f'/Region Selection Classifier/'+str(batch_idx)+'_'+str(img_id), region_selection_tensor, global_step=0)
+                # region_selection_tensor=region_selection_plot
+                # # [Tensor Board]: Evaluation Image With Boxes
+                # self.tensor_board_writer.add_image(f'/Region Selection Classifier/'+str(batch_idx)+'_'+str(img_id), region_selection_tensor, global_step=0)
 
                 # Upnormal Selection Classifier
                 abnormal_region_classifier_targets=abnormal_region_classifier['targets']
                 abnormal_region_classifier_prediction=abnormal_region_classifier['predicted']
+
+                # print(len(abnormal_region_classifier_targets.cpu().tolist()))
+                # print(len(object_detector_gold[i]['boxes'].cpu().tolist()))
+                # print(len(abnormal_region_classifier_prediction.cpu().tolist()))
+                # print(len(object_detector_boxes[i].tolist()))
+                # # sys.exit()
                 
 
-                abnormal_region_plot=plot_image(image,None,
-                                                abnormal_region_classifier_targets.cpu().tolist(),
-                                                object_detector_gold[i]['boxes'].cpu().tolist(),
-                                                abnormal_region_classifier_prediction.cpu().tolist(),
-                                                object_detector_detected_classes[i].tolist(),
-                                                object_detector_boxes[i].tolist(),
-                                                selected_region=True)
+                # abnormal_region_plot=plot_image(image,None,
+                #                                 abnormal_region_classifier_targets.cpu().tolist(),
+                #                                 object_detector_gold[i]['boxes'].cpu().tolist(),
+                #                                 abnormal_region_classifier_prediction.cpu().tolist(),
+                #                                 object_detector_detected_classes[i].tolist(),
+                #                                 selected_region=True)
 
-
-                # TODO Fix LIke PLot above
-                abnormal_region_tensor=abnormal_region_plot
-                # [Tensor Board]: Evaluation Image With Boxes
-                self.tensor_board_writer.add_image(f'/Abnormal Classifier/'+str(batch_idx)+'_'+str(img_id), abnormal_region_tensor, global_step=0)
+                # # TODO Fix LIke PLot above
+                # abnormal_region_tensor=abnormal_region_plot
+                # # [Tensor Board]: Evaluation Image With Boxes
+                # self.tensor_board_writer.add_image(f'/Abnormal Classifier/'+str(batch_idx)+'_'+str(img_id), abnormal_region_tensor, global_step=0)
 
             # Increment Image Id
             img_id+=1
