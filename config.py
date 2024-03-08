@@ -25,7 +25,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # Training / validation / EVALUATION / Testing 
 OPERATION_MODE=3
 # Model Stage
-MODEL_STAGE=2
+MODEL_STAGE=1
 
 # Training Process Parameters
 CONTINUE_TRAIN=True# Continue training
@@ -68,7 +68,7 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 training_csv_path = 'datasets/train.csv'
 validation_csv_path = 'datasets/valid.csv'
 #validation_csv_path = 'datasets/valid.csv'
-evaluation_csv_path = 'datasets/test-1000.csv'
+evaluation_csv_path = 'datasets/valid.csv'
 # TODO Fix
 # evaluation_csv_path = 'datasets/eval.csv'
 test_csv_path:str = 'datasets/test.csv'

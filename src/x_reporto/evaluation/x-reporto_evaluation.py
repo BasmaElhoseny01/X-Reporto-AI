@@ -51,11 +51,14 @@ class XReportoEvaluation():
             print("obj_detector_scores avg_iou",obj_detector_scores["avg_iou"])
             print("region_selection_scores",region_selection_scores)
             print("region_abnormal_scores",region_abnormal_scores)
+            # logging precision and recall of the object detector
+            logging.info(f"Precision: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])}")
+            logging.info(f"Recall: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])}")
+            logging.info(f"F1-Score: {2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])))}")
             
             # [Tensor Board] Update the Board by the scalers for that Run
             self.update_tensor_board_score(obj_detector_scores,region_abnormal_scores,region_abnormal_scores)
 
-            
     def validate_and_evalute_object_detection_and_classifier(self):
         '''
         validate_during_evalute_object_detection_and_classifier
@@ -110,6 +113,7 @@ class XReportoEvaluation():
                     "predicted":predicted_abnormal_regions
                 }
                 # [Tensor Board] Draw the Predictions of this batch
+                #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
 
                 validation_total_loss+=Total_loss
@@ -124,7 +128,7 @@ class XReportoEvaluation():
                 obj_detector_scores["false_positive"] += false_positive
                 obj_detector_scores["false_negative"] += false_negative
                 # ERROR
-                # logging.debug(f"True Positive: {obj_detector_scores["true_positive"]}, False Positive: {obj_detector_scores["false_positive"]}, False Negative: {obj_detector_scores["false_negative"]}")
+                logging.debug(f"True Positive: {obj_detector_scores['true_positive']}, False Positive: {obj_detector_scores['false_positive']}, False Negative: {obj_detector_scores['false_negative']}")
 
                 # update scores for Classifiers metrics
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value:
@@ -299,20 +303,32 @@ class XReportoEvaluation():
         num_false_positive = 0
         num_false_negative = 0
         # for each predicted box
+        pred_boxes = pred_boxes.tolist()
+        pred_labels = pred_labels.tolist()
+        target_boxes = target_boxes.tolist()
+        target_labels = target_labels.tolist()
+        # print lengths of 
+        # logging.debug(f"pred_labels: {pred_labels}")
+        # logging.debug(f"target_labels: {target_labels}")
+        index = 1
         for pred_box, pred_label in zip(pred_boxes, pred_labels):
             # for each target box
-            if pred_label != 0 and pred_label in target_labels:
-                # get the index of the target box
-                index = target_labels.index(pred_label)
-                if self.compute_IOU(pred_box, target_boxes[index]) > iou_threshold:
+            if pred_label != 0 and index in target_labels:
+                # get the index of the target box in tensor target_labels
+                box_index = target_labels.index(index)
+                iou = self.compute_IOU(pred_box, target_boxes[box_index])
+                if iou> iou_threshold:
                     # increment the number of true positive detections
                     num_true_positive += 1
                 else:
+                    logging.debug(f"IOU: {iou}")
+                    logging.debug(f"Label: {index}, target_labels: {target_labels[box_index]}")
                     num_false_positive += 1
-            elif pred_label != 0 and pred_label not in target_labels:
+            elif pred_label != 0 and index not in target_labels:
                 num_false_positive += 1
-            elif pred_label == 0 and pred_label in target_labels:
+            elif pred_label == 0 and index in target_labels:
                 num_false_negative += 1
+            index += 1
         return num_true_positive, num_false_positive, num_false_negative
 
     # def compute_confusion_metric(self,pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
@@ -354,9 +370,6 @@ class XReportoEvaluation():
         num_false_positive = 0
         num_false_negative = 0
         # print type of targets
-        print("type of targets is: ",type(targets))
-        # logging the type of targets
-        logging.debug(f"type of targets is: {type(targets)}")
 
         for i in range(len(pred_boxes)):
             target_labels = targets[i]['labels']
@@ -577,18 +590,20 @@ class XReportoEvaluation():
                 self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
         
             if MODEL_STAGE==ModelStage.CLASSIFIER.value :
+                logging.info('BAsma')
                 # TODO Check
                 # Region Selection Classifier
                 region_selection_classifier_targets=region_selection_classifier['targets']
                 region_selection_classifier_prediction=region_selection_classifier['predicted']
-                # print(len(region_selection_classifier_targets.cpu().tolist()))
-                # print(len(object_detector_gold[i]['boxes'].cpu().tolist()))
+                # print(len(region_selection_classifier_targets[i].cpu().tolist()))
+                # print(region_selection_classifier_targets.shape) #16*29
                 # print(len(region_selection_classifier_prediction.cpu().tolist()))
+                # print("region_selection_classifier_prediction",region_selection_classifier_prediction.shape) #16*29 bool
                 # print(len(object_detector_boxes[i].tolist()))
                 # sys.exit()
 
                 # region_selection_plot=plot_image(image,None,
-                #                             labels=region_selection_classifier_targets.cpu().tolist(),
+                #                             labels=region_selection_classifier_targets[i].cpu().tolist(),
                 #                             boxes=object_detector_gold[i]['boxes'].cpu().tolist(),
                 #                             predicted_labels=region_selection_classifier_prediction.cpu().tolist(),
                 #                             predicted_boxes=object_detector_boxes[i].tolist(),
@@ -606,10 +621,12 @@ class XReportoEvaluation():
                 abnormal_region_classifier_prediction=abnormal_region_classifier['predicted']
 
                 # print(len(abnormal_region_classifier_targets.cpu().tolist()))
+                # print(abnormal_region_classifier_targets.cpu().tolist())
                 # print(len(object_detector_gold[i]['boxes'].cpu().tolist()))
                 # print(len(abnormal_region_classifier_prediction.cpu().tolist()))
+                # print(abnormal_region_classifier_prediction.cpu().tolist())
                 # print(len(object_detector_boxes[i].tolist()))
-                # # sys.exit()
+                # sys.exit()
                 
 
                 # abnormal_region_plot=plot_image(image,None,
