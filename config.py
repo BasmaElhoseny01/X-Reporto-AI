@@ -25,7 +25,8 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # Training / validation / EVALUATION / Testing 
 OPERATION_MODE=3
 # Model Stage
-MODEL_STAGE=1
+MODEL_STAGE=2
+
 
 # Training Process Parameters
 CONTINUE_TRAIN=True# Continue training
@@ -81,7 +82,7 @@ RECOVER=False
  
 SEED=31
 
-DRAW_TENSOR_BOARD=8
+DRAW_TENSOR_BOARD=1
 
 
 def log_config():

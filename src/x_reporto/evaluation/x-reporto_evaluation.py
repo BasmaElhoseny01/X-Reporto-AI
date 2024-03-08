@@ -46,16 +46,16 @@ class XReportoEvaluation():
         #validate the model
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:  
             validation_total_loss,obj_detector_scores,region_selection_scores,region_abnormal_scores = self.validate_and_evalute_object_detection_and_classifier()
-    
-            print("region_selection_scores",region_selection_scores)
-            print("region_abnormal_scores",region_abnormal_scores)
+            
             # logging precision and recall of the object detector
             logging.info(f"Precision: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])}")
             logging.info(f"Recall: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])}")
             logging.info(f"F1-Score: {2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])))}")
             
             # [Tensor Board] Update the Board by the scalers for that Run
-            #self.update_tensor_board_score(obj_detector_scores,region_abnormal_scores,region_abnormal_scores)
+            self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores)
+            logging.info(region_selection_scores)
+            logging.info(region_abnormal_scores)
 
     def validate_and_evalute_object_detection_and_classifier(self):
         '''
@@ -68,6 +68,11 @@ class XReportoEvaluation():
         obj_detector_scores["true_positive"] = 0
         obj_detector_scores["false_positive"] = 0
         obj_detector_scores["false_negative"] = 0
+
+        obj_detector_scores["iou_per_region"] = torch.zeros(29)
+        obj_detector_scores["exist_region"] = torch.zeros(29)
+        
+
 
         # for each region, we will keep track of the number of true positive, false positive, and false negative detections
         region_selection_scores["true_positive"]=torch.zeros(29, device=DEVICE)
@@ -83,6 +88,7 @@ class XReportoEvaluation():
         region_abnormal_scores["precision for regions"]= torch.zeros(29, device=DEVICE)
         region_abnormal_scores["recall for regions"]=torch.zeros(29, device=DEVICE)
         region_abnormal_scores["f1 for regions"]=torch.zeros(29, device=DEVICE)
+
         self.model.eval()
         with torch.no_grad():
             # validate the model
@@ -118,7 +124,7 @@ class XReportoEvaluation():
                 }
                 # [Tensor Board] Draw the Predictions of this batch
                 #TODO: uncomment
-                #self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
+                # self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
 
                 validation_total_loss+=Total_loss
                 
@@ -127,10 +133,14 @@ class XReportoEvaluation():
                 # compute the confusion metric
                 # log batch index
                 logging.debug(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
-                true_positive, false_positive, false_negative = self.compute_confusion_metric_per_batch(object_detector_boxes, object_detector_detected_classes, object_detector_targets)
+                true_positive, false_positive, false_negative,iou_per_region_batch,exist_region_batch  = self.compute_confusion_metric_per_batch(object_detector_boxes, object_detector_detected_classes, object_detector_targets)
+                
                 obj_detector_scores["true_positive"] += true_positive
                 obj_detector_scores["false_positive"] += false_positive
                 obj_detector_scores["false_negative"] += false_negative
+                obj_detector_scores["iou_per_region"] += iou_per_region_batch
+                obj_detector_scores["exist_region"] += exist_region_batch
+
                 # ERROR
                 logging.debug(f"True Positive: {obj_detector_scores['true_positive']}, False Positive: {obj_detector_scores['false_positive']}, False Negative: {obj_detector_scores['false_negative']}")
                 # update scores for Classifiers metrics
@@ -174,7 +184,7 @@ class XReportoEvaluation():
                 for region_indx in range(29):
                     region_selection_scores["precision for regions"][region_indx]= (region_selection_scores["true_positive"][region_indx])/(region_selection_scores["true_positive"][region_indx]+region_selection_scores["false_positive"][region_indx])
                     region_selection_scores["recall for regions"][region_indx]= (region_selection_scores["false_positive"][region_indx])/ (region_selection_scores["true_positive"][region_indx]+region_selection_scores["false_negative"][region_indx])
-                    region_selection_scores["f1 for regions"][region_indx]= (2*region_abnormal_scores["precision for regions"][region_indx]*region_abnormal_scores["recall for regions"][region_indx])/(region_abnormal_scores["precision for regions"][region_indx]+region_abnormal_scores["recall for regions"][region_indx])
+                    region_selection_scores["f1 for regions"][region_indx]= (2*region_selection_scores["precision for regions"][region_indx]*region_selection_scores["recall for regions"][region_indx])/(region_selection_scores["precision for regions"][region_indx]+region_selection_scores["recall for regions"][region_indx])
                 # compute the precision, recall, f1 for region_abnormal_scores per region
                 for region_indx in range(29):
                     region_abnormal_scores["precision for regions"][region_indx]= (region_abnormal_scores["true_positive"][region_indx])/(region_abnormal_scores["true_positive"][region_indx]+region_abnormal_scores["false_positive"][region_indx])
@@ -312,9 +322,8 @@ class XReportoEvaluation():
         pred_labels = pred_labels.tolist()
         target_boxes = target_boxes.tolist()
         target_labels = target_labels.tolist()
-        # print lengths of 
-        # logging.debug(f"pred_labels: {pred_labels}")
-        # logging.debug(f"target_labels: {target_labels}")
+        iou_per_region = torch.zeros(29)
+        exist_region = torch.zeros(29)
         index = 1
         for pred_box, pred_label in zip(pred_boxes, pred_labels):
             # for each target box
@@ -322,6 +331,8 @@ class XReportoEvaluation():
                 # get the index of the target box in tensor target_labels
                 box_index = target_labels.index(index)
                 iou = self.compute_IOU(pred_box, target_boxes[box_index])
+                iou_per_region[index-1] = iou
+                exist_region[index-1] = 1
                 if iou> iou_threshold:
                     # increment the number of true positive detections
                     num_true_positive += 1
@@ -333,59 +344,29 @@ class XReportoEvaluation():
                 num_false_positive += 1
             elif pred_label == 0 and index in target_labels:
                 num_false_negative += 1
+                exist_region[index-1] = 1
             index += 1
-        return num_true_positive, num_false_positive, num_false_negative
-
-    # def compute_confusion_metric(self,pred_boxes,pred_labels, target_boxes,target_labels, iou_threshold=0.5):
-    #     '''
-    #     Function to compute the precision.
-
-    #     inputs:
-    #         pred_boxes: list of predicted boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-    #         pred_labels: list of predicted labels (Format [N] => N times label)
-    #         target_boxes: list of target boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-    #         target_labels: list of target labels (Format [N] => N times label)
-    #         iou_threshold: threshold to consider a prediction to be correct
-    #     '''
-    #     # compute the number of true positive detections
-    #     num_true_positive = 0
-    #     num_false_positive = 0
-    #     num_false_negative = 0
-    #     index = 1
-    #     # for each predicted box
-    #     for pred_box, pred_label in zip(pred_boxes, pred_labels):
-    #         # for each target box
-    #         if pred_label != 0 and index in target_labels:
-    #             if self.compute_IOU(pred_box, target_boxes[index-1]) > iou_threshold:
-    #                 # increment the number of true positive detections
-    #                 num_true_positive += 1
-    #             else:
-    #                 num_false_positive += 1
-    #         elif pred_label != 0 and index not in target_labels:
-    #             num_false_positive += 1
-    #         elif pred_label == 0 and index in target_labels:
-    #             num_false_negative += 1
-    #         # increment the index
-    #         index += 1            
-
-    #     return num_true_positive, num_false_positive, num_false_negative
+        return num_true_positive, num_false_positive, num_false_negative,iou_per_region,exist_region
 
     def compute_confusion_metric_per_batch(self,pred_boxes,pred_labels, targets, iou_threshold=0.5):
         num_true_positive = 0
         num_false_positive = 0
         num_false_negative = 0
         # print type of targets
-
+        iou_per_region_batch = torch.zeros(29)
+        exist_region_batch = torch.zeros(29)
         for i in range(len(pred_boxes)):
             target_labels = targets[i]['labels']
             target_boxes = targets[i]['boxes']
-            true_positive, false_positive, false_negative = self.compute_confusion_metric(pred_boxes[i], pred_labels[i], target_boxes, target_labels, iou_threshold)
+            true_positive, false_positive, false_negative,iou_per_region,exist_region = self.compute_confusion_metric(pred_boxes[i], pred_labels[i], target_boxes, target_labels, iou_threshold)
             num_true_positive += true_positive
             num_false_positive += false_positive
             num_false_negative += false_negative
+            iou_per_region_batch += iou_per_region
+            exist_region_batch += exist_region
         logging.debug(f"True Positive: {num_true_positive}, False Positive: {num_false_positive}, False Negative: {num_false_negative}")
-        return num_true_positive, num_false_positive, num_false_negative
-                      
+        return num_true_positive, num_false_positive, num_false_negative, iou_per_region_batch, exist_region_batch
+                           
     ################################################ Abnormal Classifier Functions #################################################
     def update_region_abnormal_metrics(self,region_abnormal_scores, predicted_abnormal_regions, region_is_abnormal, class_detected):
         """
@@ -593,7 +574,7 @@ class XReportoEvaluation():
 
                 # [Tensor Board]: Evaluation Image With Boxes
                 if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
-                    self.tensor_board_writer.add_image(f'/Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
+                    self.tensor_board_writer.add_image(f'Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
         
             if MODEL_STAGE==ModelStage.CLASSIFIER.value :
                 # TODO Check
@@ -626,7 +607,7 @@ class XReportoEvaluation():
 
                     # [Tensor Board]: Evaluation Image With Boxes
                     if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
-                        self.tensor_board_writer.add_image(f'/Region Selection Classifier/'+str(batch_idx)+'_'+str(img_id), region_selection_tensor, global_step=j+1)            
+                        self.tensor_board_writer.add_image(f'Region Selection Classifier/'+str(batch_idx)+'_'+str(img_id), region_selection_tensor, global_step=j+1)            
           
     
                 # Upnormal Selection Classifier
@@ -659,21 +640,28 @@ class XReportoEvaluation():
 
                     # [Tensor Board]: Evaluation Image With Boxes
                     if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
-                        self.tensor_board_writer.add_image(f'/Abnormal Classifier/'+str(batch_idx)+'_'+str(img_id), abnormal_region_tensor, global_step=j+1)            
+                        self.tensor_board_writer.add_image(f'Abnormal Classifier/'+str(batch_idx)+'_'+str(img_id), abnormal_region_tensor, global_step=j+1)            
            
             # Increment Image Id
             img_id+=1
+
 
     def update_tensor_board_score(self,obj_detector_scores,region_selection_scores,region_abnormal_scores):
         '''
         Update Tensor Board by the Scores
         '''
         # (1) Object Detector
-        correct_iou = obj_detector_scores["sum_iou_per_region"] / obj_detector_scores["sum_region_detected"]
+        # correct_iou = obj_detector_scores["sum_iou_per_region"] / obj_detector_scores["sum_region_detected"]
 
-        for region_indx, score in enumerate(correct_iou):
+        # for region_indx, score in enumerate(correct_iou):
+        #     # [Tensor Board]: Metric IOU
+        #     self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1)
+        
+        avg_iou = obj_detector_scores["iou_per_region"] / obj_detector_scores["exist_region"]
+        logging.debug(f"avg_iou: {avg_iou}")
+        for region_indx, score in enumerate(avg_iou):
             # [Tensor Board]: Metric IOU
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1) 
         
         # [Tensor Board]: Metric Num_detected_regions_per_image
         self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
@@ -690,7 +678,6 @@ class XReportoEvaluation():
             
         # (2) CLassifiers
         if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-
             # [Tensor Board]: Metric Region Selection Classifier
             self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region_Selection_Classifier/Abnormal_F1-Score',region_selection_scores["abnormal"]["f1"],global_step=0)
             self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region_Selection_Classifier/Abnormal_Precision',region_selection_scores["abnormal"]["precision"],global_step=0)
@@ -712,13 +699,13 @@ class XReportoEvaluation():
 
             # [Tensor Board]: Metric Per Region
             for region_indx in range(29):
-                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_F1-Score',region_selection_scores["f1"][region_indx],global_step=region_indx+1)
-                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_Precison',region_selection_scores["precision"][region_indx],global_step=region_indx+1)
-                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_Recall',region_selection_scores["recall"][region_indx],global_step=region_indx+1)
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_F1-Score',region_selection_scores["f1 for regions"][region_indx],global_step=region_indx+1)
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_Precison',region_selection_scores["precision for regions"][region_indx],global_step=region_indx+1)
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Region_Selection_Recall',region_selection_scores["recall for regions"][region_indx],global_step=region_indx+1)
 
-                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_F1-Score',region_abnormal_scores["f1"][region_indx],global_step=region_indx+1)
-                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Precison',region_abnormal_scores["precision"][region_indx],global_step=region_indx+1)
-                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Recall',region_abnormal_scores["recall"][region_indx],global_step=region_indx+1)
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_F1-Score',region_abnormal_scores["f1 for regions"][region_indx],global_step=region_indx+1)
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Precison',region_abnormal_scores["precision for regions"][region_indx],global_step=region_indx+1)
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Recall',region_abnormal_scores["recall for regions"][region_indx],global_step=region_indx+1)
 
 
 def collate_fn(batch):
