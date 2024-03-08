@@ -25,7 +25,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # Training / validation / EVALUATION / Testing 
 OPERATION_MODE=3
 # Model Stage
-MODEL_STAGE=2
+MODEL_STAGE=1
 
 # Training Process Parameters
 CONTINUE_TRAIN=True# Continue training
