@@ -30,7 +30,6 @@ class HeatMap(nn.Module):
         # Remove the last two layers
         self.feature_Layers=nn.Sequential(*list(self.feature_Layers.children())[:-2])
 
-
         # Transition Layer
         # in_channels=2048 --> # channels from teh resnet
         self.transition_Layer = nn.Conv2d(in_channels=2048, 
@@ -41,19 +40,12 @@ class HeatMap(nn.Module):
 
         self.GAP=GlobalAveragePooling()
 
-        # self.fc=nn.Linear(in_features=2048,out_features=13)  # SoftMax will be applied in training loop
-        self.fc=nn.Linear(in_features=1024,out_features=13)  # SoftMax will be applied in training loop
-        # self.fc=nn.Sequential(
-        #     nn.Linear(in_features=2048,out_features=512),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.5),
-        #     nn.Linear(in_features=512,out_features=13),
-        # )
+        self.fc=nn.Linear(in_features=1024,out_features=13)
+
     def forward(self, x):
         feature_map=self.feature_Layers(x) #[4, 2048, 16, 16]
         feature_map=self.transition_Layer(feature_map) #[4, 1024, 16, 16]
         y=self.GAP(feature_map)
-        # y=self.fc(y)
 
         # Apply Sigmoid
         y=F.sigmoid(self.fc(y)) #sigmoid as we use BCELoss
