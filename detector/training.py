@@ -144,7 +144,7 @@ class Object_detector_trainer:
         self.model.train()
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             # add new dimension to images after batch size
-            images = images.unsqueeze(1)
+            # images = images.unsqueeze(1)
             images = list(image.to(self.device) for image in images)
             # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
             targetdata=[]

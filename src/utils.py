@@ -1,14 +1,15 @@
 import torch
 from torch import Tensor
-from typing import List, Union
+from typing import Dict, List, Union
 
 import numpy as np
+import random
+import os
+
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-
 from config import *
-
 
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """
@@ -149,7 +150,7 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
             return listboxes,unique_labels.tolist()
         return listboxes,[]
 
-def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]]):
+def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]],selected_region:bool=False,target_regions:List[bool]=[]):
     """
     Function that draws the BBoxes on the image.
 
@@ -175,11 +176,32 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
     fig, ax = plt.subplots(1, figsize=(16, 8))
     # Display the image
     ax.imshow(img[0])
-    region_colors = ["b", "g", "r", "c", "m", "y"]
+    region_colors = [
+        "blue", "green", "red", "cyan", "magenta", "yellow", 
+        "orange", "purple", "lime", "pink", "teal", "lavender", 
+        "brown", "beige", "maroon", "mint", "coral", "olive", 
+        "navy", "grey", "black", "white", "indigo", "turquoise", 
+        "salmon", "khaki", "gold", "violet", "tan"
+    ]
+
+    images_list=[]
     for j in range(0,5):
+        count=0
         for i in range(j*6,j*6+5):
-            if labels[i]:
-                box = boxes[i]
+            condition= False
+            idx= -1
+            if i in labels:
+                if selected_region:
+                    if target_regions[count]:
+                        idx=i
+                        condition=True
+                        count+=1
+                else:
+                    idx=i
+                    condition=True
+
+            if condition and idx !=-1:
+                box = boxes[idx]
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -188,12 +210,11 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[((i-j*6)%5)],
+                    edgecolor=region_colors[(i-j*6-1)%29],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="dashed",
                 )
-                
                 # Add the patch to the Axes
                 ax.add_patch(rect)
             if predicted_labels[i]:
@@ -206,22 +227,38 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-                    edgecolor=region_colors[(i-j*6)%5],
+                    edgecolor=region_colors[(i-j*6)%29],
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="solid",
                 )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-        plt.show()
-        cmap = plt.get_cmap("tab20b")
-        height, width = img.shape[1:]
+                
+        # images_list.append(ax)
+        # convert ax to image
+        fig.canvas.draw()
+        img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+        img  = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        images_list.append(img)
+        # plt.show()
+        
 
-        # Create figure and axes
-        fig, ax = plt.subplots(1, figsize=(16, 8))
+        
+    return images_list
+    # save_path="assets/"+str(RUN)+"/image_"+str(img_idx+1)+"_region"+str(j)+".png"
+        # plt.savefig(save_path)
+        # plt.close()
+                
+        # plt.show()
+        # cmap = plt.get_cmap("tab20b")
+        # height, width = img.shape[1:]
 
-        # Display the image
-        ax.imshow(img[0])
+        # # Create figure and axes
+        # fig, ax = plt.subplots(1, figsize=(16, 8))
+
+        # # Display the image
+        # ax.imshow(img[0])
 
 def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
     """
@@ -283,3 +320,80 @@ def load_model(model,name):
         name (str): Name of the model file.
     '''
     model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))
+
+
+
+def cuda_memory_info(title=""):
+    print("==========================================================================================================")
+    print("Memory after ["+title+"]")
+    num_cuda_devices = torch.cuda.device_count()
+    for i in range(num_cuda_devices):
+        device = torch.cuda.get_device_properties(i)
+        total_memory = device.total_memory / 1024**3  # Total memory available on the device
+        allocated_memory = torch.cuda.memory_allocated(i) / 1024**3  # Memory currently in use by tensors
+        reserved_memory = torch.cuda.memory_reserved(i) / 1024**3  # Total memory reserved by PyTorch
+        remaining_memory_current = total_memory - allocated_memory  # Remaining memory that is currently available for allocation
+        remaining_memory_potential = total_memory - reserved_memory  # Remaining memory that can potentially be allocated
+        print(f"Device {i}:")
+        print(f"  Name: {device.name}")
+        print(f"  Total Memory: {total_memory:.2f} GB")
+        print(f"  Allocated Memory: {allocated_memory:.2f} GB")
+        print(f"  Reserved Memory: {reserved_memory:.2f} GB")
+        print(f"  Remaining Memory (Current): {remaining_memory_current:.2f} GB")
+        print(f"  Remaining Memory (Potential): {remaining_memory_potential:.2f} GB")
+    print("==========================================================================================================")
+
+
+def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_state_dict,model_state:Dict,best_loss:float,epoch_loss:float):
+    checkpoint={
+    "model_state":model_state, #
+    "scheduler_state_dict":scheduler_state_dict, #
+    "optimizer_state":optimizer_state,#
+    "best_loss":best_loss, #
+    "epoch":epoch,#
+    "epoch_loss":epoch_loss,#
+    "batch_index":batch_index,#
+    # "config":get_config()
+    }
+
+    # # Save Checkpoint by time 
+    # # Get the current date and time
+    # current_datetime = datetime.datetime.now()
+    # # Format the date and time to be part of the filename
+    # formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+    # # Create the filename with the formatted datetime
+    # name = f"ckpt_{formatted_datetime}"
+
+    checkpoint_path='check_points/'+str(RUN)+'/checkpoint.pth'
+    torch.save(checkpoint, checkpoint_path)
+    logging.info('Saved Check point at' + checkpoint_path)
+
+def load_checkpoint(run):
+    checkpoint_path='check_points/'+str(run)+'/checkpoint.pth'
+    logging.info('Loading Check point at' + checkpoint_path)
+    checkpoint = torch.load(checkpoint_path)
+    return checkpoint
+
+def seed_worker(worker_id):
+    """To preserve reproducibility for the randomly shuffled train loader."""
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
+
+def empty_folder(folder_path):
+    # Check if the folder exists
+    if os.path.exists(folder_path):
+        # Remove all files and subdirectories within the folder
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                logging.error(f"Failed to delete {file_path}. Reason: {e}")
+        logging.info(f"Folder '{folder_path}' emptied successfully.")
+    else:
+        logging.info(f"Folder '{folder_path}' does not exist.")

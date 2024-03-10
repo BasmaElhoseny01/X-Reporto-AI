@@ -20,7 +20,7 @@ from src.object_detector.models.rpn import Rpn
 from src.object_detector.models.feature_extraction import FeatureNetwork
 import sys
 
-from config import TRAIN_RPN
+from config import TRAIN_ROI, TRAIN_RPN
 
 '''
 image is grey scale 1*512*512 [Grey Scale 512*512]  
@@ -81,6 +81,12 @@ class FrcnnObjectDetectorV1(nn.Module):
             features=self.features,
             feature_size=feature_map_output_size,
         )
+        # freez RPN and Backbone layers if train_roi
+        if TRAIN_ROI:
+            for param in self.rpn.parameters():
+                param.requires_grad = False
+            for param in self.backbone.parameters():
+                param.requires_grad = False
 
     def _check_targets(self, targets):
         """
@@ -183,8 +189,8 @@ class FrcnnObjectDetectorV1(nn.Module):
                 "top_region_features"
             }
         """
-        if targets is not None:
-            self._check_targets(targets)
+        # if targets is not None:
+        #     self._check_targets(targets)
 
         # Features extracted from backbone feature map is 16*16 depth is 2048 [batch_size x 2048 x 16 x 16]
         features=self.backbone(images)
@@ -202,13 +208,17 @@ class FrcnnObjectDetectorV1(nn.Module):
         proposals, proposal_losses = self.rpn(images, features, targets)
 
 
-        if self.training and TRAIN_RPN:
+        if TRAIN_RPN:
             # Turn Off Object ROI output 
             detector_losses={}
             outputs = {}
             outputs["features"]=None
             outputs["class_detected"] = None
-
+            outputs["class_detected"] = None
+            outputs["detections"]={}
+            outputs["detections"]["top_region_boxes"]=None
+            outputs["class_detected"] = None
+            outputs["features"]=None
         else:
             detections  = self.roi_heads(features, proposals, images.image_sizes, targets)
             detector_losses =detections["detector_losses"]
@@ -226,8 +236,8 @@ class FrcnnObjectDetectorV1(nn.Module):
             # print("targets",targets)
             # print("")
 
-
-
+        if TRAIN_ROI:
+            proposal_losses = {}
         # Losses for RPN Network and ROI Network
         losses = {}
         losses.update(proposal_losses)

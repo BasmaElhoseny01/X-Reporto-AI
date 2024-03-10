@@ -1,4 +1,164 @@
+import torch
+import logging
+import os
+from enum import Enum
 
+# Suppress TensorFlow INFO level logs
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+# Suppress Plt INFO level logs
+logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
+
+
+class ModelStage(Enum):
+    OBJECT_DETECTOR = 1
+    CLASSIFIER = 2
+    LANGUAGE_MODEL = 3
+
+class OperationMode(Enum):
+    TRAINING = 1
+    VALIDATION = 2
+    EVALUATION = 3
+    TESTING = 4
+
+
+# device
+DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+# Training / validation / EVALUATION / Testing 
+OPERATION_MODE=3
+# Model Stage
+MODEL_STAGE=2
+
+# Training Process Parameters
+CONTINUE_TRAIN=True# Continue training
+TRAIN_RPN=False # Tain only RPN of the object detector
+TRAIN_ROI=False # Train only ROI of the object detector
+
+FREEZE_OBJECT_DETECTOR=False
+
+RUN = "5"
+EPOCHS=6
+BATCH_SIZE=16
+# BATCH_SIZE=1
+#   TODO: change to 64
+EFFECTIVE_BATCH_SIZE = 64
+ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
+LM_Batch_Size=1
+LEARNING_RATE=0.0004
+SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
+SCHEDULAR_GAMMA=0.8 # value multiply lr with
+THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only focus on significant changes
+COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
+
+# Weights of each model
+
+ABNORMAL_CLASSIFIER_WEIGHT = 2.5
+REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
+OBJECT_DETECTOR_WEIGHT = 1
+
+# Debgging COnfigurations
+DEBUG=True
+
+# Modules Configurations:
+# Abnormal Binary Classifier Hyper Parameters
+ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
+# Region Selection Classifier Hyper Parameters
+REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
+
+# Pathes to the external files
+# training_csv_path = 'datasets/train.csv'
+training_csv_path = 'datasets/train.csv'
+validation_csv_path = 'datasets/valid.csv'
+# validation_csv_path = 'datasets/valid.csv'
+evaluation_csv_path = 'datasets/valid-100.csv'
+# evaluation_csv_path = 'datasets/valid.csv'
+# TODO Fix
+# evaluation_csv_path = 'datasets/eval.csv'
+test_csv_path:str = 'datasets/test.csv'
+
+# Logging
+PERIODIC_LOGGING=True
+
+CHECKPOINT_EVERY_N=400
+RECOVER=False
+ 
+SEED=31
+
+DRAW_TENSOR_BOARD=0
+
+
+def log_config():
+    logging.info(f"DEVICE: {DEVICE}")
+
+    logging.info(f"OPERATION_MODE: {OPERATION_MODE}")
+    logging.info(f"MODEL_STAGE: {MODEL_STAGE}")
+
+    logging.info(f"CONTINUE_TRAIN: {CONTINUE_TRAIN}")
+    logging.info(f"TRAIN_RPN: {TRAIN_RPN}")
+    logging.info(f"TRAIN_ROI: {TRAIN_ROI}")
+
+    logging.info(f"FREEZE_OBJECT_DETECTOR: {FREEZE_OBJECT_DETECTOR}")
+
+    logging.info(f"RUN: {RUN}")
+    logging.info(f"EPOCHS: {EPOCHS}")
+    logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
+    logging.info(f"EFFECTIVE_BATCH_SIZE: {EFFECTIVE_BATCH_SIZE}")
+    logging.info(f"ACCUMULATION_STEPS: {ACCUMULATION_STEPS}")
+    logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
+
+    logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
+    logging.info(f"SCHEDULAR_STEP_SIZE: {SCHEDULAR_STEP_SIZE}")
+    logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
+
+    logging.info(f"DEBUG: {DEBUG}")
+    # logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
+
+    logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
+    logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
+    logging.info(f"OBJECT_DETECTOR_WEIGHT: {OBJECT_DETECTOR_WEIGHT}")
+    logging.info(f"ABNORMAL_CLASSIFIER_WEIGHT: {ABNORMAL_CLASSIFIER_WEIGHT}")
+    logging.info(f"REGION_SELECTION_CLASSIFIER_WEIGHT: {REGION_SELECTION_CLASSIFIER_WEIGHT}")
+
+    logging.info(f"training_csv_path: {training_csv_path}")
+    logging.info(f"validation_csv_path: {validation_csv_path}")
+
+    logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
+
+    logging.info(f"CHECKPOINT_EVERY_N: {CHECKPOINT_EVERY_N}")
+    logging.info(f"RECOVER: {RECOVER}")
+
+def get_config():
+    # Get the Configuration dictionary to be saved in check point
+    config = {
+    "DEVICE": DEVICE,
+    "OPERATION_MODE":OPERATION_MODE,
+    "MODEL_STAGE": MODEL_STAGE,
+    "CONTINUE_TRAIN": CONTINUE_TRAIN,
+    "TRAIN_RPN": TRAIN_RPN,
+    "TRAIN_ROI": TRAIN_ROI,
+    "FREEZE_OBJECT_DETECTOR": FREEZE_OBJECT_DETECTOR,
+    "RUN": RUN,
+    "EPOCHS": EPOCHS,
+    "BATCH_SIZE": BATCH_SIZE,
+    "EFFECTIVE_BATCH_SIZE": EFFECTIVE_BATCH_SIZE,
+    "ACCUMULATION_STEPS": ACCUMULATION_STEPS,
+    "LM_Batch_Size": LM_Batch_Size,
+    "LEARNING_RATE": LEARNING_RATE,
+    "SCHEDULAR_STEP_SIZE": SCHEDULAR_STEP_SIZE,
+    "SCHEDULAR_GAMMA": SCHEDULAR_GAMMA,
+    "DEBUG": DEBUG,
+    # "GENERATE_REPORT": GENERATE_REPORT,
+    "ABNORMAL_CLASSIFIER_POS_WEIGHT": ABNORMAL_CLASSIFIER_POS_WEIGHT,
+    "REGION_SELECTION_CLASSIFIER_POS_WEIGHT": REGION_SELECTION_CLASSIFIER_POS_WEIGHT,
+    "training_csv_path": training_csv_path,
+    "validation_csv_path": validation_csv_path,
+    "PERIODIC_LOGGING": PERIODIC_LOGGING,
+    "CHECKPOINT_EVERY_N":CHECKPOINT_EVERY_N,
+    }
+
+    return config
+
+# By Command Line TODO fix with new arguments :D
 # import argparse
 # from enum import Enum
 # import torch
@@ -70,14 +230,13 @@
 from ast import Continue
 from enum import Enum
 import torch
-import sys
 
 class ModelStage(Enum):
     OBJECT_DETECTOR = 1
     CLASSIFIER = 2
     LANGUAGE_MODEL = 3
 
-MODEL_STAGE=2
+MODEL_STAGE=3
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # X-Report Trainer Hyper Parameters
 EPOCHS=1
@@ -102,4 +261,3 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 # pathes to the datasets
 training_csv_path: str = 'datasets/train.csv'
 validation_csv_path:str = 'datasets/predict.csv'
-Heat_map_train_csv_path:str = 'datasets/HeatMapData-mini.csv'

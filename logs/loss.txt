@@ -1,6 +1,0 @@
-epoch: 1/1, epoch loss: 1.0323
-epoch: 1/1, epoch loss: 1.0443
-epoch: 1/1, epoch loss: 4.8954
-epoch: 1/1, epoch loss: 6.8998
-epoch: 1/1, epoch loss: 6.8767
-epoch: 1/1, epoch loss: 7.1796
