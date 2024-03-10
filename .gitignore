@@ -29,6 +29,8 @@ test_detector
 __pycache__/
 *.pyc
 
+.ipynb_checkpoints/
+
 # Env Variables
 .env
 .venv
