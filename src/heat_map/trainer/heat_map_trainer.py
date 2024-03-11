@@ -22,7 +22,7 @@ from torch.utils.data import  DataLoader
 from src.heat_map.models.heat_map import HeatMap
 from src.heat_map.data_loader.dataset import HeatMapDataset
 
-# Utils
+Utils
 from src.utils import save_model,save_checkpoint,load_checkpoint,seed_worker
 from config import *
 
@@ -258,6 +258,7 @@ def init_working_space():
 
 def main():
     logging.info("Training Heat Map Started")
+    sys.exit()
     # Logging Configurations
     log_config()
 

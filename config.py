@@ -77,9 +77,9 @@ evaluation_csv_path = 'datasets/valid-100.csv'
 test_csv_path:str = 'datasets/test.csv'
 
 # paths to the datasets
-heat_map_training_csv_path:str = 'datasets\HeatMapData.csv'
-heat_map_validating_csv_path:str = 'datasets\HeatMapData.csv'
-heat_map_evaluation_csv_path = 'datasets\HeatMapData.csv'
+heat_map_training_csv_path:str = 'datasets/heat_map.csv'
+heat_map_validating_csv_path:str = 'datasets/heat_map.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map.csv'
 
 # Logging
 PERIODIC_LOGGING=True
