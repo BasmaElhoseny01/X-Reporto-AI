@@ -375,9 +375,9 @@ class XReportoV1(nn.Module):
                 # Free GPU memory 
                 images=images.to('cpu')
                 # move object_detector_targets to cpu
-                for i in range(len(object_detector_targets)):
-                    object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
-                    object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                # for i in range(len(object_detector_targets)):
+                #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
                 del images
                 #TODO: should be removed ?
                 # del object_detector_targets
@@ -391,15 +391,15 @@ class XReportoV1(nn.Module):
             
             # Stage(2) Binary Classifier
             selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
-            if MODEL_STAGE == ModelStage.CLASSIFIER.value:
+            if MODEL_STAGE == ModelStage.CLASSIFIER.value or MODEL_STAGE == ModelStage.LANGUAGE_MODEL.value :
                 abnormal_binary_classifier_losses,predicted_abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
-            if delete:
-                # free gpu memory
-                selection_classifier_targets=selection_classifier_targets.to('cpu')
-                del selection_classifier_targets
-                torch.cuda.empty_cache()
              
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
+                if delete:
+                # free gpu memory
+                  selection_classifier_targets=selection_classifier_targets.to('cpu')
+                  del selection_classifier_targets
+                  torch.cuda.empty_cache()
                 if OPERATION_MODE==OperationMode.VALIDATION.value or validate_during_training: 
                     return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
                 elif OPERATION_MODE==OperationMode.EVALUATION.value or OPERATION_MODE==OperationMode.TESTING.value:

@@ -349,6 +349,7 @@ class XReportoTrainer():
         with torch.no_grad():
             validation_total_loss=0
             total_loss=0
+            print("=======================in validation=================================")
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):
                 # Move inputs to Device
                 images = images.to(DEVICE)
