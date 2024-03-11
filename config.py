@@ -79,7 +79,7 @@ test_csv_path:str = 'datasets/test.csv'
 # paths to the datasets
 heat_map_training_csv_path:str = 'datasets/HeatMapData-mini.csv'
 heat_map_validating_csv_path:str = 'datasets/HeatMapData-mini.csv'
-# heat_map_test_csv_path:str = 'datasets/HeatMapData-mini.csv'
+heat_map_evaluation_csv_path = 'datasets/HeatMapData-mini.csv'
 
 # Logging
 PERIODIC_LOGGING=True
