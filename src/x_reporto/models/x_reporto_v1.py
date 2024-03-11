@@ -129,19 +129,22 @@ class XReportoV1(nn.Module):
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Load the object_detector to continue training
                     logging.info("Loading object_detector .....")
+                    print("Loading object_detector .....")
                     load_model(model=self.object_detector,name='object_detector_best')
 
                     if FREEZE_OBJECT_DETECTOR:
                         # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                         for param in self.object_detector.object_detector.parameters():
                             param.requires_grad = False
-                        logging.info("All object_detector paramets are Frozen")         
+                        logging.info("All object_detector paramets are Frozen")  
+                        print("All object_detector paramets are Frozen")       
                     else: logging.info("All object_detector paramets are Trainable")         
 
 
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Load the Region Selection Classifier to start training
                     logging.info("Loading region_classifier .....")
+                    print("Loading region_classifier .....")
                     load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
                     # Freezing Selection Region Binary Classifier
                     for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
@@ -149,6 +152,7 @@ class XReportoV1(nn.Module):
 
                     # Load the Abnormal Classifier to start training
                     logging.info("Loading abnormal_classifier .....")
+                    print("Loading abnormal_classifier .....")
                     load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
                     # Freezing Abnormal Region Binary Classifier
                     for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
