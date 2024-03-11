@@ -209,6 +209,8 @@ class XReportoTrainer():
             
             # [Logging]: Average Loss for epoch where each image is seen once
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            # [Print]: Average Loss for epoch where each image is seen once
+            print(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
             # [Tensor Board]: Epoch Average loss
             self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
             
@@ -221,6 +223,7 @@ class XReportoTrainer():
             self.model.eval()
             validation_average_loss= self.validate_during_training(epoch=epoch) 
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
+            print(f'Validation Average Loss: {validation_average_loss:.4f}')
             self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
             self.model.train()             
             
@@ -330,6 +333,7 @@ class XReportoTrainer():
                 total_LM_losses+=LM_losses * LM_WEIGHT
 
                 logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+                print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
                 # delete language model inputs
                 torch.cuda.empty_cache()
                 gc.collect()
@@ -349,7 +353,6 @@ class XReportoTrainer():
         with torch.no_grad():
             validation_total_loss=0
             total_loss=0
-            print("=======================in validation=================================")
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):
                 # Move inputs to Device
                 images = images.to(DEVICE)
