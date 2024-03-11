@@ -86,9 +86,12 @@ class XReportoTrainer():
         self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
+        # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
         # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
-        
+        if Linear_Schecdular:
+            self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
+        else:
+            self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
         
         # create dataset
         self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
@@ -222,6 +225,8 @@ class XReportoTrainer():
             # validate the model no touch :)
             self.model.eval()
             validation_average_loss= self.validate_during_training(epoch=epoch) 
+            if Linear_Schecdular:
+                self.lr_scheduler.step()
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
             print(f'Validation Average Loss: {validation_average_loss:.4f}')
             self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
