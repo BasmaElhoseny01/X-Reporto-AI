@@ -58,8 +58,6 @@ def main(csv_name,new_csv_name):
     df.to_csv(new_csv_name, index=False)
 
 
-
-
 # /home/basma/Desktop/csv_processing/datasets/mimic-cxr-jpg\files/p10/p10144424/s55318406/0b3d1365-cecec550-e53e23f3-2fd4e293-81245c21.jpg
 # /home/basma/Desktop/csv_processing/datasets/mimic-cxr-jpg/files/p10/p10144424/s55318406/0b3d1365-cecec550-e53e23f3-2fd4e293-81245c21.jpg
 if __name__ == "__main__":
