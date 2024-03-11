@@ -31,7 +31,7 @@ class HeatMap(nn.Module):
         self.feature_Layers=nn.Sequential(*list(self.feature_Layers.children())[:-2])
 
         # Transition Layer
-        # in_channels=2048 --> # channels from teh resnet
+        # in_channels=2048 --> # channels from the resnet
         self.transition_Layer = nn.Conv2d(in_channels=2048, 
                        out_channels=1024, 
                        kernel_size=3, 

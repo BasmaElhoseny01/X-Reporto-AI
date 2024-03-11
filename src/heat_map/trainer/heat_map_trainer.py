@@ -265,7 +265,7 @@ def main():
 
     _,_,tensor_board_folder_path=init_working_space()
     
-    # # HeatMap Trainer Object
+    # HeatMap Trainer Object
     heat_map_model = HeatMap()
 
 
@@ -274,6 +274,7 @@ def main():
 
     # Create an HeatMapTrainer instance with the HeatMap model
     trainer = HeatMapTrainer(model=heat_map_model,tensor_board_writer=tensor_board_writer)
+    sys.exit()
 
     if RECOVER:
         # Load the state of model

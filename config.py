@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=2
 
@@ -77,9 +77,9 @@ evaluation_csv_path = 'datasets/valid-100.csv'
 test_csv_path:str = 'datasets/test.csv'
 
 # paths to the datasets
-heat_map_training_csv_path:str = 'datasets/HeatMapData-mini.csv'
-heat_map_validating_csv_path:str = 'datasets/HeatMapData-mini.csv'
-heat_map_evaluation_csv_path = 'datasets/HeatMapData-mini.csv'
+heat_map_training_csv_path:str = 'datasets/heat_map-mini.csv'
+heat_map_validating_csv_path:str = 'datasets/heat_map-mini.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map-mini.csv'
 
 # Logging
 PERIODIC_LOGGING=True
@@ -228,41 +228,3 @@ def get_config():
 
 
 # #>>>  python your_script.py --epochs 100 --learning_rate 0.0001 --batch_size 32 --scheduler_step_size 5 --scheduler_gamma 0.95 --debug --abnormal_pos_weight 7.5 --region_pos_weight 3.0
-
-
-
-
-from ast import Continue
-from enum import Enum
-import torch
-
-class ModelStage(Enum):
-    OBJECT_DETECTOR = 1
-    CLASSIFIER = 2
-    LANGUAGE_MODEL = 3
-
-MODEL_STAGE=3
-DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# X-Report Trainer Hyper Parameters
-EPOCHS=1
-LEARNING_RATE=0.00000001
-BATCH_SIZE=1
-LM_Batch_Size=1
-SCHEDULAR_STEP_SIZE=1
-SCHEDULAR_GAMMA=0.9999999999
-DEBUG=True
-
-# Training Process Parameters
-CONTINUE_TRAIN=True # Continue training
-TRAIN_RPN=False # Tain only RPN of the object detector
-RUN = "0"
-
-# Abnormal Binary Classifier Hyper Parameters
-ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
-
-# Region Selection Classifier Hyper Parameters
-REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
-
-# pathes to the datasets
-training_csv_path: str = 'datasets/train.csv'
-validation_csv_path:str = 'datasets/predict.csv'
