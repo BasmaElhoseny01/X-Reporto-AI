@@ -321,7 +321,8 @@ def load_model(model,name):
     '''
     model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))
 
-
+def plot_heatmap():
+    pass
 
 def cuda_memory_info(title=""):
     print("==========================================================================================================")
