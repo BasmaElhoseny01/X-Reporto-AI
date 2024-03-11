@@ -385,7 +385,9 @@ class XReportoTrainer():
             validation_total_loss/=(len(self.data_loader_val))
             
             # update the learning rate according to the validation loss if decrease
-            self.lr_scheduler.step(validation_total_loss)
+            # self.lr_scheduler.step(validation_total_loss)
+            if not Linear_Schecdular:
+                self.lr_scheduler.step(validation_total_loss)
             # self.lr_scheduler.step()
 
             return validation_total_loss
