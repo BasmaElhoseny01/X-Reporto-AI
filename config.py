@@ -28,7 +28,7 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 OPERATION_MODE=1
 
 # Model Stage
-MODEL_STAGE=3
+MODEL_STAGE=1
 
 Linear_Schecdular=True # Linear Schecdular if True, Plateau Schecdular if False
 
@@ -37,18 +37,18 @@ CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
-FREEZE_OBJECT_DETECTOR=True
+FREEZE_OBJECT_DETECTOR=False
 
 RUN = "0"
-EPOCHS=2
+EPOCHS=10
 # BATCH_SIZE=16
-BATCH_SIZE=1
+BATCH_SIZE=8
 #   TODO: change to 64
 # EFFECTIVE_BATCH_SIZE = 64
-EFFECTIVE_BATCH_SIZE = 1
+EFFECTIVE_BATCH_SIZE = 32
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=8
-LEARNING_RATE=0.001
+LEARNING_RATE=0.0008
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only focus on significant changes

@@ -77,34 +77,41 @@ class XReportoV1(nn.Module):
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_RPN:
                         
                     logging.info("Loading object_detector [Trained RPN]....")
+                    print("Loading object_detector [Trained RPN]....")
                     load_model(model=self.object_detector,name='object_detector_rpn_best')
                 elif MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value and TRAIN_ROI:
                     logging.info("Loading object_detector [Trained ROI]....")
+                    print("Loading object_detector [Trained ROI]....")
                     load_model(model=self.object_detector,name='object_detector_roi_best')
                 else:
                     # Load full object detector
                     logging.info("Loading object_detector .....")
+                    print("Loading object_detector .....")
                     load_model(model=self.object_detector,name='object_detector_best')
                     
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Load the Region Selection Classifier to continue training
                     logging.info("Loading region_classifier .....")
+                    print("Loading region_classifier .....")
                     load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
 
                     # Load the Abnormal Classifier to continue training
                     logging.info("Loading abnormal_classifier .....")
+                    print("Loading abnormal_classifier .....")
                     load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
 
                     if FREEZE_OBJECT_DETECTOR:
                         # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                         for param in self.object_detector.object_detector.parameters():
                             param.requires_grad = False
-                        logging.info("All object_detector paramets are Frozen")         
+                        logging.info("All object_detector paramets are Frozen")   
+                        print("All object_detector paramets are Frozen")      
                     else: logging.info("All object_detector paramets are Trainable")      
     
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                     # Load Language Model to continue training
                     logging.info("Loading language_model .....")
+                    print("Loading language_model .....")
                     load_model(model=self.language_model,name='LM_best')
 
                     # Freezing Selection Region Binary Classifier
@@ -120,9 +127,11 @@ class XReportoV1(nn.Module):
                         pass
                     elif TRAIN_ROI:
                         logging.info("Loading object_detector [Trained RPN]....")
+                        print("Loading object_detector [Trained RPN]....")
                         load_model(model=self.object_detector,name='object_detector_rpn_best')
                     else:
                         logging.info("Loading object_detector [Trained RPN]....")
+                        print("Loading object_detector [Trained RPN]....")
                         load_model(model=self.object_detector,name='object_detector_roi_best')
                     
 
@@ -163,18 +172,23 @@ class XReportoV1(nn.Module):
         elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.TESTING.value or OPERATION_MODE==OperationMode.EVALUATION.value:
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 logging.info("Loading object_detector .....")
+                print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector_best')
 
             elif MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 logging.info("Loading object_detector .....")
+                print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector_best')
                 logging.info("Loading region_classifier .....")
+                print("Loading region_classifier .....")
                 load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
                 logging.info("Loading abnormal_classifier .....")
+                print("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
 
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 logging.info("Loading language_model .....")
+                print("Loading language_model .....")
                 load_model(model=self.language_model,name='LM_best')         
 
 
