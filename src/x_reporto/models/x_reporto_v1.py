@@ -43,7 +43,25 @@ class XReportoV1(nn.Module):
         
         if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             config = Config()
+            # load small gpt2 config
+            config.d_model = 768
+            config.d_ff1 = 768
+            config.d_ff2 = 768
+            config.d_ff3 = 768
+            config.num_heads = 12
+            config.num_layers = 12
+            config.vocab_size = 50257
+            config.pretrained_model = "gpt2"
+            config.max_seq_len = 1024
+            config.ignore_index = -100
             image_config = Config()
+            image_config.d_model = 1024
+            image_config.d_ff1 = 1024
+            image_config.d_ff2 = 1024
+            image_config.d_ff3 = 768
+            image_config.num_heads = 16
+            image_config.num_layers = 24
+            image_config.vocab_size = 50257
             self.language_model = CustomGPT2(config,image_config)
             # convert the model to half precision
             # self.language_model.half()
@@ -291,10 +309,10 @@ class XReportoV1(nn.Module):
             if delete:
                 # Free GPU memory 
                 images=images.to('cpu')
-                # move object_detector_targets to cpu
-                for i in range(len(object_detector_targets)):
-                    object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
-                    object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                # # move object_detector_targets to cpu
+                # for i in range(len(object_detector_targets)):
+                #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
                 del images
                 del object_detector_targets
                 torch.cuda.empty_cache()

@@ -25,25 +25,27 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
+
 # Model Stage
-MODEL_STAGE=2
+MODEL_STAGE=3
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
-FREEZE_OBJECT_DETECTOR=False
+FREEZE_OBJECT_DETECTOR=True
 
-RUN = "5"
+RUN = "0"
 EPOCHS=6
-BATCH_SIZE=16
-# BATCH_SIZE=1
+# BATCH_SIZE=16
+BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 64
+# EFFECTIVE_BATCH_SIZE = 64
+EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
-LM_Batch_Size=1
+LM_Batch_Size=4
 LEARNING_RATE=0.0004
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
@@ -54,6 +56,7 @@ COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal opera
 
 ABNORMAL_CLASSIFIER_WEIGHT = 2.5
 REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
+LM_WEIGHT = 1
 OBJECT_DETECTOR_WEIGHT = 1
 
 # Debgging COnfigurations
@@ -68,8 +71,8 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 # Pathes to the external files
 # training_csv_path = 'datasets/train.csv'
 training_csv_path = 'datasets/train.csv'
-validation_csv_path = 'datasets/valid.csv'
 # validation_csv_path = 'datasets/valid.csv'
+validation_csv_path = 'datasets/valid-100.csv'
 evaluation_csv_path = 'datasets/valid-100.csv'
 # evaluation_csv_path = 'datasets/valid.csv'
 # TODO Fix
