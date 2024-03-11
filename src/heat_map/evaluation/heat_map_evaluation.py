@@ -31,7 +31,7 @@ from config import *
 from src.utils import plot_heatmap
 
 class HeatMapEvaluation():
-    def __init__(self, model:HeatMap,evaluation_csv_path:str = evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
+    def __init__(self, model:HeatMap,evaluation_csv_path:str = heat_map_evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
         '''
         X-Reporto Validation Class
         Args:
@@ -52,7 +52,7 @@ class HeatMapEvaluation():
         scores = self.evaluate_heat_map()
 
         # [Tensor Board] Update the Board by the scalers for that Run
-        self.update_tensor_board_score()
+        # self.update_tensor_board_score()
            
 
     def evaluate_heat_map(self):
