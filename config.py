@@ -29,6 +29,8 @@ OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=2
 
+Linear_Schecdular=True # Linear Schecdular if True, Plateau Schecdular if False
+
 # Training Process Parameters
 CONTINUE_TRAIN=True# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
