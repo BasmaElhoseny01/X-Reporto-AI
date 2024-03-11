@@ -1,3 +1,4 @@
+import gc
 import sys
 import torch
 from torch import Tensor
@@ -57,7 +58,7 @@ class XReportoV1(nn.Module):
             image_config = Config()
             image_config.d_model = 1024
             image_config.d_ff1 = 1024
-            image_config.d_ff2 = 1024
+            image_config.d_ff2 = 768
             image_config.d_ff3 = 768
             image_config.num_heads = 16
             image_config.num_layers = 24
@@ -341,9 +342,14 @@ class XReportoV1(nn.Module):
                 del selection_classifier_targets
                 torch.cuda.empty_cache()
             if index>=len(valid_input_ids):
-                return 0,0,0,0,0,0,0,0,True
-            if (index+LM_Batch_Size) >= len(valid_input_ids):
-                stop=True
+                # return losses of zeros
+                object_detector_losses={'loss_objectness':torch.tensor(0.0,requires_grad=True).to(DEVICE),'loss_rpn_box_reg':torch.tensor(0.0,requires_grad=True).to(DEVICE),'loss_classifier':torch.tensor(0.0,requires_grad=True).to(DEVICE),'loss_box_reg':torch.tensor(0.0,requires_grad=True).to(DEVICE)}
+                selection_classifier_losses=torch.tensor(0.0,requires_grad=True).to(DEVICE)
+                abnormal_binary_classifier_losses=torch.tensor(0.0,requires_grad=True).to(DEVICE)
+                LM_losses= torch.tensor(0.0,requires_grad=True).to(DEVICE)
+                return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,True
+            # if (index+LM_Batch_Size) >= len(valid_input_ids):
+            #     stop=True
             LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
             if delete:
                 # Free GPU memory
@@ -357,6 +363,7 @@ class XReportoV1(nn.Module):
                 del valid_attention_mask
                 del valid_object_detector_features
                 torch.cuda.empty_cache()
+                gc.collect()
 
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
        

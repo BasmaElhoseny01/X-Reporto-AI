@@ -79,6 +79,7 @@ class CustomGPT2(nn.Module):
         """
         Convert model parameters to half precision (float16).
         """
+        
         self.fc.weight.data = self.fc.weight.data.half()
         self.fc.bias.data = self.fc.bias.data.half()
         for i in range(self.num_layers):
@@ -220,12 +221,10 @@ class CustomGPT2(nn.Module):
             shift_labels = labels[..., 1:].contiguous()
             del labels
 
-            
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
             # convert logits dtype to float32
             shift_logits = shift_logits.to(dtype=torch.float32)
-         
                 
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             return (loss,shift_logits) 

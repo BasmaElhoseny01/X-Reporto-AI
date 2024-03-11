@@ -158,6 +158,7 @@ class XReportoTrainer():
                     selection_classifier_targets = selection_classifier_targets.to(DEVICE)
                     abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
                 
+                # with torch.autocast(device_type="cuda", dtype=torch.float16):
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Language Model
                     # Moving Language Model Targets to Device
@@ -187,13 +188,14 @@ class XReportoTrainer():
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+                print(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
                 # [Tensor Board]: Learning Rate
                 self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
                 if (batch_idx+1)%100==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
-
+                    print(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                     # [Tensor Board]: Epoch Average loss
                     self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 100 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
 
@@ -309,7 +311,8 @@ class XReportoTrainer():
         return Total_loss
 
     def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int,validate_during_training:bool=False):
-        Total_loss=None
+        # define the total loss as it may be in backward pass
+        Total_loss = torch.tensor(0.0, requires_grad=True).to(DEVICE)
         batch_size = images.shape[0]
         for batch in range(batch_size):
             total_LM_losses=0
@@ -320,7 +323,7 @@ class XReportoTrainer():
                     break
                 # Backward pass
                 object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-                Total_loss=object_detector_losses_summation.clone() * OBJECT_DETECTOR_WEIGHT
+                Total_loss+=object_detector_losses_summation.clone() * OBJECT_DETECTOR_WEIGHT
                 Total_loss+=selection_classifier_losses * REGION_SELECTION_CLASSIFIER_WEIGHT
                 Total_loss+=abnormal_binary_classifier_losses * ABNORMAL_CLASSIFIER_WEIGHT
                 Total_loss+=LM_losses * LM_WEIGHT
@@ -362,7 +365,8 @@ class XReportoTrainer():
                     input_ids = LM_inputs['input_ids'].to(DEVICE)
                     attention_mask = LM_inputs['attention_mask'].to(DEVICE)
                     loopLength= input_ids.shape[1]
-                    validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
+                    validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=epoch,batch_idx=batch_idx,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=False)
+                    # validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
                 else:
                     total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
                     validation_total_loss+=total_loss
