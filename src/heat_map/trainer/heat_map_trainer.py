@@ -59,7 +59,9 @@ class HeatMapTrainer:
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
-
+        
+        # Best Loss
+        self.best_loss=1000000
 
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         # make model in training mode
@@ -274,7 +276,6 @@ def main():
 
     # Create an HeatMapTrainer instance with the HeatMap model
     trainer = HeatMapTrainer(model=heat_map_model,tensor_board_writer=tensor_board_writer)
-    sys.exit()
 
     if RECOVER:
         # Load the state of model
