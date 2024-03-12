@@ -27,6 +27,10 @@ class HeatMapDataset(Dataset):
         img_path = os.path.join(os.getcwd(), img_path)
 
         # read the image
+        # Fix Problem of \
+
+        img_path = img_path.replace("\\", "/")
+        img_path = img_path.replace('\files', "/files")
         img = cv2.imread(img_path)
         assert img is not None, f"Image at {img_path} is None"
         # convert the image from BGR to RGB
