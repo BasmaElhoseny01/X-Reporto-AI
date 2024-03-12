@@ -17,7 +17,9 @@ from torch.utils.data import  DataLoader
 # Modules
 from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
-
+from src.x_reporto.data_loader.tokenizer import Tokenizer
+# Utils 
+from transformers import GPT2Tokenizer
 # Utils 
 from src.utils import plot_image
 from config import RUN,PERIODIC_LOGGING,log_config
@@ -54,6 +56,40 @@ class XReportoEvaluation():
             
             # [Tensor Board] Update the Board by the scalers for that Run
             self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores)
+        else:
+            self.evaluate_LM()
+        
+    def evaluate_LM(self):            
+        # make model in Evaluation mode
+        self.model.eval()
+        with torch.no_grad():
+            epoch_loss=0
+            for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_val):
+                # Check GPU memory usage
+                images=object_detector_batch['image']
+                reference_sentences=[]
+                for i in range(len(images)):
+                    reference_sentences.append(LM_batch['bbox_phrase'])
+                       
+                # Move images to Device
+                images = torch.stack([image.to(DEVICE) for image in images])
+                loopLength=29
+                for batch in range(BATCH_SIZE):
+                    for i in range(0,loopLength,LM_Batch_Size):
+                        # Forward Pass
+                        # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
+                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True,use_beam_search=True)
+                        tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+                        for sentence in LM_sentances:
+                            generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
+                            print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
+                            with open("logs/predictions.txt", "a") as myfile:
+                                myfile.write(generated_sentence_for_selected_regions)
+                                myfile.write("\n")
+                        print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
+                        if stop:
+                            break
+                          
            
     def validate_and_evalute_object_detection_and_classifier(self):
         '''
