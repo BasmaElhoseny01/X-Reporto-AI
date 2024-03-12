@@ -236,7 +236,7 @@ def init_working_space():
         logging.info(f"Folder '{models_folder_path}' already exists.")
 
     # Creating checkpoints folder
-    ck_folder_path="check_points/" + "heat_maps/" + str(RUN)
+    ck_folder_path="check_points/" +  str(RUN)
     if not os.path.exists(ck_folder_path):
         os.makedirs(ck_folder_path)
         logging.info(f"Folder '{ck_folder_path}' created successfully.")
@@ -245,7 +245,7 @@ def init_working_space():
 
     # Creating tensor_board folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    tensor_board_folder_path="./tensor_boards/" + "heat_map/" + str(RUN) + f"/train_{current_datetime}"
+    tensor_board_folder_path="./tensor_boards/" +  str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
