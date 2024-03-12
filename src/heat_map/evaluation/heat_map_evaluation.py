@@ -1,5 +1,6 @@
 # Logging
 import matplotlib
+from matplotlib import pyplot as plt
 import numpy as np
 from logger_setup import setup_logging
 import logging
@@ -43,7 +44,11 @@ class HeatMapEvaluation():
         model: X-Reporto Model
         evaluation_csv_path: Path to the validation csv file
         ''' 
-        self.model = model
+        if CONTINUE_TRAIN:
+            self.model=HeatMap().to(DEVICE)
+            self.model.load_state_dict(torch.load('models\heatmapoverfit\heat_map_best.pth'))
+        else:
+            self.model = model
         self.evaluation_csv_path = evaluation_csv_path
         self.tensor_board_writer=tensor_board_writer
 
@@ -200,16 +205,26 @@ class HeatMapEvaluation():
             heatmapList.append(np.array(cam_pil) )
             
         # Calculate the blended image
-        alpha = 0.025 # Alpha value for blending (adjust as needed)
-        blended_image_np = img_np.copy().astype(np.float32)
+        alpha = 0.8 # Alpha value for blending (adjust as needed)
+        # blended_image_np = img_np.copy().astype(np.float32)
+        # add all images in the heatmapList in one new image 
+        blended_image_np = np.zeros_like(img_np).astype(np.float32)
         for cam_np in heatmapList:
             blended_image_np += alpha * cam_np
+        # for cam_np in heatmapList:
+        #     blended_image_np += alpha * cam_np
+        blended_image_np/=13
+        blended_image_np += img_np.astype(np.float32)
         # Clip the pixel values to the valid range [0, 255]
         blended_image_np = np.clip(blended_image_np, 0, 255).astype(np.uint8)
         # Convert the resulting array back to a PIL image
         blended_image_pil = Image.fromarray(blended_image_np).convert("RGB")
         # Display or save the blended image in rgb formate
         blended_image_pil.show()
+        # plot img_np
+        plt.imshow(img_np)
+        print(classes)
+        plt.show()
         #convert to tensor
         blended_image_pil = torchvision.transforms.functional.to_tensor(blended_image_pil)
         return blended_image_pil    
