@@ -66,7 +66,6 @@ class HeatMapTrainer:
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         # make model in training mode
         print("Start Training")
-        print("Start Training")
         self.model.train()
 
 
@@ -108,18 +107,18 @@ class HeatMapTrainer:
                     self.optimizer.step()
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
-                    print(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    # print(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
 
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
-                print(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+                # print(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
                 # [Tensor Board]: Learning Rate
                 self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
 
-                if (batch_idx+1)%100==0:
+                if (batch_idx+1)%10==0:
                     # Every 100 Batch print Average Loss for epoch till Now
-                    print(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+                    print(f'[Every 10 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                    
                     # [Tensor Board]: Epoch Average loss
                     self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 100 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
@@ -195,13 +194,13 @@ class HeatMapTrainer:
             Total_loss+=self.criterion(y[:,c],targets[:,c])
 
         if not validate_during_training:
-            print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')
+            # print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')
          
             # [Tensor Board]: Avg Batch Loss
             self.tensor_board_writer.add_scalar('Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
         else:
-            print(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {Total_loss:.4f}')
+            # print(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss 
             self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
@@ -237,7 +236,7 @@ def init_working_space():
         print(f"Folder '{models_folder_path}' already exists.")
 
     # Creating checkpoints folder
-    ck_folder_path="check_points/" + "heat_maps/" + str(RUN)
+    ck_folder_path="check_points/" + str(RUN)
     if not os.path.exists(ck_folder_path):
         os.makedirs(ck_folder_path)
         print(f"Folder '{ck_folder_path}' created successfully.")
@@ -246,7 +245,7 @@ def init_working_space():
 
     # Creating tensor_board folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    tensor_board_folder_path="./tensor_boards/" + "heat_map/" + str(RUN) + f"/train_{current_datetime}"
+    tensor_board_folder_path="./tensor_boards/" + str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         print(f"Folder '{tensor_board_folder_path}' created successfully.")
@@ -261,11 +260,10 @@ def main():
     print("Training Heat Map Started")
     # Logging Configurations
     log_config()
-    sys.exit()
 
     if OperationMode.TRAINING.value!=OPERATION_MODE :
-            #throw exception 
-            raise Exception("Operation Mode is not Training Mode")
+        #throw exception 
+        raise Exception("Operation Mode is not Training Mode")
 
     _,_,tensor_board_folder_path=init_working_space()
     
