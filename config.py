@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=2
 
@@ -36,12 +36,12 @@ TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
-RUN = "heat_map_1"
-EPOCHS=10
-BATCH_SIZE=8
+RUN = "heat_map_2"
+EPOCHS=5
+BATCH_SIZE=2
 # BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 16
+EFFECTIVE_BATCH_SIZE = 8
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=0.001
@@ -65,6 +65,9 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 # Region Selection Classifier Hyper Parameters
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
+# HeatMap Classifier Weights
+POS_WEIGHTS=[0.7989351569392565, 0.803162048396371, 0.9526921743252555, 0.8814100172499308, 0.968489248420951, 0.980730993253653, 0.9724176677917894, 0.7738415552151413, 0.7616612605178491, 0.9911731269779263, 0.9273308255825692, 0.9545356783875485, 0.7078572776712154]
+
 # Pathes to the external files
 # training_csv_path = 'datasets/train.csv'
 training_csv_path = 'datasets/train.csv'
@@ -77,7 +80,7 @@ evaluation_csv_path = 'datasets/valid-100.csv'
 test_csv_path:str = 'datasets/test.csv'
 
 # paths to the datasets
-heat_map_training_csv_path:str = 'datasets/trainHeatmap.csv'
+heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
 heat_map_evaluation_csv_path = 'datasets/heat_map_val.csv'
 

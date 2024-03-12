@@ -34,7 +34,10 @@ import matplotlib.pyplot as plt
 class HeatMapTrainer:
     def __init__(self, model:None,tensor_board_writer:SummaryWriter,training_csv_path: str =heat_map_training_csv_path,validation_csv_path:str = heat_map_validating_csv_path):
         self.model = model
-
+        if CONTINUE_TRAIN:
+            logging.info("Loading heat_map ....")
+            load_model(model=self.model,name='heat_map_best')
+            
         self.tensor_board_writer=tensor_board_writer
 
         # Move to device
@@ -44,7 +47,7 @@ class HeatMapTrainer:
         self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
 
         # Create Criterion 
-        self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
+#         self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
 
         # create learning rate scheduler
         self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
@@ -67,7 +70,32 @@ class HeatMapTrainer:
         
         # Best Loss
         self.best_loss=1000000
+        
+    def compute_weighted_losses(self,targets,y):
+#         def weighted_binary_cross_entropy(y_true, y_pred, positive_weight, negative_weight):
+#             # Ensure inputs are within valid range
+#             y_pred = torch.clamp(y_pred, 1e-15, 1 - 1e-15)
 
+#             # Compute binary cross-entropy loss with weighted terms for positive and negative samples
+#             loss = - (positive_weight * y_true * torch.log(y_pred) + negative_weight * (1 - y_true) * torch.log(1 - y_pred))
+
+#             # Average the weighted loss across all samples
+#             loss = torch.mean(loss)
+            
+#             return loss
+        
+        # Compute Losses
+        Total_loss= 0
+        # Loss as summation of Binary cross entropy for each class :D Only 13 Classes bec we removed the class of no-finding 
+        for c in range(13):
+            # Construct weights tensor
+            weights = targets[:,c] * POS_WEIGHTS[c] + (1 - targets[:,c]) * (1-POS_WEIGHTS[c])
+     
+            # Initialize the weighted BCE loss
+            Total_loss += nn.BCELoss(weight=weights)(y[:,c],targets[:,c])
+        return Total_loss
+            
+        
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         # make model in training mode
         logging.info("Start Training")
@@ -82,22 +110,6 @@ class HeatMapTrainer:
             else:
                 epoch_loss = 0
             for batch_idx, (images, targets) in enumerate(self.data_loader_train):
-#                 print(images[0])
-#                 print(images[0].shape)
-#                 self.tensor_board_writer.add_image(f'image', images[0], global_step=0)
-#                 image_np = images[0].numpy()
-#                 print("max",np.max(image_np))
-#                 print("min",np.min(image_np))
-#                 print(targets)
-#                 plt.imshow(image_np)
-#                 plt.show()      
-        
-            
-                # Convert NumPy array to PIL Image
-#                 image_pil = Image.fromarray(np.uint8(image_np))
-                
-#                 image_pil.save("image.jpg", "JPEG")
-
                 if batch_idx < start_batch:
                     continue  # Skip batches until reaching the desired starting batch number
                
@@ -207,12 +219,7 @@ class HeatMapTrainer:
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
         # Forward Pass
         _,y=self.model(images)
-
-        # Compute Losses
-        Total_loss= 0
-        # Loss as summation of Binary cross entropy for each class :D Only 13 Classes bec we removed the class of no-finding 
-        for c in range(13):
-            Total_loss+=self.criterion(y[:,c],targets[:,c])
+        Total_loss=self.compute_weighted_losses(targets=targets,y=y)
 
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')
@@ -221,7 +228,7 @@ class HeatMapTrainer:
             self.tensor_board_writer.add_scalar('Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
         else:
-            logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {Total_loss:.4f}')
+            logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss 
             self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
