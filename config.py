@@ -37,7 +37,11 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=False
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 RUN = 5
+=======
+RUN = "heat_map_1"
+>>>>>>> Stashed changes
 =======
 RUN = "heat_map_1"
 >>>>>>> Stashed changes
@@ -90,6 +94,9 @@ heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
 # heat_map_validating_csv_path:str = 'datasets/heat_map_train.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
 # heat_map_evaluation_csv_path = 'datasets/heat_map.csv'
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 # Logging
