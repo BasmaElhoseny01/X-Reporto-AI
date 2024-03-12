@@ -43,6 +43,7 @@ class CustomDataset(Dataset):
             # Fix Problem of \
             img_path = img_path.replace("\\", "/")
             img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
+            print(img_path)
 
             assert img is not None, f"Image at {img_path} is None"
 

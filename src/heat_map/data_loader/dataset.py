@@ -26,6 +26,9 @@ class HeatMapDataset(Dataset):
         # img_path = os.path.join("datasets/", img_path)
         img_path = os.path.join(os.getcwd(), img_path)
 
+        # Fix Problem of \
+        img_path = img_path.replace("\\", "/")
+        
         # read the image
         img = cv2.imread(img_path)
         assert img is not None, f"Image at {img_path} is None"
