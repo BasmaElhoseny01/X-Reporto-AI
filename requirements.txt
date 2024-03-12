@@ -6,3 +6,8 @@ torch-summary
 imagesize
 gdown
 tensorboard
+torchvision
+torchsummary
+torch
+pandas
+matplotlib
