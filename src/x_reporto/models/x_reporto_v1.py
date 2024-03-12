@@ -175,7 +175,7 @@ class XReportoV1(nn.Module):
                 print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector_best')
 
-            elif MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+            if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 logging.info("Loading object_detector .....")
                 print("Loading object_detector .....")
                 load_model(model=self.object_detector,name='object_detector_best')
@@ -186,7 +186,7 @@ class XReportoV1(nn.Module):
                 print("Loading abnormal_classifier .....")
                 load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
 
-            elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
+            if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
                 logging.info("Loading language_model .....")
                 print("Loading language_model .....")
                 load_model(model=self.language_model,name='LM_best')         
@@ -460,7 +460,7 @@ class XReportoV1(nn.Module):
                 if use_beam_search:
                     LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
                 else:
-                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],sampling_top_k=True,top_k=5,device=DEVICE)
                 
                 if delete:
                     # Free GPU memory

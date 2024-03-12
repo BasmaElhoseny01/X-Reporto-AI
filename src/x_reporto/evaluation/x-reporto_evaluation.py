@@ -61,32 +61,33 @@ class XReportoEvaluation():
         
     def evaluate_LM(self):            
         # make model in Evaluation mode
+        tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
         self.model.eval()
         with torch.no_grad():
             epoch_loss=0
-            for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(self.data_loader_val):
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):
                 # Check GPU memory usage
-                images=object_detector_batch['image']
-                reference_sentences=[]
-                for i in range(len(images)):
-                    reference_sentences.append(LM_batch['bbox_phrase'])
-                       
+                images = images.to(DEVICE)              
                 # Move images to Device
-                images = torch.stack([image.to(DEVICE) for image in images])
+                # images = torch.stack([image.to(DEVICE) for image in images])
                 loopLength=29
                 for batch in range(BATCH_SIZE):
+                    for j in range(29):
+                      reference_sentence=tokenizer.decode(LM_inputs['input_ids'][batch][j].tolist(),skip_special_tokens=True)
+                      with open("logs/predictions.txt", "a") as myfile:
+                        myfile.write("reference_sentences "+str(reference_sentence))
+                        myfile.write("\n")     
                     for i in range(0,loopLength,LM_Batch_Size):
                         # Forward Pass
                         # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
-                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True,use_beam_search=True)
-                        tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
-                        for sentence in LM_sentances:
+                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1)
+                        for i,sentence in enumerate(LM_sentances):
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
-                            print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
+                            print("generated_sents_for_selected_regions ",generated_sentence_for_selected_regions)
                             with open("logs/predictions.txt", "a") as myfile:
-                                myfile.write(generated_sentence_for_selected_regions)
-                                myfile.write("\n")
-                        print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
+                                myfile.write("generated_sents_for_selected_regions "+str(generated_sentence_for_selected_regions))
+                                myfile.write("\n") 
+                                
                         if stop:
                             break
                           
