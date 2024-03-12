@@ -41,17 +41,16 @@ class HeatMapDataset(Dataset):
         # get the labels and if column is 1 then it is true if empty then false
         labels = self.data_info.iloc[idx, 2:15]
         # make labels as numpy array of bool values true if value is 1 else false
-        if labels.isnull().values.any():
-            labels = labels.fillna(0)
+        labels = labels.fillna(0)
+        labels = labels.astype(float)
+
         # replace the -1 values with 0
-        labels = labels.replace("-1.0", 0)
-        labels = labels.replace("0.0", 0)
-
-
+        labels = labels.replace(-1.0, 0)
+        
         labels = labels.astype(bool)
         labels = labels.to_numpy(dtype=bool)
-  
         labels=torch.as_tensor(labels, dtype=torch.bool)
+
         # tranform image
         transformed = self.transform(image=img)
         transformed_image = transformed["image"]

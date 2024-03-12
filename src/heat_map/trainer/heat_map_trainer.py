@@ -27,6 +27,10 @@ from src.utils import save_model,save_checkpoint,load_checkpoint,seed_worker
 from config import *
 
 
+import numpy as np
+# from PIL import Image
+import matplotlib.pyplot as plt
+
 class HeatMapTrainer:
     def __init__(self, model:None,tensor_board_writer:SummaryWriter,training_csv_path: str =heat_map_training_csv_path,validation_csv_path:str = heat_map_validating_csv_path):
         self.model = model
@@ -55,9 +59,10 @@ class HeatMapTrainer:
         # create data loader
         g = torch.Generator()
         g.manual_seed(SEED)
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=8, worker_init_fn=seed_worker, generator=g)
+#         self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=1, worker_init_fn=seed_worker, generator=g)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=1, worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
-        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         
         # Best Loss
@@ -77,6 +82,22 @@ class HeatMapTrainer:
             else:
                 epoch_loss = 0
             for batch_idx, (images, targets) in enumerate(self.data_loader_train):
+#                 print(images[0])
+#                 print(images[0].shape)
+#                 self.tensor_board_writer.add_image(f'image', images[0], global_step=0)
+#                 image_np = images[0].numpy()
+#                 print("max",np.max(image_np))
+#                 print("min",np.min(image_np))
+#                 print(targets)
+#                 plt.imshow(image_np)
+#                 plt.show()      
+        
+            
+                # Convert NumPy array to PIL Image
+#                 image_pil = Image.fromarray(np.uint8(image_np))
+                
+#                 image_pil.save("image.jpg", "JPEG")
+
                 if batch_idx < start_batch:
                     continue  # Skip batches until reaching the desired starting batch number
                
@@ -116,12 +137,12 @@ class HeatMapTrainer:
                 self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
 
-                if (batch_idx+1)%100==0:
+                if (batch_idx+1)%10==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                    
                     # [Tensor Board]: Epoch Average loss
-                    self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 100 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
+                    self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 10 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
                 
                 # Checkpoint every N steps inside epochs
                 total_steps+=1            
