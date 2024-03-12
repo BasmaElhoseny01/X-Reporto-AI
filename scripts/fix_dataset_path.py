@@ -108,16 +108,16 @@ def main():
 
 if __name__ == "__main__":
     # Get the current working directory
-    current_directory = os.getcwd()
-    print(current_directory)
+    # current_directory = os.getcwd()
+    # print(current_directory)
 
-    # Use regex to capture the directory path
-    match = re.search(r'.*(\\|/)Graduation-Project$', current_directory)
-    print(match)
+    # # Use regex to capture the directory path
+    # match = re.search(r'.*(\\|/)Graduation-Project$', current_directory)
+    # print(match)
     
-    if not match:
-        print("Error: This script should be called from the 'Graduation-Project' directory.")
-        sys.exit(1)
+    # if not match:
+    #     print("Error: This script should be called from the 'Graduation-Project' directory.")
+    #     sys.exit(1)
     
     # Call the main function
     main()
