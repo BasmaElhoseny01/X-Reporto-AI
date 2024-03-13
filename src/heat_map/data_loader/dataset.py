@@ -45,7 +45,8 @@ class HeatMapDataset(Dataset):
         labels = labels.astype(float)
 
         # replace the -1 values with 0
-        labels = labels.replace(-1.0, 0)
+#         labels = labels.replace(-1.0, 0)
+        labels = labels.replace(-1.0, 1)
         
         labels = labels.astype(bool)
         labels = labels.to_numpy(dtype=bool)

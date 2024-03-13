@@ -23,13 +23,8 @@ from src.heat_map.models.heat_map import HeatMap
 from src.heat_map.data_loader.dataset import HeatMapDataset
 
 # Utils
-from src.utils import save_model,save_checkpoint,load_checkpoint,seed_worker
+from src.utils import save_model,load_model,save_checkpoint,load_checkpoint,seed_worker
 from config import *
-
-
-import numpy as np
-# from PIL import Image
-import matplotlib.pyplot as plt
 
 class HeatMapTrainer:
     def __init__(self, model:None,tensor_board_writer:SummaryWriter,training_csv_path: str =heat_map_training_csv_path,validation_csv_path:str = heat_map_validating_csv_path):
@@ -72,18 +67,6 @@ class HeatMapTrainer:
         self.best_loss=1000000
         
     def compute_weighted_losses(self,targets,y):
-#         def weighted_binary_cross_entropy(y_true, y_pred, positive_weight, negative_weight):
-#             # Ensure inputs are within valid range
-#             y_pred = torch.clamp(y_pred, 1e-15, 1 - 1e-15)
-
-#             # Compute binary cross-entropy loss with weighted terms for positive and negative samples
-#             loss = - (positive_weight * y_true * torch.log(y_pred) + negative_weight * (1 - y_true) * torch.log(1 - y_pred))
-
-#             # Average the weighted loss across all samples
-#             loss = torch.mean(loss)
-            
-#             return loss
-        
         # Compute Losses
         Total_loss= 0
         # Loss as summation of Binary cross entropy for each class :D Only 13 Classes bec we removed the class of no-finding 
@@ -129,7 +112,7 @@ class HeatMapTrainer:
                 # Forward Pass
                 total_loss=self.forward_pass(epoch,batch_idx,images,targets)
                 epoch_loss+=total_loss
-
+                               
                 # backward pass
                 total_loss.backward()
 

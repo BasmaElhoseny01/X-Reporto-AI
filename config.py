@@ -30,15 +30,15 @@ OPERATION_MODE=1
 MODEL_STAGE=2
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
-RUN = "heat_map_2"
+RUN = "heat_map_1"
 EPOCHS=5
-BATCH_SIZE=2
+BATCH_SIZE=4
 # BATCH_SIZE=1
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 8
@@ -47,7 +47,7 @@ LM_Batch_Size=1
 LEARNING_RATE=0.001
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
-THRESHOLD_LR_SCHEDULER=1e-2 # Threshold for measuring the new optimum, to only focus on significant changes
+THRESHOLD_LR_SCHEDULER=1e-1 # Threshold for measuring the new optimum, to only focus on significant changes
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
 # Weights of each model
@@ -66,7 +66,7 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # HeatMap Classifier Weights
-POS_WEIGHTS=[0.7989351569392565, 0.803162048396371, 0.9526921743252555, 0.8814100172499308, 0.968489248420951, 0.980730993253653, 0.9724176677917894, 0.7738415552151413, 0.7616612605178491, 0.9911731269779263, 0.9273308255825692, 0.9545356783875485, 0.7078572776712154]
+POS_WEIGHTS=[0.7536069034837838, 0.7766375363762855, 0.9336821360067068, 0.8235854398293442, 0.927339604173342, 0.9782949343141946, 0.9674094817558937, 0.7570261645897984, 0.7361418971412519, 0.9878153160073213, 0.8470462236697143, 0.9495582174193576, 0.7068170146646359]
 
 # Pathes to the external files
 # training_csv_path = 'datasets/train.csv'
