@@ -2,6 +2,7 @@
 import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
+from sklearn.metrics import f1_score
 from logger_setup import setup_logging
 import logging
 
@@ -59,13 +60,39 @@ class HeatMapEvaluation():
         self.data_loader_val = DataLoader(dataset=HeatMapDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         logging.info("Evaluation dataset loaded")
 
+            
+    def compute_weighted_losses(self,targets,y):
+#         def weighted_binary_cross_entropy(y_true, y_pred, positive_weight, negative_weight):
+#             # Ensure inputs are within valid range
+#             y_pred = torch.clamp(y_pred, 1e-15, 1 - 1e-15)
+
+#             # Compute binary cross-entropy loss with weighted terms for positive and negative samples
+#             loss = - (positive_weight * y_true * torch.log(y_pred) + negative_weight * (1 - y_true) * torch.log(1 - y_pred))
+
+#             # Average the weighted loss across all samples
+#             loss = torch.mean(loss)
+            
+#             return loss
+        
+        # Compute Losses
+        Total_loss= 0
+        # Loss as summation of Binary cross entropy for each class :D Only 13 Classes bec we removed the class of no-finding 
+        for c in range(13):
+            # Construct weights tensor
+            weights = targets[:,c] * POS_WEIGHTS[c] + (1 - targets[:,c]) * (1-POS_WEIGHTS[c])
+     
+            # Initialize the weighted BCE loss
+            Total_loss += nn.BCELoss(weight=weights)(y[:,c],targets[:,c])
+        return Total_loss
+            
+    
     def evaluate(self):
         #Evaluate the model
         scores = self.evaluate_heat_map()
 
         # [Tensor Board] Update the Board by the scalers for that Run
         # self.update_tensor_board_score()
-           
+        
 
     def evaluate_heat_map(self):
         self.model.eval()
@@ -73,6 +100,9 @@ class HeatMapEvaluation():
             # validate the model
             logging.info("Evaluating the model")
             validation_total_loss=0
+            labels=[]
+            # make predictions tensor empty
+            predictions=[]
 
             for batch_idx,(images,targets) in enumerate(self.data_loader_val):
                 # Move inputs to Device
@@ -80,36 +110,53 @@ class HeatMapEvaluation():
                 targets=targets.to(DEVICE)
                 # convert targets to float
                 targets=targets.type(torch.float32)
+                labels.append(targets)
 
                 # Forward Pass [TODO]
                 features,Total_loss,classes=self.forward_pass(images,targets)
-
+                # apply threshold to the classes
+                classes=(classes>0.5).type(torch.float32) 
+                predictions.append(classes)
                 # [Tensor Board] Draw the HeatMap Predictions of this batch
                 #TODO: uncomment
-                self.draw_tensor_board(batch_idx,images,features,classes)
+                # self.draw_tensor_board(batch_idx,images,features,classes)
 
                 validation_total_loss+=Total_loss
-        
+
+            f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(predictions,0))
         # average validation_total_loss
         validation_total_loss/=(len(self.data_loader_val))
         print(f"Validation Loss: {validation_total_loss}")
         logging.info(f"Validation Loss: {validation_total_loss}")
         return validation_total_loss
     
-
+    def F1_score(self, y_true, y_pred):
+        '''
+        F1 Score
+        '''
+        y_true = y_true.cpu().detach().numpy()
+        y_pred = y_pred.cpu().detach().numpy()
+        false_positive = np.sum(np.logical_and(y_true == 0, y_pred == 1))
+        false_negative = np.sum(np.logical_and(y_true == 1, y_pred == 0))
+        true_positive = np.sum(np.logical_and(y_true == 1, y_pred == 1))
+        true_negative = np.sum(np.logical_and(y_true == 0, y_pred == 0))
+        precision = true_positive / (true_positive + false_positive)
+        recall = true_positive / (true_positive + false_negative)
+        f1 = 2 * (precision * recall) / (precision + recall)
+        print(f'Precision: {precision}, Recall: {recall}, F1: {f1}')
+        print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
+        return f1,precision,recall
+    
     def forward_pass(self,images,targets):
         Total_loss=0
         features=[]
-        classes=[]
         # Forward Pass
         feature_map,y=self.model(images)
         features.append(feature_map)
-        classes.append(y)
-        # Calculate Loss
-        for c in range(13):
-            Total_loss+=self.criterion(y[:,c],targets[:,c])
 
-        return features,Total_loss,classes
+        # Calculate Loss
+        Total_loss=self.compute_weighted_losses(targets=targets,y=y)
+        return features,Total_loss,y
     
     ########################################################### General Fuunctions ##########################################
     def update_tensor_board_score():
@@ -220,11 +267,11 @@ class HeatMapEvaluation():
         # Convert the resulting array back to a PIL image
         blended_image_pil = Image.fromarray(blended_image_np).convert("RGB")
         # Display or save the blended image in rgb formate
-        blended_image_pil.show()
+        # blended_image_pil.show()
         # plot img_np
-        plt.imshow(img_np)
-        print(classes)
-        plt.show()
+        # plt.imshow(img_np)
+        # print(classes)
+        # plt.show()
         #convert to tensor
         blended_image_pil = torchvision.transforms.functional.to_tensor(blended_image_pil)
         return blended_image_pil    

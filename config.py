@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=1
+OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=2
 
@@ -79,7 +79,6 @@ evaluation_csv_path = 'datasets/valid-100.csv'
 # evaluation_csv_path = 'datasets/eval.csv'
 test_csv_path:str = 'datasets/test.csv'
 
-# paths to the datasets
 heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
 heat_map_evaluation_csv_path = 'datasets/heat_map_val.csv'
