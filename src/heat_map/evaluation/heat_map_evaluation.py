@@ -48,6 +48,7 @@ class HeatMapEvaluation():
         if CONTINUE_TRAIN:
             self.model=HeatMap().to(DEVICE)
             self.model.load_state_dict(torch.load('models\heatmapoverfit\heat_map_best.pth'))
+            print("model loaded")
         else:
             self.model = model
         self.evaluation_csv_path = evaluation_csv_path
@@ -55,10 +56,13 @@ class HeatMapEvaluation():
 
         self.model.to(DEVICE)
 
-        self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
-
+        # self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
+        pos = torch.tensor(POS_WEIGHTS)
+        self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
+        
         self.data_loader_val = DataLoader(dataset=HeatMapDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         logging.info("Evaluation dataset loaded")
+        print("Evaluation dataset loaded")
 
             
     def compute_weighted_losses(self,targets,y):
@@ -155,7 +159,8 @@ class HeatMapEvaluation():
         features.append(feature_map)
 
         # Calculate Loss
-        Total_loss=self.compute_weighted_losses(targets=targets,y=y)
+        # Total_loss=self.compute_weighted_losses(targets=targets,y=y)
+        Total_loss=self.criterion(y,targets)
         return features,Total_loss,y
     
     ########################################################### General Fuunctions ##########################################
@@ -312,6 +317,7 @@ def init_working_space():
 def main():
     
     logging.info(" X_Reporto Evaluation Started")
+    print(" X_Reporto Evaluation Started")
     # Logging Configurations
     log_config()
     if OperationMode.EVALUATION.value!=OPERATION_MODE :

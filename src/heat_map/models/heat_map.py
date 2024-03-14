@@ -31,7 +31,7 @@ class HeatMap(nn.Module):
         
     def forward(self, x):
         y=self.feature_Layers(x) 
-        y=F.sigmoid(y) #sigmoid as we use BCELoss
+        # y=F.sigmoid(y) #sigmoid as we use BCELoss
         return y
 
 

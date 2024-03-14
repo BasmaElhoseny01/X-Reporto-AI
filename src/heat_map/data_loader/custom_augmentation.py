@@ -40,33 +40,20 @@ class TransformLibrary(object):
     def __init__(self, transform_type:str ='train'):
         if (transform_type == 'train'):
             #print("TransformLibrary called in init train")
-            self.transform =A.Compose(
-                [
-                    # we want the long edge of the image to be resized to IMAGE_INPUT_SIZE, and the short edge of the image to be padded to IMAGE_INPUT_SIZE on both sides,
-                    # such that the aspect ratio of the images are kept, while getting images of uniform size (IMAGE_INPUT_SIZE x IMAGE_INPUT_SIZE)
-                    # LongestMaxSize: resizes the longer edge to IMAGE_INPUT_SIZE while maintaining the aspect ratio
-                    # INTER_AREA works best for shrinking images
-                    A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
-                    A.GaussNoise(),
-                    #  rotate between -2 and 2 degrees
-                    # A.Affine(rotate=(-ANGLE, ANGLE)),
-                    A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE),keep_ratio=True),
-
-                    # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
-                    A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                    A.Normalize(mean=MEAN, std=STD),
-                    ToTensorV2()
-                ]
-                )
+            self.transform =transforms.Compose([
+            transforms.Resize(IMAGE_INPUT_SIZE),
+            transforms.CenterCrop(IMAGE_INPUT_SIZE),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
         else:
-            self.transform = A.Compose(
-                        [
-                            A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
-                            A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                            A.Normalize(mean=MEAN, std=MEAN),
-                            ToTensorV2(),
-                        ]
-                    )
+            self.transform = transforms.Compose([
+            transforms.Resize(IMAGE_INPUT_SIZE),
+            transforms.CenterCrop(IMAGE_INPUT_SIZE),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
     def __call__(self,image):
         #print("TransformLibrary called in call")
         return self.transform(image=image)
