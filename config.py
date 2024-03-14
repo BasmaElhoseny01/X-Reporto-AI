@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=2
 
@@ -37,14 +37,14 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=False
 
 RUN = "heat_map_1"
-EPOCHS=5
+EPOCHS=3
 BATCH_SIZE=4
 # BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 8
+EFFECTIVE_BATCH_SIZE = 16
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
-LEARNING_RATE=0.001
+LEARNING_RATE=1e-4
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-1 # Threshold for measuring the new optimum, to only focus on significant changes

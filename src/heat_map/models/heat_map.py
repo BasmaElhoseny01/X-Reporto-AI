@@ -25,32 +25,14 @@ class GlobalAveragePooling(nn.Module):
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
-        # self.feature_Layers=models.densenet121()
-        self.feature_Layers=models.resnet50(weights=ResNet50_Weights.DEFAULT)
-        # Remove the last two layers
-        self.feature_Layers=nn.Sequential(*list(self.feature_Layers.children())[:-2])
-
-        # Transition Layer
-        # in_channels=2048 --> # channels from the resnet
-        self.transition_Layer = nn.Conv2d(in_channels=2048, 
-                       out_channels=1024, 
-                       kernel_size=3, 
-                       stride=1, 
-                       padding=1)
-
-        self.GAP=GlobalAveragePooling()
-
-        self.fc=nn.Linear(in_features=1024,out_features=13)
-
+        self.feature_Layers=models.densenet121(pretrained=True)
+        num_ftrs = self.feature_Layers.classifier.in_features
+        self.feature_Layers.classifier = nn.Linear(num_ftrs, 13)
+        
     def forward(self, x):
-        feature_map=self.feature_Layers(x) #[4, 2048, 16, 16]
-        feature_map=self.transition_Layer(feature_map) #[4, 1024, 16, 16]
-        y=self.GAP(feature_map)
-
-        # Apply Sigmoid
-        y=F.sigmoid(self.fc(y)) #sigmoid as we use BCELoss
-
-        return feature_map,y
+        y=self.feature_Layers(x) 
+        y=F.sigmoid(y) #sigmoid as we use BCELoss
+        return y
 
 
 
@@ -58,8 +40,8 @@ class HeatMap(nn.Module):
 
 
 # model= HeatMap().to('cuda')
-# # print(model)
-# summary(model, input_size=(4, 3, 512, 512))
+# print(model)
+# summary(model, input_size=(4, 3, 512, 512) )
 
 
 # Freezing

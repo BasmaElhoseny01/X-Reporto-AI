@@ -40,6 +40,9 @@ class HeatMapTrainer:
 
         # create adam optimizer
         self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
+        # convert pos_weight to tensor
+        pos = torch.tensor(POS_WEIGHTS)
+        self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
 
         # Create Criterion 
 #         self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
@@ -201,8 +204,10 @@ class HeatMapTrainer:
         
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
         # Forward Pass
-        _,y=self.model(images)
-        Total_loss=self.compute_weighted_losses(targets=targets,y=y)
+        # _,y=self.model(images)
+        y=self.model(images)
+        # Total_loss=self.compute_weighted_losses(targets=targets,y=y)
+        Total_loss=self.criterion(y,targets)
 
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')
