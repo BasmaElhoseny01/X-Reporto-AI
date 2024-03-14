@@ -43,6 +43,7 @@ class HeatMapTrainer:
         # convert pos_weight to tensor
         pos = torch.tensor(POS_WEIGHTS)
         self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
+        # self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos).to(DEVICE)
 
         # Create Criterion 
 #         self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
@@ -206,6 +207,8 @@ class HeatMapTrainer:
         # Forward Pass
         # _,y=self.model(images)
         y=self.model(images)
+        # print("predictions is : ",y)
+        # print("targets is : ",targets)
         # Total_loss=self.compute_weighted_losses(targets=targets,y=y)
         Total_loss=self.criterion(y,targets)
 
