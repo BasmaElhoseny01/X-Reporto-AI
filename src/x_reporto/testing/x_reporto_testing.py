@@ -91,7 +91,7 @@ class XReportoTesting():
     
     def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,batch_idx:int,loopLength:int,LM_Batch_Size:int):
         logging.error("language_model_forward_pass() Not implemented Yet")
-        pass
+        
         # for batch in range(BATCH_SIZE):
         #     total_LM_losses=0
         #     for i in range(0,loopLength,LM_Batch_Size):

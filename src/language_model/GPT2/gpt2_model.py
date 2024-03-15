@@ -471,4 +471,66 @@ class CustomGPT2(nn.Module):
             seq_len +=1
         # return the generated tokens
         return input_ids
-   
+
+if __name__ == "__main__":
+    config = Config()
+    # load small gpt2 config
+    config.d_model = 768
+    config.d_ff1 = 768
+    config.d_ff2 = 768
+    config.d_ff3 = 768
+    config.num_heads = 12
+    config.num_layers = 12
+    config.vocab_size = 50257
+    config.pretrained_model = "gpt2"
+    config.max_seq_len = 1024
+    config.ignore_index = -100
+    image_config = Config()
+    image_config.d_model = 1024
+    image_config.d_ff1 = 1024
+    image_config.d_ff2 = 768
+    image_config.d_ff3 = 768
+    image_config.num_heads = 16
+    image_config.num_layers = 24
+    image_config.vocab_size = 50257
+    model = CustomGPT2(config,image_config)
+    model.train()
+    # model.convert_to_half()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    print(model)
+    summary(model, input_size=(1, 1, 768), device="cpu")
+
+    # test the model full forward pass and backward pass
+    batch_size = 1
+    seq_len = 1024
+    input_ids = torch.randint(0, config.vocab_size, (batch_size, seq_len))
+    attention_mask = torch.ones((batch_size, seq_len))
+    image_hidden_states = torch.randn((batch_size, 1, 1024))
+    labels = torch.randint(0, config.vocab_size, (batch_size, seq_len))
+    input_ids = input_ids.to(device)
+    attention_mask = attention_mask.to(device)
+    image_hidden_states = image_hidden_states.to(device)
+    labels = labels.to(device)
+    for i in range(10):
+        print(f"Running forward and backward pass {i+1}")
+        output = model(
+        input_ids = input_ids,
+        layer_past = None,
+        attention_mask = attention_mask,
+        position_ids = None,
+        inputs_embeds = None,
+        image_hidden_states = image_hidden_states,
+        labels = labels,
+        use_cache = None,
+        output_attentions = None,
+        seq_len = None
+        )
+        # print(output)
+        loss = output[0]
+        loss.backward()
+        print("Model forward and backward pass successful")
+        print("All tests passed!")
+
+    
+

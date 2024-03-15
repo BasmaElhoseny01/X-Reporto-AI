@@ -5,6 +5,7 @@ from enum import Enum
 
 # Suppress TensorFlow INFO level logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 # Suppress Plt INFO level logs
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
@@ -25,30 +26,30 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=1
+OPERATION_MODE=3
 
 # Model Stage
-MODEL_STAGE=1
+MODEL_STAGE=3
 
 Linear_Schecdular=True # Linear Schecdular if True, Plateau Schecdular if False
 
 # Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
+CONTINUE_TRAIN=True# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
-FREEZE_OBJECT_DETECTOR=False
+FREEZE_OBJECT_DETECTOR=True
 
 RUN = "0"
-EPOCHS=10
+EPOCHS=1
 # BATCH_SIZE=16
-BATCH_SIZE=8
+BATCH_SIZE=1
 #   TODO: change to 64
 # EFFECTIVE_BATCH_SIZE = 64
-EFFECTIVE_BATCH_SIZE = 32
+EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
-LM_Batch_Size=8
-LEARNING_RATE=0.0008
+LM_Batch_Size=1
+LEARNING_RATE=0.0005
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only focus on significant changes
