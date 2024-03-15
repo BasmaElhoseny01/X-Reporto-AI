@@ -16,6 +16,8 @@ import sys
 import torch
 import torch.optim as optim
 from torch.utils.data import  DataLoader
+import torch.nn.functional as F
+
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -45,9 +47,9 @@ class HeatMapEvaluation():
         model: X-Reporto Model
         evaluation_csv_path: Path to the validation csv file
         ''' 
+        self.model=HeatMap().to(DEVICE)
         if CONTINUE_TRAIN:
-            self.model=HeatMap().to(DEVICE)
-            self.model.load_state_dict(torch.load('models\heatmapoverfit\heat_map_best.pth'))
+            self.model.load_state_dict(torch.load('models\heat_map_1\heat_map_best.pth'))
             print("model loaded")
         else:
             self.model = model
@@ -58,7 +60,7 @@ class HeatMapEvaluation():
 
         # self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
         pos = torch.tensor(POS_WEIGHTS)
-        self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
+        self.criterion = nn.BCEWithLogitsLoss(reduction='mean',pos_weight=pos).to(DEVICE)
         
         self.data_loader_val = DataLoader(dataset=HeatMapDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         logging.info("Evaluation dataset loaded")
@@ -107,6 +109,7 @@ class HeatMapEvaluation():
             labels=[]
             # make predictions tensor empty
             predictions=[]
+            precisionSoftmax=[]
 
             for batch_idx,(images,targets) in enumerate(self.data_loader_val):
                 # Move inputs to Device
@@ -119,6 +122,8 @@ class HeatMapEvaluation():
                 # Forward Pass [TODO]
                 features,Total_loss,classes=self.forward_pass(images,targets)
                 # apply threshold to the classes
+                classesSoftmax=F.sigmoid(classes)
+                precisionSoftmax.append((classesSoftmax>0.5).type(torch.float32))
                 classes=(classes>0.5).type(torch.float32) 
                 predictions.append(classes)
                 # [Tensor Board] Draw the HeatMap Predictions of this batch
@@ -127,7 +132,10 @@ class HeatMapEvaluation():
 
                 validation_total_loss+=Total_loss
 
+            print(f"before : ")
             f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(predictions,0))
+            print(f"after : ")
+            f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(precisionSoftmax,0))
         # average validation_total_loss
         validation_total_loss/=(len(self.data_loader_val))
         print(f"Validation Loss: {validation_total_loss}")
@@ -155,8 +163,9 @@ class HeatMapEvaluation():
         Total_loss=0
         features=[]
         # Forward Pass
-        feature_map,y=self.model(images)
-        features.append(feature_map)
+        y=self.model(images)
+        # y=F.sigmoid(y) #sigmoid as we use BCELoss
+        # features.append(feature_map)
 
         # Calculate Loss
         # Total_loss=self.compute_weighted_losses(targets=targets,y=y)

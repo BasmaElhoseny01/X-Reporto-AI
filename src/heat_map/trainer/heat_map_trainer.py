@@ -39,7 +39,8 @@ class HeatMapTrainer:
         self.model.to(DEVICE)
 
         # create adam optimizer
-        self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
+        # self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
         # convert pos_weight to tensor
         pos = torch.tensor(POS_WEIGHTS)
         self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
@@ -49,14 +50,18 @@ class HeatMapTrainer:
 #         self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
+        # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
+
         # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
         self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
         logging.info("Train dataset loaded")        
+        print("Train dataset loaded")        
         self.dataset_val = HeatMapDataset(dataset_path= validation_csv_path, transform_type='val')
         logging.info("Validation dataset loaded")
+        print("Validation dataset loaded")
 
         # create data loader
         g = torch.Generator()
@@ -64,8 +69,10 @@ class HeatMapTrainer:
 #         self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=1, worker_init_fn=seed_worker, generator=g)
         self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=1, worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
+        print(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
+        print(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         
         # Best Loss
         self.best_loss=1000000
@@ -86,6 +93,7 @@ class HeatMapTrainer:
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         # make model in training mode
         logging.info("Start Training")
+        print("Start Training")
         self.model.train()
 
 
@@ -128,10 +136,12 @@ class HeatMapTrainer:
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
                     logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    print(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
 
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+                print(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
                 # [Tensor Board]: Learning Rate
                 self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
@@ -139,6 +149,7 @@ class HeatMapTrainer:
                 if (batch_idx+1)%10==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+                    print(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                    
                     # [Tensor Board]: Epoch Average loss
                     self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 10 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
@@ -154,6 +165,7 @@ class HeatMapTrainer:
                    
             # [Logging]: Average Loss for epoch where each image is seen once
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            print(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
             # [Tensor Board]: Epoch Average loss
             self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
 
@@ -167,6 +179,7 @@ class HeatMapTrainer:
             self.model.eval()
             validation_average_loss= self.validate_during_training(epoch=epoch) 
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
+            print(f'Validation Average Loss: {validation_average_loss:.4f}')
             self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
             self.model.train()          
 
@@ -175,6 +188,7 @@ class HeatMapTrainer:
 
         # save the best model            
         logging.info("Training Done")
+        print("Training Done")
         
     def validate_during_training(self,epoch):
         '''
@@ -214,12 +228,14 @@ class HeatMapTrainer:
 
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')
+            print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')
          
             # [Tensor Board]: Avg Batch Loss
             self.tensor_board_writer.add_scalar('Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
         else:
             logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
+            print(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss 
             self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
