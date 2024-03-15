@@ -42,7 +42,7 @@ class HeatMapTrainer:
         # self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
         self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
         # convert pos_weight to tensor
-        pos = torch.tensor(POS_WEIGHTS)
+        pos = torch.tensor(POS_WEIGHTS)*10
         self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
         # self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos).to(DEVICE)
 
