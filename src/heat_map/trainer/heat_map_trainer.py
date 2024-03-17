@@ -40,10 +40,10 @@ class HeatMapTrainer:
 
         # create adam optimizer
         # self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+        self.optimizer = optim.SGD(self.model.parameters(), lr=0.00001, momentum=0.9)
         # convert pos_weight to tensor
-        pos = torch.tensor(POS_WEIGHTS)*10
-        self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
+        pos = (1-torch.tensor(POS_WEIGHTS))*10
+        self.criterion = nn.BCEWithLogitsLoss(reduction='mean',pos_weight=pos).to(DEVICE)
         # self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos).to(DEVICE)
 
         # Create Criterion 
@@ -51,7 +51,7 @@ class HeatMapTrainer:
 
         # create learning rate scheduler
         # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.1)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.5)
 
         # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
@@ -67,15 +67,15 @@ class HeatMapTrainer:
         g = torch.Generator()
         g.manual_seed(SEED)
 #         self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=1, worker_init_fn=seed_worker, generator=g)
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=1, worker_init_fn=seed_worker, generator=g)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=4, worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         print(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
-        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         print(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         
         # Best Loss
-        self.best_loss=1000000
+        self.best_loss=78.1398
         
     def compute_weighted_losses(self,targets,y):
         # Compute Losses
@@ -212,7 +212,8 @@ class HeatMapTrainer:
             validation_total_loss/=(len(self.data_loader_val))
 
             # update the learning rate according to the validation loss if decrease
-            self.lr_scheduler.step(validation_total_loss)
+#             self.lr_scheduler.step(validation_total_loss)
+            self.lr_scheduler.step()
 
             return validation_total_loss
 

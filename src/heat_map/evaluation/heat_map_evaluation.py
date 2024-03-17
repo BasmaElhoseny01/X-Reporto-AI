@@ -33,6 +33,7 @@ from PIL import Image
 # Modules
 from src.heat_map.models.heat_map import HeatMap
 from src.heat_map.data_loader.dataset import HeatMapDataset
+from src.utils import load_model
 
 # Utils 
 from config import *
@@ -49,7 +50,8 @@ class HeatMapEvaluation():
         ''' 
         self.model=HeatMap().to(DEVICE)
         if CONTINUE_TRAIN:
-            self.model.load_state_dict(torch.load('models\heat_map_1\heat_map_best.pth'))
+            logging.info("Loading heat_map ....")
+            load_model(model=self.model,name='heat_map_epoch_10')
             print("model loaded")
         else:
             self.model = model
@@ -59,8 +61,8 @@ class HeatMapEvaluation():
         self.model.to(DEVICE)
 
         # self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
-        pos = torch.tensor(POS_WEIGHTS)
-        self.criterion = nn.BCEWithLogitsLoss(reduction='mean',pos_weight=pos).to(DEVICE)
+        pos = torch.tensor(POS_WEIGHTS)*5
+        self.criterion = nn.BCEWithLogitsLoss(reduction='sum',pos_weight=pos).to(DEVICE)
         
         self.data_loader_val = DataLoader(dataset=HeatMapDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         logging.info("Evaluation dataset loaded")
