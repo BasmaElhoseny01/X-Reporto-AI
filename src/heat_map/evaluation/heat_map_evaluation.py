@@ -126,7 +126,7 @@ class HeatMapEvaluation():
                 # apply threshold to the classes
                 classesSoftmax=F.sigmoid(classes)
                 precisionSoftmax.append((classesSoftmax>0.5).type(torch.float32))
-                classes=(classes>0.5).type(torch.float32) 
+                classes=(classes>0).type(torch.float32) 
                 predictions.append(classes)
                 # [Tensor Board] Draw the HeatMap Predictions of this batch
                 #TODO: uncomment
