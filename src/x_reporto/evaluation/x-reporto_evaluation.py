@@ -39,7 +39,7 @@ class XReportoEvaluation():
         self.model = model
         self.model.to(DEVICE)
         self.evaluation_csv_path = evaluation_csv_path
-        self.data_loader_val = DataLoader(dataset=CustomDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
+        self.data_loader_val = DataLoader(dataset=CustomDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=2, collate_fn=collate_fn)
         self.tensor_board_writer=tensor_board_writer
         logging.info("Evalution dataset loaded")
     
@@ -72,18 +72,25 @@ class XReportoEvaluation():
                 # images = torch.stack([image.to(DEVICE) for image in images])
                 loopLength=29
                 for batch in range(BATCH_SIZE):
-                    for j in range(29):
-                      reference_sentence=tokenizer.decode(LM_inputs['input_ids'][batch][j].tolist(),skip_special_tokens=True)
-                      with open("logs/predictions.txt", "a") as myfile:
-                        myfile.write("reference_sentences "+str(reference_sentence))
-                        myfile.write("\n")     
+                    # for j in range(29):
+                    #   reference_sentence=tokenizer.decode(LM_inputs['input_ids'][batch][j].tolist(),skip_special_tokens=True)
+                    #   with open("logs/predictions.txt", "a") as myfile:
+                    #     myfile.write("reference_sentences "+str(reference_sentence))
+                    #     myfile.write("\n")     
                     for i in range(0,loopLength,LM_Batch_Size):
                         # Forward Pass
                         # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
-                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1)
+                        reference_sentence=tokenizer.decode(LM_inputs['input_ids'][batch][i].tolist(),skip_special_tokens=True)
+                        if reference_sentence == "":
+                            continue
+                        with open("logs/predictions.txt", "a") as myfile:
+                            myfile.write("reference_sentences "+str(reference_sentence))
+                            myfile.write("\n") 
+                            print("reference: ",str(reference_sentence))
+                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
                         for i,sentence in enumerate(LM_sentances):
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
-                            print("generated_sents_for_selected_regions ",generated_sentence_for_selected_regions)
+                            print("predicted: ",generated_sentence_for_selected_regions)
                             with open("logs/predictions.txt", "a") as myfile:
                                 myfile.write("generated_sents_for_selected_regions "+str(generated_sentence_for_selected_regions))
                                 myfile.write("\n") 

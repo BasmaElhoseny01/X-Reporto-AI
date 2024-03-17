@@ -59,5 +59,5 @@ class PositionalEncoding(nn.Module):
         if past_length is not None:
             x = x + (self.positional_encoding[:, past_length-1:past_length+x.size(1)-1,:]).requires_grad_(False)
         else:
-              x = x + (self.positional_encoding[:, :x.size(1),:]).requires_grad_(False)
+            x = x + (self.positional_encoding[:, :x.size(1),:]).requires_grad_(False)
         return self.dropout(x) # (batch_size, max_seq_len, d_model)

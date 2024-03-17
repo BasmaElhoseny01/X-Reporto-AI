@@ -68,6 +68,7 @@ class CustomGPT2(nn.Module):
         self.fc = nn.Linear(self.d_model, self.vocab_size)
         self.init_weights()
         self.load_pretrained_weights()
+        self.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
         
     def init_weights(self):
         """
@@ -208,7 +209,6 @@ class CustomGPT2(nn.Module):
         # compute model output logits
         logits = self.fc(hidden_states) 
 
-       
         loss = None
         if labels is not None:
             # move labels to correct device to enable model parallelism
@@ -339,6 +339,11 @@ class CustomGPT2(nn.Module):
                 # Multinomial sampling based on the top-k probabilities
                 sampled_index = torch.multinomial(top_k_probs, 1).item()
                 next_token=top_k_indices[0, sampled_index].item()
+                # print top k tokens
+                # print("top_k_indices: ",top_k_indices)
+                tokens = self.tokenizer.convert_ids_to_tokens(top_k_indices[0])
+                # print("top_k_tokens: ",tokens)
+                # print("top_k_indices: ",top_k_indices)
             # concatenate the new token
             next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
 
@@ -469,7 +474,18 @@ class CustomGPT2(nn.Module):
                 break
 
             seq_len +=1
-        # return the generated tokens
+        print("input_ids length: ",input_ids.size())
+        sequence_outputs = beam_scorer.finalize(
+            input_ids,
+            beam_scores,
+            next_tokens,
+            beam_idx,
+            pad_token_id=self.config.pad_token_id,
+            eos_token_id=self.config.eos_token_id+1,
+            max_length=max_length+1,
+        )
+        # print("sequence_outputs: ",sequence_outputs)
+        return  sequence_outputs["sequences"]
         return input_ids
 
 if __name__ == "__main__":

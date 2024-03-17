@@ -58,7 +58,8 @@ class XReportoV1(nn.Module):
             image_config = Config()
             image_config.d_model = 1024
             image_config.d_ff1 = 1024
-            image_config.d_ff2 = 768
+            image_config.d_ff2 = 1024
+            # image_config.d_ff2 = 768
             image_config.d_ff3 = 768
             image_config.num_heads = 16
             image_config.num_layers = 24
@@ -480,7 +481,7 @@ class XReportoV1(nn.Module):
                 if use_beam_search:
                     LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
                 else:
-                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],sampling_top_k=True,top_k=5,device=DEVICE)
+                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,sampling_top_k=True,top_k=5,device=DEVICE)
                 
                 if delete:
                     # Free GPU memory
