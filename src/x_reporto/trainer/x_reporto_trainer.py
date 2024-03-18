@@ -90,13 +90,13 @@ class XReportoTrainer():
         self.checkpoint="healx/gpt-2-pubmed-medium"
         self.tokenizer = Tokenizer(self.checkpoint)
 
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val',tokenizer=self.tokenizer)
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train',tokenizer=self.tokenizer)
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val',tokenizer=self.tokenizer)
         print("Dataset Loaded")
         
         # create data loader
         # TODO suffle Training Loaders
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         print("DataLoader Loaded")
         # initialize the best loss to a large value
@@ -223,10 +223,7 @@ class XReportoTrainer():
                 
                 # Free GPU memory
                 del LM_losses
-                try:
-                    del Total_loss
-                except:
-                    pass
+                del Total_loss
                 del object_detector_losses
                 del selection_classifier_losses
                 del abnormal_binary_classifier_losses
@@ -235,7 +232,7 @@ class XReportoTrainer():
                 # print("losses deleted")
 
             # save the best model
-            if(epoch_loss<self.best_loss) :
+            if(epoch_loss<self.best_loss and epoch%10==0) :
                 self.best_loss=epoch_loss
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                     if TRAIN_RPN:
@@ -799,12 +796,12 @@ if __name__ == '__main__':
     # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
-    # trainer.train()
+    trainer.train()
 
     # # Run Validation
     # trainer.Validate()
 
     # # Predict and display results
     # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
-    trainer.generate_sentences(predict_path_csv='datasets/valid.csv')
+    # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
     # python -m src.x_reporto.trainer.x_reporto_trainer

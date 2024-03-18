@@ -24,7 +24,7 @@ class Config:
     - use_checkpointing (bool): Whether to use gradient checkpointing for memory efficiency.
     - debug (bool): Enable debugging mode if True.
     """
-    max_seq_len = 300
+    max_seq_len = 1024
     d_model = 1024
     d_ff1 = 1024
     d_ff2 = 1024

@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from src.language_model.GPT2.conv1d import Conv1D
 import math
-import sys
+
 class CustomGPT2MultiHeadAttention(nn.Module):
     """
     Custom multi-head attention layer for GPT-2 model.
@@ -86,6 +86,7 @@ class CustomGPT2MultiHeadAttention(nn.Module):
 
         # apply attention to value
         return torch.matmul(p_attn, value), p_attn  # (batch_size, h, max_seq_len, d_k), (batch_size, h, max_seq_len, max_seq_len+1)
+
     def forward(
         self,
         hidden_states: Optional[Tuple[torch.FloatTensor]],
@@ -121,7 +122,6 @@ class CustomGPT2MultiHeadAttention(nn.Module):
             v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
             k = torch.cat((k_image, k), dim=2)
             v = torch.cat((v_image, v), dim=2)
-            # print("k_image.shape", k_image.shape)
 
         if layer_past is not None:
             past_k, past_v = layer_past
