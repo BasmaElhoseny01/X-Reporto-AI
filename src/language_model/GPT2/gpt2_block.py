@@ -18,8 +18,16 @@ class CustomGPT2Block(nn.Module):
         self.rc2 = ResidualConnection(self.config)
         self.ff = FeedForward(self.config)
 
+<<<<<<< HEAD
     def forward(self, x,attention_mask, image_hidden_states=None):
         x = self.rc1(x, lambda x: self.attn(x, image_hidden_states=image_hidden_states,attention_mask=attention_mask))
+=======
+    def forward(self, x,attention_mask, image_hidden_states=None,layer_past = None,use_cache = False,output_attentions = False):
+        outputs = self.rc1(x, lambda x: self.attn(x, image_hidden_states=image_hidden_states,attention_mask=attention_mask
+                                            ,layer_past = layer_past,use_cache = use_cache,output_attentions = output_attentions),is_attention=True)
+        x = outputs[0]
+        outputs = outputs[1:]
+>>>>>>> parent of dadf720 (document gpt attention file)
         x = self.rc2(x, lambda x: self.ff(x))
         return x
 
