@@ -86,7 +86,7 @@ LM_Batch_Size=1
 SCHEDULAR_STEP_SIZE=1
 SCHEDULAR_GAMMA=0.9999999999
 DEBUG=True
-GENERATE_REPORT=False
+GENERATE_REPORT=True
 
 # Training Process Parameters
 CONTINUE_TRAIN=False# Continue training

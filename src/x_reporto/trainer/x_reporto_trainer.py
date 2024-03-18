@@ -267,8 +267,7 @@ class XReportoTrainer():
                     print("Saving abnormal_classifier....")
                     save_model(model=self.model.binary_classifier_region_abnormal,name='abnormal_classifier')
    
-                    #Save language model
-                    print("Saving language model....")
+                    # # Save LM
                     save_model(model=self.model.language_model,name='LM')
                                     
 
@@ -741,11 +740,11 @@ if __name__ == '__main__':
     # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
-    trainer.train()
+    # trainer.train()
 
     # # Run Validation
     # trainer.Validate()
 
     # # Predict and display results
     # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
-    # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
+    trainer.generate_sentences(predict_path_csv='datasets/train.csv')
