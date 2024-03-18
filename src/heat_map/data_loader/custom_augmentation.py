@@ -17,8 +17,8 @@ from torchvision import transforms
 
 # Parameters
 IMAGE_INPUT_SIZE=224
-MEAN=0.474
-STD=0.301
+MEAN=[0.485, 0.456, 0.406]
+STD=[0.229, 0.224, 0.225]
 ANGLE=2
 
 # implement transforms as augmentation with gaussian noise, random rotation

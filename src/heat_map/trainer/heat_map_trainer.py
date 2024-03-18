@@ -38,10 +38,10 @@ class HeatMapTrainer:
         # Move to device
         self.model.to(DEVICE)
 
-        self.optimizer = optim.Adam (self.model.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-5)
+        self.optimizer = optim.Adam (self.model.parameters(), lr=0.0005, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-5)
         
 #         Create Criterion
-        self.criterion = torch.nn.BCELoss(reduction = 'mean').to(DEVICE)
+        self.criterion = torch.nn.BCELoss(reduction = 'sum').to(DEVICE)
 #         self.criterion = nn.BCEWithLogitsLoss(reduction='mean',pos_weight=pos).to(DEVICE)
 #         self.criterion = nn.BCEWithLogitsLoss().to(DEVICE)
 #         self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
@@ -51,7 +51,8 @@ class HeatMapTrainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
-        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
+#         self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
+        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='val')
         logging.info("Train dataset loaded")        
         print("Train dataset loaded")        
         self.dataset_val = HeatMapDataset(dataset_path= validation_csv_path, transform_type='val')
@@ -188,6 +189,8 @@ class HeatMapTrainer:
 
                 # Forward Pass
                 total_loss=self.forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,targets=targets,validate_during_training=True)
+                print("total_loss",total_loss)
+                sys.exit()
                 validation_total_loss+=total_loss
            
             # average validation_total_loss
@@ -204,6 +207,12 @@ class HeatMapTrainer:
         # Forward Pass
         # _,y=self.model(images)
         y=self.model(images)
+        
+        mask = (targets == -1)
+        
+        y[mask]=1
+        targets[mask]=1
+
         Total_loss=self.criterion(y,targets)
     
       

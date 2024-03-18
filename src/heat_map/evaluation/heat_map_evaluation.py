@@ -39,6 +39,7 @@ from src.utils import load_model
 from config import *
 from src.utils import plot_heatmap
 
+from sklearn.metrics import roc_auc_score
 
 class HeatMapEvaluation():
     def __init__(self, model:HeatMap,evaluation_csv_path:str = heat_map_evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
@@ -79,7 +80,9 @@ class HeatMapEvaluation():
             # validate the model
             logging.info("Evaluating the model")
             validation_total_loss=0
-            labels=[]
+            
+            pred_labels= torch.FloatTensor().cuda()
+            gold_labels= torch.FloatTensor().cuda()
             
             for batch_idx,(images,targets) in enumerate(self.data_loader_val):
                 # Move inputs to Device
@@ -89,25 +92,21 @@ class HeatMapEvaluation():
                 # Forward Pass [TODO]
                 features,Total_loss,classes=self.forward_pass(images,targets)
                 
+                gold_labels = torch.cat((gold_labels, targets), 0)
+                pred_labels = torch.cat((pred_labels, classes), 0)
+                
                 # Update Score
-                self.update_heat_map_metrics(heat_map_scores, classes, targets)
-
+                # self.update_heat_map_metrics(heat_map_scores, classes, targets)
+                
                 # [Tensor Board] Draw the HeatMap Predictions of this batch
                 #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,features,classes)
 
                 validation_total_loss+=Total_loss
                 
+            self.computer_AUROC(gold=gold_labels,pred=pred_labels,n_classes=13)
+                
             
-            
-#             print(f"before : ")
-#             f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(predictions,0))
-#             print(f"after : ")
-#             f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(precisionSoftmax,0))
-#         # average validation_total_loss
-#         validation_total_loss/=(len(self.data_loader_val))
-#         print(f"Validation Loss: {validation_total_loss}")
-#         logging.info(f"Validation Loss: {validation_total_loss}")
         return validation_total_loss
 
     def initalize_scorces(self):
@@ -119,14 +118,42 @@ class HeatMapEvaluation():
             heat_map_scores[disease]['true_negative']=0
             heat_map_scores[disease]['false_negative']=0
         return heat_map_scores
+    
+    def computer_AUROC(self,gold,pred,n_classes):
+        outAUROC = []
+            
+        gold = gold.cpu().numpy()
+        pred = pred.cpu().numpy()
+#         print(gold[:,0])
+#         print(pred[:,0])
+#         sys.exit()
+        
+        for i in range(n_classes):
+            try:
+                outAUROC.append(roc_auc_score(gold[:, i], pred[:, i]))
+            except ValueError:
+                logging.info("Class Has One Value" + CLASSES[i])
+                outAUROC.append(-1)
+                pass
+        
+                
+        print(outAUROC)
+        sys.exit()
+        
+        pass
+        
+    
     def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):
-        for idx in range(len(targets)):
+        for i in range(len(targets)):
             # Each Example in the Batch
-            print(predicted_classes[idx])
-            print(targets[idx])
+#             for disease_idx,disease in range(CLASSES):
+#                 if predicted_classes[i][disease_idx].item()
+                
+            print(predicted_classes[i])
+            print(targets[i])
             print(predicted_classes.shape)
             print(targets.shape)
-            sys.exit()
+        sys.exit()
             
         
             

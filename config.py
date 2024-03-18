@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=2
 
@@ -36,8 +36,8 @@ TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
-RUN = "heat_map_2"
-EPOCHS=5
+RUN = "heat_map_4"
+EPOCHS=2
 BATCH_SIZE=8
 # BATCH_SIZE=1
 #   TODO: change to 64
@@ -82,8 +82,8 @@ test_csv_path:str = 'datasets/test.csv'
 
 heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
-heat_map_evaluation_csv_path = 'datasets/heat_map_val.csv'
-# heat_map_evaluation_csv_path = 'datasets/heat_map_train.csv'
+# heat_map_evaluation_csv_path = 'datasets/heat_map_val.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map_train.csv'
 
 # Logging
 PERIODIC_LOGGING=True

@@ -43,17 +43,16 @@ class HeatMapDataset(Dataset):
         labels = self.data_info.iloc[idx, 2:15]
 
         # make labels as numpy array of bool values true if value is 1 else false
-        labels.fillna(0.0, inplace = True)
-            
+        labels.fillna(0.0, inplace = True)  
         labels = labels.astype(float)
 
         # replace the -1 values with 0
-        labels = labels.replace(-1.0, 1)
+#         labels = labels.replace(-1.0, 1.0)
         
-#         labels = labels.astype(bool)
-#         labels = labels.to_numpy(dtype=float16)
-#         labels=torch.as_tensor(labels, dtype=torch.float16)
         labels=torch.tensor(labels.values.astype(float),dtype=torch.float32)
+                
+#         labels = labels.to(torch.LongTensor)
+    
 
         # tranform image
         transformed = self.transform(image=img)
