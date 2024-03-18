@@ -11,3 +11,11 @@ https://paperswithcode.com/dataset/chestx-ray14
 Data:
 https://physionet.org/content/mimic-cxr-jpg/2.1.0/
 https://physionet.org/content/mimic-cxr/2.0.0/
+
+
+Paper of Data
+Repo https://github.com/dcela/chexpert/blob/master/chex/train.py
+2 other papers
+[Bench Mark] https://paperswithcode.com/sota/multi-label-classification-on-chexpert
+https://stanfordmlgroup.github.io/competitions/chexpert/
+
