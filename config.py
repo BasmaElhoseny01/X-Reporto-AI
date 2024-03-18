@@ -30,14 +30,14 @@ OPERATION_MODE=3
 MODEL_STAGE=2
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
-RUN = "heat_map_1"
-EPOCHS=10
+RUN = "heat_map_2"
+EPOCHS=5
 BATCH_SIZE=8
 # BATCH_SIZE=1
 #   TODO: change to 64
@@ -66,6 +66,7 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # HeatMap Classifier Weights
+CLASSES=['Atelectasis','Cardiomegaly','Consolidation','Edema','Enlarged Cardiomediastinum','Fracture','Lung Lesion','Lung Opacity','Pleural Effusion','Pleural Other','Pneumonia','Pneumothorax','Support Devices']
 POS_WEIGHTS=[0.7536069034837838, 0.7766375363762855, 0.9336821360067068, 0.8235854398293442, 0.927339604173342, 0.9782949343141946, 0.9674094817558937, 0.7570261645897984, 0.7361418971412519, 0.9878153160073213, 0.8470462236697143, 0.9495582174193576, 0.7068170146646359]
 
 # Pathes to the external files

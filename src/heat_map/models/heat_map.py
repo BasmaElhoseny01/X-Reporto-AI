@@ -25,9 +25,13 @@ class GlobalAveragePooling(nn.Module):
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
-        self.feature_Layers=models.densenet121(pretrained=True)
+        self.feature_Layers=models.densenet121()
         num_ftrs = self.feature_Layers.classifier.in_features
-        self.feature_Layers.classifier = nn.Linear(num_ftrs, 13)
+        self.feature_Layers.classifier = nn.Sequential(
+            nn.Linear(num_ftrs, 13),
+            nn.Sigmoid()
+        )
+#         self.feature_Layers.classifier = nn.Linear(num_ftrs, 13)
         
     def forward(self, x):
         y=self.feature_Layers(x) 

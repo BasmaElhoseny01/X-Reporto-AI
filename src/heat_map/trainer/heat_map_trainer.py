@@ -38,22 +38,17 @@ class HeatMapTrainer:
         # Move to device
         self.model.to(DEVICE)
 
-        # create adam optimizer
-        # self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
-        self.optimizer = optim.SGD(self.model.parameters(), lr=0.00001, momentum=0.9)
-        # convert pos_weight to tensor
-        pos = (1-torch.tensor(POS_WEIGHTS))*10
-        self.criterion = nn.BCEWithLogitsLoss(reduction='mean',pos_weight=pos).to(DEVICE)
-        # self.criterion = nn.BCEWithLogitsLoss(pos_weight=pos).to(DEVICE)
-
-        # Create Criterion 
+        self.optimizer = optim.Adam (self.model.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-5)
+        
+#         Create Criterion
+        self.criterion = torch.nn.BCELoss(reduction = 'mean').to(DEVICE)
+#         self.criterion = nn.BCEWithLogitsLoss(reduction='mean',pos_weight=pos).to(DEVICE)
+#         self.criterion = nn.BCEWithLogitsLoss().to(DEVICE)
 #         self.criterion = nn.BCELoss()  # Binary Cross-Entropy Loss  -(y log(p)+(1-y)log(1-p))    
 
-        # create learning rate scheduler
-        # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.5)
-
-        # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
+        # Create learning rate scheduler
+#         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.5)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
 
         # create dataset
         self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
@@ -66,8 +61,8 @@ class HeatMapTrainer:
         # create data loader
         g = torch.Generator()
         g.manual_seed(SEED)
-#         self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=1, worker_init_fn=seed_worker, generator=g)
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=4, worker_init_fn=seed_worker, generator=g)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=1, worker_init_fn=seed_worker, generator=g)
+#         self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=4, worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         print(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
@@ -75,21 +70,10 @@ class HeatMapTrainer:
         print(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         
         # Best Loss
-        self.best_loss=78.1398
-        
-    def compute_weighted_losses(self,targets,y):
-        # Compute Losses
-        Total_loss= 0
-        # Loss as summation of Binary cross entropy for each class :D Only 13 Classes bec we removed the class of no-finding 
-        for c in range(13):
-            # Construct weights tensor
-            weights = targets[:,c] * POS_WEIGHTS[c] + (1 - targets[:,c]) * (1-POS_WEIGHTS[c])
-     
-            # Initialize the weighted BCE loss
-            Total_loss += nn.BCELoss(weight=weights)(y[:,c],targets[:,c])
-        return Total_loss
-            
-        
+#         self.best_loss=78.1398
+        self.best_loss=10000000000.0
+       
+             
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         # make model in training mode
         logging.info("Start Training")
@@ -118,8 +102,6 @@ class HeatMapTrainer:
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 targets=targets.to(DEVICE)
-                # convert targets to float
-                targets=targets.type(torch.float32)
 
                 # Forward Pass
                 total_loss=self.forward_pass(epoch,batch_idx,images,targets)
@@ -138,7 +120,7 @@ class HeatMapTrainer:
                     logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
                     print(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
 
-                # Get the new learning rate
+#                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
                 print(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
@@ -222,11 +204,9 @@ class HeatMapTrainer:
         # Forward Pass
         # _,y=self.model(images)
         y=self.model(images)
-        # print("predictions is : ",y)
-        # print("targets is : ",targets)
-        # Total_loss=self.compute_weighted_losses(targets=targets,y=y)
         Total_loss=self.criterion(y,targets)
-
+    
+      
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')
             print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}')

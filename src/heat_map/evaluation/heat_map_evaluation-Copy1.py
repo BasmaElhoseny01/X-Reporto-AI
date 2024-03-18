@@ -58,40 +58,44 @@ class HeatMapEvaluation():
         self.data_loader_val = DataLoader(dataset=HeatMapDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         logging.info("Evaluation dataset loaded")
         print("Evaluation dataset loaded")
-        
-        
-    def evaluate(self):
+        def evaluate(self):
         #Evaluate the model
-        scores = self.evaluate_heat_map()
-        
-        # logging precision and recall
+#         scores = self.evaluate_heat_map()
 
         # [Tensor Board] Update the Board by the scalers for that Run
         # self.update_tensor_board_score()
         
 
     def evaluate_heat_map(self):
-        # Init The Scores
-        heat_map_scores = self.initalize_scorces()
-        
         self.model.eval()
         with torch.no_grad():
             # validate the model
             logging.info("Evaluating the model")
             validation_total_loss=0
             labels=[]
-            
+            # make predictions tensor empty
+            predictions=[]
+            precisionSoftmax=[]
+
             for batch_idx,(images,targets) in enumerate(self.data_loader_val):
                 # Move inputs to Device
                 images = images.to(DEVICE)
-                targets=targets.to(DEVICE) 
+                targets=targets.to(DEVICE)
+                # convert targets to float
+                targets=targets.type(torch.float32)
+                labels.append(targets)
+                print("targets",targets)
 
                 # Forward Pass [TODO]
                 features,Total_loss,classes=self.forward_pass(images,targets)
-                
-                # Update Score
-                self.update_heat_map_metrics(heat_map_scores, classes, targets)
-
+                classes=classes>0.5
+                print("classes",classes)
+                sys.exit()
+                # apply threshold to the classes
+#                 classesSoftmax=F.sigmoid(classes)
+#                 precisionSoftmax.append((classesSoftmax>0.5).type(torch.float32))
+#                 classes=(classes>0).type(torch.float32) 
+#                 predictions.append(classes)
                 # [Tensor Board] Draw the HeatMap Predictions of this batch
                 #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,features,classes)
@@ -100,37 +104,17 @@ class HeatMapEvaluation():
                 
             
             
-#             print(f"before : ")
-#             f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(predictions,0))
-#             print(f"after : ")
-#             f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(precisionSoftmax,0))
-#         # average validation_total_loss
-#         validation_total_loss/=(len(self.data_loader_val))
-#         print(f"Validation Loss: {validation_total_loss}")
-#         logging.info(f"Validation Loss: {validation_total_loss}")
+            print(f"before : ")
+            f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(predictions,0))
+            print(f"after : ")
+            f1_score,precision,recall=self.F1_score(torch.cat(labels,0),torch.cat(precisionSoftmax,0))
+        # average validation_total_loss
+        validation_total_loss/=(len(self.data_loader_val))
+        print(f"Validation Loss: {validation_total_loss}")
+        logging.info(f"Validation Loss: {validation_total_loss}")
         return validation_total_loss
 
-    def initalize_scorces(self):
-        heat_map_scores={key: {} for key in CLASSES}
-        
-        for disease in CLASSES:
-            heat_map_scores[disease]['true_positive']=0
-            heat_map_scores[disease]['false_positive']=0
-            heat_map_scores[disease]['true_negative']=0
-            heat_map_scores[disease]['false_negative']=0
-        return heat_map_scores
-    def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):
-        for idx in range(len(targets)):
-            # Each Example in the Batch
-            print(predicted_classes[idx])
-            print(targets[idx])
-            print(predicted_classes.shape)
-            print(targets.shape)
-            sys.exit()
-            
-        
-            
-        
+    
     def F1_score(self, y_true, y_pred):
         '''
         F1 Score
@@ -150,13 +134,15 @@ class HeatMapEvaluation():
     
     def forward_pass(self,images,targets):
         Total_loss=0
+        features=[]
         # Forward Pass
         y=self.model(images)
-        features=None
+        # y=F.sigmoid(y) #sigmoid as we use BCELoss
+        # features.append(feature_map)
 
         # Calculate Loss
-        #Total_loss=self.criterion(y,targets)
-        Total_loss=torch.nn.BCELoss(reduction = 'mean').to(DEVICE)(y,targets)
+        # Total_loss=self.compute_weighted_losses(targets=targets,y=y)
+        Total_loss=self.criterion(y,targets)
         return features,Total_loss,y
     
     ########################################################### General Fuunctions ##########################################
@@ -181,6 +167,121 @@ class HeatMapEvaluation():
             # Add to Tensor Board
             self.tensor_board_writer.add_image(f'HeatMap_{i}', heat_map, batch_idx)
 
+    def generate_heat_map(self,feature_map,image,classes):
+        feature_map=feature_map.unsqueeze(0)
+        # print(image.shape) # torch.Size([3, 512, 512])
+
+        b, c, h, w = feature_map.size()
+        # print(feature_map.shape)  # torch.Size([batch_size, 2048, 16, 16])
+
+        # Reshape feature map
+        feature_map = feature_map.view(b, c, h*w).transpose(1, 2)
+        # print(feature_map.shape) # torch.Size([1, 256, 2048])
+        fc_weight=torch.nn.Parameter(self.model.fc.weight.t().unsqueeze(0))
+        # print(fc_weight.shape) # torch.Size([1, 2048, 14])
+
+        # Perform batch matrix multiplication
+        cam = torch.bmm(feature_map, fc_weight).transpose(1, 2) #torch.Size([1, 14, 256])
+
+        ## normalize to 0 ~ 1
+        min_val, min_args = torch.min(cam, dim=2, keepdim=True)
+        cam -= min_val
+        max_val, max_args = torch.max(cam, dim=2, keepdim=True)
+        cam /= max_val
+
+        cam = cam.view(b, -1, h, w)
+        cam = torch.nn.functional.interpolate(cam, 
+                                (image.shape[1],image.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+        # print(cam.shape) # torch.Size([13, 512, 512])
+       
+        # multiply each heatmap by the corresponding class probability
+        for i in range(cam.shape[0]):
+            cam[i] = cam[i] * classes[i]
+        # cam = torch.stack(cam)
+            
+        # print(cam.shape) # torch.Size([13, 512, 512])
+        cam = torch.split(cam, 1)
+        # print(cam.shape) #torch.Size([1, 512, 512])
+
+
+        # image = image.permute(1, 2, 0)
+        # # normalize the image
+        # image = (image - image.min()) / (image.max() - image.min())
+        # image=image.to('cpu')
+        # plt.imshow(image, cmap='hot')
+        # plt.show()
+
+        image=imshow(image)
+        heatmapList = []
+        # Load the heatmap images into a list
+        # Convert images to NumPy arrays
+        img_np = np.array(image)        
+        # normalize the image
+        # img_np = (img_np - img_np.min()) / (img_np.max() - img_np.min())
+        # print min and max value of the img_np
+        # print("image ",np.min(img_np),np.max(img_np))
+        # print(classes)
+        for k in range(len(classes)):
+            cam_ = cam[k].squeeze().cpu().data.numpy()
+        
+            # displaied as infera red image 
+            # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.hot(cam_)*255)).convert("RGB")
+        
+            # displaied black and red for important area
+            # cam_pil = Image.fromarray(np.uint8(matplotlib.cm.afmhot(cam_))*100).convert("RGB")
+        
+            # colored but slightly blue
+            cam_pil = Image.fromarray(np.uint8(matplotlib.cm.gist_earth(cam_)*255)).convert("RGB")
+            
+            # print min and max value of the cam_pil
+            # print(np.min(cam_pil),np.max(cam_pil))
+
+            heatmapList.append(np.array(cam_pil) )
+            
+        # Calculate the blended image
+        alpha = 0.8 # Alpha value for blending (adjust as needed)
+        # blended_image_np = img_np.copy().astype(np.float32)
+        # add all images in the heatmapList in one new image 
+        blended_image_np = np.zeros_like(img_np).astype(np.float32)
+        for cam_np in heatmapList:
+            blended_image_np += alpha * cam_np
+        # for cam_np in heatmapList:
+        #     blended_image_np += alpha * cam_np
+        blended_image_np/=13
+        blended_image_np += img_np.astype(np.float32)
+        # Clip the pixel values to the valid range [0, 255]
+        blended_image_np = np.clip(blended_image_np, 0, 255).astype(np.uint8)
+        # Convert the resulting array back to a PIL image
+        blended_image_pil = Image.fromarray(blended_image_np).convert("RGB")
+        # Display or save the blended image in rgb formate
+        # blended_image_pil.show()
+        # plot img_np
+        # plt.imshow(img_np)
+        # print(classes)
+        # plt.show()
+        #convert to tensor
+        blended_image_pil = torchvision.transforms.functional.to_tensor(blended_image_pil)
+        return blended_image_pil    
+
+def imshow(tensor):
+    denormalize = _normalizer(denormalize=True)    
+    if tensor.is_cuda:
+        tensor = tensor.cpu()    
+    tensor = torchvision.utils.make_grid(denormalize(tensor.squeeze()))
+    image = torchvision.transforms.functional.to_pil_image(tensor)
+    return image
+
+
+def _normalizer(denormalize=False):
+    MEAN = [0.485, 0.456, 0.406]
+    STD = [0.229, 0.224, 0.225]    
+    
+    if denormalize:
+        MEAN = [-mean/std for mean, std in zip(MEAN, STD)]
+        STD = [1/std for std in STD]
+    
+    return torchvision.transforms.Normalize(mean=MEAN, std=STD)
+  
 
 def init_working_space():
 
