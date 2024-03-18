@@ -275,8 +275,8 @@ class CustomGPT2(nn.Module):
 
             input_ids = input_ids[:, remove_prefix_length:]
             # print("input_ids shape:", input_ids.shape)
-            if token_type_ids is not None:
-                token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
+            # if token_type_ids is not None:
+            #     token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
 
         attention_mask = kwargs.get("attention_mask", None)
         position_ids = kwargs.get("position_ids", None)

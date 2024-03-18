@@ -328,6 +328,7 @@ class XReportoV1(nn.Module):
            
         if generate_sentence:
                 object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                # get copy of object_detector_features
                 if delete:
                     # Free GPU memory 
                     images=images.to('cpu')
@@ -347,6 +348,9 @@ class XReportoV1(nn.Module):
                 object_detector_features = object_detector_features[selected_regions]
                 # if (index+LM_Batch_Size) >= object_detector_features.shape[0]-1:
                 #     stop=True
+                
+                
+                # assert if object_detector_features is not equal to copy_object_detector_features
                 if use_beam_search:
                     LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
                 else:
@@ -355,8 +359,8 @@ class XReportoV1(nn.Module):
                 # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
                 if delete:
                     # Free GPU memory
-                    object_detector_features=object_detector_features.to('cpu')
-                    del object_detector_features
+                    # object_detector_features=object_detector_features.to('cpu')
+                    # del object_detector_features
                     torch.cuda.empty_cache()
 
                 return LM_sentencses,stop
