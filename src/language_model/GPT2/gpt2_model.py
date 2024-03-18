@@ -175,11 +175,7 @@ class CustomGPT2(nn.Module):
             attention_mask = attention_mask.view(-1, attention_mask.size(-1))
             attention_mask = attention_mask[:, None, None, :]
             # convert attention mask of shape (batch_size,1,1, max_seq_len) to (batch_size, 1, 1, 1+max_seq_len) by concatenating 1s
-            ones = torch.ones(attention_mask.size()[:-1] + (1,), dtype=attention_mask.dtype, device=attention_mask.device)
-            attention_mask = torch.cat((ones, attention_mask), dim=-1)
-            attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
-            attention_mask = (1.0 - attention_mask) * -10000.0  #do masking
-
+            c
 
         presents = ()
         if use_cache is False:
