@@ -11,8 +11,7 @@ import imagesize
 import spacy
 import torch
 from tqdm import tqdm
-from PIL import Image
-import sys
+
 from data_preprocessing.constants import ANATOMICAL_REGIONS, IMAGE_IDS_TO_IGNORE, SUBSTRINGS_TO_REMOVE
 import data_preprocessing.section_parser as sp
 from data_preprocessing.paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg, path_full_dataset,path_dataset,path_dataset_csv
@@ -483,20 +482,18 @@ class DataPreprocessing:
                 writer.writerow(next(csv_reader))
 
             for row in tqdm(csv_reader, total=total_num_rows):
-                mimic_image_file_path = row[3]
+                mimic_image_file_path = os.path.join(path_dataset, row[3])
                 # replace \ with / in mimic_image_file_path
                 mimic_image_file_path = mimic_image_file_path.replace("\\", "/")
                 # update the row with the new bbox coordinates
                 row[3] = row[3].replace("\\", "/")
                 # check if the image exists
                 if not os.path.exists(mimic_image_file_path):
-                    print(mimic_image_file_path)
                     continue
 
                 # read the image
-                # image = cv2.imread(mimic_image_file_path, cv2.IMREAD_UNCHANGED)
-                width,height = get_image_dimensions(mimic_image_file_path)
-                # height, width = image.shape
+                image = cv2.imread(mimic_image_file_path, cv2.IMREAD_UNCHANGED)
+                height, width = image.shape
 
                 # calculate the scaling factors
                 scaling_factor_height = height / old_height
@@ -536,18 +533,3 @@ class DataPreprocessing:
                     writer = csv.writer(f)
                     writer.writerow(row)
 
-def get_image_dimensions(image_path):
-    try:
-        # Open the image file without loading its contents
-        with Image.open(image_path) as img:
-            # Get the dimensions (width, height) of the image
-            width, height = img.size
-            return width, height
-    except FileNotFoundError:
-        print("File not found.")
-    except Exception as e:
-        print("An error occurred:", e)
-
-if __name__=="__main__":
-    data=DataPreprocessing()
-    data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
