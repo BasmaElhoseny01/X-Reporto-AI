@@ -8,33 +8,22 @@ class ModelStage(Enum):
     CLASSIFIER = 2
     LANGUAGE_MODEL = 3
 
-# Parse command-line arguments
-parser = argparse.ArgumentParser(description="Configuration")
+MODEL_STAGE=3
+DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+# X-Report Trainer Hyper Parameters
+EPOCHS=11
+LEARNING_RATE=0.00008
+BATCH_SIZE=1
+LM_Batch_Size=2
+SCHEDULAR_STEP_SIZE=1
+SCHEDULAR_GAMMA=0.9999999999
+DEBUG=True
+GENERATE_REPORT=False
 
-parser.add_argument("--model_stage", type=int, choices=[1, 2, 3], default=3, help="Model stage: 1 (OBJECT_DETECTOR), 2 (CLASSIFIER), or 3 (LANGUAGE_MODEL)")
-parser.add_argument("--debug", action="store_true", help="Enable debugging")
-
-parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs")
-parser.add_argument("--learning_rate", type=float, default=0.00000001, help="Learning rate")
-parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
-parser.add_argument("--scheduler_step_size", type=int, default=1, help="Scheduler step size")
-parser.add_argument("--scheduler_gamma", type=float, default=0.9999999999, help="Scheduler gamma")
-
-parser.add_argument("--abnormal_pos_weight", type=float, default=6.0, help="Abnormal classifier positive weight")
-parser.add_argument("--region_pos_weight", type=float, default=2.2, help="Region selection classifier positive weight")
-
-args = parser.parse_args()
-
-# Update configuration with command-line arguments
-MODEL_STAGE=args.model_stage
-DEBUG = args.debug
-
-# Training Parameters
-EPOCHS = args.epochs
-LEARNING_RATE = args.learning_rate
-BATCH_SIZE = args.batch_size
-SCHEDULAR_STEP_SIZE = args.scheduler_step_size
-SCHEDULAR_GAMMA = args.scheduler_gamma
+# Training Process Parameters
+CONTINUE_TRAIN=True# Continue training
+TRAIN_RPN=False # Tain only RPN of the object detector
+RUN = "0"
 
 # Abnormal Binary Classifier Hyper Parameters
 ABNORMAL_CLASSIFIER_POS_WEIGHT = args.abnormal_pos_weight

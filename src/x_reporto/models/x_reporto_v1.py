@@ -195,6 +195,81 @@ class XReportoV1(nn.Module):
             del attention_mask
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
        
+            # print("Before language model")       
+            valid_input_ids, valid_attention_mask, valid_object_detector_features ,valid_labels= self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets)
+            if delete or True:
+                selection_classifier_targets=selection_classifier_targets.to('cpu')
+                del selection_classifier_targets
+                # del object_detector_features
+                # del input_ids
+                # del attention_mask
+                torch.cuda.empty_cache()
+            # print("here is the problem ",len(input_ids))
+            if index>=len(valid_input_ids):
+                return 0,0,0,0,0,0,0,0,True
+            if (index+LM_Batch_Size) >= len(valid_input_ids):
+                stop=True
+            LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
+            tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+            logits = LM_output[1] 
+            logits = torch.argmax(logits, dim=-1) # of shape [batch_size]
+            print("=============================================================")
+            for reference_sentencs in valid_input_ids[index:index+LM_Batch_Size,:]:
+                rs=tokenizer.decode(reference_sentencs[:100].tolist(),skip_special_tokens=True)
+                print("reference_sentencs in Forward: ",rs)
+            for sentence in logits:
+                generated_sentence_for_selected_regions = tokenizer.decode(sentence[:100].tolist(),skip_special_tokens=True)
+                print("Generated Sentence in Forward: ",generated_sentence_for_selected_regions)
+            if delete:
+                # Free GPU memory
+                object_detector_features=object_detector_features.to('cpu')
+                input_ids=input_ids.to('cpu')
+                attention_mask=attention_mask.to('cpu')
+                del object_detector_features
+                del input_ids
+                del attention_mask
+                del valid_input_ids
+                del valid_attention_mask
+                del valid_object_detector_features
+                torch.cuda.empty_cache()
+
+            return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
+           
+        if generate_sentence:
+                object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
+                if delete:
+                    # Free GPU memory 
+                    images=images.to('cpu')
+                    # move object_detector_targets to cpu
+                    # for i in range(len(object_detector_targets)):
+                    #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
+                    #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
+                    del images
+                    # del object_detector_targets
+                    torch.cuda.empty_cache()
+                    # Stage(2) Binary Classifier
+                selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+                if delete:
+                        # free gpu memory
+                        torch.cuda.empty_cache()
+                selected_regions=torch.ones_like(selected_regions)
+                object_detector_features = object_detector_features[selected_regions]
+                # if (index+LM_Batch_Size) >= object_detector_features.shape[0]-1:
+                #     stop=True
+                if use_beam_search:
+                    LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=True)
+                else:
+                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                
+                # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
+                if delete:
+                    # Free GPU memory
+                    object_detector_features=object_detector_features.to('cpu')
+                    del object_detector_features
+                    torch.cuda.empty_cache()
+
+                return LM_sentencses,stop
+
         else: # Validation (or inference) mode
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)

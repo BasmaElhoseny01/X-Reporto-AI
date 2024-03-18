@@ -326,9 +326,8 @@ class CustomGPT2(nn.Module):
         
         # convert image_hidden_state from batch_size to total_size by copying the same hidden state
         image_hidden_states = image_hidden_states.repeat(1,beam_size,1)
-        if debug
-            print("image_hidden_states shape:", image_hidden_states.shape)
-            print("image_hidden_states:", image_hidden_states)
+        print("image_hidden_states shape:", image_hidden_states.shape)
+        print("image_hidden_states:", image_hidden_states)
 
         beam_scorer = BeamSearchScorer(
                 batch_size=batch_size,

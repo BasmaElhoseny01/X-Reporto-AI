@@ -385,7 +385,81 @@ class XReportoTrainer():
         Args:
             name (str): Name of the model file.
         '''
-        torch.save(self.model.state_dict(), "models/"+name+".pth")
+        if predict_path_csv==None:
+                predicted_dataloader=self.data_loader_val
+        else:
+                predicted_data = CustomDataset(dataset_path= predict_path_csv, transform_type='val',tokenizer=self.tokenizer)
+
+                # create data loader
+                predicted_dataloader = DataLoader(dataset=predicted_data, batch_size=1, shuffle=False, num_workers=4)
+                
+        # make model in Evaluation mode
+        self.model.eval()
+        with torch.no_grad():
+            epoch_loss=0
+            for batch_idx,(object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) in enumerate(predicted_dataloader):
+                # Check GPU memory usage
+                images=object_detector_batch['image']
+                reference_sentences=[]
+                for i in range(len(images)):
+                    reference_sentences.append(LM_batch['bbox_phrase'])
+                       
+                # Move images to Device
+                images = torch.stack([image.to(DEVICE) for image in images])
+                loopLength=29
+                for batch in range(BATCH_SIZE):
+                    for i in range(0,loopLength,LM_Batch_Size):
+                        # Forward Pass
+                        # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
+                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True,use_beam_search=False)
+                        tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+                        for sentence in LM_sentances:
+                            generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
+                            print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
+                            with open("logs/predictions.txt", "a") as myfile:
+                                myfile.write(generated_sentence_for_selected_regions)
+                                myfile.write("\n")
+                        print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
+                        
+                        if stop:
+                            break
+                        
+                
+    def save_check_point(self,epoch):
+        checkpoint={
+            "epoch":epoch,
+            "optim_state":self.optimizer.state_dict()
+        }
+
+
+        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
+            checkpoint['object_detector']=self.model.object_detector.state_dict()
+
+                
+        elif MODEL_STAGE==ModelStage.CLASSIFIER.value:
+                checkpoint['object_detector']=self.model.object_detector.state_dict()            
+
+                checkpoint['region_classifier']=self.model.abnormal_classifier.state_dict()
+                checkpoint['abnormal_classifier']=self.model.abnormal_classifier.state_dict()
+
+                
+        elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+                checkpoint['object_detector']=self.model.object_detector.state_dict()            
+            
+                checkpoint['region_classifier']=self.model.abnormal_classifier.state_dict()
+                checkpoint['abnormal_classifier']=self.model.abnormal_classifier.state_dict()
+
+                # Save Language Model
+
+        # Get the current date and time
+        current_datetime = datetime.datetime.now()
+        # Format the date and time to be part of the filename
+        formatted_datetime = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+        # Create the filename with the formatted datetime
+        name = f"ckpt_{formatted_datetime}"
+
+        # Save Checkpoint File
+        torch.save(checkpoint,"models/" + RUN + '/checkpoints/' + name + ".pth")
     
     def load_model(self,name):
         '''
@@ -439,4 +513,5 @@ if __name__ == '__main__':
     # trainer.validate()
 
     # # Predict and display results
-    # trainer.predict_and_display(predict_path_csv='datasets/predict.csv')
+    # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
+    # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
