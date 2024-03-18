@@ -19,3 +19,5 @@ class Config:
     pretrained_model = "healx/gpt-2-pubmed-medium"
     use_checkpointing = True
     debug = False
+
+print("Config.pretrained_model:", Config.pretrained_model)

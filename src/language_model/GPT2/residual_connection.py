@@ -11,13 +11,7 @@ class ResidualConnection(nn.Module):
         self.ln = LayerNormalization(self.config)
         self.dropout = nn.Dropout(self.config.dropout)
 
-    def forward(self, x, sublayer,is_attention=False):
-        if is_attention:
-            outputs = sublayer(self.ln(x))
-            x = x + self.dropout(outputs[0])
-            # return same outputs as the attention layer
-            outputs = (x,) + outputs[1:]
-            return outputs # tuple (x, present, output_attentions)
+    def forward(self, x, sublayer):
         return x + self.dropout(sublayer(self.ln(x))) # (batch_size, max_seq_len, d_model)
 
 if __name__ == '__main__':

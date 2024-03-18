@@ -7,9 +7,6 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 
 
-from config import *
-
-
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """
     Convert a 2D boolean tensor to a list of indices where the value is True.
@@ -262,24 +259,3 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
         # Add the patch to the Axes
         ax.add_patch(rect)
     plt.show()
-
-
-def save_model(model,name):
-    '''
-    Save the X-Reporto model to a file.
-
-    Args:
-        model(nn): model to be saved
-        name (str): Name of the model file.
-    '''
-    torch.save(model.state_dict(), "models/" + str(RUN) + '/' + name + ".pth")
-
-def load_model(model,name):
-    '''
-    Load the X-Reporto model from a file.
-
-    Args:
-        model(nn): model to be loaded
-        name (str): Name of the model file.
-    '''
-    model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))
