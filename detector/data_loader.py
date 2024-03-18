@@ -25,6 +25,7 @@ class F_RCNNDataset(Dataset):
         # row contains (subject_id,	study_id, image_id, mimic_image_file_path, bbox_coordinates list of list, bbox_labels list,
         #               bbox_phrases list of str, bbox_phrase_exists list of booleans, bbox_is_abnormal list of booleans)
 
+
     def __len__(self):
         return len(self.data_info)
 
@@ -34,7 +35,7 @@ class F_RCNNDataset(Dataset):
 
         # read the image with parent path of current folder + image path
         img_path = os.path.join(os.getcwd(), img_path)
-        img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
+        img = cv2.imread(img_path,0)
         assert img is not None, f"Image at {img_path} is None"
         
         # get the bounding boxes
@@ -81,7 +82,6 @@ class F_RCNNDataset(Dataset):
         target["boxes"] = bboxes
         target["labels"] = labels
 
-        # print("target",target)ٍ
         return img, target
 
 # implement transforms as augmentation with gaussian noise, random rotation
@@ -112,8 +112,8 @@ class Augmentation(object):
 
 
 # Define a custom transform to add Gaussian noise
-class GaussianNoise(object):
-    def __init__(self, mean=0, std=0.0001):
+class AddGaussianNoise(object):
+    def __init__(self, mean=0, std=1):
         self.mean = mean
         self.std = std
 

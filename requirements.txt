@@ -1,3 +1,1 @@
 transformers
-spacy
-spacy-transformers

@@ -29,8 +29,8 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         #TODO: check dimension of the causal mask
         self.register_buffer(
             "causal_mask",
-            torch.tril(torch.ones((self.max_seq_len, self.max_seq_len+1), dtype=torch.bool)).view(
-                1, 1, self.max_seq_len, self.max_seq_len+1
+            torch.tril(torch.ones((self.max_seq_len, self.max_seq_len), dtype=torch.bool)).view(
+                1, 1, self.max_seq_len, self.max_seq_len
             ),
             persistent=False,
         )
@@ -40,10 +40,10 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         # ----------------- TEST -----------------
         self.register_buffer("mask_value", torch.tensor(-1e4), persistent=False)
 
-        # # hidden state to query, key, value
-        # self.w_q = nn.Linear(self.d_model, self.d_model,bias=False)
-        # self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
-        # self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
+        # hidden state to query, key, value
+        self.w_q = nn.Linear(self.d_model, self.d_model,bias=False)
+        self.w_k = nn.Linear(self.d_model, self.d_model,bias=False)
+        self.w_v = nn.Linear(self.d_model, self.d_model,bias=False)
         
         # image hidden state to key, value
         # self.u_k = nn.Linear(self.d_model, self.d_model,bias=False)
@@ -56,8 +56,7 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         self.c_attn = Conv1D(3 * self.d_model, self.d_model)
         self.c_proj = Conv1D(self.d_model, self.d_model)
 
-        # self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
-        self.w_o = Conv1D(self.d_model, self.d_model) # Wo
+        self.w_o = nn.Linear(self.d_model, self.d_model, bias=False) # Wo
         self.dropout = nn.Dropout(config.dropout)
 
         # assert with print "assert self.d_model % self.num_heads == 0"
@@ -75,9 +74,7 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         # causal_mask_selected = causal_mask[:, :, :query_length, :key_length]
 
         query_length, key_length = query.size(-2), key.size(-2)
-        #TODO: check dimension of the causal mask 
-        # causal_mask = causal_mask[:, :, key_length - query_length : key_length, :key_length]
-        causal_mask = causal_mask[:, :, :query_length, :key_length]
+        causal_mask = causal_mask[:, :, key_length - query_length : key_length, :key_length]
         # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
         # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
         # mask_value = torch.full([], mask_value, dtype=scores.dtype, device=scores.device)

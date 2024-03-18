@@ -19,14 +19,13 @@ from transformers import GPT2Tokenizer
 from transformers.generation.beam_search import BeamSearchScorer
 
 class CustomGPT2(nn.Module):
-    def __init__(self, config,image_config):
+    def __init__(self, config,image_config,load_pretrained_weights=False):
         super(CustomGPT2, self).__init__()
         self.config = config
         self.d_model = config.d_model
         self.num_layers = config.num_layers
         self.vocab_size = config.vocab_size
         self.ignore_index = config.ignore_index
-        self.pretrained_model = config.pretrained_model
         # define image transformation feed forward layer
         self.image_to_text = FeedForward(image_config)
 
@@ -48,53 +47,40 @@ class CustomGPT2(nn.Module):
         # define fully connected layer
         self.fc = nn.Linear(self.d_model, self.vocab_size)
         self.init_weights()
-        self.load_pretrained_weights()
+        if load_pretrained_weights:
+            self.load_pretrained_weights()
         
     def init_weights(self):
         self.fc.weight.data.normal_(mean=0.0, std=0.02)
         self.fc.bias.data.zero_()
-    def convert_to_half(self):
-        self.fc.weight.data = self.fc.weight.data.half()
-        self.fc.bias.data = self.fc.bias.data.half()
-        for i in range(self.num_layers):
-            self.blocks[i].attn.c_attn.weight.data = self.blocks[i].attn.c_attn.weight.data.half()
-            self.blocks[i].attn.c_attn.bias.data = self.blocks[i].attn.c_attn.bias.data.half()
-            self.blocks[i].attn.c_proj.weight.data = self.blocks[i].attn.c_proj.weight.data.half()
-            self.blocks[i].attn.c_proj.bias.data = self.blocks[i].attn.c_proj.bias.data.half()
-            self.blocks[i].rc1.ln.gamma.data = self.blocks[i].rc1.ln.gamma.data.half()
-            self.blocks[i].rc1.ln.beta.data = self.blocks[i].rc1.ln.beta.data.half()
-            self.blocks[i].rc2.ln.gamma.data = self.blocks[i].rc2.ln.gamma.data.half()
-            self.blocks[i].rc2.ln.beta.data = self.blocks[i].rc2.ln.beta.data.half()
-            self.blocks[i].ff.fc1.weight.data = self.blocks[i].ff.fc1.weight.data.half()
-            self.blocks[i].ff.fc1.bias.data = self.blocks[i].ff.fc1.bias.data.half()
-            self.blocks[i].ff.fc2.weight.data = self.blocks[i].ff.fc2.weight.data.half()
-            self.blocks[i].ff.fc2.bias.data = self.blocks[i].ff.fc2.bias.data.half()
-
+    
     def load_pretrained_weights(self):
-        if self.pretrained_model is not None:
-            # use GPT2 model with language modeling head, since we want to generate phrases
-            gpt_with_lm_head = GPT2LMHeadModel.from_pretrained(self.pretrained_model)
+        self.checkpoint = "healx/gpt-2-pubmed-medium"
 
-            # copy weights from pre-trained model to custom model
-            # print("pretrained model architecture: ", gpt_with_lm_head)
+        # use GPT2 model with language modeling head, since we want to generate phrases
+        gpt_with_lm_head = GPT2LMHeadModel.from_pretrained(self.checkpoint)
 
-            # copy weights of embedding layers
-            self.wte.token_embedding.weight.data = gpt_with_lm_head.transformer.wte.weight.data
-            
-            # copy weights of transformer blocks
-            for i in range(self.num_layers):
-                self.blocks[i].attn.c_attn.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.weight.data
-                self.blocks[i].attn.c_attn.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.bias.data
-                self.blocks[i].attn.c_proj.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.weight.data
-                self.blocks[i].attn.c_proj.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.bias.data
-                self.blocks[i].rc1.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_1.weight.data
-                self.blocks[i].rc1.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_1.bias.data
-                self.blocks[i].rc2.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_2.weight.data
-                self.blocks[i].rc2.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_2.bias.data
-                self.blocks[i].ff.fc1.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.weight.data.T
-                self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
-                self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
-                self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
+        # copy weights from pre-trained model to custom model
+        # print("pretrained model architecture: ", gpt_with_lm_head)
+
+        # copy weights of embedding layers
+        self.wte.token_embedding.weight.data = gpt_with_lm_head.transformer.wte.weight.data
+        
+        # copy weights of transformer blocks
+        for i in range(self.num_layers):
+            self.blocks[i].attn.c_attn.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.weight.data
+            self.blocks[i].attn.c_attn.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_attn.bias.data
+            self.blocks[i].attn.c_proj.weight.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.weight.data
+            self.blocks[i].attn.c_proj.bias.data = gpt_with_lm_head.transformer.h[i].attn.c_proj.bias.data
+            self.blocks[i].rc1.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_1.weight.data
+            self.blocks[i].rc1.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_1.bias.data
+            self.blocks[i].rc2.ln.gamma.data = gpt_with_lm_head.transformer.h[i].ln_2.weight.data
+            self.blocks[i].rc2.ln.beta.data = gpt_with_lm_head.transformer.h[i].ln_2.bias.data
+            self.blocks[i].ff.fc1.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.weight.data.T
+            self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
+            self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
+            self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
+
 
     def forward(self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -105,13 +91,10 @@ class CustomGPT2(nn.Module):
         image_hidden_states: Optional[torch.Tensor] = None,
         labels: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None
+        output_attentions: Optional[bool] = None,
         ):
 
         if image_hidden_states is not None:
-            # convert image hidden states dtype to dtype of the model
-            image_hidden_states = image_hidden_states.to(dtype=self.fc.weight.dtype)
-            print("image_hidden_states dtype:", image_hidden_states.dtype)
             image_hidden_states = self.image_to_text(image_hidden_states)
 
         input_ids = input_ids.view(-1, input_ids.size(-1))
@@ -122,9 +105,6 @@ class CustomGPT2(nn.Module):
 
         if position_ids is None:
             # apply positional encoding layer
-            # convert hidden states dtype to dtype of the model
-            hidden_states = hidden_states.to(dtype=self.fc.weight.dtype)
-            print("hidden_states dtype:", hidden_states.dtype)
             hidden_states = self.positional_encoding(hidden_states)
 
         # apply dropout layer
@@ -134,67 +114,27 @@ class CustomGPT2(nn.Module):
         if attention_mask is not None:
             attention_mask = attention_mask.view(-1, attention_mask.size(-1))
             attention_mask = attention_mask[:, None, None, :]
-            # convert attention mask of shape (batch_size,1,1, max_seq_len) to (batch_size, 1, 1, 1+max_seq_len) by concatenating 1s
-            ones = torch.ones(attention_mask.size()[:-1] + (1,), dtype=attention_mask.dtype, device=attention_mask.device)
-            attention_mask = torch.cat((ones, attention_mask), dim=-1)
             attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
             attention_mask = (1.0 - attention_mask) * torch.finfo(hidden_states.dtype).min
 
         # apply transformer blocks
         for i in range(self.num_layers):
-            # check if gradient checkpointing should be used
-            if self.config.use_checkpointing:
-                if self.config.debug and i == 0:
-                    print("using gradient checkpointing")
-                hidden_states = torch.utils.checkpoint.checkpoint(self.blocks[i], hidden_states,attention_mask, image_hidden_states)
-            else:
-                hidden_states = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask)
-            if self.config.debug and i == self.num_layers - 1:
-                print("memory usage after block", i, ":", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-            
+            hidden_states = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask)
+        
         # compute model output logits
         logits = self.fc(hidden_states)
-
-        if self.config.debug:
-            # wait two seconds
-            for i in range(400000000):
-            # print("waiting for 2 seconds")
-                continue
-            # print memory usage
-            print("memory usage after logits:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
 
         loss = None
         if labels is not None:
             # move labels to correct device to enable model parallelism
-            # labels = labels.to(logits.device)
-            # convert labels dtype to dtype of the model
-            # labels = labels.to(dtype=torch.long)
+            labels = labels.to(logits.device)
             # Shift so that tokens < n predict n
             shift_logits = logits[..., :-1, :].contiguous()
-            del logits
             shift_labels = labels[..., 1:].contiguous()
-            del labels
-
-            if self.config.debug:
-                # wait two seconds
-                for i in range(200000000):
-                    # print("waiting for 2 seconds")
-                    continue
-                # print memory usage
-                print("memory usage before loss:", torch.cuda.memory_allocated() / 1024 ** 3, "GB")
-            
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
-            # convert logits dtype to float32
-            shift_logits = shift_logits.to(dtype=torch.float32)
-            if self.config.debug:
-                # wait two seconds
-                for i in range(200000000):
-                    # print("waiting for 2 seconds")
-                    continue
-                
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            return (loss,shift_logits) 
+            return (loss,logits) 
         return logits
 
     def prepare_inputs_for_generation(self, input_ids:Tensor=None, seq_len:int=1, **kwargs:dict[str, Any]):

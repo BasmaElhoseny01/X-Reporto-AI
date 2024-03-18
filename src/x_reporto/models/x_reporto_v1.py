@@ -1,4 +1,3 @@
-import sys
 import torch
 from torch import Tensor
 import torch.nn as nn
@@ -12,8 +11,7 @@ from src.object_detector.models.object_detector_factory import ObjectDetector
 
 from src.binary_classifier.models.binary_classifier_selection_region_factory import BinaryClassifierSelectionRegion
 from src.binary_classifier.models.binary_classifier_region_abnormal_factory import BinaryClassifierRegionAbnormal
-from src.language_model.GPT2.gpt2_model import CustomGPT2
-from src.language_model.GPT2.config import Config
+
 class XReportoV1(nn.Module):
     """
     A modular model for object detection and binary classification.
@@ -33,35 +31,13 @@ class XReportoV1(nn.Module):
 
         self.object_detector = ObjectDetector().create_model()
 
-        if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+        if MODEL_STAGE==ModelStage.CLASSIFIER.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
-        if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
-            config = Config()
-            config.d_model = 768
-            config.d_ff1 = 768
-            config.d_ff2 = 768
-            config.d_ff3 = 768
-            config.num_layers = 12
-            config.vocab_size = 50257
-            config.max_seq_len = 1024
-            config.pretrained_model = "gpt2"
-            image_config = Config()
-            image_config.d_model = 1024
-            image_config.d_ff1 = 1024
-            image_config.d_ff2 = 1024
-            image_config.d_ff3 = 768
-            image_config.num_heads = 8
-            image_config.num_layers = 6
-            image_config.vocab_size = 50257
-            image_config.max_seq_len = 1024
-            image_config.dropout = 0.1
-            self.language_model = CustomGPT2(config,image_config)
-            # convert the model to half precision
-            self.language_model.half()
-            self.language_model.convert_to_half()
+    
+        
 
-    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,):
+    def forward(self,images: Tensor , object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None):
         '''
         Forward pass through the X-ReportoV1 model.
 
@@ -167,33 +143,16 @@ class XReportoV1(nn.Module):
         if self.training:
             # Training
             # Stage(1) Object Detector
-            print("Before object detector")
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
-            del images
-            del object_detector_targets
+
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
                 return object_detector_losses,0,0
             # Stage(2) Binary Classifier
-            print("Before binary classifier selection region")
             object_detector_detected_classes=object_detector_detected_classes.to(DEVICE)
             selection_classifier_losses,_,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
             abnormal_binary_classifier_losses,_=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
-            del abnormal_classifier_targets
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses
-            
-            # valid_input_ids, valid_attention_mask, valid_region_features=self.get_valid_decoder_input_for_training(object_detector_detected_classes, selection_classifier_targets, input_ids, attention_mask, object_detector_features)
-            input_ids, attention_mask, object_detector_features = self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features)
-            del selection_classifier_targets
-            del object_detector_detected_classes
-            del object_detector_targets
-          
-            print("Before language model")
-            LM_output=self.language_model(input_ids=input_ids,image_hidden_states=object_detector_features,attention_mask=attention_mask,labels=language_model_targets)
-            del object_detector_features
-            del input_ids
-            del attention_mask
-            return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0]
        
             # print("Before language model")       
             valid_input_ids, valid_attention_mask, valid_object_detector_features ,valid_labels= self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets)
@@ -282,28 +241,4 @@ class XReportoV1(nn.Module):
             
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions
-    
-    def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features):
-        '''
-        Filters the inputs to the language model based on the outputs of the object detector and binary classifiers.
-
-        Args:
-            - selection_classifier_targets (Tensor):Binary Tensor of shape [batch_size x,29]
-                Ground truth indicating whether a phrase exists in the region or not.
-            - input_ids (Tensor): Input tensor for the language model.
-            - attention_mask (Tensor): Attention mask for the language model.
-            - object_detector_features (Tensor): Output features from the object detector.
-
-        Returns:
-            - valid_input_ids (Tensor): Input tensor for the language model.
-            - valid_attention_mask (Tensor): Attention mask for the language model.
-            - valid_region_features (Tensor): Output features from the object detector.
-        '''
-        # using gold standard labels to filter the input to the language model
-        valid_input_ids = input_ids[selection_classifier_targets]
-        valid_attention_mask = attention_mask[selection_classifier_targets]
-        valid_region_features = object_detector_features[selection_classifier_targets]
-        print("valid_input_ids",valid_input_ids.size())
-        print("valid_attention_mask",valid_attention_mask.size())
-        print("valid_region_features",valid_region_features.size())
-        return valid_input_ids, valid_attention_mask, valid_region_features
+            
