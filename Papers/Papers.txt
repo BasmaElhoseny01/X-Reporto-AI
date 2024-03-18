@@ -1,0 +1,13 @@
+https://github.com/gaetandi/cheXpert/blob/master/cheXpert_final.ipynb
+https://github.com/dcela/chexpert/tree/master?tab=readme-ov-file
+https://github.com/jfhealthcare/Chexpert/blob/master/data/dataset.py
+
+
+https://github.com/zoogzog/chexnet/blob/master/ChexnetTrainer.py
+https://github.com/arnoweng/CheXNet
+
+https://paperswithcode.com/dataset/chestx-ray14
+
+Data:
+https://physionet.org/content/mimic-cxr-jpg/2.1.0/
+https://physionet.org/content/mimic-cxr/2.0.0/
