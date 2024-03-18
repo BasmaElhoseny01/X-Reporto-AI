@@ -507,11 +507,11 @@ if __name__ == '__main__':
     # trainer = XReportoTrainer()
 
     # Train the X-Reporto model on the training dataset
-    trainer.train()
+    # trainer.train()
 
     # # Run Validation
     # trainer.validate()
 
     # # Predict and display results
     # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
-    # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
+    trainer.generate_sentences(predict_path_csv='datasets/train.csv')
