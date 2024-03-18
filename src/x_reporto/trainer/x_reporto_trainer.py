@@ -90,13 +90,13 @@ class XReportoTrainer():
         self.checkpoint="healx/gpt-2-pubmed-medium"
         self.tokenizer = Tokenizer(self.checkpoint)
 
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train',tokenizer=self.tokenizer)
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val',tokenizer=self.tokenizer)
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val',tokenizer=self.tokenizer)
         print("Dataset Loaded")
         
         # create data loader
         # TODO suffle Training Loaders
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         print("DataLoader Loaded")
         # initialize the best loss to a large value
@@ -217,10 +217,7 @@ class XReportoTrainer():
 
                     if DEBUG :
                         print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')
-                
-                # update the learning rate
-                self.lr_scheduler.step()
-                
+                            
                 # Free GPU memory
                 del LM_losses
                 del Total_loss
@@ -229,7 +226,7 @@ class XReportoTrainer():
                 del abnormal_binary_classifier_losses
                 torch.cuda.empty_cache()
                 gc.collect()
-                # print("losses deleted")
+                print("losses deleted")
 
             # save the best model
             if(epoch_loss<self.best_loss and epoch%10==0) :
@@ -283,8 +280,8 @@ class XReportoTrainer():
                 print("\n")
                 print(f'epoch: {epoch+1}/{EPOCHS}, epoch loss: {epoch_loss/len(self.data_loader_train):.4f}')
                 print("\n")
-
-
+            # update the learning rate
+            # self.lr_scheduler.step()
                 
 
     def Validate(self):
@@ -752,4 +749,3 @@ if __name__ == '__main__':
     # # Predict and display results
     # trainer.predict_and_display(predict_path_csv='datasets/train.csv')
     # trainer.generate_sentences(predict_path_csv='datasets/train.csv')
-    # python -m src.x_reporto.trainer.x_reporto_trainer
