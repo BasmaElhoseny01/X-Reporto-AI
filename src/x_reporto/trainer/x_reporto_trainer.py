@@ -96,7 +96,7 @@ class XReportoTrainer():
         
         # create data loader
         # TODO suffle Training Loaders
-        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         print("DataLoader Loaded")
         # initialize the best loss to a large value
@@ -646,8 +646,11 @@ class XReportoTrainer():
                             with open("logs/predictions.txt", "a") as myfile:
                                 myfile.write(generated_sentence_for_selected_regions)
                                 myfile.write("\n")
-                        print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
-                        
+                        with open("logs/predictions.txt", "a") as myfile:
+                            print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
+                            myfile.write(str(reference_sentences[batch][i:i+LM_Batch_Size]))
+                            myfile.write("========================================================================")
+                            myfile.write("\n")                  
                         if stop:
                             break
                         
