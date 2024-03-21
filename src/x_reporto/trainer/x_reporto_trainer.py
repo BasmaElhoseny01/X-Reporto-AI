@@ -646,9 +646,12 @@ class XReportoTrainer():
                         for sentence in LM_sentances:
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
                             print("generated_sents_for_selected_regions",generated_sentence_for_selected_regions)
-                            with open("logs/predictions.txt", "a") as myfile:
-                                myfile.write(generated_sentence_for_selected_regions)
-                                myfile.write("\n")
+                            try:
+                                with open("logs/predictions.txt", "a") as myfile:
+                                    myfile.write(generated_sentence_for_selected_regions)
+                                    myfile.write("\n")
+                            except:
+                                pass
                         print("reference_sentences",reference_sentences[batch][i:i+LM_Batch_Size])
                         
                         if stop:

@@ -34,9 +34,9 @@ class Config:
     num_layers = 24
     vocab_size = 50257
     ignore_index = -100
-    bos_token = ""  
-    eos_token = ""
-    pad_token = ""
+    bos_token = "<|endoftext|>"  
+    eos_token = "<|endoftext|>"
+    pad_token = "<|endoftext|>"
     pad_token_id = 50256
     bos_token_id = 50256
     eos_token_id = 50256
