@@ -40,6 +40,7 @@ TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=True
+FREEZE = True
 
 RUN = "3"
 EPOCHS=4

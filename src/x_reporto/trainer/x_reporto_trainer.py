@@ -342,9 +342,9 @@ class XReportoTrainer():
             object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,language_model_targets=LM_targets,batch=batch,index=0,delete = True,validate_during_training=validate_during_training)
             # Backward pass
             object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-            # Total_loss+=object_detector_losses_summation.clone() * OBJECT_DETECTOR_WEIGHT
-            # Total_loss+=selection_classifier_losses * REGION_SELECTION_CLASSIFIER_WEIGHT
-            # Total_loss+=abnormal_binary_classifier_losses * ABNORMAL_CLASSIFIER_WEIGHT
+            Total_loss+=object_detector_losses_summation.clone() * OBJECT_DETECTOR_WEIGHT
+            Total_loss+=selection_classifier_losses * REGION_SELECTION_CLASSIFIER_WEIGHT
+            Total_loss+=abnormal_binary_classifier_losses * ABNORMAL_CLASSIFIER_WEIGHT
             Total_loss+=LM_losses * LM_WEIGHT
             total_LM_losses+=LM_losses * LM_WEIGHT
 

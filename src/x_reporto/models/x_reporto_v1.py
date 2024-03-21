@@ -101,7 +101,7 @@ class XReportoV1(nn.Module):
                     print("Loading abnormal_classifier .....")
                     load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
 
-                    if FREEZE_OBJECT_DETECTOR:
+                    if FREEZE_OBJECT_DETECTOR and FREEZE:
                         # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                         for param in self.object_detector.object_detector.parameters():
                             param.requires_grad = False
@@ -114,14 +114,14 @@ class XReportoV1(nn.Module):
                     logging.info("Loading language_model .....")
                     print("Loading language_model .....")
                     load_model(model=self.language_model,name='LM_best')
+                    if FREEZE:
+                        # Freezing Selection Region Binary Classifier
+                        for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
+                            param.requires_grad = False
 
-                    # Freezing Selection Region Binary Classifier
-                    for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
-                        param.requires_grad = False
-
-                    # Freezing Abnormal Region Binary Classifier
-                    for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
-                        param.requires_grad = False   
+                        # Freezing Abnormal Region Binary Classifier
+                        for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
+                            param.requires_grad = False   
             else:
                 if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                     if TRAIN_RPN:
@@ -142,7 +142,7 @@ class XReportoV1(nn.Module):
                     print("Loading object_detector .....")
                     load_model(model=self.object_detector,name='object_detector_best')
 
-                    if FREEZE_OBJECT_DETECTOR:
+                    if FREEZE_OBJECT_DETECTOR and FREEZE:
                         # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                         for param in self.object_detector.object_detector.parameters():
                             param.requires_grad = False
@@ -156,19 +156,21 @@ class XReportoV1(nn.Module):
                     logging.info("Loading region_classifier .....")
                     print("Loading region_classifier .....")
                     load_model(model=self.binary_classifier_selection_region,name='region_classifier_best')
-                    # Freezing Selection Region Binary Classifier
-                    for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
-                        param.requires_grad = False
+                    if FREEZE:
+                        # Freezing Selection Region Binary Classifier
+                        for param in self.binary_classifier_selection_region.selection_binary_classifier.parameters():
+                            param.requires_grad = False
 
                     # Load the Abnormal Classifier to start training
                     logging.info("Loading abnormal_classifier .....")
                     print("Loading abnormal_classifier .....")
                     load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
-                    # Freezing Abnormal Region Binary Classifier
-                    for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
-                        param.requires_grad = False
-                        # if  GENERATE_REPORT:
-                        #     load_model(model=self.language_model,name='LM_best')
+                    if FREEZE:
+                        # Freezing Abnormal Region Binary Classifier
+                        for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
+                            param.requires_grad = False
+                            # if  GENERATE_REPORT:
+                            #     load_model(model=self.language_model,name='LM_best')
 
         elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.TESTING.value or OPERATION_MODE==OperationMode.EVALUATION.value:
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
