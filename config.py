@@ -94,6 +94,7 @@ SEED=31
 
 DRAW_TENSOR_BOARD=0
 
+BERTSCORE_SIMILARITY_THRESHOLD = 0.9 
 
 def log_config():
     logging.info(f"DEVICE: {DEVICE}")

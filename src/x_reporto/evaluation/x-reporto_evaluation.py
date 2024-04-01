@@ -1,5 +1,6 @@
 # Logging
 import numpy as np
+import spacy
 from logger_setup import setup_logging
 import logging
 
@@ -29,6 +30,10 @@ from torch.utils.tensorboard import SummaryWriter
 import torchmetrics
 from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.meteor.meteor import Meteor
+from pycocoevalcap.rouge.rouge import Rouge
+from collections import defaultdict
+import evaluate
+
 
 
 
@@ -47,8 +52,11 @@ class XReportoEvaluation():
         self.tensor_board_writer=tensor_board_writer
         logging.info("Evalution dataset loaded")
         # load bleu score
+        # calculating a score based on the n-gram overlap between them.
         self.bleu_score = Bleu()
+        self.rouge = Rouge() 
         self.bleu_score.weights = [1/4, 1/4, 1/4, 1/4]
+        # calculating a score based on the harmonic mean of precision and recall.
         self.meteor = Meteor()
 
     def evaluate(self):
@@ -65,45 +73,6 @@ class XReportoEvaluation():
             self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores)
         else:
             print(self.validate_and_evalute_language_model())
-
-        
-    def evaluate_LM(self):            
-        # make model in Evaluation mode
-        tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
-        self.model.eval()
-        with torch.no_grad():
-            epoch_loss=0
-            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):
-                # Check GPU memory usage
-                images = images.to(DEVICE)              
-                # Move images to Device
-                loopLength=29
-                for batch in range(BATCH_SIZE):
-                    # for j in range(29):
-                    #   reference_sentence=tokenizer.decode(LM_inputs['input_ids'][batch][j].tolist(),skip_special_tokens=True)
-                    #   with open("logs/predictions.txt", "a") as myfile:
-                    #     myfile.write("reference_sentences "+str(reference_sentence))
-                    #     myfile.write("\n")     
-                    for i in range(0,loopLength,LM_Batch_Size):
-                        # Forward Pass
-                        # LM_sentances,stop= self.model(images=images, object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,generate_sentence=True)
-                        reference_sentence=tokenizer.decode(LM_inputs['input_ids'][batch][i].tolist(),skip_special_tokens=True)
-                        if reference_sentence == "":
-                            continue
-                        with open("logs/predictions.txt", "a") as myfile:
-                            myfile.write("reference_sentences "+str(reference_sentence))
-                            myfile.write("\n") 
-                            print("reference: ",str(reference_sentence))
-                        LM_sentances= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
-                        for i,sentence in enumerate(LM_sentances):
-                            generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
-                            print("predicted: ",generated_sentence_for_selected_regions)
-                            with open("logs/predictions.txt", "a") as myfile:
-                                myfile.write("generated_sents_for_selected_regions "+str(generated_sentence_for_selected_regions))
-                                myfile.write("\n") 
-                                
-                        # if stop:
-                        #     break
                           
     def validate_and_evalute_language_model(self):
         '''
@@ -115,10 +84,19 @@ class XReportoEvaluation():
         LM_sentances_generated_reference = {
         "generated_sentences": [],
         "reference_sentences": [],
+        "generated_sentences_normal_selected_regions": [],
+        "generated_sentences_abnormal_selected_regions": [],
+        "reference_sentences_normal_selected_regions": [],
+        "reference_sentences_abnormal_selected_regions": [],
         }
         # intialize LM_scores
         LM_scores = {   
-        "METEOR": 0,
+        "BLUE-Sentence": 0,
+        "METEOR-Sentence": 0,
+        "ROUGE-Sentence": 0,
+        "BLUE-report":0,
+        "METEOR-report":0,
+        "ROUGE-report":0,
         }
 
         self.model.eval()
@@ -129,35 +107,38 @@ class XReportoEvaluation():
                 images = images.to(DEVICE)              
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
-                # object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
-                # selection_classifier_targets = selection_classifier_targets.to(DEVICE)
-                # abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
-                # LM_targets = LM_targets.to(DEVICE)
-                # LM_inputs = {k: v.to(DEVICE) for k, v in LM_inputs.items()}
-                # lm_sentences = self.language_model_forward_pass(images=images,input_ids=LM_inputs['input_ids'],attention_mask=LM_inputs['attention_mask'],object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=0,batch_idx=batch_idx,loopLength=29,LM_Batch_Size= LM_Batch_Size,validate_during_training=False)
-                lm_sentences_encoded = self.language_model_forward_pass(images=images)
-                #TODO: detokinze sentences of targets and prediction
-                # print(LM_inputs['input_ids'][0].tolist())
-                # sys.exit()
-                LM_sentances_generated_reference["generated_sentences"].extend(tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True))
-                LM_sentances_generated_reference["reference_sentences"].extend(tokenizer.batch_decode(LM_inputs['input_ids'][0].tolist(),skip_special_tokens=True,clean_up_tokenization_spaces=True))
-        
-        #TODO: Preprosess the sentences
-        print("Start Scoring")
-        generated_sentences=LM_sentances_generated_reference["generated_sentences"]
-        reference_sentences=LM_sentances_generated_reference["reference_sentences"]
-        #1- remove empty sentences
-        filtered_gen_sents = []
-        filtered_ref_sents = []
-        for gen_sent, ref_sent in zip(generated_sentences,reference_sentences):
-            if ref_sent != "":
-                filtered_gen_sents.append(gen_sent)
-                filtered_ref_sents.append(ref_sent)
-        #TODO: compute bleu score using above function
+                
+                lm_sentences_encoded_selected,selected_regions = self.language_model_forward_pass(images=images)
+                generated_sents_for_selected_regions=tokenizer.batch_decode(lm_sentences_encoded_selected,skip_special_tokens=True,clean_up_tokenization_spaces=True)
+                reference_sentences_encoded=LM_inputs['input_ids'][0].tolist()
+                reference_sents_for_selected_regions=tokenizer.batch_decode(reference_sentences_encoded[selected_regions],skip_special_tokens=True,clean_up_tokenization_spaces=True)
+                (
+                gen_sents_for_normal_selected_regions,
+                gen_sents_for_abnormal_selected_regions,
+                ref_sents_for_normal_selected_regions,
+                ref_sents_for_abnormal_selected_regions,
+            ) = self.get_sents_for_normal_abnormal_selected_regions(abnormal_classifier_targets, selected_regions, generated_sents_for_selected_regions, reference_sents_for_selected_regions)
+
+
+                LM_sentances_generated_reference["generated_sentences"].extend(generated_sents_for_selected_regions)
+                LM_sentances_generated_reference["reference_sentences"].extend(reference_sents_for_selected_regions)
+                LM_sentances_generated_reference["generated_sentences_normal_selected_regions"].extend(gen_sents_for_normal_selected_regions)
+                LM_sentances_generated_reference["generated_sentences_abnormal_selected_regions"].extend(gen_sents_for_abnormal_selected_regions)
+                LM_sentances_generated_reference["reference_sentences_normal_selected_regions"].extend(ref_sents_for_normal_selected_regions)
+                LM_sentances_generated_reference["reference_sentences_abnormal_selected_regions"].extend(ref_sents_for_abnormal_selected_regions)
+
+        #compute score for all sentences
+        filtered_gen_sents,filtered_ref_sents=self.filter_empty_sentences(LM_sentances_generated_reference["generated_sentences"],LM_sentances_generated_reference["reference_sentences"])
+        self.compute_LM_score_by_sentence(filtered_gen_sents,filtered_ref_sents,LM_scores)
+        #compute score for normal selected regions
+        filtered_gen_sents,filtered_ref_sents=self.filter_empty_sentences(LM_sentances_generated_reference["generated_sentences_normal_selected_regions"],LM_sentances_generated_reference["reference_sentences_normal_selected_regions"])
+        self.compute_LM_score_by_sentence(filtered_gen_sents,filtered_ref_sents,LM_scores)
+        #compute score for abnormal selected regions
+        filtered_gen_sents,filtered_ref_sents=self.filter_empty_sentences(LM_sentances_generated_reference["generated_sentences_abnormal_selected_regions"],LM_sentances_generated_reference["reference_sentences_abnormal_selected_regions"])
         self.compute_LM_score_by_sentence(filtered_gen_sents,filtered_ref_sents,LM_scores)
         return LM_scores
-
-    def compute_LM_score_by_sentence(self,generated_sentences,reference_sentences,score):
+    
+    def compute_LM_score_by_sentence(self,generated_sentences,reference_sentences,LM_scores):
         '''
         compute_LM_score_by_sentence
         '''
@@ -165,7 +146,10 @@ class XReportoEvaluation():
         generated_sentences_converted = self.convert_for_pycoco_scorer(generated_sentences)
         reference_sentences_converted = self.convert_for_pycoco_scorer(reference_sentences)
         # compute the score
-        score["METEOR"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)
+        
+        LM_scores["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
+        LM_scores["ROUGE-Sentence"] = self.rouge.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
+        LM_scores["BLUE-Sentence"] = self.bleu_score.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
 
     def convert_for_pycoco_scorer(self,sents):
         '''
@@ -176,6 +160,18 @@ class XReportoEvaluation():
             sents_converted[str(num)] = [re.sub(' +', ' ', text.replace(".", " ."))]
         return sents_converted
     
+    def filter_empty_sentences(self,generated_sentences,reference_sentences):
+        '''
+        filter_empty_sentences
+        '''
+         #1- remove empty sentences
+        filtered_gen_sents = []
+        filtered_ref_sents = []
+        for gen_sent, ref_sent in zip(generated_sentences,reference_sentences):
+            if ref_sent != "":
+                filtered_gen_sents.append(gen_sent)
+                filtered_ref_sents.append(ref_sent)
+        return filtered_gen_sents,filtered_ref_sents
 
     def validate_and_evalute_object_detection_and_classifier(self):
         '''
@@ -608,51 +604,113 @@ class XReportoEvaluation():
         return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
     
     def language_model_forward_pass(self,images:torch.Tensor):
-    # def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int,validate_during_training:bool=False):
-        # for batch in range(BATCH_SIZE):
-        #     total_LM_losses=0
-        #     for i in range(0,loopLength,LM_Batch_Size):
-                
-        #         # Forward Pass
-        #         object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
-
-        #         if stop:
-        #             break
-        #         # Backward pass
-        #         Total_loss=None
-        #         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-        #         Total_loss=object_detector_losses_summation.clone()
-        #         Total_loss+=selection_classifier_losses
-        #         Total_loss+=abnormal_binary_classifier_losses
-        #         Total_loss+=LM_losses
-        #         total_LM_losses+=LM_losses
-
-        #     logging.debug(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-        #     # Free GPU memory
-        #     del LM_losses
-        #     del object_detector_losses
-        #     del selection_classifier_losses
-        #     del abnormal_binary_classifier_losses
-        #     torch.cuda.empty_cache()
-        #     gc.collect()
-        # return Total_loss
-            # define the total loss as it may be in backward pass
-        # Forward Pass
-        # LM_sentencses,_= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,language_model_targets=LM_targets,batch=0,index=0,delete = True,validate_during_training=validate_during_training)
-        # LM_sentencses,_= self.model(images=images,delete = True,use_beam_search= True)
         LM_sentencses=[]
         loopLength=29
         for batch in range(BATCH_SIZE):   
             for i in range(0,loopLength,LM_Batch_Size):
                 # Forward Pass              
-                LM_sentances_LM_batch= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
+                LM_sentances_LM_batch,selected_regions= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
                 LM_sentencses.extend(LM_sentances_LM_batch)
                  
         torch.cuda.empty_cache()
         gc.collect()
-        return LM_sentencses
+        return LM_sentencses,selected_regions
 
     ########################################################### General Fuunctions ##########################################
+    
+    def get_sents_for_normal_abnormal_selected_regions(self,region_is_abnormal, selected_regions, generated_sentences_for_selected_regions, reference_sentences_for_selected_regions):
+        selected_region_is_abnormal = region_is_abnormal[selected_regions]
+        # selected_region_is_abnormal is a bool array of shape [num_regions_selected_in_batch] that specifies if a selected region is abnormal (True) or normal (False)
+
+        gen_sents_for_selected_regions = np.asarray(generated_sentences_for_selected_regions)
+        ref_sents_for_selected_regions = np.asarray(reference_sentences_for_selected_regions)
+
+        gen_sents_for_normal_selected_regions = gen_sents_for_selected_regions[~selected_region_is_abnormal].tolist()
+        gen_sents_for_abnormal_selected_regions = gen_sents_for_selected_regions[selected_region_is_abnormal].tolist()
+
+        ref_sents_for_normal_selected_regions = ref_sents_for_selected_regions[~selected_region_is_abnormal].tolist()
+        ref_sents_for_abnormal_selected_regions = ref_sents_for_selected_regions[selected_region_is_abnormal].tolist()
+
+        return (
+            gen_sents_for_normal_selected_regions,
+            gen_sents_for_abnormal_selected_regions,
+            ref_sents_for_normal_selected_regions,
+            ref_sents_for_abnormal_selected_regions,
+        )
+    
+    def get_report(generated_sentences_for_selected_regions, selected_regions):
+        # used in function get_generated_reports
+        sentence_tokenizer = spacy.load("en_core_web_trf")
+        def remove_duplicate_generated_sentences(gen_report_single_image, bert_score):
+            def check_gen_sent_in_sents_to_be_removed(gen_sent, similar_generated_sents_to_be_removed):
+                for lists_of_gen_sents_to_be_removed in similar_generated_sents_to_be_removed.values():
+                    if gen_sent in lists_of_gen_sents_to_be_removed:
+                        return True
+
+                return False
+            
+            gen_sents_single_image = sentence_tokenizer(gen_report_single_image).sents
+
+            gen_sents_single_image = [sent.text for sent in gen_sents_single_image]
+            gen_sents_single_image = list(dict.fromkeys(gen_sents_single_image))
+
+            similar_generated_sents_to_be_removed = defaultdict(list)
+
+            for i in range(len(gen_sents_single_image)):
+                gen_sent_1 = gen_sents_single_image[i]
+
+                for j in range(i + 1, len(gen_sents_single_image)):
+                    if check_gen_sent_in_sents_to_be_removed(gen_sent_1, similar_generated_sents_to_be_removed):
+                        break
+
+                    gen_sent_2 = gen_sents_single_image[j]
+                    if check_gen_sent_in_sents_to_be_removed(gen_sent_2, similar_generated_sents_to_be_removed):
+                        continue
+
+                    bert_score_result = bert_score.compute(
+                        lang="en", predictions=[gen_sent_1], references=[gen_sent_2], model_type="distilbert-base-uncased"
+                    )
+
+                    if bert_score_result["f1"][0] > BERTSCORE_SIMILARITY_THRESHOLD:
+                        # remove the generated similar sentence that is shorter
+                        if len(gen_sent_1) > len(gen_sent_2):
+                            similar_generated_sents_to_be_removed[gen_sent_1].append(gen_sent_2)
+                        else:
+                            similar_generated_sents_to_be_removed[gen_sent_2].append(gen_sent_1)
+
+            gen_report_single_image = " ".join(
+                sent for sent in gen_sents_single_image if not check_gen_sent_in_sents_to_be_removed(sent, similar_generated_sents_to_be_removed)
+            )
+
+            return gen_report_single_image, similar_generated_sents_to_be_removed
+
+        bert_score = evaluate.load("bertscore")
+
+        generated_reports = []
+        curr_index = 0
+
+        for selected_regions_single_image in selected_regions:
+            # sum up all True values for a single row in the array (corresponing to a single image)
+            num_selected_regions_single_image = np.sum(selected_regions_single_image)
+
+            # use curr_index and num_selected_regions_single_image to index all generated sentences corresponding to a single image
+            gen_sents_single_image = generated_sentences_for_selected_regions[
+                curr_index: curr_index + num_selected_regions_single_image
+            ]
+
+            # update curr_index for next image
+            curr_index += num_selected_regions_single_image
+            # concatenate generated sentences of a single image to a continuous string gen_report_single_image
+            gen_report_single_image = " ".join(sent for sent in gen_sents_single_image)
+
+            gen_report_single_image = remove_duplicate_generated_sentences(
+                gen_report_single_image, bert_score
+            )
+            generated_reports.append(gen_report_single_image)
+
+        return generated_reports
+
+
     def initalize_scorces(self):
         '''
         initalize_scorces

@@ -431,7 +431,7 @@ class XReportoV1(nn.Module):
                     return object_detector_losses,object_detector_boxes,object_detector_detected_classes,0,None,0,None,None,None,None
             
             # Stage(2) Binary Classifier
-            selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
+            selection_classifier_losses,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
             if MODEL_STAGE == ModelStage.CLASSIFIER.value or MODEL_STAGE == ModelStage.LANGUAGE_MODEL.value :
                 abnormal_binary_classifier_losses,predicted_abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
              
@@ -490,7 +490,7 @@ class XReportoV1(nn.Module):
                     object_detector_features=object_detector_features.to('cpu')
                     del object_detector_features
                     torch.cuda.empty_cache()
-                return LM_sentencses
+                return LM_sentencses[selected_regions],selected_regions
 
             # Stage(3) Language Model
      
