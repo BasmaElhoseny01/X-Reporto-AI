@@ -9,34 +9,27 @@ from torchsummary import summary
 from config import *
 
 
-class GlobalAveragePooling(nn.Module):
-    def __init__(self):
-        super(GlobalAveragePooling, self).__init__()
-
-    def forward(self, x):
-        # Perform global average pooling along the spatial dimensions (height and width)
-        return F.avg_pool2d(x, x.size()[2:]).view(x.size()[0], -1)
-
-# Example usage:
-# # Create an instance of the GlobalAveragePooling layer
-# gap_layer = GlobalAveragePooling()
-
-
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
-        self.feature_Layers=models.densenet121()
-        num_ftrs = self.feature_Layers.classifier.in_features
-        self.feature_Layers.classifier = nn.Sequential(
-            nn.Linear(num_ftrs, 13),
-            nn.Sigmoid()
-        )
-#         self.feature_Layers.classifier = nn.Linear(num_ftrs, 13)
+        self.model = models.densenet121()
+        # [Fix] The Paper is 13
+        self.model.classifier = nn.Linear(self.model.classifier.in_features, 13)
         
     def forward(self, x):
-        y=self.feature_Layers(x) 
-        # y=F.sigmoid(y) #sigmoid as we use BCELoss
-        return y
+        x=self.model.features(x)
+        
+        # Apply Global Average Pooling to feature maps
+        x = F.adaptive_avg_pool2d(x, (1, 1))
+        
+        # Concatenate the two tensors
+        x = torch.flatten(x, 1)
+        x = x.view(x.size(0), -1)
+        
+        # Classifier
+        x = self.model.classifier(x)
+
+        return x
 
 
 
@@ -44,8 +37,8 @@ class HeatMap(nn.Module):
 
 
 # model= HeatMap().to('cuda')
-# print(model)
-# summary(model, input_size=(4, 3, 512, 512) )
+# # print(model)
+# summary(model, input_size=(4, 3, 224, 224) )
 
 
 # Freezing

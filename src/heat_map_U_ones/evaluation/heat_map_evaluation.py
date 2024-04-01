@@ -31,15 +31,15 @@ import torchvision
 from PIL import Image
 
 # Modules
-from src.heat_map.models.heat_map import HeatMap
-from src.heat_map.data_loader.dataset import HeatMapDataset
+from src.heat_map_U_ones.models.heat_map import HeatMap
+from src.heat_map_U_ones.data_loader.dataset import HeatMapDataset
 from src.utils import load_model
 
 # Utils 
 from config import *
 from src.utils import plot_heatmap
 
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import precision_recall_curve, roc_auc_score
 
 class HeatMapEvaluation():
     def __init__(self, model:HeatMap,evaluation_csv_path:str = heat_map_evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
@@ -52,13 +52,17 @@ class HeatMapEvaluation():
         self.model=model
         self.model.to(DEVICE)
         
-        self.evaluation_csv_path = evaluation_csv_path
         self.tensor_board_writer=tensor_board_writer
+        
+        self.criterion = nn.BCEWithLogitsLoss(reduction='mean')
+        
+        self.dataset_eval = HeatMapDataset(dataset_path= evaluation_csv_path, transform_type='test')
+        logging.info(f"Evaluation dataset loaded Size: {len(self.dataset_eval)}")   
 
         
-        self.data_loader_val = DataLoader(dataset=HeatMapDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
-        logging.info("Evaluation dataset loaded")
-        print("Evaluation dataset loaded")
+        self.data_loader_eval = DataLoader(dataset=self.dataset_eval, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)        
+        logging.info(f"Evaluation DataLoader Loaded Size: {len(self.data_loader_eval)}")
+        
         
         
     def evaluate(self):
@@ -74,6 +78,9 @@ class HeatMapEvaluation():
     def evaluate_heat_map(self):
         # Init The Scores
         heat_map_scores = self.initalize_scorces()
+        all_preds= np.zeros((1, len(CLASSES)))
+        all_targets= np.zeros((1, len(CLASSES)))
+      
         
         self.model.eval()
         with torch.no_grad():
@@ -81,19 +88,24 @@ class HeatMapEvaluation():
             logging.info("Evaluating the model")
             validation_total_loss=0
             
-            pred_labels= torch.FloatTensor().cuda()
-            gold_labels= torch.FloatTensor().cuda()
+        
             
-            for batch_idx,(images,targets) in enumerate(self.data_loader_val):
+            for batch_idx,(images,targets) in enumerate(self.data_loader_eval):
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 targets=targets.to(DEVICE) 
 
                 # Forward Pass [TODO]
-                features,Total_loss,classes=self.forward_pass(images,targets)
+                features,Total_loss,preds=self.forward_pass(images,targets)
+                #print("classes",classes)
+                #print("Total_loss",Total_loss)
+                #sys.exit()
                 
-                gold_labels = torch.cat((gold_labels, targets), 0)
-                pred_labels = torch.cat((pred_labels, classes), 0)
+                # Cumulate all predictions ans labels
+                all_preds = np.concatenate((all_preds, preds.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+                
+          
                 
                 # Update Score
                 # self.update_heat_map_metrics(heat_map_scores, classes, targets)
@@ -104,10 +116,30 @@ class HeatMapEvaluation():
 
                 validation_total_loss+=Total_loss
                 
-            self.computer_AUROC(gold=gold_labels,pred=pred_labels,n_classes=13)
+                break
+                
+            # Compute ROC
+            roc=self.compute_ROC(y_true=all_targets,y_scores=all_preds,n_classes=len(CLASSES))
+            print("roc",roc)
+            sys.exit()
                 
             
         return validation_total_loss
+    
+    
+    def forward_pass(self,images,targets):
+        '''
+        y: Prob not classes
+        '''
+        Total_loss=0
+        # Forward Pass
+        y=self.model(images)
+        features=None
+
+        # Calculate Loss
+        Total_loss=self.criterion(targets,y)
+        
+        return features,Total_loss,y
 
     def initalize_scorces(self):
         heat_map_scores={key: {} for key in CLASSES}
@@ -119,100 +151,87 @@ class HeatMapEvaluation():
             heat_map_scores[disease]['false_negative']=0
         return heat_map_scores
     
-    def computer_AUROC(self,gold,pred,n_classes):
-        outAUROC = []
-            
-        gold = gold.cpu().numpy()
-        pred = pred.cpu().numpy()
-#         print(gold[:,0])
-#         print(pred[:,0])
-#         sys.exit()
-        
+    def compute_ROC(self,y_true,y_scores,n_classes):
+        result = []
+        print("y_scores",y_scores)
+        print("y_true",y_true)
+    
         for i in range(n_classes):
+            precisions, recalls, thresholds= precision_recall_curve(y_true[1:, i].flatten(), y_scores[1:, i].flatten())
+            print("precisions",precisions)
+            print("recalls",recalls)
+            print("thresholds",thresholds)
+            #id = np.argmax(recalls[:len(recalls)-1])
             try:
-                outAUROC.append(roc_auc_score(gold[:, i], pred[:, i]))
-            except ValueError:
-                logging.info("Class Has One Value" + CLASSES[i])
-                outAUROC.append(-1)
-                pass
-        
+                result.append(roc_auc_score(y_true[1:, i], y_score[1:, i], average="weighted"))
+            except:
+                result.append(0)          
                 
-        print(outAUROC)
-        sys.exit()
+        return result
         
-        pass
         
     
-    def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):
-        for i in range(len(targets)):
-            # Each Example in the Batch
-#             for disease_idx,disease in range(CLASSES):
-#                 if predicted_classes[i][disease_idx].item()
+#     def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):
+#         for i in range(len(targets)):
+#             # Each Example in the Batch
+# #             for disease_idx,disease in range(CLASSES):
+# #                 if predicted_classes[i][disease_idx].item()
                 
-            print(predicted_classes[i])
-            print(targets[i])
-            print(predicted_classes.shape)
-            print(targets.shape)
-        sys.exit()
+#             print(predicted_classes[i])
+#             print(targets[i])
+#             print(predicted_classes.shape)
+#             print(targets.shape)
+#         sys.exit()
             
         
             
         
-    def F1_score(self, y_true, y_pred):
-        '''
-        F1 Score
-        '''
-        y_true = y_true.cpu().detach().numpy()
-        y_pred = y_pred.cpu().detach().numpy()
-        false_positive = np.sum(np.logical_and(y_true == 0, y_pred == 1))
-        false_negative = np.sum(np.logical_and(y_true == 1, y_pred == 0))
-        true_positive = np.sum(np.logical_and(y_true == 1, y_pred == 1))
-        true_negative = np.sum(np.logical_and(y_true == 0, y_pred == 0))
-        precision = true_positive / (true_positive + false_positive)
-        recall = true_positive / (true_positive + false_negative)
-        f1 = 2 * (precision * recall) / (precision + recall)
-        print(f'Precision: {precision}, Recall: {recall}, F1: {f1}')
-        print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
-        return f1,precision,recall
-    
-    def forward_pass(self,images,targets):
-        Total_loss=0
-        # Forward Pass
-        y=self.model(images)
-        features=None
+#     def F1_score(self, y_true, y_pred):
+#         '''
+#         F1 Score
+#         '''
+#         y_true = y_true.cpu().detach().numpy()
+#         y_pred = y_pred.cpu().detach().numpy()
+#         false_positive = np.sum(np.logical_and(y_true == 0, y_pred == 1))
+#         false_negative = np.sum(np.logical_and(y_true == 1, y_pred == 0))
+#         true_positive = np.sum(np.logical_and(y_true == 1, y_pred == 1))
+#         true_negative = np.sum(np.logical_and(y_true == 0, y_pred == 0))
+#         precision = true_positive / (true_positive + false_positive)
+#         recall = true_positive / (true_positive + false_negative)
+#         f1 = 2 * (precision * recall) / (precision + recall)
+#         print(f'Precision: {precision}, Recall: {recall}, F1: {f1}')
+#         print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
+#         return f1,precision,recall
 
-        # Calculate Loss
-        #Total_loss=self.criterion(y,targets)
-        Total_loss=torch.nn.BCELoss(reduction = 'mean').to(DEVICE)(y,targets)
-        return features,Total_loss,y
     
-    ########################################################### General Fuunctions ##########################################
-    def update_tensor_board_score():
-        pass
+#     ########################################################### General Fuunctions ##########################################
+#     def update_tensor_board_score():
+#         pass
 
-    def draw_tensor_board(self,batch_idx,images,features,classes):
-        '''
-        Add images to tensorboard
-        '''
-        images=images.to('cpu')
-        # convert features and classes to tensor
-        features=torch.stack(features)
-        classes=torch.stack(classes)
-        # print(features.shape) # torch.Size([1, 2, 1024, 16, 16]).
-        # print(classes.shape) # torch.Size([1, 2, 13])
-        classes=classes.squeeze(0)
-        features=features.squeeze(0)
-        for i in range(images.shape[0]):
-            # Generate HeatMap
-            heat_map=self.generate_heat_map(feature_map=features[i],image=images[i],classes=classes[i])
-            # Add to Tensor Board
-            self.tensor_board_writer.add_image(f'HeatMap_{i}', heat_map, batch_idx)
+#     def draw_tensor_board(self,batch_idx,images,features,classes):
+#         '''
+#         Add images to tensorboard
+#         '''
+#         images=images.to('cpu')
+#         # convert features and classes to tensor
+#         features=torch.stack(features)
+#         classes=torch.stack(classes)
+#         # print(features.shape) # torch.Size([1, 2, 1024, 16, 16]).
+#         # print(classes.shape) # torch.Size([1, 2, 13])
+#         classes=classes.squeeze(0)
+#         features=features.squeeze(0)
+#         for i in range(images.shape[0]):
+#             # Generate HeatMap
+#             heat_map=self.generate_heat_map(feature_map=features[i],image=images[i],classes=classes[i])
+#             # Add to Tensor Board
+#             self.tensor_board_writer.add_image(f'HeatMap_{i}', heat_map, batch_idx)
 
 
 def init_working_space():
 
     # Creating tensorboard folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    current_datetime="test"
     tensor_board_folder_path="./tensor_boards/" + "heat_maps/" + str(RUN)+ f"/eval_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
@@ -244,13 +263,13 @@ def main():
     # Create an XReportoTrainer instance with the X-Reporto model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
-    # Start Training
+    # Start Evaluation
     evaluator.evaluate()
         
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
-    setup_logging(log_file_path='./logs/heat_map_Evaluator.log',bash=True,periodic_logger=PERIODIC_LOGGING)
+    setup_logging(log_file_path='./logs/heat_map_u_ones_Evaluator.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
     try:
         # The main script runs here
@@ -261,4 +280,4 @@ if __name__ == '__main__':
     
 
      
-# python -m src.heat_map.evaluation.heat_map_evaluation
+# python -m src.heat_map_U_ones.evaluation.heat_map_evaluation

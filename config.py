@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=1
+OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=2
 
@@ -37,11 +37,11 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=False
 
 RUN = "heat_map_4"
-EPOCHS=2
+EPOCHS=5
 BATCH_SIZE=8
 # BATCH_SIZE=1
 #   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = 16
+EFFECTIVE_BATCH_SIZE = 16 
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
 LEARNING_RATE=1e-3
@@ -67,7 +67,23 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # HeatMap Classifier Weights
 CLASSES=['Atelectasis','Cardiomegaly','Consolidation','Edema','Enlarged Cardiomediastinum','Fracture','Lung Lesion','Lung Opacity','Pleural Effusion','Pleural Other','Pneumonia','Pneumothorax','Support Devices']
-POS_WEIGHTS=[0.7536069034837838, 0.7766375363762855, 0.9336821360067068, 0.8235854398293442, 0.927339604173342, 0.9782949343141946, 0.9674094817558937, 0.7570261645897984, 0.7361418971412519, 0.9878153160073213, 0.8470462236697143, 0.9495582174193576, 0.7068170146646359]
+
+POS_WEIGHTS=[3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,2.2849,36.2066,9.0119,9.8955,1.9085]
+
+# CLASSES={'No Finding':9.9758,
+# 'Enlarged Cardiomediastinum':4.0310,
+# 'Cardiomegaly':6.3618,
+# 'Lung Opacity':1.3439,
+# 'Lung Lesion':20.9506,
+# 'Edema': 3.4262,
+# 'Consolidation':5.2551,
+# 'Pneumonia':9.0119,
+# 'Atelectasis':3.3283,
+# 'Pneumothorax':9.8955,
+# 'Pleural Effusion': 2.2849,
+# 'Pleural Other':36.2066,
+# 'Fracture':23.0994,
+# 'Support Devices':1.9085}
 
 # Pathes to the external files
 # training_csv_path = 'datasets/train.csv'

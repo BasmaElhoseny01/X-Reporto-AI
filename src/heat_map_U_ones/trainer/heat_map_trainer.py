@@ -26,31 +26,36 @@ from src.heat_map_U_ones.data_loader.dataset import HeatMapDataset
 from src.utils import save_model,load_model,save_checkpoint,load_checkpoint,seed_worker
 from config import *
 
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 class HeatMapTrainer:
     def __init__(self, model:None,tensor_board_writer:SummaryWriter,training_csv_path: str =heat_map_training_csv_path,validation_csv_path:str = heat_map_validating_csv_path):
-        #self.model = model
+        self.model = model
         #if CONTINUE_TRAIN:
             #logging.info("Loading heat_map ....")
             #load_model(model=self.model,name='heat_map_best')
             
-        #self.tensor_board_writer=tensor_board_writer
+        self.tensor_board_writer=tensor_board_writer
 
-        ## Move to device
-        #self.model.to(DEVICE)
+        # Move to device
+        self.model.to(DEVICE)
 
-        #self.optimizer = optim
+        # Optimizer
+        # The learning rate was initially set to 1e-4
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, betas=(0.9, 0.999))
+        
+        # Create learning rate scheduler
+        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
         
         #Create Criterion
-        #self.criterion = nn.BCEWithLogitsLoss(reduction='mean',pos_weight=pos).to(DEVICE)
- 
-
-        # Create learning rate scheduler
-        #self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=7, gamma=0.5)
+        #self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight= torch.tensor(POS_WEIGHTS).to(DEVICE))
+        self.criterion = nn.BCEWithLogitsLoss(reduction='mean')
 
         # create dataset
         self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
-        logging.info(f"Train dataset loaded Size: {len(self.dataset_train)}")        
-        #print("Train dataset loaded")    
+        logging.info(f"Train dataset loaded Size: {len(self.dataset_train)}")   
         #img,labels=(self.dataset_train[76])   
         
         #self.dataset_val = HeatMapDataset(dataset_path= validation_csv_path, transform_type='val')
@@ -69,10 +74,116 @@ class HeatMapTrainer:
         #print(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         
         # Best Loss
-        #self.best_loss=78.1398
-        #self.best_loss=10000000000.0
+        self.best_loss=10000000000.0
     
+    def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
+        # make model in training mode
+        logging.info("Start Training")
+        self.model.train()
+
+        total_steps=0
+        for epoch in range(start_epoch, start_epoch + EPOCHS):
+            if epoch==start_epoch:
+                # Loaded loss from chkpt
+                epoch_loss=epoch_loss_init
+            else:
+                epoch_loss = 0
+            for batch_idx, (images, targets) in enumerate(self.data_loader_train):
+                if batch_idx < start_batch:
+                    continue  # Skip batches until reaching the desired starting batch number
+               
+                ## Test Recovery
+                # if epoch==3 and batch_idx==1:
+                    # print("Start Next time from")
+                    # print(object_detector_targets[1])
+                    # print(batch_idx)
+                    # raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH") 
+             
+                # Move inputs to Device
+                images = images.to(DEVICE)
+                targets=targets.to(DEVICE)
+
+                # Forward Pass
+                y_pred=self.model(images)              
+                
+                # Compute Loss
+                total_loss = self.criterion(targets, y_pred)
+                #logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {total_loss:.4f}')
+               
+                epoch_loss+=total_loss
+                               
+                # backward pass
+                total_loss.backward()
+
+
+                # Accumulation Learning
+                if True or (batch_idx+1) %ACCUMULATION_STEPS==0:
+                    # update the parameters
+                    self.optimizer.step()
+                    # zero the parameter gradients
+                    self.optimizer.zero_grad()
+#                     logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+
+                ## Get the new learning rate
+                #new_lr = self.optimizer.param_groups[0]['lr']
+                #logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+                ## [Tensor Board]: Learning Rate
+                #self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
+
+
+                if (batch_idx+1)%10==0:
+                    # Every 100 Batch print Average Loss for epoch till Now
+                    logging.info(f'[Every 10 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+                    
+                    break
+                  
+                   
+                    #[Tensor Board]: Epoch Average loss
+                    #self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 10 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
+                
+                ## Checkpoint every N steps inside epochs
+                #total_steps+=1            
+                #if(total_steps%CHECKPOINT_EVERY_N == 0):
+                    #save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+                                    #scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
+                                    #best_loss=self.best_loss,epoch_loss=epoch_loss)
+                    #total_steps=0
+                
+                   
+            # [Logging]: Average Loss for epoch where each image is seen once
+            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            ## [Tensor Board]: Epoch Average loss
+            #self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
+            
+            #self.lr_scheduler.step()
+
+                   
+            # Free GPU memory
+            del total_loss
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            ## validate the model no touch :)
+            #self.model.eval()
+            #validation_average_loss= self.validate_during_training(epoch=epoch) 
+            #logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
+            #self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
+            #self.model.train()          
+
+            # saving model per epoch
+            #self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
+            self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=1555.0000)
+
+        logging.info("Training Done")
         
+    def save_model(self,model:torch.nn.Module,name:str,epoch:int,validation_loss:float):
+        '''
+        Save the current state of model.
+        '''
+        logging.info("Saving "+name+"_epoch "+str(epoch+1))
+        save_model(model=model,name=name+"_epoch_"+str(epoch+1))
+        #self.check_best_model(epoch,validation_loss,name,model)  
+    
 
 def init_working_space():
     # Creating run folder
@@ -93,6 +204,7 @@ def init_working_space():
 
     # Creating tensor_board folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    current_datetime="test"
     tensor_board_folder_path="./tensor_boards/" +  str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
@@ -101,8 +213,6 @@ def init_working_space():
         logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
 
     return models_folder_path,ck_folder_path,tensor_board_folder_path
-
-      
 
 def main():
     logging.info("Training Heat Map Started")
@@ -113,19 +223,19 @@ def main():
             #throw exception 
             raise Exception("Operation Mode is not Training Mode")
 
-#     _,_,tensor_board_folder_path=init_working_space()
+    _,_,tensor_board_folder_path=init_working_space()
     
-#     # HeatMap Trainer Object
-#     heat_map_model = HeatMap()
+    # HeatMap Trainer Object
+    heat_map_model = HeatMap() 
 
+     # Tensor Board
+    tensor_board_writer=SummaryWriter(tensor_board_folder_path)
 
-#     #  # Tensor Board
-#     tensor_board_writer=SummaryWriter(tensor_board_folder_path)
+    # Create an HeatMapTrainer instance with the HeatMap model
+    trainer = HeatMapTrainer(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
-#     # Create an HeatMapTrainer instance with the HeatMap model
-    trainer = HeatMapTrainer(model=None,tensor_board_writer=None)
-
-#     if RECOVER:
+    if RECOVER =="BASMA":
+        pass
 #         # Load the state of model
 #         checkpoint=load_checkpoint(run=RUN)
 
@@ -148,10 +258,10 @@ def main():
 #         # Start Train form checkpoint ends
 #         trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
 
-#     else:
-#         # No check point
-#         # Start New Training
-#         trainer.train()
+    else:
+        # No check point
+        # Start New Training
+        trainer.train()
 
 
 if __name__ == '__main__':
