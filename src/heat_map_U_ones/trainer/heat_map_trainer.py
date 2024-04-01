@@ -44,7 +44,7 @@ class HeatMapTrainer:
 
         # Optimizer
         # The learning rate was initially set to 1e-4
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, betas=(0.9, 0.999))
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.01, betas=(0.9, 0.999))
         
         # Create learning rate scheduler
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
@@ -104,10 +104,13 @@ class HeatMapTrainer:
                 targets=targets.to(DEVICE)
 
                 # Forward Pass
-                y_pred,_=self.model(images)              
+                y_pred,scores=self.model(images)
+#                 print("batch_idx",batch_idx)
+#                 print("targets",targets)
+#                 print("scores",scores)
                 
                 # Compute Loss
-                total_loss = self.criterion(targets, y_pred)
+                total_loss = self.criterion(y_pred,targets)
                 #logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {total_loss:.4f}')
                
                 epoch_loss+=total_loss
@@ -131,11 +134,11 @@ class HeatMapTrainer:
                 #self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
 
-                if (batch_idx+1)%10==0:
+                if True or (batch_idx+1)%10==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 10 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                     
-                    break
+                break
                   
                    
                     #[Tensor Board]: Epoch Average loss
@@ -172,7 +175,8 @@ class HeatMapTrainer:
 
             # saving model per epoch
             #self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
-            self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=1555.0000)
+            if epoch==49:
+                self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=1555.0000)
 
         logging.info("Training Done")
         

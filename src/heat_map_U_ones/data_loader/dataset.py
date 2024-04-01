@@ -13,13 +13,24 @@ class HeatMapDataset(Dataset):
         # Read CSV
         self.data_info = pd.read_csv(dataset_path)
         
+
+        # Print the second row
+        print(self.data_info.iloc[0, 0:15])
+        
+        print(self.data_info.iloc[1, 0:15])
+        
+        
+        # Print the third row, columns 0 to 14
+        print(self.data_info.iloc[2, 0:15])
+#         sys.exit()
+        
         # Get the headers
         self.headers = self.data_info.columns.tolist()
         
         # Replace Uncertain Labels
         self.data_info.iloc[:, 2:15] = self.data_info.iloc[:, 2:15].replace(np.nan, 0.0)
         self.data_info.iloc[:, 2:15] = self.data_info.iloc[:, 2:15].replace(-1.0, 1.0)
-        
+                
         #Data Types of each column print(self.data_info.dtypes)              
         #print(self.data_info.iloc[76, :])
         #sys.exit()

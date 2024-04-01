@@ -115,13 +115,13 @@ class HeatMapEvaluation():
                 # self.draw_tensor_board(batch_idx,images,features,classes)
 
                 validation_total_loss+=Total_loss
-                
+            
                 break
-
+            # F1
             f1_scores = self.F1_score_for_each_class(all_targets, all_preds)
-                
+            
             # Compute ROC
-            roc=self.compute_ROC(y_true=all_targets,y_scores=all_preds,n_classes=len(CLASSES))
+            roc=self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
             print("roc",roc)
             sys.exit()
                 
@@ -139,10 +139,39 @@ class HeatMapEvaluation():
         features=None
 
         # Calculate Loss
-        Total_loss=self.criterion(targets,y)
+        Total_loss=self.criterion(y,targets)
         
         return features,Total_loss,scores
 
+    def initalize_scorces(self):
+        heat_map_scores={key: {} for key in CLASSES}
+        
+        for disease in CLASSES:
+            heat_map_scores[disease]['true_positive']=0
+            heat_map_scores[disease]['false_positive']=0
+            heat_map_scores[disease]['true_negative']=0
+            heat_map_scores[disease]['false_negative']=0
+        return heat_map_scores
+    
+    def compute_ROC(self,y_true,y_scores,n_classes):
+        result = []
+        print("y_scores",y_scores)
+        print("y_true",y_true)
+    
+        for i in range(n_classes):
+            precisions, recalls, thresholds= precision_recall_curve(y_true[1:, i].flatten(), y_scores[1:, i].flatten())
+#             print("precisions",precisions)
+#             print("recalls",recalls)
+#             print("thresholds",thresholds)
+            #id = np.argmax(recalls[:len(recalls)-1])
+            try:
+                result.append(roc_auc_score(y_true[1:, i], y_scores[1:, i], average="weighted"))
+            except:
+                result.append(0)          
+                
+        return result
+    
+  
     def F1_score_for_each_class(self, y_true, y_pred):
         '''
         F1 Score
@@ -162,37 +191,7 @@ class HeatMapEvaluation():
             print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
             print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
         return f1_scores
-    
-    def initalize_scorces(self):
-        heat_map_scores={key: {} for key in CLASSES}
-        
-        for disease in CLASSES:
-            heat_map_scores[disease]['true_positive']=0
-            heat_map_scores[disease]['false_positive']=0
-            heat_map_scores[disease]['true_negative']=0
-            heat_map_scores[disease]['false_negative']=0
-        return heat_map_scores
-    
-    def compute_ROC(self,y_true,y_scores,n_classes):
-        result = []
-        print("y_scores",y_scores)
-        print("y_true",y_true)
-    
-        for i in range(n_classes):
-            precisions, recalls, thresholds= precision_recall_curve(y_true[1:, i].flatten(), y_scores[1:, i].flatten())
-            print("precisions",precisions)
-            print("recalls",recalls)
-            print("thresholds",thresholds)
-            #id = np.argmax(recalls[:len(recalls)-1])
-            try:
-                result.append(roc_auc_score(y_true[1:, i], y_scores[1:, i], average="weighted"))
-            except:
-                result.append(0)          
-                
-        return result
-        
-        
-    
+           
 #     def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):
 #         for i in range(len(targets)):
 #             # Each Example in the Batch
@@ -280,9 +279,7 @@ def main():
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
-    # load_model(model=heat_map_model,name='heat_map_epoch_1')
     load_model(model=heat_map_model,name='heat_map_epoch_9')
-
         
     # Create an XReportoTrainer instance with the X-Reporto model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
