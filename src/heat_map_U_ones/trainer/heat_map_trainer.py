@@ -104,7 +104,7 @@ class HeatMapTrainer:
                 targets=targets.to(DEVICE)
 
                 # Forward Pass
-                y_pred=self.model(images)              
+                y_pred,_=self.model(images)              
                 
                 # Compute Loss
                 total_loss = self.criterion(targets, y_pred)

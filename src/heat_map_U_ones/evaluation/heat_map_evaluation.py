@@ -96,7 +96,7 @@ class HeatMapEvaluation():
                 targets=targets.to(DEVICE) 
 
                 # Forward Pass [TODO]
-                features,Total_loss,preds=self.forward_pass(images,targets)
+                _,Total_loss,preds=self.forward_pass(images,targets)
                 #print("classes",classes)
                 #print("Total_loss",Total_loss)
                 #sys.exit()
@@ -133,13 +133,13 @@ class HeatMapEvaluation():
         '''
         Total_loss=0
         # Forward Pass
-        y=self.model(images)
+        y,scores=self.model(images)
         features=None
 
         # Calculate Loss
         Total_loss=self.criterion(targets,y)
         
-        return features,Total_loss,y
+        return features,Total_loss,scores
 
     def initalize_scorces(self):
         heat_map_scores={key: {} for key in CLASSES}
@@ -258,7 +258,7 @@ def main():
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
-    load_model(model=heat_map_model,name='heat_map_best')
+    load_model(model=heat_map_model,name='heat_map_epoch_1')
         
     # Create an XReportoTrainer instance with the X-Reporto model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)

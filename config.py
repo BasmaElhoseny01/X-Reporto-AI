@@ -37,7 +37,7 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=False
 
 RUN = "heat_map_4"
-EPOCHS=5
+EPOCHS=10
 BATCH_SIZE=8
 # BATCH_SIZE=1
 #   TODO: change to 64
