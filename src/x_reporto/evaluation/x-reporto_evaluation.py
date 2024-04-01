@@ -7,6 +7,7 @@ from datetime import datetime
 
 import os
 import gc
+import re
 import sys
 
 # Torch
@@ -17,7 +18,6 @@ from torch.utils.data import  DataLoader
 # Modules
 from src.x_reporto.models.x_reporto_factory import XReporto
 from src.x_reporto.data_loader.custom_dataset import CustomDataset
-from src.x_reporto.data_loader.tokenizer import Tokenizer
 # Utils 
 from transformers import GPT2Tokenizer
 # Utils 
@@ -28,6 +28,9 @@ from src.language_model.GPT2.config import Config
 from torch.utils.tensorboard import SummaryWriter
 import torchmetrics
 from pycocoevalcap.bleu.bleu import Bleu
+from pycocoevalcap.meteor.meteor import Meteor
+
+
 
 class XReportoEvaluation():
     def __init__(self, model:XReporto,evaluation_csv_path:str = evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
@@ -46,8 +49,7 @@ class XReportoEvaluation():
         # load bleu score
         self.bleu_score = Bleu()
         self.bleu_score.weights = [1/4, 1/4, 1/4, 1/4]
-
-    
+        self.meteor = Meteor()
 
     def evaluate(self):
         #validate the model
@@ -62,7 +64,8 @@ class XReportoEvaluation():
             # [Tensor Board] Update the Board by the scalers for that Run
             self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores)
         else:
-            self.evaluate_LM()
+            print(self.validate_and_evalute_language_model())
+
         
     def evaluate_LM(self):            
         # make model in Evaluation mode
@@ -74,7 +77,6 @@ class XReportoEvaluation():
                 # Check GPU memory usage
                 images = images.to(DEVICE)              
                 # Move images to Device
-                # images = torch.stack([image.to(DEVICE) for image in images])
                 loopLength=29
                 for batch in range(BATCH_SIZE):
                     # for j in range(29):
@@ -103,11 +105,21 @@ class XReportoEvaluation():
                         if stop:
                             break
                           
-    def validate_language_model(self):
+    def validate_and_evalute_language_model(self):
         '''
         validate_language_model
         '''
         # make model in Evaluation mode
+        tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+        LM_sentances_generated_reference = {
+        "generated_sentences": [],
+        "reference_sentences": [],
+        }
+        # intialize LM_scores
+        LM_scores = {   
+        "METEOR": 0,
+        }
+
         self.model.eval()
         with torch.no_grad():
             epoch_loss=0
@@ -116,21 +128,50 @@ class XReportoEvaluation():
                 images = images.to(DEVICE)              
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
-                object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
-                selection_classifier_targets = selection_classifier_targets.to(DEVICE)
-                abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
-                LM_targets = LM_targets.to(DEVICE)
-                LM_inputs = {k: v.to(DEVICE) for k, v in LM_inputs.items()}
-
-                lm_sentences = self.language_model_forward_pass(images=images,input_ids=LM_inputs['input_ids'],attention_mask=LM_inputs['attention_mask'],object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=0,batch_idx=batch_idx,loopLength=29,LM_Batch_Size= LM_Batch_Size,validate_during_training=False)
-
+                # object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
+                # selection_classifier_targets = selection_classifier_targets.to(DEVICE)
+                # abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
+                # LM_targets = LM_targets.to(DEVICE)
+                # LM_inputs = {k: v.to(DEVICE) for k, v in LM_inputs.items()}
+                # lm_sentences = self.language_model_forward_pass(images=images,input_ids=LM_inputs['input_ids'],attention_mask=LM_inputs['attention_mask'],object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=0,batch_idx=batch_idx,loopLength=29,LM_Batch_Size= LM_Batch_Size,validate_during_training=False)
+                lm_sentences_encoded = self.language_model_forward_pass(images=images)
                 #TODO: detokinze sentences of targets and prediction
+                LM_sentances_generated_reference["generated_sentences"].extend(tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True))
+                LM_sentances_generated_reference["reference_sentences"].extend(tokenizer.batch_decode(LM_inputs['input_ids'],skip_special_tokens=True,clean_up_tokenization_spaces=True))
+        
+        #TODO: Preprosess the sentences
+        generated_sentences=LM_sentances_generated_reference["generated_sentences"]
+        reference_sentences=LM_sentances_generated_reference["reference_sentences"]
+        #1- remove empty sentences
+        filtered_gen_sents = []
+        filtered_ref_sents = []
+        for gen_sent, ref_sent in zip(generated_sentences,reference_sentences):
+            if ref_sent != "":
+                filtered_gen_sents.append(gen_sent)
+                filtered_ref_sents.append(ref_sent)
+        #TODO: compute bleu score using above function
+        self.compute_LM_score_by_sentence(filtered_gen_sents,filtered_ref_sents,LM_scores)
+        return LM_scores
 
-                #TODO: convert list of strings to dictionary 
+    def compute_LM_score_by_sentence(self,generated_sentences,reference_sentences,score):
+        '''
+        compute_LM_score_by_sentence
+        '''
+        # convert_for_pycoco_score
+        generated_sentences_converted = self.convert_for_pycoco_scorer(generated_sentences)
+        reference_sentences_converted = self.convert_for_pycoco_scorer(reference_sentences)
+        # compute the score
+        score["METEOR"] += self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)
 
-                #TODO: compute bleu score using above function
-                
-                # Forward Pass
+    def convert_for_pycoco_scorer(sents):
+        '''
+        convert_for_pycoco_scorer
+        '''
+        sents_converted = {}
+        for num, text in enumerate(sents):
+            sents_converted[str(num)] = [re.sub(' +', ' ', text.replace(".", " ."))]
+        return sents_converted
+    
 
     def validate_and_evalute_object_detection_and_classifier(self):
         '''
@@ -269,7 +310,6 @@ class XReportoEvaluation():
                
             return validation_total_loss,obj_detector_scores,region_selection_scores,region_abnormal_scores
    
-
     ################################################ Object Detector Functions #################################################
     def update_object_detector_metrics(self,obj_detector_scores, detections, image_targets, class_detected):
         def compute_box_area(box):
@@ -347,7 +387,6 @@ class XReportoEvaluation():
         obj_detector_scores["sum_iou_per_region"] += iou_per_region
         # print iou
         # print("iou: ",iou_per_region)
-
 
     def compute_IOU(self,pred_box, target_box):
         '''
@@ -513,7 +552,6 @@ class XReportoEvaluation():
         region_selection_scores["abnormal"]["recall"](abnormal_selected_regions, abnormal_region_has_sentence)
         region_selection_scores["abnormal"]["f1"](abnormal_selected_regions, abnormal_region_has_sentence)
     
-    
     def update_update_region_selection_metrics_per_region(self,region_selection_scores, selected_regions, region_has_sentence,class_detected):
         """
         Args:
@@ -565,7 +603,8 @@ class XReportoEvaluation():
         gc.collect()
         return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
     
-    def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int,validate_during_training:bool=False):
+    def language_model_forward_pass(self,images:torch.Tensor):
+    # def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int,validate_during_training:bool=False):
         # for batch in range(BATCH_SIZE):
         #     total_LM_losses=0
         #     for i in range(0,loopLength,LM_Batch_Size):
@@ -595,7 +634,8 @@ class XReportoEvaluation():
         # return Total_loss
             # define the total loss as it may be in backward pass
         # Forward Pass
-        LM_sentencses,_= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,language_model_targets=LM_targets,batch=0,index=0,delete = True,validate_during_training=validate_during_training)
+        # LM_sentencses,_= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,language_model_targets=LM_targets,batch=0,index=0,delete = True,validate_during_training=validate_during_training)
+        LM_sentencses,_= self.model(images=images,delete = True,use_beam_search= True)
         torch.cuda.empty_cache()
         gc.collect()
         return LM_sentencses

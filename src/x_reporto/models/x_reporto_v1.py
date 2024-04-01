@@ -490,7 +490,7 @@ class XReportoV1(nn.Module):
                     object_detector_features=object_detector_features.to('cpu')
                     del object_detector_features
                     torch.cuda.empty_cache()
-                return LM_sentencses,stop
+                return LM_sentencses
 
             # Stage(3) Language Model
      
