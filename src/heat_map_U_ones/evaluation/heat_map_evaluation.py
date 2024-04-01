@@ -117,6 +117,8 @@ class HeatMapEvaluation():
                 validation_total_loss+=Total_loss
                 
                 break
+
+            f1_scores = self.F1_score_for_each_class(all_targets, all_preds)
                 
             # Compute ROC
             roc=self.compute_ROC(y_true=all_targets,y_scores=all_preds,n_classes=len(CLASSES))
@@ -141,6 +143,26 @@ class HeatMapEvaluation():
         
         return features,Total_loss,scores
 
+    def F1_score_for_each_class(self, y_true, y_pred):
+        '''
+        F1 Score
+        '''
+        # y_true = y_true.cpu().detach().numpy()
+        # y_pred = y_pred.cpu().detach().numpy()
+        f1_scores = []
+        for i in range(y_true.shape[1]):
+            false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
+            false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
+            true_positive = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 1))
+            true_negative = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 0))
+            precision = true_positive / (true_positive + false_positive)
+            recall = true_positive / (true_positive + false_negative)
+            f1 = 2 * (precision * recall) / (precision + recall)
+            f1_scores.append(f1)
+            print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
+            print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
+        return f1_scores
+    
     def initalize_scorces(self):
         heat_map_scores={key: {} for key in CLASSES}
         
@@ -163,7 +185,7 @@ class HeatMapEvaluation():
             print("thresholds",thresholds)
             #id = np.argmax(recalls[:len(recalls)-1])
             try:
-                result.append(roc_auc_score(y_true[1:, i], y_score[1:, i], average="weighted"))
+                result.append(roc_auc_score(y_true[1:, i], y_scores[1:, i], average="weighted"))
             except:
                 result.append(0)          
                 
@@ -258,7 +280,7 @@ def main():
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
-    load_model(model=heat_map_model,name='heat_map_epoch_1')
+    # load_model(model=heat_map_model,name='heat_map_epoch_1')
         
     # Create an XReportoTrainer instance with the X-Reporto model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
