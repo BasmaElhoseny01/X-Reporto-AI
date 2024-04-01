@@ -15,221 +15,29 @@ from PIL import Image
 import random
 from torchvision import transforms
 
-# Parameters
-IMAGE_INPUT_SIZE=224
-MEAN=[0.485, 0.456, 0.406]
-STD=[0.229, 0.224, 0.225]
-ANGLE=2
-
-# implement transforms as augmentation with gaussian noise, random rotation
-
 class CustomAugmentation(object):
-    def __init__(self, transform_type:str ='train'):
-        if(transform_type == 'train'or transform_type == 'val'):
+    def __init__(self, transform_type):
             self.transform=TransformLibrary(transform_type)
-        else:
-            self.transform=CustomTransform(transform_type)
-
+        
     def __call__(self,image):
         return self.transform(image=image)
 
-# implement transforms as augmentation with gaussian noise, random rotation
-
+    
 class TransformLibrary(object):
     
     def __init__(self, transform_type:str ='train'):
         if (transform_type == 'train'):
-            self.transform =A.Compose(
-                [
-                    # we want the long edge of the image to be resized to IMAGE_INPUT_SIZE, and the short edge of the image to be padded to IMAGE_INPUT_SIZE on both sides,
-                    # such that the aspect ratio of the images are kept, while getting images of uniform size (IMAGE_INPUT_SIZE x IMAGE_INPUT_SIZE)
-                    # LongestMaxSize: resizes the longer edge to IMAGE_INPUT_SIZE while maintaining the aspect ratio
-                    # INTER_AREA works best for shrinking images
-                    A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
-                    A.GaussNoise(),
-                    #  rotate between -2 and 2 degrees
-                    # A.Affine(rotate=(-ANGLE, ANGLE)),
-                    A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE),keep_ratio=True),
-
-                    # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
-                    A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                    A.Normalize(mean=MEAN, std=STD),
-                    ToTensorV2()
-                ]
-                )
+            self.transform =A.Compose([
+            A.RandomCrop(height=256, width=256, p=1.0),
+            A.Resize(height=224, width=224, p=1.0),
+            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            ToTensorV2(p=1.0),], p=1.0)
+                    
         else:
-            self.transform = A.Compose(
-                [
-                    A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
-                    A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                    A.Normalize(mean=MEAN, std=MEAN),
-                    ToTensorV2(),
-                ]
-            )
+            self.transform = A.Compose([
+            A.Resize(height=224, width=224, p=1.0),
+            A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            ToTensorV2(p=1.0),])
+            
     def __call__(self,image):
-        #print("TransformLibrary called in call")
         return self.transform(image=image)
-# Custom function to add Gaussian noise to an image
-def add_gaussian_noise(img, mean=0, std=25):
-    return img + torch.randn_like(img) * std + mean
-
-class CustomTransform(object):
-    
-    def __init__(self, transform_type:str ='custom_train'):
-       # Define a composite transform
-        if(transform_type == 'custom_train'):
-            self.transform = transforms.Compose([
-                transforms.Resize((IMAGE_INPUT_SIZE, IMAGE_INPUT_SIZE),interpolation=cv2.INTER_AREA),                # Resize the image
-                transforms.Pad(IMAGE_INPUT_SIZE),   # Pad the image with reflection padding
-                transforms.RandomRotation(ANGLE),                 # Rotate the image randomly by up to 10 degrees
-                transforms.ToTensor(),                        # Convert to PyTorch tensor
-                transforms.Normalize(mean=[MEAN], std=[STD]),  # Normalize the pixel values
-                transforms.Lambda(lambda x: add_gaussian_noise(x) if x.ndim == 3 else x)  # Add Gaussian noise (only for 3D tensors)
-            ])
-        else:
-            self.transform = transforms.Compose([
-                transforms.Pad(IMAGE_INPUT_SIZE),   # Pad the image with reflection padding
-                transforms.Resize((IMAGE_INPUT_SIZE, IMAGE_INPUT_SIZE),interpolation=cv2.INTER_AREA),                # Resize the image
-                transforms.ToTensor(),                        # Convert to PyTorch tensor
-                transforms.Normalize(mean=[MEAN], std=[STD]),  # Normalize the pixel values
-            ])
-    def __call__(self,image):
-        print("CustomTransform called in call")
-
-        image = self.transform(Image.fromarray(image))
-        #print size of image
-        print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image.size()[1])
-        print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image)
-        return {'image':image}
-
-# class CustomTransform(object):
-    
-#     def __init__(self, transform_type:str ='train'):
-#         #print("CustomTransform called in init")
-#         self .resize_padding=ResizeAndPad()
-#         self.rotation_transforms = v2.Compose([
-#             v2.RandomRotation(degrees=(-ANGLE, ANGLE)),
-#             v2.ToTensor(),
-#             ]
-#         )
-#         self.normalize_transforms = v2.Compose([
-#             # randomly rotate the image
-#             GaussianNoise(0,1),
-#             Normalize(MEAN,STD), # normalize with imagenet mean and std
-#             v2.ToTensor(),
-#             ]
-#         )
-#     def __call__(self,image,bboxes,class_labels):
-#         #print("CustomTransform called in call")
-#         # img = self.normalize_transforms(image) 
-#         x=self.rotation_transforms(Image.fromarray(image),bboxes,class_labels)
-#         #print(x)
-#         return {'image':x[0],'bboxes':x[1],'class_labels':x[2]}
-# # Define a custom transform to add Gaussian noise
-# class GaussianNoise(object):
-#     def __init__(self, mean=0, std=0.0001):
-#         self.mean = mean
-#         self.std = std
-
-#     def __call__(self, img):
-#         # check if image type is uint8
-#         if img.dtype == np.uint8:
-#             img = np.array(img)
-#             noise = np.random.normal(self.mean, self.std, img.shape)
-#             img = img + noise
-#             img = np.clip(img, 0,255)
-#             img = img.astype(np.uint8)
-#             return img
-#         else:
-#             noise = np.random.normal(self.mean, self.std, img.shape)
-#             img = img + noise
-#             return img
-        
-# class Normalize(object):
-#     def __init__(self, mean=0, std=0.0001):
-#         self.mean = mean
-#         self.std = std
-
-#     def __call__(self, img):
-#         # check if image type is uint8
-#         if img.dtype == np.uint8:
-#             img = np.array(img)
-#             # img = img/255
-#             # # subtract mean
-#             # img = img - self.mean
-#             # # divide by std
-#             # img = img/self.std
-#             return img
-#         else:
-#             img = np.array(img)
-#             # subtract mean
-#             img = img - self.mean
-#             # divide by std
-#             img = img/self.std
-#             return img
-
-# # Define a custom transform to resize and pad the image and update bounding boxes
-# class ResizeAndPad(object):
-#     def __init__(self, target_size=(512, 512)):
-#         self.target_size = target_size
-
-#     def __call__(self, image, boxes=None):
-#         # Resize the  image while maintaining aspect ratio
-#         width, height = image.shape[0],image.shape[1]
-
-#         # calculate aspect ratio
-#         aspect_ratio = width / height
-
-#         # get the long and short side of the image
-#         long_side = max(self.target_size)
-#         short_side = min(self.target_size)
-
-#         new_width = 0
-#         new_height = 0
-
-#         # resize the image according to the long side
-#         # if width > height then resize according to width
-#         if width > height:
-#             # width = 1024 , height = 512, long_side = 512, aspect ratio = 2 => new_width = 512, new_height = 256
-#             new_width = long_side
-#             new_height = int(new_width / aspect_ratio)
-
-#         else:
-#             # width = 512 , height = 1024, long_side = 512, aspect ratio = 0.5 => new_width = 256, new_height = 512
-#             new_height = long_side
-#             new_width = int(new_height * aspect_ratio)
-        
-#         # new width is row, new height is column
-#         # resize the image
-#         resized_image = cv2.resize(image, (new_height, new_width))
-
-#         # Create a new black grayscale image with the desired size
-#         new_image = np.zeros(self.target_size, dtype=np.float32)
-
-#         # add the resized image to the new image and center it
-#         # if width > height then the resized image will be added to the new image with the same width but different height
-#         if new_width > new_height:
-#             # calculate the starting and ending column
-#             start = int((new_width - new_height) / 2)
-#             end = start + new_height
-#             new_image[:, start:end] = resized_image
-#             # change the bounding boxes accordingly and add shift to the x coordinate
-#             if boxes is not None:
-#                 boxes = np.array(boxes)
-#                 boxes[:, [0, 2]] = boxes[:, [0, 2]] * (new_height / height) + start
-#                 boxes[:, [1, 3]] = boxes[:, [1, 3]] * (new_width / width)
-#         else:
-#             # if width < height then the resized image will be added to the new image with the same height but different width
-#             # calculate the starting and ending row
-#             start = int((new_height - new_width) / 2)
-#             end = start + new_width
-#             new_image[start:end, :] = resized_image
-#             # change the bounding boxes accordingly and add shift to the y coordinate
-#             if boxes is not None:
-#                 boxes = np.array(boxes)
-#                 boxes[:, [0, 2]] = boxes[:, [0, 2]] * (new_height / height)
-#                 boxes[:, [1, 3]] = boxes[:, [1, 3]] * (new_width / width) + start
-
-#         # convert the image to uint8
-#         new_image = new_image.astype(np.uint8)
-#         return new_image, boxes
