@@ -94,7 +94,7 @@ class XReportoEvaluation():
                             myfile.write("reference_sentences "+str(reference_sentence))
                             myfile.write("\n") 
                             print("reference: ",str(reference_sentence))
-                        LM_sentances,stop= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
+                        LM_sentances= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
                         for i,sentence in enumerate(LM_sentances):
                             generated_sentence_for_selected_regions = tokenizer.decode(sentence.tolist(),skip_special_tokens=True)
                             print("predicted: ",generated_sentence_for_selected_regions)
@@ -102,13 +102,14 @@ class XReportoEvaluation():
                                 myfile.write("generated_sents_for_selected_regions "+str(generated_sentence_for_selected_regions))
                                 myfile.write("\n") 
                                 
-                        if stop:
-                            break
+                        # if stop:
+                        #     break
                           
     def validate_and_evalute_language_model(self):
         '''
         validate_language_model
         '''
+        print("Start Evaluting")
         # make model in Evaluation mode
         tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
         LM_sentances_generated_reference = {
@@ -136,10 +137,13 @@ class XReportoEvaluation():
                 # lm_sentences = self.language_model_forward_pass(images=images,input_ids=LM_inputs['input_ids'],attention_mask=LM_inputs['attention_mask'],object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=0,batch_idx=batch_idx,loopLength=29,LM_Batch_Size= LM_Batch_Size,validate_during_training=False)
                 lm_sentences_encoded = self.language_model_forward_pass(images=images)
                 #TODO: detokinze sentences of targets and prediction
+                # print(LM_inputs['input_ids'][0].tolist())
+                # sys.exit()
                 LM_sentances_generated_reference["generated_sentences"].extend(tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True))
-                LM_sentances_generated_reference["reference_sentences"].extend(tokenizer.batch_decode(LM_inputs['input_ids'],skip_special_tokens=True,clean_up_tokenization_spaces=True))
+                LM_sentances_generated_reference["reference_sentences"].extend(tokenizer.batch_decode(LM_inputs['input_ids'][0].tolist(),skip_special_tokens=True,clean_up_tokenization_spaces=True))
         
         #TODO: Preprosess the sentences
+        print("Start Scoring")
         generated_sentences=LM_sentances_generated_reference["generated_sentences"]
         reference_sentences=LM_sentances_generated_reference["reference_sentences"]
         #1- remove empty sentences
@@ -161,9 +165,9 @@ class XReportoEvaluation():
         generated_sentences_converted = self.convert_for_pycoco_scorer(generated_sentences)
         reference_sentences_converted = self.convert_for_pycoco_scorer(reference_sentences)
         # compute the score
-        score["METEOR"] += self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)
+        score["METEOR"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)
 
-    def convert_for_pycoco_scorer(sents):
+    def convert_for_pycoco_scorer(self,sents):
         '''
         convert_for_pycoco_scorer
         '''
@@ -635,7 +639,15 @@ class XReportoEvaluation():
             # define the total loss as it may be in backward pass
         # Forward Pass
         # LM_sentencses,_= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,language_model_targets=LM_targets,batch=0,index=0,delete = True,validate_during_training=validate_during_training)
-        LM_sentencses,_= self.model(images=images,delete = True,use_beam_search= True)
+        # LM_sentencses,_= self.model(images=images,delete = True,use_beam_search= True)
+        LM_sentencses=[]
+        loopLength=29
+        for batch in range(BATCH_SIZE):   
+            for i in range(0,loopLength,LM_Batch_Size):
+                # Forward Pass              
+                LM_sentances_LM_batch= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
+                LM_sentencses.extend(LM_sentances_LM_batch)
+                 
         torch.cuda.empty_cache()
         gc.collect()
         return LM_sentencses

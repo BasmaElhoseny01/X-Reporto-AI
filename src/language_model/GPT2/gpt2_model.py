@@ -474,7 +474,7 @@ class CustomGPT2(nn.Module):
                 break
 
             seq_len +=1
-        print("input_ids length: ",input_ids.size())
+        # print("input_ids length: ",input_ids.size())
         sequence_outputs = beam_scorer.finalize(
             input_ids,
             beam_scores,
