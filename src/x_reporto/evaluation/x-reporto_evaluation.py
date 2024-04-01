@@ -111,7 +111,7 @@ class XReportoEvaluation():
                 lm_sentences_encoded_selected,selected_regions = self.language_model_forward_pass(images=images)
                 generated_sents_for_selected_regions=tokenizer.batch_decode(lm_sentences_encoded_selected,skip_special_tokens=True,clean_up_tokenization_spaces=True)
                 reference_sentences_encoded=LM_inputs['input_ids'][0].tolist()
-                reference_sents_for_selected_regions=tokenizer.batch_decode(reference_sentences_encoded[selected_regions],skip_special_tokens=True,clean_up_tokenization_spaces=True)
+                reference_sents_for_selected_regions=tokenizer.batch_decode(reference_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
                 (
                 gen_sents_for_normal_selected_regions,
                 gen_sents_for_abnormal_selected_regions,
@@ -604,22 +604,23 @@ class XReportoEvaluation():
         return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
     
     def language_model_forward_pass(self,images:torch.Tensor):
-        LM_sentencses=[]
+        LM_sentances=[]
         loopLength=29
         for batch in range(BATCH_SIZE):   
             for i in range(0,loopLength,LM_Batch_Size):
                 # Forward Pass              
                 LM_sentances_LM_batch,selected_regions= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
-                LM_sentencses.extend(LM_sentances_LM_batch)
+                LM_sentances.extend(LM_sentances_LM_batch)
                  
         torch.cuda.empty_cache()
         gc.collect()
-        return LM_sentencses,selected_regions
+        return LM_sentances,selected_regions[0].tolist()
 
     ########################################################### General Fuunctions ##########################################
     
     def get_sents_for_normal_abnormal_selected_regions(self,region_is_abnormal, selected_regions, generated_sentences_for_selected_regions, reference_sentences_for_selected_regions):
-        selected_region_is_abnormal = region_is_abnormal[selected_regions]
+        # selected_region_is_abnormal = region_is_abnormal[selected_regions]
+        selected_region_is_abnormal = region_is_abnormal
         # selected_region_is_abnormal is a bool array of shape [num_regions_selected_in_batch] that specifies if a selected region is abnormal (True) or normal (False)
 
         gen_sents_for_selected_regions = np.asarray(generated_sentences_for_selected_regions)
