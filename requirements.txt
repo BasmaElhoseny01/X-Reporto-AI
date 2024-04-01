@@ -6,3 +6,4 @@ torch-summary
 imagesize
 gdown
 tensorboard
+pycocoevalcap

@@ -72,6 +72,7 @@ class XReportoV1(nn.Module):
         if RECOVER==True:
             # Don't Load any module the check point will be loaded Later :
             logging.debug("No Modules are loaded in x_reporto_v1 due to Recovery Mode")
+            #TODO: Add a check point to load the model
 
         elif OPERATION_MODE==OperationMode.TRAINING.value:
             if CONTINUE_TRAIN:
@@ -359,8 +360,7 @@ class XReportoV1(nn.Module):
                 del abnormal_classifier_targets
                 del object_detector_detected_classes
                 torch.cuda.empty_cache()
-                print("Deleted")
-           
+
             if MODEL_STAGE == ModelStage.CLASSIFIER.value:
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,0
             # Stage(3) Language Model

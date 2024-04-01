@@ -24,9 +24,10 @@ from transformers import GPT2Tokenizer
 from src.utils import plot_image
 from config import RUN,PERIODIC_LOGGING,log_config
 from config import *
+from src.language_model.GPT2.config import Config
 from torch.utils.tensorboard import SummaryWriter
 import torchmetrics
-
+from pycocoevalcap.bleu.bleu import Bleu
 
 class XReportoEvaluation():
     def __init__(self, model:XReporto,evaluation_csv_path:str = evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
@@ -42,6 +43,10 @@ class XReportoEvaluation():
         self.data_loader_val = DataLoader(dataset=CustomDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=2, collate_fn=collate_fn)
         self.tensor_board_writer=tensor_board_writer
         logging.info("Evalution dataset loaded")
+        # load bleu score
+        self.bleu_score = Bleu()
+        self.bleu_score.weights = [1/4, 1/4, 1/4, 1/4]
+
     
 
     def evaluate(self):
@@ -98,7 +103,35 @@ class XReportoEvaluation():
                         if stop:
                             break
                           
-           
+    def validate_language_model(self):
+        '''
+        validate_language_model
+        '''
+        # make model in Evaluation mode
+        self.model.eval()
+        with torch.no_grad():
+            epoch_loss=0
+            for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):
+                # Check GPU memory usage
+                images = images.to(DEVICE)              
+                # Move images to Device
+                images = torch.stack([image.to(DEVICE) for image in images])
+                object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
+                selection_classifier_targets = selection_classifier_targets.to(DEVICE)
+                abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
+                LM_targets = LM_targets.to(DEVICE)
+                LM_inputs = {k: v.to(DEVICE) for k, v in LM_inputs.items()}
+
+                lm_sentences = self.language_model_forward_pass(images=images,input_ids=LM_inputs['input_ids'],attention_mask=LM_inputs['attention_mask'],object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=0,batch_idx=batch_idx,loopLength=29,LM_Batch_Size= LM_Batch_Size,validate_during_training=False)
+
+                #TODO: detokinze sentences of targets and prediction
+
+                #TODO: convert list of strings to dictionary 
+
+                #TODO: compute bleu score using above function
+                
+                # Forward Pass
+
     def validate_and_evalute_object_detection_and_classifier(self):
         '''
         validate_during_evalute_object_detection_and_classifier
@@ -499,7 +532,15 @@ class XReportoEvaluation():
                 elif selected_regions[img_idx][region_indx].item() == False and detected_region_has_sentence[img_idx][region_indx].item()== True:
                     region_selection_scores["false_negative"][region_indx] +=1
             
-
+    def update_language_model_metrics(self,LM_scores,LM_predictions,LM_targets):
+        '''
+        update_language_model_metrics
+        '''
+        # compute the BLEU score
+        LM_scores["BLEU"] += self.bleu_score.compute_score(LM_predictions, LM_targets)
+        LM_scores["BLEU_Count"] += len(LM_predictions)
+        return LM_scores
+    
     
     # ################################################### Foward Passes ####################################################################
     def  object_detector_and_classifier_forward_pass(self,batch_idx:int,images:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor):
@@ -524,8 +565,7 @@ class XReportoEvaluation():
         gc.collect()
         return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
     
-    def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,batch_idx:int,loopLength:int,LM_Batch_Size:int):
-        pass
+    def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int,validate_during_training:bool=False):
         # for batch in range(BATCH_SIZE):
         #     total_LM_losses=0
         #     for i in range(0,loopLength,LM_Batch_Size):
@@ -553,8 +593,12 @@ class XReportoEvaluation():
         #     torch.cuda.empty_cache()
         #     gc.collect()
         # return Total_loss
-    
-
+            # define the total loss as it may be in backward pass
+        # Forward Pass
+        LM_sentencses,_= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,language_model_targets=LM_targets,batch=0,index=0,delete = True,validate_during_training=validate_during_training)
+        torch.cuda.empty_cache()
+        gc.collect()
+        return LM_sentencses
 
     ########################################################### General Fuunctions ##########################################
     def initalize_scorces(self):
@@ -749,45 +793,77 @@ class XReportoEvaluation():
 
 
 def collate_fn(batch):
-        image_shape = batch[0][0]["image"].size()
-        images = torch.empty(size=(len(batch), *image_shape))
-        object_detector_targets=[]
-        selection_classifier_targets=[]
-        abnormal_classifier_targets=[]
-        LM_targets=[]
-        input_ids=[]
-        attention_mask=[]
-        LM_inputs={}
+    batch = list(filter(lambda x: x is not None, batch))
+    image_shape = batch[0][0]["image"].size()
+    images = torch.empty(size=(len(batch), *image_shape))
+    object_detector_targets=[]
+    selection_classifier_targets=[]
+    abnormal_classifier_targets=[]
+    LM_targets=[]
+    input_ids=[]
+    attention_mask=[]
+    LM_inputs={}
 
-        for i in range(len(batch)):
-            (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[i]
-            # stack images
-            images[i] = object_detector_batch['image']
-            # Moving Object Detector Targets to Device
-            new_dict={}
-            new_dict['boxes']=object_detector_batch['bboxes']
-            new_dict['labels']=object_detector_batch['bbox_labels']
-            object_detector_targets.append(new_dict)
-            
-            bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal']
-            abnormal_classifier_targets.append(bbox_is_abnormal)
+    for i in range(len(batch)):
+        (object_detector_batch,selection_classifier_batch,abnormal_classifier_batch,LM_batch) = batch[i]
+        # stack images
+        images[i] = object_detector_batch['image']
+        # Moving Object Detector Targets to Device
+        new_dict={}
+        new_dict['boxes']=object_detector_batch['bboxes']
+        new_dict['labels']=object_detector_batch['bbox_labels']
+        object_detector_targets.append(new_dict)
+        
+        bbox_is_abnormal=abnormal_classifier_batch['bbox_is_abnormal']
+        abnormal_classifier_targets.append(bbox_is_abnormal)
 
-            phrase_exist=selection_classifier_batch['bbox_phrase_exists']
-            selection_classifier_targets.append(phrase_exist)
+        phrase_exist=selection_classifier_batch['bbox_phrase_exists']
+        selection_classifier_targets.append(phrase_exist)
 
-            phrase=LM_batch['label_ids']
-            LM_targets.append(phrase)
-            input_ids.append(LM_batch['input_ids'])
-            attention_mask.append(LM_batch['attention_mask'])
+        phrase=LM_batch['label_ids']
+        LM_targets.append(phrase)
+        input_ids.append(LM_batch['input_ids'])
+        attention_mask.append(LM_batch['attention_mask'])
 
+    # check if batch_size >1
+    if len(batch)>1:
+        # pad phrases to the same length 
+        # input_ids is list of tensors
+        max_seq_len = max([len(tokenize_phrase_lst[0]) for tokenize_phrase_lst in input_ids])
+        # print("max_seq_len",max_seq_len)
+        # each tensor in list input_ids is padded to max_seq_len
+        new_input_ids=[]
+        new_attention_mask=[]
+        new_LM_targets=[]
+        for i in range(len(input_ids)):
+            # each tensor in list input_ids is padded to max_seq_len
+            new_input_ids.append([])
+            new_attention_mask.append([])
+            new_LM_targets.append([])
+            for j in range(len(input_ids[i])):
+                # concatenate the tensor with pad_token_id to the max_seq_len
+                new_input_ids[i].append(torch.cat((input_ids[i][j], torch.tensor([Config.pad_token_id] * (max_seq_len - len(input_ids[i][j])), dtype=torch.long))))
+                # concatenate the tensor with ignore_index to the max_seq_len
+                new_attention_mask[i].append(torch.cat((attention_mask[i][j], torch.tensor([0] * (max_seq_len - len(attention_mask[i][j])), dtype=torch.long))))
+                # concatenate the tensor with ignore_index to the max_seq_len
+                new_LM_targets[i].append(torch.cat((LM_targets[i][j], torch.tensor([Config.ignore_index] * (max_seq_len - len(LM_targets[i][j])), dtype=torch.long))))
 
-        selection_classifier_targets=torch.stack(selection_classifier_targets)
-        abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
-        LM_targets=torch.stack(LM_targets)
-        LM_inputs['input_ids']=torch.stack(input_ids)
-        LM_inputs['attention_mask']=torch.stack(attention_mask)
+        input_ids=new_input_ids
+        attention_mask=new_attention_mask
+        LM_targets=new_LM_targets
+        # convert the list of tensors to tensor
+        input_ids = [torch.stack(input_id) for input_id in input_ids]
+        attention_mask = [torch.stack(mask) for mask in attention_mask]
+        LM_targets = [torch.stack(target) for target in LM_targets]
 
-        return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
+    selection_classifier_targets=torch.stack(selection_classifier_targets)
+    abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
+    LM_targets=torch.stack(LM_targets)
+    LM_inputs['input_ids']=torch.stack(input_ids)
+    LM_inputs['attention_mask']=torch.stack(attention_mask)
+    # print("inside Custon dataset")
+    # print("length of each phrase in the batch", LM_inputs['input_ids'].shape)
+    return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
 def init_working_space():
 
