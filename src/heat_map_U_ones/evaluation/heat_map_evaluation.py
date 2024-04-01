@@ -281,6 +281,8 @@ def main():
 
     logging.info("Loading heat_map ....")
     # load_model(model=heat_map_model,name='heat_map_epoch_1')
+    load_model(model=heat_map_model,name='heat_map_epoch_9')
+
         
     # Create an XReportoTrainer instance with the X-Reporto model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
