@@ -30,8 +30,9 @@ class HeatMap(nn.Module):
         x = self.model.classifier(x)
         
         # Apply sigmoid activation
-        scores = torch.sigmoid(x)
-        
+        # scores = torch.sigmoid(x)
+        scores=x
+
         return x,scores
 
 
