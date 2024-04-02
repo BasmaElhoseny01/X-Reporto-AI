@@ -159,13 +159,13 @@ class HeatMapEvaluation():
         print("y_true",y_true)
     
         for i in range(n_classes):
-            precisions, recalls, thresholds= precision_recall_curve(y_true[1:, i].flatten(), y_scores[1:, i].flatten())
+            precisions, recalls, thresholds= precision_recall_curve(y_true[:, i].flatten(), y_scores[:, i].flatten())
 #             print("precisions",precisions)
 #             print("recalls",recalls)
 #             print("thresholds",thresholds)
             #id = np.argmax(recalls[:len(recalls)-1])
             try:
-                result.append(roc_auc_score(y_true[1:, i], y_scores[1:, i], average="weighted"))
+                result.append(roc_auc_score(y_true[:, i], y_scores[:, i], average="weighted"))
             except:
                 result.append(0)          
                 
@@ -279,7 +279,7 @@ def main():
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
-    load_model(model=heat_map_model,name='heat_map_epoch_9')
+    load_model(model=heat_map_model,name='heat_map_epoch_10')
         
     # Create an XReportoTrainer instance with the X-Reporto model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)

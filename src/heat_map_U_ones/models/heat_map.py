@@ -14,7 +14,8 @@ class HeatMap(nn.Module):
         super(HeatMap, self).__init__()
         self.model = models.densenet121()
         # [Fix] The Paper is 13
-        self.model.classifier = nn.Linear(self.model.classifier.in_features, 13)
+#         self.model.classifier = nn.Linear(self.model.classifier.in_features, 13)
+        self.model.classifier = nn.Linear(self.model.classifier.in_features, 14)
         
     def forward(self, x):
         x=self.model.features(x)
@@ -30,8 +31,7 @@ class HeatMap(nn.Module):
         x = self.model.classifier(x)
         
         # Apply sigmoid activation
-        # scores = torch.sigmoid(x)
-        scores=x
+        scores = torch.sigmoid(x)
 
         return x,scores
 

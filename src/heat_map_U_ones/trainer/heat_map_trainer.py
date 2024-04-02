@@ -91,7 +91,8 @@ class HeatMapTrainer:
             for batch_idx, (images, targets) in enumerate(self.data_loader_train):
                 if batch_idx < start_batch:
                     continue  # Skip batches until reaching the desired starting batch number
-               
+        
+
                 ## Test Recovery
                 # if epoch==3 and batch_idx==1:
                     # print("Start Next time from")
@@ -125,7 +126,7 @@ class HeatMapTrainer:
                     self.optimizer.step()
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
-#                     logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
 
                 ## Get the new learning rate
                 #new_lr = self.optimizer.param_groups[0]['lr']
@@ -138,7 +139,7 @@ class HeatMapTrainer:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 10 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                     
-                break
+                #break
                   
                    
                     #[Tensor Board]: Epoch Average loss
@@ -175,7 +176,7 @@ class HeatMapTrainer:
 
             # saving model per epoch
             #self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
-            if epoch==49:
+            if epoch==9:
                 self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=1555.0000)
 
         logging.info("Training Done")
