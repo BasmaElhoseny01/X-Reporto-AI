@@ -26,7 +26,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=1
+OPERATION_MODE=3
 
 
 # Model Stage
@@ -35,14 +35,14 @@ MODEL_STAGE=3
 Linear_Schecdular=True # Linear Schecdular if True, Plateau Schecdular if False
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=True
 FREEZE = True
 
-RUN = "3"
+RUN = "0"
 EPOCHS=4
 # BATCH_SIZE=16
 BATCH_SIZE=1
@@ -50,7 +50,7 @@ BATCH_SIZE=1
 # EFFECTIVE_BATCH_SIZE = 64
 EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
-LM_Batch_Size=2
+LM_Batch_Size=1
 LEARNING_RATE=0.0005
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.85 # value multiply lr with
@@ -78,7 +78,7 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 training_csv_path = 'datasets/train.csv'
 # validation_csv_path = 'datasets/valid.csv'
 validation_csv_path = 'datasets/valid.csv'
-evaluation_csv_path = 'datasets/valid.csv'
+evaluation_csv_path = 'datasets/test.csv'
 # evaluation_csv_path = 'datasets/valid.csv'
 # TODO Fix
 # evaluation_csv_path = 'datasets/eval.csv'

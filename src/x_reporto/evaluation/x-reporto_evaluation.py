@@ -53,9 +53,9 @@ class XReportoEvaluation():
         logging.info("Evalution dataset loaded")
         # load bleu score
         # calculating a score based on the n-gram overlap between them.
-        self.bleu_score = Bleu()
+        self.bleu_score = Bleu(4)
         self.rouge = Rouge() 
-        self.bleu_score.weights = [1/4, 1/4, 1/4, 1/4]
+        # self.bleu_score.weights = [1/4, 1/4, 1/4, 1/4]
         # calculating a score based on the harmonic mean of precision and recall.
         self.meteor = Meteor()
 
@@ -91,7 +91,10 @@ class XReportoEvaluation():
         }
         # intialize LM_scores
         LM_scores = {   
-        "BLUE-Sentence": 0,
+        "BLUE1-Sentence": 0,
+        "BLUE2-Sentence": 0,
+        "BLUE3-Sentence": 0,
+        "BLUE4-Sentence": 0,
         "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
         "BLUE-report":0,
@@ -107,21 +110,27 @@ class XReportoEvaluation():
                 images = images.to(DEVICE)              
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
+                abnormal_classifier_targets=abnormal_classifier_targets.to("cpu")
+                abnormal_classifier_targets=abnormal_classifier_targets[0].numpy()
                 
                 lm_sentences_encoded_selected,selected_regions = self.language_model_forward_pass(images=images)
                 generated_sents_for_selected_regions=tokenizer.batch_decode(lm_sentences_encoded_selected,skip_special_tokens=True,clean_up_tokenization_spaces=True)
+                
                 reference_sentences_encoded=LM_inputs['input_ids'][0].tolist()
-                reference_sents_for_selected_regions=tokenizer.batch_decode(reference_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
+                reference_sents=tokenizer.batch_decode(reference_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
+                reference_sents = np.asarray(reference_sents)
+                ref_sentences_for_selected_regions = reference_sents[selected_regions]
+
                 (
                 gen_sents_for_normal_selected_regions,
                 gen_sents_for_abnormal_selected_regions,
                 ref_sents_for_normal_selected_regions,
                 ref_sents_for_abnormal_selected_regions,
-            ) = self.get_sents_for_normal_abnormal_selected_regions(abnormal_classifier_targets, selected_regions, generated_sents_for_selected_regions, reference_sents_for_selected_regions)
+            ) = self.get_sents_for_normal_abnormal_selected_regions(abnormal_classifier_targets, selected_regions, generated_sents_for_selected_regions,ref_sentences_for_selected_regions)
 
 
                 LM_sentances_generated_reference["generated_sentences"].extend(generated_sents_for_selected_regions)
-                LM_sentances_generated_reference["reference_sentences"].extend(reference_sents_for_selected_regions)
+                LM_sentances_generated_reference["reference_sentences"].extend(ref_sentences_for_selected_regions)
                 LM_sentances_generated_reference["generated_sentences_normal_selected_regions"].extend(gen_sents_for_normal_selected_regions)
                 LM_sentances_generated_reference["generated_sentences_abnormal_selected_regions"].extend(gen_sents_for_abnormal_selected_regions)
                 LM_sentances_generated_reference["reference_sentences_normal_selected_regions"].extend(ref_sents_for_normal_selected_regions)
@@ -146,10 +155,13 @@ class XReportoEvaluation():
         generated_sentences_converted = self.convert_for_pycoco_scorer(generated_sentences)
         reference_sentences_converted = self.convert_for_pycoco_scorer(reference_sentences)
         # compute the score
-        
-        LM_scores["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
+        Bleu_score = self.bleu_score.compute_score(generated_sentences_converted, reference_sentences_converted)
+        LM_scores["BLUE1-Sentence"] =Bleu_score[0][0]
+        LM_scores["BLUE2-Sentence"] =Bleu_score[0][1]
+        LM_scores["BLUE3-Sentence"] = Bleu_score[0][2]
+        LM_scores["BLUE4-Sentence"] = Bleu_score[0][3]
         LM_scores["ROUGE-Sentence"] = self.rouge.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
-        LM_scores["BLUE-Sentence"] = self.bleu_score.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
+        LM_scores["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
 
     def convert_for_pycoco_scorer(self,sents):
         '''
@@ -604,14 +616,9 @@ class XReportoEvaluation():
         return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
     
     def language_model_forward_pass(self,images:torch.Tensor):
-        LM_sentances=[]
         loopLength=29
         for batch in range(BATCH_SIZE):   
-            for i in range(0,loopLength,LM_Batch_Size):
-                # Forward Pass              
-                LM_sentances_LM_batch,selected_regions= self.model(images=images,batch=batch,index=i,delete=i+LM_Batch_Size>=loopLength-1,use_beam_search= True)
-                LM_sentances.extend(LM_sentances_LM_batch)
-                 
+            LM_sentances,selected_regions= self.model(images=images,use_beam_search= False)
         torch.cuda.empty_cache()
         gc.collect()
         return LM_sentances,selected_regions[0].tolist()
@@ -619,18 +626,15 @@ class XReportoEvaluation():
     ########################################################### General Fuunctions ##########################################
     
     def get_sents_for_normal_abnormal_selected_regions(self,region_is_abnormal, selected_regions, generated_sentences_for_selected_regions, reference_sentences_for_selected_regions):
-        # selected_region_is_abnormal = region_is_abnormal[selected_regions]
-        selected_region_is_abnormal = region_is_abnormal
-        # selected_region_is_abnormal is a bool array of shape [num_regions_selected_in_batch] that specifies if a selected region is abnormal (True) or normal (False)
+        selected_region_is_abnormal = region_is_abnormal[selected_regions]
+        selected_region_is_abnormal = np.where(selected_region_is_abnormal)[0]  # Get the indices where boolean_array is True
+        generated_sentences_for_selected_regions=np.array(generated_sentences_for_selected_regions)
+        reference_sentences_for_selected_regions=np.array(reference_sentences_for_selected_regions)
+        gen_sents_for_normal_selected_regions = generated_sentences_for_selected_regions[~selected_region_is_abnormal].tolist()
+        gen_sents_for_abnormal_selected_regions = generated_sentences_for_selected_regions[selected_region_is_abnormal].tolist()
 
-        gen_sents_for_selected_regions = np.asarray(generated_sentences_for_selected_regions)
-        ref_sents_for_selected_regions = np.asarray(reference_sentences_for_selected_regions)
-
-        gen_sents_for_normal_selected_regions = gen_sents_for_selected_regions[~selected_region_is_abnormal].tolist()
-        gen_sents_for_abnormal_selected_regions = gen_sents_for_selected_regions[selected_region_is_abnormal].tolist()
-
-        ref_sents_for_normal_selected_regions = ref_sents_for_selected_regions[~selected_region_is_abnormal].tolist()
-        ref_sents_for_abnormal_selected_regions = ref_sents_for_selected_regions[selected_region_is_abnormal].tolist()
+        ref_sents_for_normal_selected_regions = reference_sentences_for_selected_regions[~selected_region_is_abnormal].tolist()
+        ref_sents_for_abnormal_selected_regions = reference_sentences_for_selected_regions[selected_region_is_abnormal].tolist()
 
         return (
             gen_sents_for_normal_selected_regions,

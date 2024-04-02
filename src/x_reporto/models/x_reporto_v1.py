@@ -394,13 +394,7 @@ class XReportoV1(nn.Module):
             # LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
             
             if delete:
-                # Free GPU memory
-                # object_detector_features=object_detector_features.to('cpu')
-                # input_ids=input_ids.to('cpu')
-                # attention_mask=attention_mask.to('cpu')
-                # del object_detector_features
-                # del input_ids
-                # del attention_mask
+
                 del valid_input_ids
                 del valid_attention_mask
                 del valid_object_detector_features
@@ -460,8 +454,11 @@ class XReportoV1(nn.Module):
                     abnormal_binary_classifier_losses=torch.tensor(0.0,requires_grad=True).to(DEVICE)
                     LM_losses= torch.tensor(0.0,requires_grad=True).to(DEVICE)
                     return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,True
-                
-                LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
+                LM_losses=0
+                for lm_index in range(0,len(valid_input_ids),LM_Batch_Size):
+                    LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
+                    LM_losses=LM_losses+LM_output[0]
+
                 if delete:
                     # Free GPU memory
                     object_detector_features=object_detector_features.to('cpu')
@@ -475,59 +472,24 @@ class XReportoV1(nn.Module):
                     del valid_object_detector_features
                     torch.cuda.empty_cache()
                     gc.collect()
-                    return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_output[0],stop
+                    return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop
                 
             elif OPERATION_MODE==OperationMode.EVALUATION.value or OPERATION_MODE==OperationMode.TESTING.value:
-                selected_regions=torch.ones_like(selected_regions)
+                # selected_regions=torch.ones_like(selected_regions)
+                LM_sentances=[]
                 object_detector_features = object_detector_features[selected_regions]
-                if use_beam_search:
-                    LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
-                else:
-                    LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,sampling_top_k=True,top_k=5,device=DEVICE)
-                
+                for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
+                    if use_beam_search:
+                        LM_sentencses_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
+                    else:
+                        LM_sentencses_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                    LM_sentances.extend(LM_sentencses_batch)
                 if delete:
                     # Free GPU memory
                     object_detector_features=object_detector_features.to('cpu')
                     del object_detector_features
                     torch.cuda.empty_cache()
-                return LM_sentencses,selected_regions
-
-            # Stage(3) Language Model
-     
-        # if generate_sentence:
-                # object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
-                # if delete:
-                #     # Free GPU memory 
-                #     images=images.to('cpu')
-                #     # move object_detector_targets to cpu
-                #     # for i in range(len(object_detector_targets)):
-                #     #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
-                #     #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
-                #     del images
-                #     # del object_detector_targets
-                #     torch.cuda.empty_cache()
-                #     # Stage(2) Binary Classifier
-                # selection_classifier_losses,selected_regions,_=self.binary_classifier_selection_region(object_detector_features,object_detector_detected_classes,selection_classifier_targets)
-                # if delete:
-                #         # free gpu memory
-                #         torch.cuda.empty_cache()
-                # selected_regions=torch.ones_like(selected_regions)
-                # object_detector_features = object_detector_features[selected_regions]
-                # # if (index+LM_Batch_Size) >= object_detector_features.shape[0]-1:
-                # #     stop=True
-                # if use_beam_search:
-                #     LM_sentencses=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
-                # else:
-                #     LM_sentencses=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],greedy=True,device=DEVICE)
-                
-                # # LM_output=self.language_model(input_ids=input_ids[index:index+LM_Batch_Size,:],image_hidden_states=object_detector_features[index:index+LM_Batch_Size,:],attention_mask=attention_mask[index:index+LM_Batch_Size,:],labels=language_model_targets[batch][index:index+LM_Batch_Size,:])
-                # if delete:
-                #     # Free GPU memory
-                #     object_detector_features=object_detector_features.to('cpu')
-                #     del object_detector_features
-                #     torch.cuda.empty_cache()
-
-                # return LM_sentencses,stop
+                return LM_sentances,selected_regions
 
        
     def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets):
