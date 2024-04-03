@@ -318,7 +318,7 @@ def main():
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
-    setup_logging(log_file_path='./logs/heat_map_u_onestrainer.log',bash=True,periodic_logger=PERIODIC_LOGGING)
+    setup_logging(log_file_path='./logs/heat_map_u_ones_trainer.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
     try:
         # The main script runs here

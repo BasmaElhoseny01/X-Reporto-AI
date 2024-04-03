@@ -180,7 +180,7 @@ class HeatMapEvaluation():
         #plt.close()
 
         # Save figure with appropriate DPI
-        plt.savefig(f"./tensor_boards/{RUN}/roc.png", dpi=300)
+        plt.savefig(f"./tensor_boards/heat_maps/{RUN}/roc.png", dpi=300)
         plt.show()
 
         return
@@ -226,7 +226,7 @@ def main():
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
-    setup_logging(log_file_path='./logs/heat_map_u_ones_Evaluator.log',bash=True,periodic_logger=PERIODIC_LOGGING)
+    setup_logging(log_file_path='./logs/heat_map_u_ones_evaluator.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
     try:
         # The main script runs here

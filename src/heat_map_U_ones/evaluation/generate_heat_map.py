@@ -65,7 +65,7 @@ class HeatMapGeneration():
             
         def generate(self):
             with torch.no_grad():
-                logging.info(f"Generating Heat Map Every{GENERATE_HEAT_MAP_EVERY}")
+                logging.info(f"Generating Heat Maps")
                 for batch_idx,(images,targets,images_path) in enumerate(self.data_loader_eval):
                     
                     # Move inputs to Device
@@ -121,7 +121,7 @@ class HeatMapGeneration():
             plt.imshow(img)
             plt.plot()
             plt.axis('off')
-            plt.savefig(f"./tensor_boards/{RUN}/{desired_string}")
+            plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
             plt.show()
             return
         
@@ -173,7 +173,7 @@ def main():
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
-    setup_logging(log_file_path='./logs/generate_heat_map.log',bash=True,periodic_logger=PERIODIC_LOGGING)
+    setup_logging(log_file_path='./logs/heat_map_u_ones_generator.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
     try:
         # The main script runs here
