@@ -154,7 +154,7 @@ class HeatMapEvaluation():
 
         # Add legend, labels, and grid
         plt.legend(loc='lower right', fontsize=8)
-        #plt.plot([0, 1], [0, 1], 'r--')
+        plt.plot([0, 1], [0, 1], 'r--')
         plt.xlim([0, 1])
         plt.ylim([0, 1])
         plt.xlabel('False Positive Rate', fontsize=10)
