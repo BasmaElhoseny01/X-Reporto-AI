@@ -47,7 +47,7 @@ class HeatMapTrainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr=LEARNING_RATE, betas=(LR_BETA_1, LR_BETA_2))
         
         # Create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, SCHEDULAR_GAMMA=0.1)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
         
         #Create Criterion
         #self.criterion = nn.BCEWithLogitsLoss(reduction='none', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
@@ -172,7 +172,7 @@ class HeatMapTrainer:
             
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
         # Forward Pass
-        y_pred,_=self.model(images)  # Return is y_pred,y_scores
+        y_pred,_,_=self.model(images)  # Return is y_pred,y_scores
         
         # VIP DON'T FORGET TO UPDATE ONE IN EVALUATION :D
         Total_loss=self.criterion(y_pred,targets)*images[0].size(0)   #3-channels
@@ -201,7 +201,7 @@ class HeatMapTrainer:
         with torch.no_grad():
             validation_total_loss=0
             total_loss=0
-            for batch_idx, (images, targets) in enumerate(self.data_loader_val):
+            for batch_idx, (images, targets,_) in enumerate(self.data_loader_val):
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 targets=targets.to(DEVICE)

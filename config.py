@@ -8,6 +8,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 # Suppress Plt INFO level logs
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
+
 class ModelStage(Enum):
     OBJECT_DETECTOR = 1
     CLASSIFIER = 2
@@ -24,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=2
 
@@ -39,10 +40,12 @@ RUN = "heat_map_4"
 EPOCHS=5
 BATCH_SIZE=16
 LM_Batch_Size=1
+
 EFFECTIVE_BATCH_SIZE = 16
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
 LEARNING_RATE=0.0001
+
 LR_BETA_1=0.9
 LR_BETA_2=0.999
 
@@ -51,13 +54,13 @@ SCHEDULAR_GAMMA=0.8 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-1 # Threshold for measuring the new optimum, to only focus on significant changes
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
-# Debugging COnfigurations
-DEBUG=True
-
 # Weights of each model
 ABNORMAL_CLASSIFIER_WEIGHT = 2.5
 REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
 OBJECT_DETECTOR_WEIGHT = 1
+
+# Debgging COnfigurations
+DEBUG=True
 
 # Modules Configurations:
 # Abnormal Binary Classifier Hyper Parameters
@@ -65,17 +68,9 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 # Region Selection Classifier Hyper Parameters
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
-# Paths to the external files
-training_csv_path = 'datasets/train.csv'
-validation_csv_path = 'datasets/valid.csv'
-evaluation_csv_path = 'datasets/valid-100.csv'
-test_csv_path:str = 'datasets/test.csv'
-# Heat Map
-heat_map_training_csv_path:str = 'datasets/heat_map_train_2.csv'
-heat_map_validating_csv_path:str = 'datasets/heat_map_train_2.csv'
-heat_map_evaluation_csv_path = 'datasets/heat_map_train_2.csv'
 
 # HeatMap Classifier Weights
+HEAT_MAP_IMAGE_SIZE=224
 CLASSES=['No Finding','Atelectasis','Cardiomegaly','Consolidation','Edema','Enlarged Cardiomediastinum','Fracture','Lung Lesion','Lung Opacity','Pleural Effusion','Pleural Other','Pneumonia','Pneumothorax','Support Devices']
 POS_WEIGHTS=[9.9758,3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,2.2849,36.2066,9.0119,9.8955,1.9085]
 
@@ -94,13 +89,28 @@ POS_WEIGHTS=[9.9758,3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,2.
 # 'Fracture':23.0994,
 # 'Support Devices':1.9085}
 
+# Pathes to the external files
+# training_csv_path = 'datasets/train.csv'
+training_csv_path = 'datasets/train.csv'
+validation_csv_path = 'datasets/valid.csv'
+# validation_csv_path = 'datasets/valid.csv'
+evaluation_csv_path = 'datasets/valid-100.csv'
+# evaluation_csv_path = 'datasets/valid.csv'
+# TODO Fix
+# evaluation_csv_path = 'datasets/eval.csv'
+test_csv_path:str = 'datasets/test.csv'
+
+heat_map_training_csv_path:str = 'datasets/heat_map_train_2.csv'
+heat_map_validating_csv_path:str = 'datasets/heat_map_train_2.csv'
+# heat_map_evaluation_csv_path = 'datasets/heat_map_val.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map_train_2.csv'
 
 # Logging
 PERIODIC_LOGGING=True
 
 CHECKPOINT_EVERY_N=400
 RECOVER=False
-
+ 
 SEED=31
 
 def log_config():
@@ -118,37 +128,25 @@ def log_config():
     logging.info(f"RUN: {RUN}")
     logging.info(f"EPOCHS: {EPOCHS}")
     logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
-    logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
     logging.info(f"EFFECTIVE_BATCH_SIZE: {EFFECTIVE_BATCH_SIZE}")
     logging.info(f"ACCUMULATION_STEPS: {ACCUMULATION_STEPS}")
+    logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
 
     logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
-    logging.info(f"LR_BETA_1: {LR_BETA_1}")
-    logging.info(f"LR_BETA_2: {LR_BETA_2}")
-
     logging.info(f"SCHEDULAR_STEP_SIZE: {SCHEDULAR_STEP_SIZE}")
     logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
-    logging.info(f"THRESHOLD_LR_SCHEDULER: {THRESHOLD_LR_SCHEDULER}")
-    logging.info(f"COOLDOWN_LR_SCHEDULER: {COOLDOWN_LR_SCHEDULER}")
 
     logging.info(f"DEBUG: {DEBUG}")
     # logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
 
-    logging.info(f"ABNORMAL_CLASSIFIER_WEIGHT: {ABNORMAL_CLASSIFIER_WEIGHT}")
-    logging.info(f"REGION_SELECTION_CLASSIFIER_WEIGHT: {REGION_SELECTION_CLASSIFIER_WEIGHT}")
-    logging.info(f"OBJECT_DETECTOR_WEIGHT: {OBJECT_DETECTOR_WEIGHT}")
-
     logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
     logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
+    logging.info(f"OBJECT_DETECTOR_WEIGHT: {OBJECT_DETECTOR_WEIGHT}")
+    logging.info(f"ABNORMAL_CLASSIFIER_WEIGHT: {ABNORMAL_CLASSIFIER_WEIGHT}")
+    logging.info(f"REGION_SELECTION_CLASSIFIER_WEIGHT: {REGION_SELECTION_CLASSIFIER_WEIGHT}")
 
     logging.info(f"training_csv_path: {training_csv_path}")
     logging.info(f"validation_csv_path: {validation_csv_path}")
-    logging.info(f"evaluation_csv_path: {evaluation_csv_path}")
-    logging.info(f"test_csv_path: {test_csv_path}")
-
-    logging.info(f"heat_map_training_csv_path: {heat_map_training_csv_path}")
-    logging.info(f"heat_map_validating_csv_path: {heat_map_validating_csv_path}")
-    logging.info(f"heat_map_evaluation_csv_path: {heat_map_evaluation_csv_path}")
 
     logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
 
