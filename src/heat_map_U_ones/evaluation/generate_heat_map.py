@@ -73,16 +73,14 @@ class HeatMapGeneration():
                     targets=targets.to(DEVICE)
                     
                     # Forward Pass
-                    _,_,features=self.model(images)
-                    print(features.shape) #torch.Size([2, 1024, 7, 7])
-                    
+                    _,_,features=self.model(images)#torch.Size([2, 1024, 7, 7])                    
                     
                     # For Each Image in the Batch Generate the heat Map
                     for i , img in enumerate(images):
                         self.generate_one_heat_map(images_path[i],features[i])
+                        
+                return 
 
-
-                    pass
                 
         def generate_one_heat_map(self,image_path,features):
             #---- Generate heatmap
@@ -125,6 +123,7 @@ class HeatMapGeneration():
             plt.axis('off')
             plt.savefig(f"./tensor_boards/{RUN}/{desired_string}")
             plt.show()
+            return
         
 
 def init_working_space():

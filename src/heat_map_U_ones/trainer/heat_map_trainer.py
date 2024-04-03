@@ -157,7 +157,6 @@ class HeatMapTrainer:
             gc.collect()
             
             
-        
             # validate the model no touch :)
             self.model.eval()
             validation_average_loss= self.validate_during_training(epoch=epoch) 
