@@ -48,4 +48,4 @@ class HeatMapDataset(Dataset):
         # tranform image
         # 3channel 224x224 Normalized 0-1
         transformed_image = self.transform(image=img)["image"] #([3, 224, 224])  # I think [-3,-3]
-        return transformed_image, labels
+        return transformed_image, labels,img_path

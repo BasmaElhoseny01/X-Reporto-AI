@@ -2,7 +2,7 @@
 import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
-from sklearn.metrics import f1_score
+from sklearn import metrics
 from logger_setup import setup_logging
 import logging
 
@@ -37,9 +37,6 @@ from src.utils import load_model
 
 # Utils 
 from config import *
-from src.utils import plot_heatmap
-
-from sklearn import metrics
 
 class HeatMapEvaluation():
     def __init__(self, model:HeatMap,evaluation_csv_path:str = heat_map_evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
@@ -85,7 +82,7 @@ class HeatMapEvaluation():
             # evaluate the model
             logging.info("Evaluating the model")
             
-            for batch_idx,(images,targets) in enumerate(self.data_loader_eval):
+            for batch_idx,(images,targets,_) in enumerate(self.data_loader_eval):
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 targets=targets.to(DEVICE) 
@@ -121,7 +118,7 @@ class HeatMapEvaluation():
         y: Prob not classes
         '''
         # Forward Pass
-        y_pred,scores=self.model(images)
+        y_pred,scores,_=self.model(images)
 
         # Calculate Loss
         Total_loss=nn.BCEWithLogitsLoss(reduction='mean')(y_pred,targets)*images[0].size(0)
@@ -187,103 +184,7 @@ class HeatMapEvaluation():
         plt.show()
 
         return
-         
-#         # Draw ROC Curve Per Class
-#         for i in range(len(CLASSES)):    
-#             # Computing Precison & Recall
-#             #precisions, recalls, thresholds = metrics.precision_recall_curve(y_true[:, i].flatten(), y_scores[:, i].flatten())
-#             #try:
-#                 #result.append(roc_auc_score(y_true[:, i], y_scores[:, i], average="weighted"))
-#             #except:
-#                 #result.append(0)      
-
-#             fpr, tpr, threshold = metrics.roc_curve(y_true[:, i], y_scores[:, i])
-
-#             # AUC
-#             roc_auc = metrics.auc(fpr,tpr)
-#             f = plt.subplot(3, 5, i+1)
-            
-
-#             plt.title('ROC for: ' + CLASSES[i],fontsize=4)
-#             plt.plot(fpr, tpr, label = 'AUC = %0.2f' % roc_auc)
-
-#             plt.legend(loc = 'lower right',fontsize=3)
-#             plt.plot([0, 1], [0, 1],'r--')
-#             plt.xlim([0, 1])
-#             plt.ylim([0, 1])
-#             plt.ylabel('tp rate',fontsize=3)
-#             plt.xlabel('fp rate',fontsize=3)
-            
-#         # Add tight layout
-#         plt.tight_layout()
         
-#         fig_size = plt.rcParams["figure.figsize"]
-#         fig_size[0] = 30
-#         fig_size[1] = 10
-#         plt.rcParams["figure.figsize"] = fig_size
-        
-#         plt.tick_params(axis='both', which='major', labelsize=2)  # Decrease tick label font size
-
-#         plt.savefig("./models/heat_map_4/roc.png", dpi=1000)
-#         plt.show()
-                
-#         return 
-    
-  
-    #def F1_score_for_each_class(self, y_true, y_pred):
-#         '''
-#         F1 Score
-#         '''
-#         # y_true = y_true.cpu().detach().numpy()
-#         # y_pred = y_pred.cpu().detach().numpy()
-#         f1_scores = []
-#         for i in range(y_true.shape[1]):
-#             false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
-#             false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
-#             true_positive = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 1))
-#             true_negative = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 0))
-#             precision = true_positive / (true_positive + false_positive)
-#             recall = true_positive / (true_positive + false_negative)
-#             f1 = 2 * (precision * recall) / (precision + recall)
-#             f1_scores.append(f1)
-#             print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
-#             print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
-#         return f1_scores
-              
-        
-#     def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):
-#         for i in range(len(targets)):
-#             # Each Example in the Batch
-# #             for disease_idx,disease in range(CLASSES):
-# #                 if predicted_classes[i][disease_idx].item()
-                
-#             print(predicted_classes[i])
-#             print(targets[i])
-#             print(predicted_classes.shape)
-#             print(targets.shape)
-#         sys.exit()
-#     ########################################################### General Fuunctions ##########################################
-#     def update_tensor_board_score():
-#         pass
-
-#     def draw_tensor_board(self,batch_idx,images,features,classes):
-#         '''
-#         Add images to tensorboard
-#         '''
-#         images=images.to('cpu')
-#         # convert features and classes to tensor
-#         features=torch.stack(features)
-#         classes=torch.stack(classes)
-#         # print(features.shape) # torch.Size([1, 2, 1024, 16, 16]).
-#         # print(classes.shape) # torch.Size([1, 2, 13])
-#         classes=classes.squeeze(0)
-#         features=features.squeeze(0)
-#         for i in range(images.shape[0]):
-#             # Generate HeatMap
-#             heat_map=self.generate_heat_map(feature_map=features[i],image=images[i],classes=classes[i])
-#             # Add to Tensor Board
-#             self.tensor_board_writer.add_image(f'HeatMap_{i}', heat_map, batch_idx)
-
 
 def init_working_space():
 
@@ -300,11 +201,10 @@ def init_working_space():
     return tensor_board_folder_path
 
 def main():
-    
-    logging.info(" X_Reporto Evaluation Started")
-    print(" Heat Map Evaluation Started")
+    logging.info(" Heat Map Evaluation Started")
     # Logging Configurations
     log_config()
+    
     if OperationMode.EVALUATION.value!=OPERATION_MODE :
         raise Exception("Operation Mode is not Evaluation Mode")
     
@@ -312,18 +212,17 @@ def main():
     tensor_board_folder_path=init_working_space()
     tensor_board_writer=SummaryWriter(tensor_board_folder_path)
 
-    # X-Reporto Trainer Object
+    # Heat Map Model 
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
     load_model(model=heat_map_model,name='heat_map_best')
         
-    # Create an XReportoTrainer instance with the X-Reporto model
+    # Create an HeatMap Evaluation instance with the HeatMap model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
     # Start Evaluation
-    evaluator.evaluate()
-        
+    evaluator.evaluate()        
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script

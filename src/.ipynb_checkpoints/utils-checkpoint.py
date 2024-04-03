@@ -1,6 +1,5 @@
 import torch
 from torch import Tensor
-<<<<<<< Updated upstream
 from typing import Dict, List, Union
 
 import numpy as np
@@ -12,18 +11,6 @@ from matplotlib import patches
 
 from config import *
 
-=======
-from typing import List, Union
-
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import patches
-
-
-from config import *
-
-
->>>>>>> Stashed changes
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """
     Convert a 2D boolean tensor to a list of indices where the value is True.
@@ -163,11 +150,7 @@ def get_top_k_boxes_for_labels(boxes, labels, scores, k=1):
             return listboxes,unique_labels.tolist()
         return listboxes,[]
 
-<<<<<<< Updated upstream
 def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]],selected_region:bool=False,target_regions:List[bool]=[]):
-=======
-def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], predicted_labels: List[bool], predicted_boxes: List[List[float]]):
->>>>>>> Stashed changes
     """
     Function that draws the BBoxes on the image.
 
@@ -193,7 +176,6 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
     fig, ax = plt.subplots(1, figsize=(16, 8))
     # Display the image
     ax.imshow(img[0])
-<<<<<<< Updated upstream
     region_colors = [
         "blue", "green", "red", "cyan", "magenta", "yellow", 
         "orange", "purple", "lime", "pink", "teal", "lavender", 
@@ -220,13 +202,6 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
 
             if condition and idx !=-1:
                 box = boxes[idx]
-=======
-    region_colors = ["b", "g", "r", "c", "m", "y"]
-    for j in range(0,5):
-        for i in range(j*6,j*6+5):
-            if labels[i]:
-                box = boxes[i]
->>>>>>> Stashed changes
                 width = box[2] - box[0]
                 height = box[3] - box[1]
                 rect = patches.Rectangle(
@@ -235,19 +210,11 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-<<<<<<< Updated upstream
                     edgecolor=region_colors[(i-j*6-1)%29],
-=======
-                    edgecolor=region_colors[((i-j*6)%5)],
->>>>>>> Stashed changes
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="dashed",
                 )
-<<<<<<< Updated upstream
-=======
-                
->>>>>>> Stashed changes
                 # Add the patch to the Axes
                 ax.add_patch(rect)
             if predicted_labels[i]:
@@ -260,18 +227,13 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
                     height,
                     linewidth=1,  # Increase linewidth
                     # make the box color correspond to the label color
-<<<<<<< Updated upstream
                     edgecolor=region_colors[(i-j*6)%29],
-=======
-                    edgecolor=region_colors[(i-j*6)%5],
->>>>>>> Stashed changes
                     # edgecolor="white",  # Set the box border color
                     facecolor="none",  # Set facecolor to none
                     linestyle="solid",
                 )
                 # Add the patch to the Axes
                 ax.add_patch(rect)
-<<<<<<< Updated upstream
                 
         # images_list.append(ax)
         # convert ax to image
@@ -297,17 +259,6 @@ def plot_image(img: np.ndarray, labels: List[int], boxes: List[List[float]], pre
 
         # # Display the image
         # ax.imshow(img[0])
-=======
-        plt.show()
-        cmap = plt.get_cmap("tab20b")
-        height, width = img.shape[1:]
-
-        # Create figure and axes
-        fig, ax = plt.subplots(1, figsize=(16, 8))
-
-        # Display the image
-        ax.imshow(img[0])
->>>>>>> Stashed changes
 
 def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
     """
@@ -368,10 +319,10 @@ def load_model(model,name):
         model(nn): model to be loaded
         name (str): Name of the model file.
     '''
-<<<<<<< Updated upstream
     model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))
 
-
+def plot_heatmap():
+    pass
 
 def cuda_memory_info(title=""):
     print("==========================================================================================================")
@@ -447,6 +398,3 @@ def empty_folder(folder_path):
         logging.info(f"Folder '{folder_path}' emptied successfully.")
     else:
         logging.info(f"Folder '{folder_path}' does not exist.")
-=======
-    model.load_state_dict(torch.load("models/" + str(RUN) + '/' + name + ".pth"))
->>>>>>> Stashed changes

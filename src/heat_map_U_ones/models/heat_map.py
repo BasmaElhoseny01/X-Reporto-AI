@@ -34,7 +34,7 @@ class HeatMap(nn.Module):
         # Apply Sigmoid
         y_scores=torch.sigmoid(y_pred)
 
-        return y_pred,y_scores
+        return y_pred,y_scores,features
 
 
 

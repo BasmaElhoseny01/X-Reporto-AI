@@ -39,14 +39,15 @@ class HeatMapTrainer:
         if CONTINUE_TRAIN:
             logging.info("Loading heat_map ....")
             load_model(model=self.model,name='heat_map_best')    
+            
         # Move to device
         self.model.to(DEVICE)
 
         # Optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, betas=(0.9, 0.999))
+        self.optimizer = optim.Adam(self.model.parameters(), lr=LEARNING_RATE, betas=(LR_BETA_1, LR_BETA_2))
         
         # Create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
+        self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, SCHEDULAR_GAMMA=0.1)
         
         #Create Criterion
         #self.criterion = nn.BCEWithLogitsLoss(reduction='none', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
@@ -90,7 +91,7 @@ class HeatMapTrainer:
                 epoch_loss=epoch_loss_init
             else:
                 epoch_loss = 0
-            for batch_idx, (images, targets) in enumerate(self.data_loader_train):
+            for batch_idx, (images, targets,_) in enumerate(self.data_loader_train):
                 if batch_idx < start_batch:
                     continue  # Skip batches until reaching the desired starting batch number
         

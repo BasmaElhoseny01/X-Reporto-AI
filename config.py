@@ -39,19 +39,22 @@ FREEZE_OBJECT_DETECTOR=False
 RUN = "heat_map_4"
 EPOCHS=5
 BATCH_SIZE=16
-# BATCH_SIZE=1
-#   TODO: change to 64
-EFFECTIVE_BATCH_SIZE = BATCH_SIZE
-ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 LM_Batch_Size=1
-LEARNING_RATE=1e-3
+
+EFFECTIVE_BATCH_SIZE = 16
+ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
+
+LEARNING_RATE=0.0001
+
+LR_BETA_1=0.9
+LR_BETA_2=0.999
+
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-1 # Threshold for measuring the new optimum, to only focus on significant changes
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
 # Weights of each model
-
 ABNORMAL_CLASSIFIER_WEIGHT = 2.5
 REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
 OBJECT_DETECTOR_WEIGHT = 1
@@ -108,9 +111,6 @@ CHECKPOINT_EVERY_N=400
 RECOVER=False
  
 SEED=31
-
-DRAW_TENSOR_BOARD=0
-
 
 def log_config():
     logging.info(f"DEVICE: {DEVICE}")
@@ -182,6 +182,9 @@ def get_config():
     }
 
     return config
+
+
+
 
 # By Command Line TODO fix with new arguments :D
 # import argparse
