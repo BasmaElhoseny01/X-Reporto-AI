@@ -71,8 +71,8 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # HeatMap Classifier Weights
 HEAT_MAP_IMAGE_SIZE=224
-CLASSES=['No Finding','Atelectasis','Cardiomegaly','Consolidation','Edema','Enlarged Cardiomediastinum','Fracture','Lung Lesion','Lung Opacity','Pleural Effusion','Pleural Other','Pneumonia','Pneumothorax','Support Devices']
-POS_WEIGHTS=[9.9758,3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,2.2849,36.2066,9.0119,9.8955,1.9085]
+CLASSES=['Atelectasis','Cardiomegaly','Consolidation','Edema','Enlarged Cardiomediastinum','Fracture','Lung Lesion','Lung Opacity','No Finding','Pleural Effusion','Pleural Other','Pneumonia','Pneumothorax','Support Devices']
+POS_WEIGHTS=[3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,9.9758,2.2849,36.2066,9.0119,9.8955,1.9085]
 
 # CLASSES={'No Finding':9.9758,
 # 'Enlarged Cardiomediastinum':4.0310,
