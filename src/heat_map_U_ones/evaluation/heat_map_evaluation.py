@@ -39,7 +39,7 @@ from src.utils import load_model
 from config import *
 from src.utils import plot_heatmap
 
-from sklearn.metrics import precision_recall_curve, roc_auc_score
+from sklearn import metrics
 
 class HeatMapEvaluation():
     def __init__(self, model:HeatMap,evaluation_csv_path:str = heat_map_evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
@@ -63,10 +63,9 @@ class HeatMapEvaluation():
         
     def evaluate(self):
         #Evaluate the model
-        eval_loss,roc = self.evaluate_heat_map()
+        eval_loss = self.evaluate_heat_map()
         
         print("Evaluation Loss",eval_loss)
-        print("ROC Score",roc)
         
         # logging precision and recall
 
@@ -111,10 +110,10 @@ class HeatMapEvaluation():
             #f1_scores = self.F1_score_for_each_class(all_targets, all_preds)
             
             # Compute ROC
-            roc = self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
+            self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
          
             
-        return validation_total_loss,roc
+        return validation_total_loss
     
     
     def forward_pass(self,images,targets):
@@ -142,39 +141,114 @@ class HeatMapEvaluation():
         return heat_map_scores
     
     def compute_ROC(self,y_true,y_scores,n_classes):
-        result = []
-        #print("y_scores",y_scores)
-        #print("y_true",y_true)
+        # print("y_scores",y_scores)
+        # print("y_true",y_true)
+        plt.figure(figsize=(10, 8))  # Adjust figure size
     
-        for i in range(n_classes):
-            precisions, recalls, thresholds = precision_recall_curve(y_true[:, i].flatten(), y_scores[:, i].flatten())
-            try:
-                result.append(roc_auc_score(y_true[:, i], y_scores[:, i], average="weighted"))
-            except:
-                result.append(0)          
+        # Draw ROC Curve for Each Class
+        for i in range(len(CLASSES)):    
+            fpr, tpr, threshold = metrics.roc_curve(y_true[:, i], y_scores[:, i])
+
+            # AUC
+            roc_auc = metrics.auc(fpr, tpr)
+            
+            # Plot Line
+            plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f)' % roc_auc,linewidth=2)
+
+        # Add legend, labels, and grid
+        plt.legend(loc='lower right', fontsize=8)
+        #plt.plot([0, 1], [0, 1], 'r--')
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
+        plt.xlabel('False Positive Rate', fontsize=10)
+        plt.ylabel('True Positive Rate', fontsize=10)
+        plt.title('ROC Curves for Different Classes', fontsize=12)
+        plt.tick_params(axis='both', which='major', labelsize=12)  # Decrease tick label font size
+        plt.grid(True)
+        
+        # [TODO] Add To Tensor board
+        # Save figure as PNG image in memory buffer
+        #buf = io.BytesIO()
+        #plt.savefig(buf, format='png')
+        #buf.seek(0)
+
+        # Convert PNG image buffer to TensorFlow Summary
+        #image = tf.image.decode_png(buf.getvalue(), channels=4)
+        #image = tf.expand_dims(image, 0)
+
+        # Write Summary to TensorBoard
+        #with tf.summary.create_file_writer("./models/heat_map_4").as_default():
+            #tf.summary.image("ROC Curve", image, step=0)  # Use appropriate step value
+
+        #plt.close()
+
+        # Save figure with appropriate DPI
+        plt.savefig(f"./tensor_boards/{RUN}/roc.png", dpi=300)
+        plt.show()
+
+        return
+         
+#         # Draw ROC Curve Per Class
+#         for i in range(len(CLASSES)):    
+#             # Computing Precison & Recall
+#             #precisions, recalls, thresholds = metrics.precision_recall_curve(y_true[:, i].flatten(), y_scores[:, i].flatten())
+#             #try:
+#                 #result.append(roc_auc_score(y_true[:, i], y_scores[:, i], average="weighted"))
+#             #except:
+#                 #result.append(0)      
+
+#             fpr, tpr, threshold = metrics.roc_curve(y_true[:, i], y_scores[:, i])
+
+#             # AUC
+#             roc_auc = metrics.auc(fpr,tpr)
+#             f = plt.subplot(3, 5, i+1)
+            
+
+#             plt.title('ROC for: ' + CLASSES[i],fontsize=4)
+#             plt.plot(fpr, tpr, label = 'AUC = %0.2f' % roc_auc)
+
+#             plt.legend(loc = 'lower right',fontsize=3)
+#             plt.plot([0, 1], [0, 1],'r--')
+#             plt.xlim([0, 1])
+#             plt.ylim([0, 1])
+#             plt.ylabel('tp rate',fontsize=3)
+#             plt.xlabel('fp rate',fontsize=3)
+            
+#         # Add tight layout
+#         plt.tight_layout()
+        
+#         fig_size = plt.rcParams["figure.figsize"]
+#         fig_size[0] = 30
+#         fig_size[1] = 10
+#         plt.rcParams["figure.figsize"] = fig_size
+        
+#         plt.tick_params(axis='both', which='major', labelsize=2)  # Decrease tick label font size
+
+#         plt.savefig("./models/heat_map_4/roc.png", dpi=1000)
+#         plt.show()
                 
-        return result
+#         return 
     
   
-    def F1_score_for_each_class(self, y_true, y_pred):
-        '''
-        F1 Score
-        '''
-        # y_true = y_true.cpu().detach().numpy()
-        # y_pred = y_pred.cpu().detach().numpy()
-        f1_scores = []
-        for i in range(y_true.shape[1]):
-            false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
-            false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
-            true_positive = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 1))
-            true_negative = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 0))
-            precision = true_positive / (true_positive + false_positive)
-            recall = true_positive / (true_positive + false_negative)
-            f1 = 2 * (precision * recall) / (precision + recall)
-            f1_scores.append(f1)
-            print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
-            print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
-        return f1_scores
+    #def F1_score_for_each_class(self, y_true, y_pred):
+#         '''
+#         F1 Score
+#         '''
+#         # y_true = y_true.cpu().detach().numpy()
+#         # y_pred = y_pred.cpu().detach().numpy()
+#         f1_scores = []
+#         for i in range(y_true.shape[1]):
+#             false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
+#             false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
+#             true_positive = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 1))
+#             true_negative = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 0))
+#             precision = true_positive / (true_positive + false_positive)
+#             recall = true_positive / (true_positive + false_negative)
+#             f1 = 2 * (precision * recall) / (precision + recall)
+#             f1_scores.append(f1)
+#             print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
+#             print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
+#         return f1_scores
               
         
 #     def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):

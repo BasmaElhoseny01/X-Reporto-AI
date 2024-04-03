@@ -163,12 +163,7 @@ class HeatMapTrainer:
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
             self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
             self.model.train()     
-            
-            
-            #[Basma]       
-            #epoch_loss = running_loss / len(self.data_loader_train)
-            #print('Loss: {:.4f}'.format(epoch_loss))
-            
+                       
             # saving model per epoch
             self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
 
@@ -293,27 +288,27 @@ def main():
 
     if RECOVER =="BASMA":
         pass
-#         # Load the state of model
-#         checkpoint=load_checkpoint(run=RUN)
+        # Load the state of model
+        checkpoint=load_checkpoint(run=RUN)
 
-#         # Load Model state
-#         heat_map_model.load_state_dict(checkpoint['model_state'])
+        # Load Model state
+        heat_map_model.load_state_dict(checkpoint['model_state'])
 
-#         # Batch to start from
-#         start_batch=checkpoint['batch_index']+1
+        # Batch to start from
+        start_batch=checkpoint['batch_index']+1
 
-#         # Load scheduler_state_dict
-#         trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        # Load scheduler_state_dict
+        trainer.lr_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
-#         # Load optimizer_state
-#         trainer.optimizer.load_state_dict(checkpoint['optimizer_state'])
+        # Load optimizer_state
+        trainer.optimizer.load_state_dict(checkpoint['optimizer_state'])
 
-#         # Load best_loss
-#         trainer.best_loss=checkpoint['best_loss']
+        # Load best_loss
+        trainer.best_loss=checkpoint['best_loss']
 
-#         # trainer.test_data_loader()
-#         # Start Train form checkpoint ends
-#         trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
+        # trainer.test_data_loader()
+        # Start Train form checkpoint ends
+        trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
 
     else:
         # No check point
