@@ -125,7 +125,7 @@ class HeatMapEvaluation():
         y_pred,scores=self.model(images)
 
         # Calculate Loss
-        Total_loss=nn.BCEWithLogitsLoss(reduction='mean')(y_pred,targets)
+        Total_loss=nn.BCEWithLogitsLoss(reduction='mean')(y_pred,targets)*images[0].size(0)
         
         features=None
         
@@ -143,14 +143,11 @@ class HeatMapEvaluation():
     
     def compute_ROC(self,y_true,y_scores,n_classes):
         result = []
-        print("y_scores",y_scores)
-        print("y_true",y_true)
+        #print("y_scores",y_scores)
+        #print("y_true",y_true)
     
         for i in range(n_classes):
             precisions, recalls, thresholds = precision_recall_curve(y_true[:, i].flatten(), y_scores[:, i].flatten())
-            #print("precisions",precisions)
-            #print("recalls",recalls)
-            #print("thresholds",thresholds)
             try:
                 result.append(roc_auc_score(y_true[:, i], y_scores[:, i], average="weighted"))
             except:
@@ -178,7 +175,8 @@ class HeatMapEvaluation():
             print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
             print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
         return f1_scores
-           
+              
+        
 #     def update_heat_map_metrics(self,heat_map_scores, predicted_classes, targets):
 #         for i in range(len(targets)):
 #             # Each Example in the Batch
@@ -190,28 +188,6 @@ class HeatMapEvaluation():
 #             print(predicted_classes.shape)
 #             print(targets.shape)
 #         sys.exit()
-            
-        
-            
-        
-#     def F1_score(self, y_true, y_pred):
-#         '''
-#         F1 Score
-#         '''
-#         y_true = y_true.cpu().detach().numpy()
-#         y_pred = y_pred.cpu().detach().numpy()
-#         false_positive = np.sum(np.logical_and(y_true == 0, y_pred == 1))
-#         false_negative = np.sum(np.logical_and(y_true == 1, y_pred == 0))
-#         true_positive = np.sum(np.logical_and(y_true == 1, y_pred == 1))
-#         true_negative = np.sum(np.logical_and(y_true == 0, y_pred == 0))
-#         precision = true_positive / (true_positive + false_positive)
-#         recall = true_positive / (true_positive + false_negative)
-#         f1 = 2 * (precision * recall) / (precision + recall)
-#         print(f'Precision: {precision}, Recall: {recall}, F1: {f1}')
-#         print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
-#         return f1,precision,recall
-
-    
 #     ########################################################### General Fuunctions ##########################################
 #     def update_tensor_board_score():
 #         pass
@@ -252,7 +228,7 @@ def init_working_space():
 def main():
     
     logging.info(" X_Reporto Evaluation Started")
-    print(" X_Reporto Evaluation Started")
+    print(" Heat Map Evaluation Started")
     # Logging Configurations
     log_config()
     if OperationMode.EVALUATION.value!=OPERATION_MODE :
