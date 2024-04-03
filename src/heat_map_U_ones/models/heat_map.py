@@ -12,28 +12,29 @@ from config import *
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
-        self.model = models.densenet121()
+        self.model = models.densenet121(pretrained=True)
         # [Fix] The Paper is 13
 #         self.model.classifier = nn.Linear(self.model.classifier.in_features, 13)
         self.model.classifier = nn.Linear(self.model.classifier.in_features, 14)
         
     def forward(self, x):
-        x=self.model.features(x)
+        features=self.model.features(x)
         
         # Apply Global Average Pooling to feature maps
-        x = F.adaptive_avg_pool2d(x, (1, 1))
+        y_pred = F.adaptive_avg_pool2d(features, (1, 1))
         
         # Concatenate the two tensors
-        x = torch.flatten(x, 1)
-        x = x.view(x.size(0), -1)
+        y_pred = torch.flatten(y_pred, 1)
+        y_pred = y_pred.view(y_pred.size(0), -1)
         
         # Classifier
-        x = self.model.classifier(x)
+        y_pred = self.model.classifier(y_pred)
         
-        # Apply sigmoid activation
-        scores = torch.sigmoid(x)
+        
+        # Apply Sigmoid
+        y_scores=torch.sigmoid(y_pred)
 
-        return x,scores
+        return y_pred,y_scores
 
 
 

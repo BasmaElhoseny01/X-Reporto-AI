@@ -54,20 +54,19 @@ class HeatMapEvaluation():
         
         self.tensor_board_writer=tensor_board_writer
         
-        self.criterion = nn.BCEWithLogitsLoss(reduction='mean')
-        
         self.dataset_eval = HeatMapDataset(dataset_path= evaluation_csv_path, transform_type='test')
         logging.info(f"Evaluation dataset loaded Size: {len(self.dataset_eval)}")   
 
-        
         self.data_loader_eval = DataLoader(dataset=self.dataset_eval, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)        
         logging.info(f"Evaluation DataLoader Loaded Size: {len(self.data_loader_eval)}")
-        
-        
+               
         
     def evaluate(self):
         #Evaluate the model
-        scores = self.evaluate_heat_map()
+        eval_loss,roc = self.evaluate_heat_map()
+        
+        print("Evaluation Loss",eval_loss)
+        print("ROC Score",roc)
         
         # logging precision and recall
 
@@ -84,11 +83,8 @@ class HeatMapEvaluation():
         
         self.model.eval()
         with torch.no_grad():
-            # validate the model
+            # evaluate the model
             logging.info("Evaluating the model")
-            validation_total_loss=0
-            
-        
             
             for batch_idx,(images,targets) in enumerate(self.data_loader_eval):
                 # Move inputs to Device
@@ -96,50 +92,42 @@ class HeatMapEvaluation():
                 targets=targets.to(DEVICE) 
 
                 # Forward Pass [TODO]
-                _,Total_loss,preds=self.forward_pass(images,targets)
-                #print("classes",classes)
-                #print("Total_loss",Total_loss)
-                #sys.exit()
+                _,loss,scores=self.forward_pass(images,targets)
                 
+                validation_total_loss=loss
+                        
                 # Cumulate all predictions ans labels
-                all_preds = np.concatenate((all_preds, preds.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+                all_preds = np.concatenate((all_preds, scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
                 all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-                
-          
-                
+                                
                 # Update Score
                 # self.update_heat_map_metrics(heat_map_scores, classes, targets)
                 
                 # [Tensor Board] Draw the HeatMap Predictions of this batch
                 #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,features,classes)
-
-                validation_total_loss+=Total_loss
             
-                break
             # F1
-            f1_scores = self.F1_score_for_each_class(all_targets, all_preds)
+            #f1_scores = self.F1_score_for_each_class(all_targets, all_preds)
             
             # Compute ROC
-            roc=self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
-            print("roc",roc)
-            sys.exit()
-                
+            roc = self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
+         
             
-        return validation_total_loss
+        return validation_total_loss,roc
     
     
     def forward_pass(self,images,targets):
         '''
         y: Prob not classes
         '''
-        Total_loss=0
         # Forward Pass
-        y,scores=self.model(images)
-        features=None
+        y_pred,scores=self.model(images)
 
         # Calculate Loss
-        Total_loss=self.criterion(y,targets)
+        Total_loss=nn.BCEWithLogitsLoss(reduction='mean')(y_pred,targets)
+        
+        features=None
         
         return features,Total_loss,scores
 
@@ -159,11 +147,10 @@ class HeatMapEvaluation():
         print("y_true",y_true)
     
         for i in range(n_classes):
-            precisions, recalls, thresholds= precision_recall_curve(y_true[:, i].flatten(), y_scores[:, i].flatten())
-#             print("precisions",precisions)
-#             print("recalls",recalls)
-#             print("thresholds",thresholds)
-            #id = np.argmax(recalls[:len(recalls)-1])
+            precisions, recalls, thresholds = precision_recall_curve(y_true[:, i].flatten(), y_scores[:, i].flatten())
+            #print("precisions",precisions)
+            #print("recalls",recalls)
+            #print("thresholds",thresholds)
             try:
                 result.append(roc_auc_score(y_true[:, i], y_scores[:, i], average="weighted"))
             except:
@@ -279,7 +266,7 @@ def main():
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
-    load_model(model=heat_map_model,name='heat_map_epoch_10')
+    load_model(model=heat_map_model,name='heat_map_best')
         
     # Create an XReportoTrainer instance with the X-Reporto model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)

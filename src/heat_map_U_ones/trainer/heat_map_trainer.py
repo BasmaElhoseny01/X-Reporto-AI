@@ -44,19 +44,19 @@ class HeatMapTrainer:
 
         # Optimizer
         # The learning rate was initially set to 1e-4
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.01, betas=(0.9, 0.999))
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.0001, betas=(0.9, 0.999))
         
         # Create learning rate scheduler
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=0.1)
         
         #Create Criterion
-        #self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight= torch.tensor(POS_WEIGHTS).to(DEVICE))
-        self.criterion = nn.BCEWithLogitsLoss(reduction='mean')
+        #self.criterion = nn.BCEWithLogitsLoss(reduction='none', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
+        self.criterion=nn.BCEWithLogitsLoss(reduction='mean')
 
+        
         # create dataset
         self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
         logging.info(f"Train dataset loaded Size: {len(self.dataset_train)}")   
-        #img,labels=(self.dataset_train[76])   
         
         #self.dataset_val = HeatMapDataset(dataset_path= validation_csv_path, transform_type='val')
         #logging.info("Validation dataset loaded")
@@ -80,9 +80,12 @@ class HeatMapTrainer:
         # make model in training mode
         logging.info("Start Training")
         self.model.train()
+                
+        
 
         total_steps=0
         for epoch in range(start_epoch, start_epoch + EPOCHS):
+            running_loss = 0.0
             if epoch==start_epoch:
                 # Loaded loss from chkpt
                 epoch_loss=epoch_loss_init
@@ -92,23 +95,17 @@ class HeatMapTrainer:
                 if batch_idx < start_batch:
                     continue  # Skip batches until reaching the desired starting batch number
         
-
-                ## Test Recovery
-                # if epoch==3 and batch_idx==1:
-                    # print("Start Next time from")
-                    # print(object_detector_targets[1])
-                    # print(batch_idx)
-                    # raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH") 
              
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 targets=targets.to(DEVICE)
+                
+                # zero the parameter gradients
+                self.optimizer.zero_grad()
 
                 # Forward Pass
-                y_pred,scores=self.model(images)
-#                 print("batch_idx",batch_idx)
-#                 print("targets",targets)
-#                 print("scores",scores)
+                y_pred,y_scores=self.model(images)
+
                 
                 # Compute Loss
                 total_loss = self.criterion(y_pred,targets)
@@ -116,68 +113,22 @@ class HeatMapTrainer:
                
                 epoch_loss+=total_loss
                                
-                # backward pass
+                # backward Pass
                 total_loss.backward()
-
-
-                # Accumulation Learning
-                if True or (batch_idx+1) %ACCUMULATION_STEPS==0:
-                    # update the parameters
-                    self.optimizer.step()
-                    # zero the parameter gradients
-                    self.optimizer.zero_grad()
-                    logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
-
-                ## Get the new learning rate
-                #new_lr = self.optimizer.param_groups[0]['lr']
-                #logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
-                ## [Tensor Board]: Learning Rate
-                #self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
-
-
-                if True or (batch_idx+1)%10==0:
-                    # Every 100 Batch print Average Loss for epoch till Now
-                    logging.info(f'[Every 10 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
-                    
-                #break
-                  
-                   
-                    #[Tensor Board]: Epoch Average loss
-                    #self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 10 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
+                # model.prohibe_grad()
+                self.optimizer.step()
                 
-                ## Checkpoint every N steps inside epochs
-                #total_steps+=1            
-                #if(total_steps%CHECKPOINT_EVERY_N == 0):
-                    #save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
-                                    #scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
-                                    #best_loss=self.best_loss,epoch_loss=epoch_loss)
-                    #total_steps=0
+                # statistics
+                running_loss += total_loss.item() * images[0].size(0)  # *3
                 
-                   
-            # [Logging]: Average Loss for epoch where each image is seen once
-            logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
-            ## [Tensor Board]: Epoch Average loss
-            #self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
-            
-            #self.lr_scheduler.step()
+            epoch_loss = running_loss / len(self.data_loader_train)
+            print('Loss: {:.4f}'.format(epoch_loss))
+            self.scheduler.step()
 
-                   
-            # Free GPU memory
-            del total_loss
-            torch.cuda.empty_cache()
-            gc.collect()
-
-            ## validate the model no touch :)
-            #self.model.eval()
-            #validation_average_loss= self.validate_during_training(epoch=epoch) 
-            #logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
-            #self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
-            #self.model.train()          
 
             # saving model per epoch
+            self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=0.0)
             #self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
-            if epoch==9:
-                self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=1555.0000)
 
         logging.info("Training Done")
         

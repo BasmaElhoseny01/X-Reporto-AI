@@ -37,8 +37,8 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=False
 
 RUN = "heat_map_4"
-EPOCHS=10
-BATCH_SIZE=8
+EPOCHS=5
+BATCH_SIZE=2
 # BATCH_SIZE=1
 #   TODO: change to 64
 EFFECTIVE_BATCH_SIZE = 16 
@@ -66,9 +66,9 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # HeatMap Classifier Weights
-CLASSES=['Atelectasis','Cardiomegaly','Consolidation','Edema','Enlarged Cardiomediastinum','Fracture','Lung Lesion','Lung Opacity','Pleural Effusion','Pleural Other','Pneumonia','Pneumothorax','Support Devices',"x"]
+CLASSES=['No Finding','Atelectasis','Cardiomegaly','Consolidation','Edema','Enlarged Cardiomediastinum','Fracture','Lung Lesion','Lung Opacity','Pleural Effusion','Pleural Other','Pneumonia','Pneumothorax','Support Devices']
 
-POS_WEIGHTS=[3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,2.2849,36.2066,9.0119,9.8955,1.9085,0]
+POS_WEIGHTS=[9.9758,3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,2.2849,36.2066,9.0119,9.8955,1.9085]
 
 # CLASSES={'No Finding':9.9758,
 # 'Enlarged Cardiomediastinum':4.0310,
@@ -96,10 +96,10 @@ evaluation_csv_path = 'datasets/valid-100.csv'
 # evaluation_csv_path = 'datasets/eval.csv'
 test_csv_path:str = 'datasets/test.csv'
 
-heat_map_training_csv_path:str = 'datasets/trial.csv'
-heat_map_validating_csv_path:str = 'datasets/trial.csv'
+heat_map_training_csv_path:str = 'datasets/heat_map_train_2.csv'
+heat_map_validating_csv_path:str = 'datasets/heat_map_train_2.csv'
 # heat_map_evaluation_csv_path = 'datasets/heat_map_val.csv'
-heat_map_evaluation_csv_path = 'datasets/trial.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map_train_2.csv'
 
 # Logging
 PERIODIC_LOGGING=True
