@@ -286,7 +286,7 @@ def main():
     # Create an HeatMapTrainer instance with the HeatMap model
     trainer = HeatMapTrainer(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
-    if RECOVER =="BASMA":
+    if RECOVER:
         pass
         # Load the state of model
         checkpoint=load_checkpoint(run=RUN)

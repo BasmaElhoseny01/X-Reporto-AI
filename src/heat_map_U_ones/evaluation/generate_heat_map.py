@@ -73,16 +73,16 @@ class HeatMapGeneration():
                     targets=targets.to(DEVICE)
                     
                     # Forward Pass
-                    _,_,features=self.model(images)#torch.Size([2, 1024, 7, 7])                    
+                    _,y_scores,features=self.model(images)#torch.Size([2, 1024, 7, 7])                    
                     
                     # For Each Image in the Batch Generate the heat Map
                     for i , img in enumerate(images):
-                        self.generate_one_heat_map(images_path[i],features[i])
+                        self.generate_one_heat_map(images_path[i],features[i],gold_labels=targets[i],pred_labels=y_scores[i])
                         
                 return 
 
                 
-        def generate_one_heat_map(self,image_path,features):
+        def generate_one_heat_map(self,image_path,features,gold_labels,pred_labels):
             #---- Generate heatmap
             print(features.shape) #torch.Size([1024, 7, 7])
                         
@@ -105,11 +105,18 @@ class HeatMapGeneration():
             
             img = cv2.addWeighted(imgOriginal,1,heatmap,0.35,0)            
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            
+
+
+            # Construct the legend table
+            table_data = []
+            for class_idx, class_name in enumerate(CLASSES):
+                gold_label = '1' if class_idx in gold_labels else ''
+                pred_label = '2' if class_idx in pred_labels else ''
+                table_data.append([class_name, gold_label, pred_label])
+
             # Heat Map Name
             # Split the file path by the directory separator '/'
             parts = image_path.split('/')
-        
 
             # Get the last two directory names and the file name
             last_two_directories = '_'.join(parts[-3:-1])
@@ -117,12 +124,18 @@ class HeatMapGeneration():
 
             # Construct the desired string
             desired_string = f"{last_two_directories}_{file_name}"
-            
-            plt.imshow(img)
-            plt.plot()
-            plt.axis('off')
+
+            # Display the image with legend table
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax.imshow(img)
+            ax.axis('off')
+            table = ax.table(cellText=table_data, colLabels=['Class', 'Gold', 'Predicted'],
+                            loc='bottom', cellLoc='center', colLoc='center', bbox=[0, -0.3, 1, 0.2])
+            table.auto_set_font_size(False)
+            table.set_fontsize(10)
             plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
             plt.show()
+
             return
         
 

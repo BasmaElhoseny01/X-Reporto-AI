@@ -132,3 +132,6 @@ if __name__ == "__main__":
     
     # Call the main function
     main(args.parent_folder, args.datasets_parent)
+
+
+    # python ./scripts/fix_dataset_path.py --parent_folder "./datasets/physionet.org/files/mimic-cxr-jpg/" --datasets_parent "./datasets/"
