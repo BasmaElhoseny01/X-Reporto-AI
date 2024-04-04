@@ -62,8 +62,8 @@ def main(csv_name,new_csv_name):
 # /home/basma/Desktop/csv_processing/datasets/mimic-cxr-jpg/files/p10/p10144424/s55318406/0b3d1365-cecec550-e53e23f3-2fd4e293-81245c21.jpg
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Cleaning CSV file.")
-    parser.add_argument("--csv", help="Name of the csv file to cleaned",default='./datasets/train.csv')
-    parser.add_argument("--new_csv", help="New name for the CSV file", default='./datasets/train.csv')
+    parser.add_argument("--csv", help="Name of the csv file to cleaned",default='./datasets/heat_map_full.csv')
+    parser.add_argument("--new_csv", help="New name for the CSV file", default='./datasets/heat_map.csv')
 
     args = parser.parse_args()
 

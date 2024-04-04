@@ -48,13 +48,16 @@ To run the script , execute:
 
 import shutil
 import os
+import argparse
+
 import sys
 import re
 
-def main():
+def main(parent_folder="./datasets/physionet.org/files/mimic-cxr-jpg/", datasets_parent="./datasets/"):
+
 
     # 1. Remove 2.0.0
-    parent_folder = "./datasets/physionet.org/files/mimic-cxr-jpg/"
+    parent_folder = parent_folder
     child_folder = os.path.join(parent_folder, '2.0.0/')
 
 
@@ -74,7 +77,7 @@ def main():
         os.rmdir(child_folder)
 
     # 2. Remove physionet.org/files
-    parent_folder = "./datasets/"
+    parent_folder = datasets_parent
     child_folder = os.path.join(parent_folder, 'physionet.org/files/')
 
         # List files in the child folder
@@ -118,6 +121,14 @@ if __name__ == "__main__":
     # if not match:
     #     print("Error: This script should be called from the 'Graduation-Project' directory.")
     #     sys.exit(1)
+
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--parent_folder', default="./datasets/physionet.org/files/mimic-cxr-jpg/", type=str,
+                        help='Parent folder for processing')
+    parser.add_argument('--datasets_parent', default="./datasets/", type=str,
+                        help='Parent folder for datasets')
+    args = parser.parse_args()
+    
     
     # Call the main function
-    main()
+    main(args.parent_folder, args.datasets_parent)
