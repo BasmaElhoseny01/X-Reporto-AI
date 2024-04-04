@@ -12,7 +12,7 @@ from config import *
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
-        self.model = models.densenet121()
+        self.model = models.densenet121(pretrained=True)
         self.model.classifier = nn.Linear(self.model.classifier.in_features, 14)
         
     def forward(self, x):

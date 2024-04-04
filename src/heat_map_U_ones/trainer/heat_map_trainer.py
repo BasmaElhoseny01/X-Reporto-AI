@@ -121,14 +121,13 @@ class HeatMapTrainer:
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
                     
-                    logging.debug(f'[Accumlative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1},'+
-                                  f'Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    #logging.debug(f'[Accumlative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1},'+f'Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
                   
                                 
         
-                if (batch_idx+1)%100==0:
+                if (batch_idx+1)%AVERGAE_EPOCH_LOSS_EVERY==0:
                     # Every 100 Batch print Average Loss for epoch till Now
-                    logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)},'+
+                    logging.info(f'[Every {AVERGAE_EPOCH_LOSS_EVERY} Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)},'+
                                  f'Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
 
                     # [Tensor Board]: Epoch Average loss
@@ -257,7 +256,7 @@ def init_working_space():
     # Creating tensor_board folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     current_datetime="test"
-    tensor_board_folder_path="./tensor_boards/heat_maps" +  str(RUN) + f"/train_{current_datetime}"
+    tensor_board_folder_path="./tensor_boards/heat_maps/" +  str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
@@ -287,7 +286,6 @@ def main():
     trainer = HeatMapTrainer(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
     if RECOVER:
-        pass
         # Load the state of model
         checkpoint=load_checkpoint(run=RUN)
 

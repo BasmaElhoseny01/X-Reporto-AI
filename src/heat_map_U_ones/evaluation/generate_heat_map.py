@@ -82,8 +82,7 @@ class HeatMapGeneration():
                         self.generate_one_heat_map(images_path[i],features[i],gold_labels=targets[i],pred_labels=y_scores[i])
                         
                 return 
-
-                
+            
         def generate_one_heat_map(self,image_path,features,gold_labels,pred_labels):
             #---- Generate heatmap
             print(features.shape) #torch.Size([1024, 7, 7])
@@ -140,14 +139,13 @@ class HeatMapGeneration():
             ax_legend.text(0, 0, legend_text, fontsize=10, color='black', bbox=dict(facecolor='lightgrey', alpha=0.5))
             ax_legend.axis('off')
             
-            
-            plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
+            if SAVE_IMAGES:
+                plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
             plt.show()
-
-           
+   
             return
+            
         
-
 def init_working_space():
 
     # Creating tensorboard folder
