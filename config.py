@@ -41,7 +41,7 @@ EPOCHS=5
 BATCH_SIZE=16
 LM_Batch_Size=1
 
-EFFECTIVE_BATCH_SIZE = 16
+EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
 LEARNING_RATE=0.0001
@@ -91,18 +91,18 @@ POS_WEIGHTS=[3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,9.9758,2.
 
 # Pathes to the external files
 # training_csv_path = 'datasets/train.csv'
-training_csv_path = 'datasets/train.csv'
-validation_csv_path = 'datasets/valid.csv'
+training_csv_path = 'datasets/heat_map_train.csv'
+validation_csv_path = 'datasets/heat_map_val.csv'
 # validation_csv_path = 'datasets/valid.csv'
-evaluation_csv_path = 'datasets/valid-100.csv'
+evaluation_csv_path = 'datasets/heat_map_val.csv'
 # evaluation_csv_path = 'datasets/valid.csv'
 # TODO Fix
 # evaluation_csv_path = 'datasets/eval.csv'
 test_csv_path:str = 'datasets/test.csv'
 
-heat_map_training_csv_path:str = 'datasets/heat_map_train_2.csv'
-heat_map_validating_csv_path:str = 'datasets/heat_map_train_2.csv'
-heat_map_evaluation_csv_path = 'datasets/heat_map_train_2.csv'
+heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
+heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map_val.csv'
 
 # Logging
 PERIODIC_LOGGING=True
