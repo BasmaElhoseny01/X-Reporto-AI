@@ -257,7 +257,7 @@ def init_working_space():
     # Creating tensor_board folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     current_datetime="test"
-    tensor_board_folder_path="./tensor_boards/" +  str(RUN) + f"/train_{current_datetime}"
+    tensor_board_folder_path="./tensor_boards/heat_maps" +  str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")

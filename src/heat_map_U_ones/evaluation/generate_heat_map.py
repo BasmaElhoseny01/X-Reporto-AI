@@ -1,6 +1,8 @@
 # Logging
 import matplotlib
 from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
+
 import numpy as np
 import cv2
 from sklearn import metrics
@@ -58,7 +60,7 @@ class HeatMapGeneration():
             self.dataset_eval = HeatMapDataset(dataset_path= evaluation_csv_path, transform_type='test')
             logging.info(f"Evaluation dataset loaded Size: {len(self.dataset_eval)}")   
 
-            self.data_loader_eval = DataLoader(dataset=self.dataset_eval, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)        
+            self.data_loader_eval = DataLoader(dataset=self.dataset_eval, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)        
             logging.info(f"Evaluation DataLoader Loaded Size: {len(self.data_loader_eval)}")
             
             
@@ -105,14 +107,12 @@ class HeatMapGeneration():
             
             img = cv2.addWeighted(imgOriginal,1,heatmap,0.35,0)            
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            
+            # Construct the legend
+            legend_text = "Results:\n"
+            for class_name, gold_label, pred_label in zip(CLASSES, gold_labels, pred_labels):
+                legend_text += f"{class_name}: *{gold_label}, {pred_label:.2f}\n"
 
-
-            # Construct the legend table
-            table_data = []
-            for class_idx, class_name in enumerate(CLASSES):
-                gold_label = '1' if class_idx in gold_labels else ''
-                pred_label = '2' if class_idx in pred_labels else ''
-                table_data.append([class_name, gold_label, pred_label])
 
             # Heat Map Name
             # Split the file path by the directory separator '/'
@@ -124,18 +124,27 @@ class HeatMapGeneration():
 
             # Construct the desired string
             desired_string = f"{last_two_directories}_{file_name}"
+            
+            # Display the image with legend beside it
+            fig = plt.figure(figsize=(12, 5))
+            gs = GridSpec(1, 2, width_ratios=[4, 1], wspace=0)  # Set wspace=0 to remove space between subplots
 
-            # Display the image with legend table
-            fig, ax = plt.subplots(figsize=(8, 5))
-            ax.imshow(img)
-            ax.axis('off')
-            table = ax.table(cellText=table_data, colLabels=['Class', 'Gold', 'Predicted'],
-                            loc='bottom', cellLoc='center', colLoc='center', bbox=[0, -0.3, 1, 0.2])
-            table.auto_set_font_size(False)
-            table.set_fontsize(10)
+
+            # Plot image
+            ax_img = fig.add_subplot(gs[0])
+            ax_img.imshow(img)
+            ax_img.axis('off')
+
+            # Plot legend
+            ax_legend = fig.add_subplot(gs[1])
+            ax_legend.text(0, 0, legend_text, fontsize=10, color='black', bbox=dict(facecolor='lightgrey', alpha=0.5))
+            ax_legend.axis('off')
+            
+            
             plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
             plt.show()
 
+           
             return
         
 
