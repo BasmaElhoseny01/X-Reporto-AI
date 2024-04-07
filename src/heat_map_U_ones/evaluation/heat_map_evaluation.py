@@ -124,13 +124,13 @@ class HeatMapEvaluation():
                 #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,features,classes)
             all_preds[all_preds >= 0.5] = 1
-            # F1
-            f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:])
-            
 
             # Compute ROC
             self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
          
+            # F1
+            f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:])
+            
             
         return validation_total_loss
     
@@ -163,16 +163,31 @@ class HeatMapEvaluation():
         # print("y_scores",y_scores)
         # print("y_true",y_true)
         plt.figure(figsize=(10, 8))  # Adjust figure size
+
+        optimal_thresholds=[]
     
         # Draw ROC Curve for Each Class
         for i in range(len(CLASSES)):    
-            fpr, tpr, threshold = metrics.roc_curve(y_true[:, i], y_scores[:, i])
+            fpr, tpr, thresholds = metrics.roc_curve(y_true[:, i], y_scores[:, i])
 
             # AUC
             roc_auc = metrics.auc(fpr, tpr)
             
-            # Plot Line
-            plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f)' % roc_auc,linewidth=2)
+            # Compute Youden's J statistic
+            j_statistic = tpr - fpr
+
+            # Find the index of the threshold that maximizes J statistic
+            optimal_threshold_index = np.argmax(j_statistic)
+
+            # Get the optimal threshold
+            optimal_threshold = thresholds[optimal_threshold_index]
+
+            # Add Optimal Thresholds
+            optimal_thresholds.append[optimal_threshold]
+
+            # Plot Line with optimal threshold in legend
+            plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (roc_auc, optimal_threshold), linewidth=2)
+
 
         # Add legend, labels, and grid
         plt.legend(loc='lower right', fontsize=8)
