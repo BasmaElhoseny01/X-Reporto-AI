@@ -123,11 +123,12 @@ class HeatMapEvaluation():
                 # [Tensor Board] Draw the HeatMap Predictions of this batch
                 #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,features,classes)
-            all_preds[all_preds >= 0.5] = 1
 
             # Compute ROC
-            self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
-         
+            thresholds= self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
+            print("Thresholds",thresholds)
+            print(len(thresholds))
+            print(all_preds)
             # F1
             f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:])
             
@@ -220,7 +221,7 @@ class HeatMapEvaluation():
         plt.savefig(f"./tensor_boards/heat_maps/{RUN}/roc.png", dpi=300)
         plt.show()
 
-        return
+        return optimal_thresholds
         
 
 def init_working_space():
@@ -253,7 +254,7 @@ def main():
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
-    load_model(model=heat_map_model,name='heat_map_best')
+    # load_model(model=heat_map_model,name='heat_map_best')
         
     # Create an HeatMap Evaluation instance with the HeatMap model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
