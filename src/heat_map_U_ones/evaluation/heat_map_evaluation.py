@@ -59,13 +59,20 @@ class HeatMapEvaluation():
                
         
 
-    def F1_score_for_each_class(self, y_true, y_pred):
+    def F1_score_for_each_class(self, y_true, y_pred,thresholds):
         '''
         F1 Score
         '''
         # y_true = y_true.cpu().detach().numpy()
         # y_pred = y_pred.cpu().detach().numpy()
         f1_scores = []
+        for i in range(len(CLASSES)):
+            for j in range(len(y_pred[:, i])):
+                if y_pred[j, i] >= thresholds[i]:
+                    y_pred[j, i] = 1
+                else:
+                    y_pred[j, i] = 0
+
         for i in range(len(CLASSES)):
             false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
             false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
@@ -116,7 +123,7 @@ class HeatMapEvaluation():
                 # Cumulate all predictions ans labels
                 all_preds = np.concatenate((all_preds, scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
                 all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-                                
+                
                 # Update Score
                 # self.update_heat_map_metrics(heat_map_scores, classes, targets)
                 
@@ -125,12 +132,9 @@ class HeatMapEvaluation():
                 # self.draw_tensor_board(batch_idx,images,features,classes)
 
             # Compute ROC
-            thresholds= self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))
-            print("Thresholds",thresholds)
-            print(len(thresholds))
-            print(all_preds)
+            thresholds= self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))                
             # F1
-            f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:])
+            f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:],thresholds)
             
             
         return validation_total_loss
@@ -254,7 +258,7 @@ def main():
     heat_map_model = HeatMap()
 
     logging.info("Loading heat_map ....")
-    # load_model(model=heat_map_model,name='heat_map_best')
+    load_model(model=heat_map_model,name='heat_map_best')
         
     # Create an HeatMap Evaluation instance with the HeatMap model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
