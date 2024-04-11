@@ -79,10 +79,10 @@ class HeatMapGeneration():
                     
                     # For Each Image in the Batch Generate the heat Map
                     for i , img in enumerate(images):
-                        self.generate_one_heat_map(images_path[i],features[i],gold_labels=targets[i],pred_labels=y_scores[i])
+                        self.generate_one_heat_map(images_path[i],features[i],gold_labels=targets[i],pred_labels=y_scores[i],thresholds=self.model.optimal_thresholds)
                 return 
             
-        def generate_one_heat_map(self,image_path,features,gold_labels,pred_labels):
+        def generate_one_heat_map(self,image_path,features,gold_labels,pred_labels,thresholds):
             #---- Generate heatmap
             #print(features.shape) #torch.Size([1024, 7, 7])
                         
@@ -108,9 +108,10 @@ class HeatMapGeneration():
             
             # Construct the legend
             legend_text = "Results:\n"
+            class_idx=0
             for class_name, gold_label, pred_label in zip(CLASSES, gold_labels, pred_labels):
-                legend_text += f"{class_name}: *{gold_label}, {pred_label:.2f}\n"
-
+                legend_text += f"{class_name}: *{gold_label}, {pred_label:.2f},{pred_label>thresholds[class_idx]}\n"
+                class_idx+=1
 
             # Heat Map Name
             # Split the file path by the directory separator '/'
@@ -143,9 +144,9 @@ class HeatMapGeneration():
             ax_legend.text(0, 0, legend_text, fontsize=10, color='black', bbox=dict(facecolor='lightgrey', alpha=0.5))
             ax_legend.axis('off')
 
-            if SAVE_IMAGES:
-              plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
-            plt.show()
+            # if SAVE_IMAGES:
+            #   plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
+            # plt.show()
 
             return
             
