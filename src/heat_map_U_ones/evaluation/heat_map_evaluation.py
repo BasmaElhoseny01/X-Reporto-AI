@@ -58,34 +58,6 @@ class HeatMapEvaluation():
         logging.info(f"Evaluation DataLoader Loaded Size: {len(self.data_loader_eval)}")
                
         
-
-    def F1_score_for_each_class(self, y_true, y_pred,thresholds):
-        '''
-        F1 Score
-        '''
-        # y_true = y_true.cpu().detach().numpy()
-        # y_pred = y_pred.cpu().detach().numpy()
-        f1_scores = []
-        for i in range(len(CLASSES)):
-            for j in range(len(y_pred[:, i])):
-                if y_pred[j, i] >= thresholds[i]:
-                    y_pred[j, i] = 1
-                else:
-                    y_pred[j, i] = 0
-
-        for i in range(len(CLASSES)):
-            false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
-            false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
-            true_positive = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 1))
-            true_negative = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 0))
-            precision = true_positive / (true_positive + false_positive)
-            recall = true_positive / (true_positive + false_negative)
-            f1 = 2 * (precision * recall) / (precision + recall)
-            f1_scores.append(f1)
-            print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
-            print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
-        return f1_scores
-    
     def evaluate(self):
         #Evaluate the model
         eval_loss = self.evaluate_heat_map()
@@ -103,7 +75,6 @@ class HeatMapEvaluation():
         heat_map_scores = self.initalize_scorces()
         all_preds= np.zeros((1, len(CLASSES)))
         all_targets= np.zeros((1, len(CLASSES)))
-      
         
         self.model.eval()
         with torch.no_grad():
@@ -131,10 +102,17 @@ class HeatMapEvaluation():
                 #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,features,classes)
 
-            # Compute ROC
-            thresholds= self.compute_ROC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:],n_classes=len(CLASSES))                
-            # F1
-            f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:],thresholds)
+            # Compute AUC
+            auc= self.compute_AUC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:])
+            logging.info("AUC: %s", auc)
+               
+    
+            
+            # # # F1
+            # # f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:],thresholds)
+
+            # [Tensor Board]
+            self.save_result_to_tensor_board(aucs=auc,f1=None)
             
             
         return validation_total_loss
@@ -164,75 +142,65 @@ class HeatMapEvaluation():
             heat_map_scores[disease]['false_negative']=0
         return heat_map_scores
     
-    def compute_ROC(self,y_true,y_scores,n_classes):
-        # print("y_scores",y_scores)
-        # print("y_true",y_true)
-        plt.figure(figsize=(10, 8))  # Adjust figure size
+    def compute_AUC(self,y_true,y_scores):
+      AUCs={}
+      for i in range(len(CLASSES)):    
+          fpr, tpr, thresholds = metrics.roc_curve(y_true[:, i], y_scores[:, i])
+          # AUC
+          auc = metrics.auc(fpr, tpr)
 
-        optimal_thresholds=[]
+          AUCs[CLASSES[i]]=auc
+          
+      return AUCs
+
     
-        # Draw ROC Curve for Each Class
-        for i in range(len(CLASSES)):    
-            fpr, tpr, thresholds = metrics.roc_curve(y_true[:, i], y_scores[:, i])
+    # def F1_score_for_each_class(self, y_true, y_pred,thresholds):
+      # pass
+        # '''
+        # F1 Score
+        # '''
+        # # y_true = y_true.cpu().detach().numpy()
+        # # y_pred = y_pred.cpu().detach().numpy()
+        # f1_scores = []
+        # for i in range(len(CLASSES)):
+        #     for j in range(len(y_pred[:, i])):
+        #         if y_pred[j, i] >= thresholds[i]:
+        #             y_pred[j, i] = 1
+        #         else:
+        #             y_pred[j, i] = 0
 
-            # AUC
-            roc_auc = metrics.auc(fpr, tpr)
-            
-            # Compute Youden's J statistic
-            j_statistic = tpr - fpr
+        # for i in range(len(CLASSES)):
+        #     false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
+        #     false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
+        #     true_positive = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 1))
+        #     true_negative = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 0))
+        #     precision = true_positive / (true_positive + false_positive)
+        #     recall = true_positive / (true_positive + false_negative)
+        #     f1 = 2 * (precision * recall) / (precision + recall)
+        #     f1_scores.append(f1)
+        #     print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
+        #     print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
+        # return f1_scores
 
-            # Find the index of the threshold that maximizes J statistic
-            optimal_threshold_index = np.argmax(j_statistic)
+    def save_result_to_tensor_board(self,aucs,f1):
+      # List of 14 different colors
+      colors=['blue', 'red', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'brown', 'gray', 'black', 'pink', 'teal', 'olive']
+      
+      # Log AUC values for each condition with different colors
+      for i, (auc_key,auc_value) in enumerate(aucs.items()):
+          color = colors[i % len(colors)]  # Use modulo to cycle through colors
+          self.tensor_board_writer.add_scalars('Evaluation_Metrics/AUC', {auc_key: auc_value}, global_step=0)
 
-            # Get the optimal threshold
-            optimal_threshold = thresholds[optimal_threshold_index]
+          # self.tensor_board_writer.add_scalar(f'Evaluation_Metrics/AUC', auc_value, global_step=0, description=f'{auc_key}', colors=color)
 
-            # Add Optimal Thresholds
-            optimal_thresholds.append(optimal_threshold)
+    
 
-            # Plot Line with optimal threshold in legend
-            plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (roc_auc, optimal_threshold), linewidth=2)
-
-
-        # Add legend, labels, and grid
-        plt.legend(loc='lower right', fontsize=8)
-        plt.plot([0, 1], [0, 1], 'r--')
-        plt.xlim([0, 1])
-        plt.ylim([0, 1])
-        plt.xlabel('False Positive Rate', fontsize=10)
-        plt.ylabel('True Positive Rate', fontsize=10)
-        plt.title('ROC Curves for Different Classes', fontsize=12)
-        plt.tick_params(axis='both', which='major', labelsize=12)  # Decrease tick label font size
-        plt.grid(True)
-        
-        # [TODO] Add To Tensor board
-        # Save figure as PNG image in memory buffer
-        #buf = io.BytesIO()
-        #plt.savefig(buf, format='png')
-        #buf.seek(0)
-
-        # Convert PNG image buffer to TensorFlow Summary
-        #image = tf.image.decode_png(buf.getvalue(), channels=4)
-        #image = tf.expand_dims(image, 0)
-
-        # Write Summary to TensorBoard
-        #with tf.summary.create_file_writer("./models/heat_map_4").as_default():
-            #tf.summary.image("ROC Curve", image, step=0)  # Use appropriate step value
-
-        #plt.close()
-
-        # Save figure with appropriate DPI
-        plt.savefig(f"./tensor_boards/heat_maps/{RUN}/roc.png", dpi=300)
-        plt.show()
-
-        return optimal_thresholds
         
 
 def init_working_space():
 
     # Creating tensorboard folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    current_datetime="test"
     tensor_board_folder_path="./tensor_boards/" + "heat_maps/" + str(RUN)+ f"/eval_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
