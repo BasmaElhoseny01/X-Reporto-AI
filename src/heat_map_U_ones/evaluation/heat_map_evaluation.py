@@ -60,27 +60,33 @@ class HeatMapEvaluation():
         
     def evaluate(self):
         #Evaluate the model
-        eval_loss = self.evaluate_heat_map()
-        
-        print("Evaluation Loss",eval_loss)
-        
-        # logging precision and recall
+        logging.info("Evaluating the model")
 
-        # [Tensor Board] Update the Board by the scalers for that Run
-        # self.update_tensor_board_score()
+        # Run Predictions
+        eval_loss,all_preds,all_targets = self.evaluate_heat_map()
+        logging.info(f"Evaluation Loss :{eval_loss}")     
+
+        # Compute Metrics
+        # Compute AUC
+        auc= self.compute_AUC(y_true=all_targets,y_scores=all_preds)
+        logging.info("AUC: %s", auc)
+                    
+        # Compute Fp....
+        classification_metrics=self.compute_classification_metrics(y_true=all_targets,y_pred=all_preds,thresholds=self.model.optimal_thresholds)
+        for metric,values in classification_metrics.items():
+          logging.info(f"{metric}:{values}")
+
+        # [Tensor Board] 
+        self.save_result_to_tensor_board(evaluation_loss=eval_loss,aucs=auc,classification_metrics=classification_metrics)
         
 
     def evaluate_heat_map(self):
         # Init The Scores
-        heat_map_scores = self.initalize_scorces()
         all_preds= np.zeros((1, len(CLASSES)))
         all_targets= np.zeros((1, len(CLASSES)))
         
         self.model.eval()
         with torch.no_grad():
-            # evaluate the model
-            logging.info("Evaluating the model")
-            
             for batch_idx,(images,targets,_) in enumerate(self.data_loader_eval):
                 # Move inputs to Device
                 images = images.to(DEVICE)
@@ -89,33 +95,13 @@ class HeatMapEvaluation():
                 # Forward Pass [TODO]
                 _,loss,scores=self.forward_pass(images,targets)
                 
-                validation_total_loss=loss
+                evaluation_total_loss=loss
                         
                 # Cumulate all predictions ans labels
                 all_preds = np.concatenate((all_preds, scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-                
-                # Update Score
-                # self.update_heat_map_metrics(heat_map_scores, classes, targets)
-                
-                # [Tensor Board] Draw the HeatMap Predictions of this batch
-                #TODO: uncomment
-                # self.draw_tensor_board(batch_idx,images,features,classes)
-
-            # Compute AUC
-            auc= self.compute_AUC(y_true=all_targets[1:,:],y_scores=all_preds[1:,:])
-            logging.info("AUC: %s", auc)
-               
-    
+                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)         
             
-            # # # F1
-            # # f1_scores = self.F1_score_for_each_class(all_targets[1:,:], all_preds[1:,:],thresholds)
-
-            # [Tensor Board]
-            self.save_result_to_tensor_board(aucs=auc,f1=None)
-            
-            
-        return validation_total_loss
+        return evaluation_total_loss,all_preds[1:,:],all_targets[1:,:]
     
     
     def forward_pass(self,images,targets):
@@ -126,22 +112,12 @@ class HeatMapEvaluation():
         y_pred,scores,_=self.model(images)
 
         # Calculate Loss
-        Total_loss=nn.BCEWithLogitsLoss(reduction='mean')(y_pred,targets)*images[0].size(0)
+        Total_loss=nn.BCEWithLogitsLoss(reduction='mean', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))(y_pred,targets)
         
         features=None
         
         return features,Total_loss,scores
 
-    def initalize_scorces(self):
-        heat_map_scores={key: {} for key in CLASSES}
-        
-        for disease in CLASSES:
-            heat_map_scores[disease]['true_positive']=0
-            heat_map_scores[disease]['false_positive']=0
-            heat_map_scores[disease]['true_negative']=0
-            heat_map_scores[disease]['false_negative']=0
-        return heat_map_scores
-    
     def compute_AUC(self,y_true,y_scores):
       AUCs={}
       for i in range(len(CLASSES)):    
@@ -153,47 +129,53 @@ class HeatMapEvaluation():
           
       return AUCs
 
-    
-    # def F1_score_for_each_class(self, y_true, y_pred,thresholds):
-      # pass
-        # '''
-        # F1 Score
-        # '''
-        # # y_true = y_true.cpu().detach().numpy()
-        # # y_pred = y_pred.cpu().detach().numpy()
-        # f1_scores = []
-        # for i in range(len(CLASSES)):
-        #     for j in range(len(y_pred[:, i])):
-        #         if y_pred[j, i] >= thresholds[i]:
-        #             y_pred[j, i] = 1
-        #         else:
-        #             y_pred[j, i] = 0
+    def compute_classification_metrics(self, y_true, y_pred, thresholds):
+      '''
+      Calculate classification metrics
+      '''
+      metrics={
+        "false_positive":{},
+        "false_negative":{},
+        "true_positive":{},
+        "true_negative":{},
+        "precision":{},
+        "recall":{},
+        "f1":{},
+      }
 
-        # for i in range(len(CLASSES)):
-        #     false_positive = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 1))
-        #     false_negative = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 0))
-        #     true_positive = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] == 1))
-        #     true_negative = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] == 0))
-        #     precision = true_positive / (true_positive + false_positive)
-        #     recall = true_positive / (true_positive + false_negative)
-        #     f1 = 2 * (precision * recall) / (precision + recall)
-        #     f1_scores.append(f1)
-        #     print(f'Class: {CLASSES[i]}, Precision: {precision}, Recall: {recall}, F1: {f1}')
-        #     print(f'False Positive: {false_positive}, False Negative: {false_negative}, True Positive: {true_positive}, True Negative: {true_negative}')
-        # return f1_scores
+      for i in range(len(CLASSES)):
+          fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= thresholds[i]))
+          fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < thresholds[i]))
+          tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= thresholds[i]))
+          tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < thresholds[i]))
 
-    def save_result_to_tensor_board(self,aucs,f1):
-      # List of 14 different colors
-      colors=['blue', 'red', 'green', 'orange', 'purple', 'cyan', 'magenta', 'yellow', 'brown', 'gray', 'black', 'pink', 'teal', 'olive']
-      
-      # Log AUC values for each condition with different colors
-      for i, (auc_key,auc_value) in enumerate(aucs.items()):
-          color = colors[i % len(colors)]  # Use modulo to cycle through colors
-          self.tensor_board_writer.add_scalars('Evaluation_Metrics/AUC', {auc_key: auc_value}, global_step=0)
+          precision = fp / (tp + fp)
+          recall = tp / (tp + fn)
+          f1 = 2 * (precision * recall) / (precision + recall)
 
-          # self.tensor_board_writer.add_scalar(f'Evaluation_Metrics/AUC', auc_value, global_step=0, description=f'{auc_key}', colors=color)
+          metrics["false_positive"][CLASSES[i]]=fp
+          metrics["false_negative"][CLASSES[i]]=fn
+          metrics["true_positive"][CLASSES[i]]=tp
+          metrics["true_negative"][CLASSES[i]]=tn
 
-    
+          metrics["precision"][CLASSES[i]]=precision
+          metrics["recall"][CLASSES[i]]=recall
+          metrics["f1"][CLASSES[i]]=f1
+          
+      return metrics
+
+    def save_result_to_tensor_board(self,evaluation_loss,aucs,classification_metrics):
+      # Loss
+      self.tensor_board_writer.add_scalar('Evaluation_Metrics/evaluation_loss', evaluation_loss)
+
+      # AUC
+      self.tensor_board_writer.add_scalars('Evaluation_Metrics/auc', aucs)
+
+      # classification metrics
+      for metric,values in classification_metrics.items():
+        self.tensor_board_writer.add_scalars(f'Evaluation_Metrics/{metric}', values)
+
+
 
         
 
