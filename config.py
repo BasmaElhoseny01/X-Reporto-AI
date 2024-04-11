@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=2
 
@@ -36,8 +36,8 @@ TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
-RUN = "heat_map_1"
-EPOCHS=1
+RUN = "1"
+EPOCHS=5
 BATCH_SIZE=64
 # BATCH_SIZE=2
 LM_Batch_Size=1
