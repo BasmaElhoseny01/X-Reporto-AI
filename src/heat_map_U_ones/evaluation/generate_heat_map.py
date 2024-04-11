@@ -6,8 +6,8 @@ from matplotlib.gridspec import GridSpec
 import numpy as np
 import cv2
 from sklearn import metrics
-# from logger_setup import setup_logging
-# import logging
+from logger_setup import setup_logging
+import logging
 
 from datetime import datetime
 
@@ -36,7 +36,7 @@ from PIL import Image
 # Modules
 from src.heat_map_U_ones.models.heat_map import HeatMap
 from src.heat_map_U_ones.data_loader.dataset import HeatMapDataset
-from src.utils import load_model
+from src.utils import load_model,plot_to_image
 
 # Utils 
 from config import *
@@ -69,6 +69,7 @@ class HeatMapGeneration():
             with torch.no_grad():
                 logging.info(f"Generating Heat Maps")
                 for batch_idx,(images,targets,images_path) in enumerate(self.data_loader_eval):
+                    logging.info(f"Generating Heat Map for Batch {batch_idx+1}/{len(self.data_loader_eval)}")
                     
                     # Move inputs to Device
                     images = images.to(DEVICE)
@@ -79,7 +80,11 @@ class HeatMapGeneration():
                     
                     # For Each Image in the Batch Generate the heat Map
                     for i , img in enumerate(images):
-                        self.generate_one_heat_map(images_path[i],features[i],gold_labels=targets[i],pred_labels=y_scores[i],thresholds=self.model.optimal_thresholds)
+                        image,image_title=self.generate_one_heat_map(images_path[i],features[i],gold_labels=targets[i],pred_labels=y_scores[i],thresholds=self.model.optimal_thresholds)
+
+                        # [TensorBoard] Write Image to Board
+                        self.tensor_board_writer.add_image(f'HeatMaps/{image_title}', image,dataformats='HWC')            
+                logging.info("Done Generation")
                 return 
             
         def generate_one_heat_map(self,image_path,features,gold_labels,pred_labels,thresholds):
@@ -108,10 +113,8 @@ class HeatMapGeneration():
             
             # Construct the legend
             legend_text = "Results:\n"
-            class_idx=0
-            for class_name, gold_label, pred_label in zip(CLASSES, gold_labels, pred_labels):
-                legend_text += f"{class_name}: *{gold_label}, {pred_label:.2f},{pred_label>thresholds[class_idx]}\n"
-                class_idx+=1
+            for index, (class_name, gold_label, pred_label) in enumerate(zip(CLASSES, gold_labels, pred_labels)):
+                legend_text += f"{class_name}: *{gold_label}, {pred_label:.2f},{1*(pred_label>thresholds[index])}\n"
 
             # Heat Map Name
             # Split the file path by the directory separator '/'
@@ -144,33 +147,35 @@ class HeatMapGeneration():
             ax_legend.text(0, 0, legend_text, fontsize=10, color='black', bbox=dict(facecolor='lightgrey', alpha=0.5))
             ax_legend.axis('off')
 
+            # Convert plot to image
+            image = plot_to_image()
+
             # if SAVE_IMAGES:
             #   plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
             # plt.show()
 
-            return
+            return image,desired_string
             
         
 def init_working_space():
 
     # Creating tensorboard folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    current_datetime="test"
     tensor_board_folder_path="./tensor_boards/" + "heat_maps/" + str(RUN)+ f"/generation_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
-        print(f"Folder '{tensor_board_folder_path}' created successfully.")
+        logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
     else:
-        print(f"Folder '{tensor_board_folder_path}' already exists.")
+        logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
 
     return tensor_board_folder_path
 
 def main():
-    #logging.info("Heat Map Generation Started")
+    logging.info("Heat Map Generation Started")
     
     # Logging Configurations
-    # log_config()
-    
+    log_config()
+
     if OperationMode.EVALUATION.value!=OPERATION_MODE :
         raise Exception("Operation Mode is not Evaluation Mode")
         
@@ -182,7 +187,7 @@ def main():
     # Heat Map Model 
     heat_map_model = HeatMap()
 
-    # logging.info("Loading heat_map ....")
+    logging.info("Loading heat_map ....")
     load_model(model=heat_map_model,name='heat_map_best')
     
     
@@ -198,7 +203,7 @@ def main():
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
-    #setup_logging(log_file_path='./logs/heat_map_u_ones_generator.log',bash=False,periodic_logger=PERIODIC_LOGGING)
+    setup_logging(log_file_path='./logs/heat_map_u_ones_generator.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
     try:
         # The main script runs here

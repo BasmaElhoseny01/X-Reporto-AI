@@ -30,14 +30,14 @@ OPERATION_MODE=1
 MODEL_STAGE=2
 
 # Training Process Parameters
-CONTINUE_TRAIN=True# Continue training
+CONTINUE_TRAIN=False# Continue training
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
 RUN = "1"
-EPOCHS=10
+EPOCHS=5
 BATCH_SIZE=64
 # BATCH_SIZE=2
 LM_Batch_Size=1
