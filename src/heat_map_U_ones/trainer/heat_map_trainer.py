@@ -8,7 +8,7 @@ import os
 import gc
 from tqdm import tqdm
 import sys
-
+import tensorflow as tf
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -23,7 +23,7 @@ from src.heat_map_U_ones.models.heat_map import HeatMap
 from src.heat_map_U_ones.data_loader.dataset import HeatMapDataset
 
 # Utils
-from src.utils import save_model,load_model,save_checkpoint,load_checkpoint,seed_worker
+from src.utils import save_model,load_model,save_checkpoint,load_checkpoint,seed_worker,ROC_AUC,plot_to_image
 from config import *
 
 
@@ -77,7 +77,7 @@ class HeatMapTrainer:
         
         # Best Loss
         self.best_loss = float('inf')
-    
+
     
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
         logging.info("Start Training")
@@ -160,11 +160,13 @@ class HeatMapTrainer:
             
             # validate the model no touch :)
             self.model.eval()
-            validation_average_loss= self.validate_during_training(epoch=epoch) 
+            optimal_thresholds,validation_average_loss= self.validate_during_training(epoch=epoch) 
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
             self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
+            # Optimal Thresholds
+            self.model.optimal_thresholds=optimal_thresholds
             self.model.train()     
-                       
+                        
             # saving model per epoch
             self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
 
@@ -173,25 +175,25 @@ class HeatMapTrainer:
             
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
         # Forward Pass
-        y_pred,_,_=self.model(images)  # Return is y_pred,y_scores
-        
+        y_pred,y_scores,_=self.model(images)  # Return is y_pred,y_scores
+
+
         # VIP DON'T FORGET TO UPDATE ONE IN EVALUATION :D
-        Total_loss=self.criterion(y_pred,targets)*images[0].size(0)   #3-channels
-       
+        # Total_loss=self.criterion(y_pred,targets)*images[0].size(0)   #3-channels       
+        Total_loss=self.criterion(y_pred,targets)      
 
         if not validate_during_training:
             # logging.debug(f"epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}")
-         
             # [Tensor Board]: Avg Batch Loss
             self.tensor_board_writer.add_scalar('Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
-            pass
 
+            return Total_loss
         else:
             # logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss 
             self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
-            pass
-        return Total_loss
+
+            return y_scores,Total_loss
     
 
     
@@ -199,6 +201,10 @@ class HeatMapTrainer:
         '''
         Validate the model during training
         '''
+
+        all_preds= np.zeros((1, len(CLASSES)))
+        all_targets= np.zeros((1, len(CLASSES)))
+
         with torch.no_grad():
             validation_total_loss=0
             total_loss=0
@@ -208,31 +214,76 @@ class HeatMapTrainer:
                 targets=targets.to(DEVICE)
                 
                 # Forward Pass
-                total_loss=self.forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,targets=targets,validate_during_training=True)
+                y_scores,total_loss=self.forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,targets=targets,validate_during_training=True)
                 validation_total_loss+=total_loss
-           
+
+                # Cumulate all predictions ans labels
+                all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+
+
             # average validation_total_loss
             validation_total_loss/=(len(self.data_loader_val))
 
             # update the learning rate according to the validation loss if decrease
             self.lr_scheduler.step(validation_total_loss)
-
-
             # Get the new learning rate
             new_lr = self.optimizer.param_groups[0]['lr']
             logging.info(f"Epoch {epoch+1}/{EPOCHS},Learning Rate: {new_lr:.10f}")
             # [Tensor Board]: Learning Rate
             self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train))
     
+            # Compute ROC_AUC
+            optimal_thresolds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:])                
 
-            return validation_total_loss
+            return optimal_thresolds,validation_total_loss
 
-        
+    def Validation_ROC_AUC(self,epoch,y_true,y_scores):
+        '''
+        ROC_AUC for Validation Pass :D
+        '''
+
+        plt.figure(figsize=(10, 8))  # Adjust figure size
+
+        optimal_thresholds=[]
+
+        # Draw ROC Curve for Each Class
+        for i in range(len(CLASSES)):    
+            fpr, tpr,auc,optimal_threshold = ROC_AUC(y_true[:, i], y_scores[:, i])
+
+            optimal_thresholds.append(optimal_threshold)
+
+            # Plotting
+            # Plot Line with optimal threshold in legend
+            plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (auc, optimal_threshold), linewidth=2)
+      
+        # Add legend, labels, and grid
+        plt.legend(loc='lower right', fontsize=8)
+        plt.plot([0, 1], [0, 1], 'r--')
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
+        plt.xlabel('False Positive Rate', fontsize=10)
+        plt.ylabel('True Positive Rate', fontsize=10)
+        plt.title('ROC Curves for Different Classes', fontsize=12)
+        plt.tick_params(axis='both', which='major', labelsize=12)  # Decrease tick label font size
+        plt.grid(False)
+
+        # Convert the plot to a tensor
+        image = plot_to_image()
+
+        # Write the image to the event file
+        self.tensor_board_writer.add_image(f'ROC_curve/Validation', image, global_step=epoch,dataformats='HWC')
+
+        # [Tensor Board] to the event file
+        for idx, threshold in enumerate(optimal_thresholds):
+          self.tensor_board_writer.add_scalar(f'ROC_curve/Optimal_Threshold_{CLASSES[idx]}', threshold, global_step=epoch)
+
+        return optimal_thresholds
         
     def save_model(self,model:torch.nn.Module,name:str,epoch:int,validation_loss:float):
         '''
         Save the current state of model.
-        '''
+        '''     
         logging.info("Saving "+name+"_epoch "+str(epoch+1))
         save_model(model=model,name=name+"_epoch_"+str(epoch+1))
         self.check_best_model(epoch,validation_loss,name,model)  
@@ -265,7 +316,7 @@ def init_working_space():
 
     # Creating tensor_board folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    current_datetime="test"
+    # current_datetime="test"
     tensor_board_folder_path="./tensor_boards/heat_maps/" +  str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
@@ -289,7 +340,7 @@ def main():
     # HeatMap Trainer Object
     heat_map_model = HeatMap() 
 
-     # Tensor Board
+    # Tensor Board
     tensor_board_writer=SummaryWriter(tensor_board_folder_path)
 
     # Create an HeatMapTrainer instance with the HeatMap model

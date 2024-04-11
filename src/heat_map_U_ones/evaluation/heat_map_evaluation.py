@@ -188,7 +188,7 @@ class HeatMapEvaluation():
             optimal_threshold = thresholds[optimal_threshold_index]
 
             # Add Optimal Thresholds
-            optimal_thresholds.append[optimal_threshold]
+            optimal_thresholds.append(optimal_threshold)
 
             # Plot Line with optimal threshold in legend
             plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (roc_auc, optimal_threshold), linewidth=2)

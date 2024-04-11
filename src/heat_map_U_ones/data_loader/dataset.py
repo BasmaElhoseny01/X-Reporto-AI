@@ -6,34 +6,49 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from config import CLASSES
+
 from src.heat_map_U_ones.data_loader.custom_augmentation import CustomAugmentation
 
 class HeatMapDataset(Dataset):
     def __init__(self, dataset_path, transform_type:str ='train'):
         # Read CSV
         self.data_info = pd.read_csv(dataset_path)
-                
+
+        # Select First 2 columns
+        selected_columns = self.data_info.iloc[:, :2]
+
+        # Select columns based on class names
+        for class_name in CLASSES:
+            if class_name in self.data_info.columns:
+                selected_columns[class_name] = self.data_info[class_name]
+
+        # Select last two columns
+        selected_columns = pd.concat([selected_columns, self.data_info.iloc[:, -2:]], axis=1)
+        self.data_info=selected_columns
+          
+        # Replace Uncertain Labels
+        self.data_info.iloc[:, 2:-2] = self.data_info.iloc[:, 2:-2].replace(np.nan, 0.0)
+        self.data_info.iloc[:, 2:-2] = self.data_info.iloc[:, 2:-2].replace(-1.0, 1.0)
+          
         # Get the headers
         self.headers = self.data_info.columns.tolist()
-        
-        # Replace Uncertain Labels
-        self.data_info.iloc[:, 2:16] = self.data_info.iloc[:, 2:16].replace(np.nan, 0.0)
-        self.data_info.iloc[:, 2:16] = self.data_info.iloc[:, 2:16].replace(-1.0, 1.0)
-        
+
+        # Transform
         self.transform = CustomAugmentation(transform_type=transform_type)
 
     def __len__(self):
         return len(self.data_info)
 
     def __getitem__(self, idx):
-        img_path = self.data_info.iloc[idx,17]
+        img_path = self.data_info.iloc[idx,-1]
         
         # Getting image path  with parent path of current folder + image path
         img_path = os.path.join(os.getcwd(), img_path)
       
         # Fix Problem of \
         img_path = img_path.replace("\\", "/")
-        
+        image
         #Read Image  
         img = cv2.imread(img_path, cv2.IMREAD_COLOR)
         assert img is not None, f"Image at {img_path} is None"
@@ -42,7 +57,7 @@ class HeatMapDataset(Dataset):
         
         # get the labels and if column is 1 then it is true if empty then false
         # use Values bec this is a series [Drop Headers] + Covert dtyoe to ve float32 not obj
-        labels=self.data_info.iloc[idx, 2:16].values.astype('float32')
+        labels=self.data_info.iloc[idx, 2:-2].values.astype('float32')
         labels = torch.FloatTensor(labels) #Tensor([13])
         
         # tranform image

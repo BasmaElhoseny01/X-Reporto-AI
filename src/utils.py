@@ -8,8 +8,77 @@ import os
 
 import matplotlib.pyplot as plt
 from matplotlib import patches
+import io
+import tensorflow as tf
 
 from config import *
+
+from sklearn import metrics
+
+def ROC_AUC(y_true,y_scores):
+    """
+    Compute ROC curve and AUC (Area Under the Curve).
+
+    Parameters:
+        y_true (array-like): True binary labels. 
+        y_scores (array-like): Target scores, can either be probability estimates of the positive class or confidence values.
+
+    Returns:
+        fpr (array-like): False Positive Rate (FPR).
+        tpr (array-like): True Positive Rate (TPR).
+        auc (float): Area Under the ROC Curve (AUC).
+        optimal_threshold (float): Optimal threshold based on Youden's J statistic.
+    """
+    # ROC Curve
+    fpr, tpr, thresholds = metrics.roc_curve(y_true, y_scores)
+
+    # AUC
+    auc = metrics.auc(fpr, tpr)
+
+    # Optimal Threshold
+    # Compute Youden's J statistic
+    j_statistic = tpr - fpr
+
+    # Find the index of the threshold that maximizes J statistic
+    optimal_threshold_index = np.argmax(j_statistic)
+
+    # Get the optimal threshold
+    optimal_threshold = thresholds[optimal_threshold_index]
+
+    return fpr, tpr,auc,optimal_threshold
+
+
+def plot_to_image():
+    """
+    Convert a matplotlib plot to a TensorFlow tensor image.
+
+    Returns:
+        image (numpy.ndarray): NumPy array representing the image.
+    """
+    # Create a buffer to store the plot
+    buf = io.BytesIO()
+    
+    # Save the plot to the buffer
+    plt.savefig(buf, format='png')
+    
+    # Close the plot to avoid memory leaks
+    plt.close()
+    
+    # Convert the buffer to a numpy array
+    buf.seek(0)
+    image = tf.image.decode_png(buf.getvalue(), channels=4)
+    
+    # Expand the dimensions of the image tensor
+    image = tf.expand_dims(image, 0)
+
+    image = tf.squeeze(image, axis=0)  # Remove the first dimension (batch size)
+
+    # Convert the TensorFlow EagerTensor image to a NumPy array
+    image = image.numpy()
+
+    image=image[:, :, :3]  # Take only the first three channels (RGB)
+
+    return image
 
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """

@@ -14,6 +14,9 @@ class HeatMap(nn.Module):
         super(HeatMap, self).__init__()
         self.model = models.densenet121()
         self.model.classifier = nn.Linear(self.model.classifier.in_features, len(CLASSES))
+
+        # Optimal Thresholds
+        self.optimal_thresholds=[]
         
     def forward(self, x):
         features=self.model.features(x)
@@ -32,6 +35,20 @@ class HeatMap(nn.Module):
         y_scores=torch.sigmoid(y_pred)
 
         return y_pred,y_scores,features
+
+    def __str__(self):
+        model_str = str(self.model)
+        thresholds_str = str(self.optimal_thresholds)
+        return f"Model:\n{model_str}\nOptimal Thresholds:\n{thresholds_str}"
+
+    def state_dict(self, destination=None, prefix='', keep_vars=False):
+        state_dict = super().state_dict(destination, prefix, keep_vars)
+        state_dict['optimal_thresholds'] = self.optimal_thresholds
+        return state_dict
+
+    def load_state_dict(self, state_dict, strict=True):
+        self.optimal_thresholds = state_dict.pop('optimal_thresholds', [])
+        super().load_state_dict(state_dict, strict)
 
 
 
