@@ -52,7 +52,8 @@ class HeatMapTrainer:
         #Create Criterion
         #self.criterion = nn.BCEWithLogitsLoss(reduction='none', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
         # add one to the positive weights
-        self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight=(10* (1-torch.tensor(POS_WEIGHTS)) ).to(DEVICE))
+        # self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight=(10* (1-torch.tensor(POS_WEIGHTS)) ).to(DEVICE))
+        self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
         # self.criterion=nn.BCEWithLogitsLoss(reduction='mean')
 
         
