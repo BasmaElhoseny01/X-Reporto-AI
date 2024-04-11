@@ -13,7 +13,7 @@ class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
         self.model = models.densenet121()
-        self.model.classifier = nn.Linear(self.model.classifier.in_features, 14)
+        self.model.classifier = nn.Linear(self.model.classifier.in_features, len(CLASSES))
         
     def forward(self, x):
         features=self.model.features(x)

@@ -112,7 +112,7 @@ heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
 PERIODIC_LOGGING=True
 
 CHECKPOINT_EVERY_N=400
-AVERGAE_EPOCH_LOSS_EVERY=5
+AVERAGE_EPOCH_LOSS_EVERY=5
 RECOVER=False
  
 
