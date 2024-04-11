@@ -50,7 +50,6 @@ class HeatMapTrainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
         
         #Create Criterion
-        #self.criterion = nn.BCEWithLogitsLoss(reduction='none', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
         # add one to the positive weights
         # self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight=(10* (1-torch.tensor(POS_WEIGHTS)) ).to(DEVICE))
         self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
@@ -129,11 +128,11 @@ class HeatMapTrainer:
             
                 if (batch_idx+1)%AVERAGE_EPOCH_LOSS_EVERY==0:
                     # Every 100 Batch print Average Loss for epoch till Now
-                    logging.info(f'[Every {AVERAGE_EPOCH_LOSS_EVERY} Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)},'+
-                                 f'Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
+                    logging.info(f'[Every {AVERAGE_EPOCH_LOSS_EVERY} Steps]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)},'+
+                                 f'Average Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
 
                     # [Tensor Board]: Epoch Average loss
-                    self.tensor_board_writer.add_scalar(f'Epoch Average Loss/Every {AVERAGE_EPOCH_LOSS_EVERY} Step'
+                    self.tensor_board_writer.add_scalar(f'Training/Epoch Average Loss [Every {AVERAGE_EPOCH_LOSS_EVERY} Steps]'
                                                       ,epoch_loss/(batch_idx+1)
                                                       ,epoch * len(self.data_loader_train) + batch_idx)
                     
@@ -150,7 +149,7 @@ class HeatMapTrainer:
             # [Logging]: Average Loss for epoch where each image is seen once
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
             # [Tensor Board]: Epoch Average loss
-            self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
+            self.tensor_board_writer.add_scalar('Training/Epoch Average Loss',epoch_loss/(len(self.data_loader_train)),epoch+1)
             
             # Free GPU memory
             del total_loss
@@ -162,11 +161,13 @@ class HeatMapTrainer:
             self.model.eval()
             optimal_thresholds,validation_average_loss= self.validate_during_training(epoch=epoch) 
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
-            self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
+            self.tensor_board_writer.add_scalar('Validation/Loss',validation_average_loss,epoch+1)
             # Optimal Thresholds
-            self.model.optimal_thresholds=optimal_thresholds
             self.model.train()     
-                        
+
+            # Add Optimal Thresholds to teh Model
+            self.model.optimal_thresholds=optimal_thresholds
+
             # saving model per epoch
             self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
 
@@ -185,13 +186,13 @@ class HeatMapTrainer:
         if not validate_during_training:
             # logging.debug(f"epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}")
             # [Tensor Board]: Avg Batch Loss
-            self.tensor_board_writer.add_scalar('Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
+            self.tensor_board_writer.add_scalar('Training/Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
             return Total_loss
         else:
             # logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss 
-            self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
+            self.tensor_board_writer.add_scalar('Validation/Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
             return y_scores,Total_loss
     
@@ -227,16 +228,17 @@ class HeatMapTrainer:
 
             # update the learning rate according to the validation loss if decrease
             self.lr_scheduler.step(validation_total_loss)
+
             # Get the new learning rate
             new_lr = self.optimizer.param_groups[0]['lr']
             logging.info(f"Epoch {epoch+1}/{EPOCHS},Learning Rate: {new_lr:.10f}")
             # [Tensor Board]: Learning Rate
-            self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train))
+            self.tensor_board_writer.add_scalar('Training/Learning Rate',new_lr,epoch+1)
     
             # Compute ROC_AUC
-            optimal_thresolds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:])                
+            optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:])                
 
-            return optimal_thresolds,validation_total_loss
+            return optimal_thresholds,validation_total_loss
 
     def Validation_ROC_AUC(self,epoch,y_true,y_scores):
         '''
@@ -272,11 +274,11 @@ class HeatMapTrainer:
         image = plot_to_image()
 
         # Write the image to the event file
-        self.tensor_board_writer.add_image(f'ROC_curve/Validation', image, global_step=epoch,dataformats='HWC')
+        self.tensor_board_writer.add_image(f'Validation/ROC_curve', image, global_step=epoch,dataformats='HWC')
 
         # [Tensor Board] to the event file
         for idx, threshold in enumerate(optimal_thresholds):
-          self.tensor_board_writer.add_scalar(f'ROC_curve/Optimal_Threshold_{CLASSES[idx]}', threshold, global_step=epoch)
+          self.tensor_board_writer.add_scalar(f'Validation/Optimal_Threshold_{CLASSES[idx]}', threshold, global_step=epoch)
 
         return optimal_thresholds
         
