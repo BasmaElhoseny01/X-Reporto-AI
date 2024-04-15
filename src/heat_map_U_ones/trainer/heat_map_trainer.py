@@ -109,6 +109,7 @@ class HeatMapTrainer:
 
                 # Forward Pass
                 total_loss=self.forward_pass(epoch,batch_idx,images,targets)
+                # print("total_loss",total_loss)
 
                 epoch_loss+=total_loss.item()              
      
@@ -155,6 +156,10 @@ class HeatMapTrainer:
             del total_loss
             torch.cuda.empty_cache()
             gc.collect()
+
+
+            # Compute ROC
+            self.compute_training_ROC(epoch=epoch)
             
             
             # validate the model no touch :)
@@ -182,7 +187,30 @@ class HeatMapTrainer:
 
         logging.info("Training Done")
         
-            
+    def compute_training_ROC(self,epoch):
+      logging.info("Computing ROC for Training .....")
+
+      all_preds= np.zeros((1, len(CLASSES)))
+      all_targets= np.zeros((1, len(CLASSES)))
+          
+      with torch.no_grad():
+        for batch_idx, (images, targets,_) in enumerate(self.data_loader_val):
+          # Move inputs to Device
+          images = images.to(DEVICE)
+          targets=targets.to(DEVICE)
+
+          # Forward Pass
+          y_pred,y_scores,_=self.model(images)  # Return is y_pred,y_scores
+
+          
+          # Cumulate all predictions ans labels
+          all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+          all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+
+      _=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:],tensor_board_card="Training")
+      return
+                
+
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
         # Forward Pass
         y_pred,y_scores,_=self.model(images)  # Return is y_pred,y_scores
@@ -243,7 +271,7 @@ class HeatMapTrainer:
 
             return optimal_thresholds,validation_total_loss
 
-    def Validation_ROC_AUC(self,epoch,y_true,y_scores):
+    def Validation_ROC_AUC(self,epoch,y_true,y_scores,tensor_board_card="Validation"):
         '''
         ROC_AUC for Validation Pass :D
         '''
@@ -277,11 +305,12 @@ class HeatMapTrainer:
         image = plot_to_image()
 
         # Write the image to the event file
-        self.tensor_board_writer.add_image(f'Validation/ROC_curve', image, global_step=epoch,dataformats='HWC')
+        self.tensor_board_writer.add_image(f'{tensor_board_card}/ROC_curve', image, global_step=epoch,dataformats='HWC')
+        logging.info("ROC Added To Tensor board")
 
         # [Tensor Board] to the event file
         for idx, threshold in enumerate(optimal_thresholds):
-          self.tensor_board_writer.add_scalar(f'Validation/Optimal_Threshold_{CLASSES[idx]}', threshold, global_step=epoch)
+          self.tensor_board_writer.add_scalar(f'{tensor_board_card}/Optimal_Threshold_{CLASSES[idx]}', threshold, global_step=epoch)
 
         return optimal_thresholds
         

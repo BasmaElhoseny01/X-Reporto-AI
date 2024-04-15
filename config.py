@@ -25,7 +25,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Testing 
-OPERATION_MODE=1
+OPERATION_MODE=3
 # Model Stage
 MODEL_STAGE=2
 
@@ -38,20 +38,20 @@ FREEZE_OBJECT_DETECTOR=False
 
 RUN = "1"
 EPOCHS=5
-BATCH_SIZE=64
+BATCH_SIZE=32
 # BATCH_SIZE=2
 LM_Batch_Size=1
 
-EFFECTIVE_BATCH_SIZE = 128
+EFFECTIVE_BATCH_SIZE = BATCH_SIZE
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
-LEARNING_RATE=0.01
+LEARNING_RATE=0.0001
 
 LR_BETA_1=0.9
 LR_BETA_2=0.999
 
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
-SCHEDULAR_GAMMA=0.8 # value multiply lr with
+SCHEDULAR_GAMMA=0.9 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-1 # Threshold for measuring the new optimum, to only focus on significant changes
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
@@ -107,7 +107,8 @@ test_csv_path:str = 'datasets/test.csv'
 
 heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
-heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map_train.csv'
+# heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
 
 # Logging
 PERIODIC_LOGGING=True
