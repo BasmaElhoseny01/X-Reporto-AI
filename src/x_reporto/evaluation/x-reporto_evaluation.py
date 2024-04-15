@@ -91,13 +91,13 @@ class XReportoEvaluation():
         }
         # intialize LM_scores
         LM_scores = {   
-        "BLUE1-Sentence": 0,
-        "BLUE2-Sentence": 0,
-        "BLUE3-Sentence": 0,
-        "BLUE4-Sentence": 0,
+        "BLEU1-Sentence": 0,
+        "BLEU2-Sentence": 0,
+        "BLEU3-Sentence": 0,
+        "BLEU4-Sentence": 0,
         "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
-        "BLUE-report":0,
+        "BLEU-report":0,
         "METEOR-report":0,
         "ROUGE-report":0,
         }
@@ -156,10 +156,10 @@ class XReportoEvaluation():
         reference_sentences_converted = self.convert_for_pycoco_scorer(reference_sentences)
         # compute the score
         Bleu_score = self.bleu_score.compute_score(generated_sentences_converted, reference_sentences_converted)
-        LM_scores["BLUE1-Sentence"] =Bleu_score[0][0]
-        LM_scores["BLUE2-Sentence"] =Bleu_score[0][1]
-        LM_scores["BLUE3-Sentence"] = Bleu_score[0][2]
-        LM_scores["BLUE4-Sentence"] = Bleu_score[0][3]
+        LM_scores["BLEU1-Sentence"] =Bleu_score[0][0]
+        LM_scores["BLEU2-Sentence"] =Bleu_score[0][1]
+        LM_scores["BLEU3-Sentence"] = Bleu_score[0][2]
+        LM_scores["BLEU4-Sentence"] = Bleu_score[0][3]
         LM_scores["ROUGE-Sentence"] = self.rouge.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
         LM_scores["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
 
