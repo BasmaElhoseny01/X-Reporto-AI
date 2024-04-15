@@ -159,7 +159,8 @@ class HeatMapTrainer:
 
 
             # Compute ROC
-            self.compute_training_ROC(epoch=epoch)
+            # [TODO] Fix
+            self.model.optimal_thresholds=self.compute_training_ROC(epoch=epoch)
             
             
             # validate the model no touch :)
@@ -180,7 +181,7 @@ class HeatMapTrainer:
 
 
             # Add Optimal Thresholds to teh Model
-            self.model.optimal_thresholds=optimal_thresholds
+            # self.model.optimal_thresholds=optimal_thresholds
 
             # saving model per epoch
             self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
@@ -200,15 +201,15 @@ class HeatMapTrainer:
           targets=targets.to(DEVICE)
 
           # Forward Pass
-          y_pred,y_scores,_=self.model(images)  # Return is y_pred,y_scores
+          _,y_scores,_=self.model(images)  # Return is y_pred,y_scores
 
           
           # Cumulate all predictions ans labels
           all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
           all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
 
-      _=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:],tensor_board_card="Training")
-      return
+      optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:],tensor_board_card="Training")
+      return optimal_thresholds
                 
 
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
