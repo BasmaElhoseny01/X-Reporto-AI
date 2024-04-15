@@ -150,7 +150,7 @@ class HeatMapEvaluation():
         image = plot_to_image()
 
         # Write the image to the event file
-        self.tensor_board_writer.add_image(f'Evaluation/ROC_curve', image, global_step=0,dataformats='HWC')
+        self.tensor_board_writer.add_image(f'Evaluation_Metrics/ROC_curve', image, global_step=0,dataformats='HWC')
         logging.info("ROC Added To Tensor board")
 
     
