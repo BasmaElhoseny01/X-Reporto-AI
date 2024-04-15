@@ -33,7 +33,7 @@ from PIL import Image
 # Modules
 from src.heat_map_U_ones.models.heat_map import HeatMap
 from src.heat_map_U_ones.data_loader.dataset import HeatMapDataset
-from src.utils import load_model
+from src.utils import load_model,ROC_AUC,plot_to_image
 
 # Utils 
 from config import *
@@ -119,51 +119,42 @@ class HeatMapEvaluation():
         return features,Total_loss,scores
 
     def compute_AUC(self,y_true,y_scores):
-      AUCs={}
-      plt.figure(figsize=(10, 8))  # Adjust figure size
+        AUCs={}
+        plt.figure(figsize=(10, 8))  # Adjust figure size
 
-      optimal_thresholds=[]
+        for i in range(len(CLASSES)):    
+            fpr, tpr, _ = metrics.roc_curve(y_true[:, i], y_scores[:, i])
+            # AUC
+            auc = metrics.auc(fpr, tpr)
 
-      # Draw ROC Curve for Each Class
-      for i in range(len(CLASSES)):    
-          fpr, tpr,auc,optimal_threshold = ROC_AUC(y_true[:, i], y_scores[:, i])
+            # Plotting
+            # Plot Line with optimal threshold in legend
+            plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (auc, self.model.optimal_thresholds[i]), linewidth=2)
 
-          optimal_thresholds.append(optimal_threshold)
-
-          # Plotting
-          # Plot Line with optimal threshold in legend
-          plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (auc, optimal_threshold), linewidth=2)
-
-          AUCs[CLASSES[i]]=auc
+            # Store AUC
+            AUCs[CLASSES[i]]=auc
         
     
-      # Add legend, labels, and grid
-      plt.legend(loc='lower right', fontsize=8)
-      plt.plot([0, 1], [0, 1], 'r--')
-      plt.xlim([0, 1])
-      plt.ylim([0, 1])
-      plt.xlabel('False Positive Rate', fontsize=10)
-      plt.ylabel('True Positive Rate', fontsize=10)
-      plt.title('ROC Curves for Different Classes', fontsize=12)
-      plt.tick_params(axis='both', which='major', labelsize=12)  # Decrease tick label font size
-      plt.grid(False)
+        # Add legend, labels, and grid
+        plt.legend(loc='lower right', fontsize=8)
+        plt.plot([0, 1], [0, 1], 'r--')
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
+        plt.xlabel('False Positive Rate', fontsize=10)
+        plt.ylabel('True Positive Rate', fontsize=10)
+        plt.title('ROC Curves for Different Classes', fontsize=12)
+        plt.tick_params(axis='both', which='major', labelsize=12)  # Decrease tick label font size
+        plt.grid(False)
 
-      # Convert the plot to a tensor
-      image = plot_to_image()
+        # Convert the plot to a tensor
+        image = plot_to_image()
 
-      # Write the image to the event file
-      self.tensor_board_writer.add_image(f'Evaluation/ROC_curve', image, global_step=0,dataformats='HWC')
-      logging.info("ROC Added To Tensor board")
+        # Write the image to the event file
+        self.tensor_board_writer.add_image(f'Evaluation/ROC_curve', image, global_step=0,dataformats='HWC')
+        logging.info("ROC Added To Tensor board")
 
-      # [Tensor Board] to the event file
-      for idx, threshold in enumerate(optimal_thresholds):
-        self.tensor_board_writer.add_scalar(f'Evaluation/Optimal_Threshold_{CLASSES[idx]}', threshold, global_step=0)
-
-      #   for i in range(len(CLASSES)):    
-      #       fpr, tpr, thresholds = metrics.roc_curve(y_true[:, i], y_scores[:, i])
-      #       # AUC
-      #       auc = metrics.auc(fpr, tpr)
-      return AUCs
+    
+        return AUCs
 
       
     
