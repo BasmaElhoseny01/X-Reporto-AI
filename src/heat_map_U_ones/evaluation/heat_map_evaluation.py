@@ -123,9 +123,19 @@ class HeatMapEvaluation():
         plt.figure(figsize=(10, 8))  # Adjust figure size
 
         for i in range(len(CLASSES)):    
-            fpr, tpr, _ = metrics.roc_curve(y_true[:, i], y_scores[:, i])
+            fpr, tpr, thresholds = metrics.roc_curve(y_true[:, i], y_scores[:, i])
             # AUC
             auc = metrics.auc(fpr, tpr)
+
+            # Optimal Threshold
+            # Compute Youden's J statistic
+            # j_statistic = tpr - fpr
+
+            # Find the index of the threshold that maximizes J statistic
+            # optimal_threshold_index = np.argmax(j_statistic)
+            # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]-0.1
+            # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]
+
 
             # Plotting
             # Plot Line with optimal threshold in legend
@@ -174,13 +184,41 @@ class HeatMapEvaluation():
         "f1":{},
       }
 
-      for i in range(len(CLASSES)):
-          fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= thresholds[i]))
-          fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < thresholds[i]))
-          tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= thresholds[i]))
-          tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < thresholds[i]))
+      best_thresholds=thresholds
 
-          precision = fp / (tp + fp)
+
+      # thresholds=np.array(np.arange(0, 1.1, 0.1))
+      # threshold_best=None
+      # best_thresholds=[]
+   
+
+      # for i in range(len(CLASSES)):
+      #   f1_best=-1
+      #   for threshold in thresholds:
+      #     fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= threshold))
+      #     fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < threshold))
+      #     tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= threshold))
+      #     tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < threshold))
+
+      #     precision = tp / (tp + fp)
+      #     recall = tp / (tp + fn)
+      #     f1 = 2 * (precision * recall) / (precision + recall)
+
+      #     if f1>f1_best:
+      #       threshold_best=threshold
+      #       f1_best=f1
+      #       print("f1_best",f1_best,"at threshold",threshold_best)
+       
+      #   best_thresholds.append(threshold_best)
+
+
+      for i in range(len(CLASSES)):
+          fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= best_thresholds[i]))
+          fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < best_thresholds[i]))
+          tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= best_thresholds[i]))
+          tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < best_thresholds[i]))
+
+          precision = tp / (tp + fp)
           recall = tp / (tp + fn)
           f1 = 2 * (precision * recall) / (precision + recall)
 

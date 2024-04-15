@@ -67,11 +67,11 @@ class HeatMapTrainer:
         g = torch.Generator()
         g.manual_seed(SEED)
         # [Fix] No of Workers & Shuffle
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=4,
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=2,
                                             worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         
-        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         
         # Best Loss
