@@ -306,7 +306,7 @@ class HeatMapTrainer:
 
         # Write the image to the event file
         self.tensor_board_writer.add_image(f'{tensor_board_card}/ROC_curve', image, global_step=epoch,dataformats='HWC')
-        logging.info("ROC Added To Tensor board")
+        logging.info("ROC Added To Tensor board"+f'{tensor_board_card}/ROC_curve')
 
         # [Tensor Board] to the event file
         for idx, threshold in enumerate(optimal_thresholds):
