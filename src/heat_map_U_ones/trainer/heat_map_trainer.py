@@ -165,6 +165,15 @@ class HeatMapTrainer:
             # Optimal Thresholds
             self.model.train()     
 
+            self.lr_scheduler.step()
+            # Get the new learning rate
+            new_lr = self.optimizer.param_groups[0]['lr']
+            logging.info(f"Epoch {epoch+1}/{EPOCHS},Learning Rate: {new_lr:.10f}")
+            
+            # [Tensor Board]: Learning Rate
+            self.tensor_board_writer.add_scalar('Training/Learning Rate',new_lr,epoch+1)
+
+
             # Add Optimal Thresholds to teh Model
             self.model.optimal_thresholds=optimal_thresholds
 
@@ -227,13 +236,7 @@ class HeatMapTrainer:
             validation_total_loss/=(len(self.data_loader_val))
 
             # update the learning rate according to the validation loss if decrease
-            self.lr_scheduler.step(validation_total_loss)
-
-            # Get the new learning rate
-            new_lr = self.optimizer.param_groups[0]['lr']
-            logging.info(f"Epoch {epoch+1}/{EPOCHS},Learning Rate: {new_lr:.10f}")
-            # [Tensor Board]: Learning Rate
-            self.tensor_board_writer.add_scalar('Training/Learning Rate',new_lr,epoch+1)
+            # self.lr_scheduler.step(validation_total_loss)
     
             # Compute ROC_AUC
             optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:])                
