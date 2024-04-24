@@ -13,10 +13,10 @@ from src.heat_map_U_ones.data_loader.custom_augmentation import CustomAugmentati
 class HeatMapDataset(Dataset):
     def __init__(self, dataset_path, transform_type:str ='train'):
         # Read CSV
-        # self.data_info = pd.read_csv(dataset_path,nrows=100)
+        # self.data_info = pd.read_csv(dataset_path,nrows=32)
         self.data_info = pd.read_csv(dataset_path)
 
-        self.image_pathes=self.data_info.loc[:, self.data_info.columns.isin(['mimic_image_file_path'])]
+        self.image_pathes=self.data_info.iloc[:,3]
 
         # Select Columns of Class
         self.data_info = self.data_info.loc[:, self.data_info.columns.isin(CLASSES)]
@@ -51,7 +51,7 @@ class HeatMapDataset(Dataset):
         
         # get the labels and if column is 1 then it is true if empty then false
         # use Values bec this is a series [Drop Headers] + Covert dtyoe to ve float32 not obj
-        labels=self.data_info.values.astype('float32')
+        labels=self.data_info.values[idx,:].astype('float32')
         labels = torch.FloatTensor(labels) #Tensor([13])
         
         # tranform image

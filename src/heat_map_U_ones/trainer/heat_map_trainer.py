@@ -50,14 +50,12 @@ class HeatMapTrainer:
         self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
         
         #Create Criterion
-        # add one to the positive weights
-        # self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight=(10* (1-torch.tensor(POS_WEIGHTS)) ).to(DEVICE))
-        # self.criterion = nn.BCEWithLogitsLoss(reduction='mean', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))
-        self.criterion=nn.BCEWithLogitsLoss(reduction='mean')
+        self.criterion=nn.BCEWithLogitsLoss(reduction='sum')
 
         
         # create dataset
-        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
+        # self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
+        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='val')
         logging.info(f"Train dataset loaded Size: {len(self.dataset_train)}")   
         
         self.dataset_val = HeatMapDataset(dataset_path= validation_csv_path, transform_type='val')
@@ -67,7 +65,7 @@ class HeatMapTrainer:
         g = torch.Generator()
         g.manual_seed(SEED)
         # [Fix] No of Workers & Shuffle
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=2,
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=2,
                                             worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         
@@ -203,6 +201,16 @@ class HeatMapTrainer:
           # Forward Pass
           _,y_scores,_=self.model(images)  # Return is y_pred,y_scores
 
+          mask = (targets != -1).float()
+
+          # print("y_pred shape",y_pred.shape)
+          # print("targets shape",targets.shape)
+          # apply mask to the targets
+          targets = targets * mask
+
+
+          # print(targets)
+          # y_pred = y_pred * mask
           
           # Cumulate all predictions ans labels
           all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
@@ -222,8 +230,8 @@ class HeatMapTrainer:
         # create mask for the targets if the target is -1 then it is 0 else 1
         mask = (targets != -1).float()
 
-        print("y_pred shape",y_pred.shape)
-        print("targets shape",targets.shape)
+        # print("y_pred shape",y_pred.shape)
+        # print("targets shape",targets.shape)
         # apply mask to the targets
         targets = targets * mask
         y_pred = y_pred * mask
@@ -293,6 +301,10 @@ class HeatMapTrainer:
 
         # Draw ROC Curve for Each Class
         for i in range(len(CLASSES)):    
+            x = y_true[:, i]
+            x[x<0] = 0
+            x[x>1] =1
+            y_true[:, i] = x 
             fpr, tpr,auc,optimal_threshold = ROC_AUC(y_true[:, i], y_scores[:, i])
 
             optimal_thresholds.append(optimal_threshold)
