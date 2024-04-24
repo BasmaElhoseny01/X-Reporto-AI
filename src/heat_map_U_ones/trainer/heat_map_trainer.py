@@ -217,6 +217,16 @@ class HeatMapTrainer:
         y_pred,y_scores,_=self.model(images)  # Return is y_pred,y_scores
 
 
+        # targets shape is [batch_size, num_labels]
+        # y_pred shape is [batch_size, num_labels]
+        # create mask for the targets if the target is -1 then it is 0 else 1
+        mask = (targets != -1).float()
+
+        print("y_pred shape",y_pred.shape)
+        print("targets shape",targets.shape)
+        # apply mask to the targets
+        targets = targets * mask
+        y_pred = y_pred * mask
         # VIP DON'T FORGET TO UPDATE ONE IN EVALUATION :D
         # Total_loss=self.criterion(y_pred,targets)*images[0].size(0)   #3-channels       
         Total_loss=self.criterion(y_pred,targets)      
