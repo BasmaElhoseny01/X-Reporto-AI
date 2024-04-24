@@ -36,7 +36,7 @@ TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
-RUN = "3"
+RUN = "1"
 EPOCHS=5
 BATCH_SIZE=32
 # BATCH_SIZE=2
