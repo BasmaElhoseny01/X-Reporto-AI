@@ -118,7 +118,7 @@ class HeatMapEvaluation():
         targets = targets * mask
         y_pred = y_pred * mask
         # Calculate Loss
-        Total_loss=nn.BCEWithLogitsLoss(reduction='mean')(y_pred,targets)
+        Total_loss=nn.BCEWithLogitsLoss(reduction='sum')(y_pred,targets)
         
         features=None
         
