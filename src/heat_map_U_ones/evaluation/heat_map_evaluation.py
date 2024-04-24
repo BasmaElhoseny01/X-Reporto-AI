@@ -110,9 +110,15 @@ class HeatMapEvaluation():
         '''
         # Forward Pass
         y_pred,scores,_=self.model(images)
+        mask = (targets != -1).float()
 
+        # print("y_pred shape",y_pred.shape)
+        # print("targets shape",targets.shape)
+        # apply mask to the targets
+        targets = targets * mask
+        y_pred = y_pred * mask
         # Calculate Loss
-        Total_loss=nn.BCEWithLogitsLoss(reduction='mean', pos_weight=torch.tensor(POS_WEIGHTS).to(DEVICE))(y_pred,targets)
+        Total_loss=nn.BCEWithLogitsLoss(reduction='mean')(y_pred,targets)
         
         features=None
         
@@ -123,6 +129,10 @@ class HeatMapEvaluation():
         plt.figure(figsize=(10, 8))  # Adjust figure size
 
         for i in range(len(CLASSES)):    
+            x = y_true[:, i]
+            x[x<0] = 0
+            x[x>1] =1
+            y_true[:, i] = x 
             fpr, tpr, thresholds = metrics.roc_curve(y_true[:, i], y_scores[:, i])
             # AUC
             auc = metrics.auc(fpr, tpr)
@@ -213,6 +223,10 @@ class HeatMapEvaluation():
 
 
       for i in range(len(CLASSES)):
+          x = y_true[:, i]
+          x[x<0] = 0
+          x[x>1] =1
+          y_true[:, i] = x 
           fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= best_thresholds[i]))
           fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < best_thresholds[i]))
           tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= best_thresholds[i]))

@@ -16,12 +16,14 @@ class HeatMapDataset(Dataset):
         # self.data_info = pd.read_csv(dataset_path,nrows=100)
         self.data_info = pd.read_csv(dataset_path)
 
+        self.image_pathes=self.data_info.loc[:, self.data_info.columns.isin(['mimic_image_file_path'])]
+
         # Select Columns of Class
         self.data_info = self.data_info.loc[:, self.data_info.columns.isin(CLASSES)]
           
         # Replace Uncertain Labels
-        self.data_info.iloc = self.data_info.iloc.replace(np.nan, 0.0)
-        self.data_info.iloc = self.data_info.iloc.replace(-1.0, 1.0)
+        # self.data_info.iloc = self.data_info.replace(np.nan, 0.0)
+        # self.data_info.iloc = self.data_info.replace(-1.0, 1.0)
           
         # Get the headers
         self.headers = self.data_info.columns.tolist()
@@ -33,7 +35,7 @@ class HeatMapDataset(Dataset):
         return len(self.data_info)
 
     def __getitem__(self, idx):
-        img_path = self.data_info.iloc[idx,-1]
+        img_path=self.image_pathes[idx]
         
         # Getting image path  with parent path of current folder + image path
         img_path = os.path.join(os.getcwd(), img_path)
@@ -43,12 +45,13 @@ class HeatMapDataset(Dataset):
         #Read Image  
         img = cv2.imread(img_path, cv2.IMREAD_COLOR)
         assert img is not None, f"Image at {img_path} is None"
+        
         # convert the image from BGR to RGB
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
         
         # get the labels and if column is 1 then it is true if empty then false
         # use Values bec this is a series [Drop Headers] + Covert dtyoe to ve float32 not obj
-        labels=self.data_info.iloc[idx, 2:-2].values.astype('float32')
+        labels=self.data_info.values.astype('float32')
         labels = torch.FloatTensor(labels) #Tensor([13])
         
         # tranform image
