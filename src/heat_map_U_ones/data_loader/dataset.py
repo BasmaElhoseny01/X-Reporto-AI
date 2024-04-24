@@ -16,21 +16,12 @@ class HeatMapDataset(Dataset):
         # self.data_info = pd.read_csv(dataset_path,nrows=100)
         self.data_info = pd.read_csv(dataset_path)
 
-        # Select First 2 columns
-        selected_columns = self.data_info.iloc[:, :2]
-
-        # Select columns based on class names
-        for class_name in CLASSES:
-            if class_name in self.data_info.columns:
-                selected_columns[class_name] = self.data_info[class_name]
-
-        # Select last two columns
-        selected_columns = pd.concat([selected_columns, self.data_info.iloc[:, -2:]], axis=1)
-        self.data_info=selected_columns
+        # Select Columns of Class
+        self.data_info = self.data_info.loc[:, self.data_info.columns.isin(CLASSES)]
           
         # Replace Uncertain Labels
-        self.data_info.iloc[:, 2:-2] = self.data_info.iloc[:, 2:-2].replace(np.nan, 0.0)
-        self.data_info.iloc[:, 2:-2] = self.data_info.iloc[:, 2:-2].replace(-1.0, 1.0)
+        self.data_info.iloc = self.data_info.iloc.replace(np.nan, 0.0)
+        self.data_info.iloc = self.data_info.iloc.replace(-1.0, 1.0)
           
         # Get the headers
         self.headers = self.data_info.columns.tolist()

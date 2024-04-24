@@ -72,44 +72,17 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 # HeatMap Classifier Weights
 HEAT_MAP_IMAGE_SIZE=224
-# CLASSES=['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Enlarged Cardiomediastinum', 'Fracture', 'Lung Lesion', 'Lung Opacity', 'No Finding', 'Pleural Effusion', 'Pleural Other', 'Pneumonia', 'Pneumothorax', 'Support Devices']
-CLASSES=['Pleural Effusion']
-# POS_WEIGHTS=[5.196613826873599,  6.001985087634356,  21.518615145959668,  6.496558205694836, 16.197855853943317, 78.12385762385762, 52.769722814498934,  5.910333309811117,  3.9707016191210487,  4.7390841098065435,  127.0726429675425, 6.976997039482303, 29.93885270014709, 4.553176740869841]
-POS_WEIGHTS=[ 4.7390841098065435]
+CLASSES=['Atelectasis', 'Cardiomegaly', 'Edema', 'Lung Opacity', 'No Finding', 'Pleural Effusion', 'Pneumonia', 'Support Devices']
 
-# POS_WEIGHTS=[3.3283,6.3618,5.2551,3.4262,4.0310,23.0994,20.9506,1.3439,9.9758,2.2849,36.2066,9.0119,9.8955,1.9085]
-# POS_WEIGHTS=[0.2446785508360561, 0.22177109359984623, 0.06628988083797809, 0.17826254084182203, 0.07220593888141456, 0.022499039015952335, 0.03201278108783394, 0.2391769171631751, 0.3349690082644628, 0.2621984912550452, 0.01216846050355564, 0.1499615606380934, 0.05223548914088026, 0.30217542763790123]
 
-# CLASSES={'No Finding':9.9758,
-# 'Enlarged Cardiomediastinum':4.0310,
-# 'Cardiomegaly':6.3618,
-# 'Lung Opacity':1.3439,
-# 'Lung Lesion':20.9506,
-# 'Edema': 3.4262,
-# 'Consolidation':5.2551,
-# 'Pneumonia':9.0119,
-# 'Atelectasis':3.3283,
-# 'Pneumothorax':9.8955,
-# 'Pleural Effusion': 2.2849,
-# 'Pleural Other':36.2066,
-# 'Fracture':23.0994,
-# 'Support Devices':1.9085}
-
-# Pathes to the external files
-# training_csv_path = 'datasets/train.csv'
-training_csv_path = 'datasets/heat_map_train.csv'
-validation_csv_path = 'datasets/heat_map_val.csv'
-# validation_csv_path = 'datasets/valid.csv'
-evaluation_csv_path = 'datasets/heat_map_val.csv'
-# evaluation_csv_path = 'datasets/valid.csv'
-# TODO Fix
-# evaluation_csv_path = 'datasets/eval.csv'
-test_csv_path:str = 'datasets/test.csv'
+# Paths to the external files
+training_csv_path = 'NAN'
+validating_csv_path = 'NAN'
+evaluation_csv_path:str = 'NAN'
 
 heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
-heat_map_evaluation_csv_path = 'datasets/heat_map_train.csv'
-# heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
 
 # Logging
 PERIODIC_LOGGING=True
@@ -155,7 +128,13 @@ def log_config():
     logging.info(f"REGION_SELECTION_CLASSIFIER_WEIGHT: {REGION_SELECTION_CLASSIFIER_WEIGHT}")
 
     logging.info(f"training_csv_path: {training_csv_path}")
-    logging.info(f"validation_csv_path: {validation_csv_path}")
+    logging.info(f"validating_csv_path: {validating_csv_path}")
+    logging.info(f"evaluation_csv_path: {evaluation_csv_path}")
+
+
+    logging.info("heat_map_training_csv_path",heat_map_training_csv_path)
+    logging.info("heat_map_validating_csv_path",heat_map_validating_csv_path)
+    logging.info("heat_map_evaluation_csv_path",heat_map_evaluation_csv_path)
 
     logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
 
