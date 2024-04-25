@@ -286,7 +286,8 @@ class HeatMapTrainer:
             # self.lr_scheduler.step(validation_total_loss)
     
             # Compute ROC_AUC
-            optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:])                
+            # optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:])            
+            optimal_thresholds=0.5*np.ones(len(CLASSES))  # [STOP]    
 
             return optimal_thresholds,validation_total_loss
 
