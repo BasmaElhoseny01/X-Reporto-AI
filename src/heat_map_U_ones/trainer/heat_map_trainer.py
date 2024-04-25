@@ -54,8 +54,7 @@ class HeatMapTrainer:
 
         
         # create dataset
-        # self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
-        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='val')
+        self.dataset_train = HeatMapDataset(dataset_path= training_csv_path, transform_type='train')
         logging.info(f"Train dataset loaded Size: {len(self.dataset_train)}")   
         
         self.dataset_val = HeatMapDataset(dataset_path= validation_csv_path, transform_type='val')
@@ -65,7 +64,7 @@ class HeatMapTrainer:
         g = torch.Generator()
         g.manual_seed(SEED)
         # [Fix] No of Workers & Shuffle
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=False, num_workers=2,
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=2,
                                             worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         

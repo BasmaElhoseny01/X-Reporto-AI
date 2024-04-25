@@ -52,12 +52,12 @@ class HeatMap(nn.Module):
 
 
 
-# from torchinfo import summary
+from torchinfo import summary
 
 
-# model= HeatMap().to('cuda')
-# # print(model)
-# summary(model, input_size=(4, 3, 224, 224) )
+model= HeatMap().to('cuda')
+# print(model)
+summary(model, input_size=(4, 3, 224, 224) )
 
 
 # Freezing
