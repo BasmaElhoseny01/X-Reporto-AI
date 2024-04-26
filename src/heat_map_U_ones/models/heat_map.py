@@ -14,25 +14,25 @@ class HeatMap(nn.Module):
         super(HeatMap, self).__init__()
         self.model = models.densenet121(pretrained=True)
         self.model.classifier = nn.Linear(self.model.classifier.in_features, len(CLASSES))
+        
 
         # Optimal Thresholds
         self.optimal_thresholds=[]
         
     def forward(self, x):
-        features=self.model.features(x)
-        
+        features=self.model.features(x) # shape: (batch_size, 1024, 7, 7)
         # Apply Global Average Pooling to feature maps
-        y_pred = F.adaptive_avg_pool2d(features, (1, 1))
+        y_pred = F.adaptive_avg_pool2d(features, (1, 1)) # shape: (batch_size, 1024, 1, 1)
         
         # Concatenate the two tensors
-        y_pred = torch.flatten(y_pred, 1)
-        y_pred = y_pred.view(y_pred.size(0), -1)
+        y_pred = torch.flatten(y_pred, 1) # shape: (batch_size, 1024)
+        y_pred = y_pred.view(y_pred.size(0), -1) # shape: (batch_size, 1024)
         
         # Classifier
-        y_pred = self.model.classifier(y_pred)
+        y_pred = self.model.classifier(y_pred) # shape: (batch_size, num_classes)
         
         # Apply Sigmoid
-        y_scores=torch.sigmoid(y_pred)
+        y_scores=torch.sigmoid(y_pred)  # shape: (batch_size, num_classes)
 
         return y_pred,y_scores,features
 
@@ -52,12 +52,20 @@ class HeatMap(nn.Module):
 
 
 
-# from torchinfo import summary
+from torchinfo import summary
 
 
-# model= HeatMap().to('cuda')
-# # print(model)
-# summary(model, input_size=(4, 3, 224, 224) )
+model= HeatMap().to('cuda')
+# print(model)
+
+print("Model Summary")
+summary(model, input_size=(4, 3, 224, 224) )
+
+# run forwad pass
+print("Demo of Data Flow")
+input_data = torch.randn(4,3,224, 224).to('cuda')
+output=model.to('cuda')(input_data)
+# Apply softmax activation
 
 
 # Freezing
@@ -69,8 +77,10 @@ class HeatMap(nn.Module):
 
 # # pip install torchsummary
 
+# import torchsummary
 
-# You need to define input size to calcualte parameters
+# model= HeatMap().to('cuda')
+# # You need to define input size to calcualte parameters
 # torchsummary.summary(model,batch_size=4, input_size=(3, 512, 512))
 
 

@@ -165,7 +165,7 @@ def get_config():
     "ABNORMAL_CLASSIFIER_POS_WEIGHT": ABNORMAL_CLASSIFIER_POS_WEIGHT,
     "REGION_SELECTION_CLASSIFIER_POS_WEIGHT": REGION_SELECTION_CLASSIFIER_POS_WEIGHT,
     "training_csv_path": training_csv_path,
-    "validation_csv_path": validation_csv_path,
+    "validation_csv_path": validating_csv_path,
     "PERIODIC_LOGGING": PERIODIC_LOGGING,
     "CHECKPOINT_EVERY_N":CHECKPOINT_EVERY_N,
     }
