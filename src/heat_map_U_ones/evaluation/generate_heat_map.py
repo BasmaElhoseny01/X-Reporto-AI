@@ -234,10 +234,91 @@ class HeatMapGeneration():
 
             return image,desired_string
 
+        def get_gradients(self, module, grad_input, grad_output):
+            self.gradients = grad_input
 
+        def generate_heatmap_gradCam_per_class(self, image_path, features, predictions, class_index, class_name):
+            # Get the gradCAM heatmap for the class
 
+            pred = predictions[class_index]
 
+            # register the hook
+            self.model.model.features.register_backward_hook(self.model.activations_hook)
+            # get gradient of the prediction with respect to the features
             
+            self.model.zero_grad()
+            pred.backward(retain_graph=True)
+
+            # get the gradients of the features
+            gradients = self.model.get_gradients() # 1, 1024, 7, 7
+
+            # multiply the gradients with the features
+            grad_cam = gradients * features
+
+            # get the mean of the grad_cam
+            grad_cam = grad_cam.mean(dim=1, keepdim=True).squeeze() # 7, 7
+
+            # apply relu
+            grad_cam = F.relu(grad_cam)
+
+            # apply normalization
+            grad_cam = grad_cam / torch.max(grad_cam)
+
+
+            #---- Blend original and heatmap
+            imgOriginal = cv2.imread(image_path, 1)
+
+            imgOriginal = cv2.resize(imgOriginal, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+
+            cam = grad_cam
+            cam = cv2.resize(cam.cpu().data.numpy(), (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+
+            heatmap = cv2.applyColorMap(np.uint8(255*cam), cv2.COLORMAP_JET)
+
+            img = cv2.addWeighted(imgOriginal,1,heatmap,0.35,0)
+
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+            # Construct the legend
+
+            legend_text = f"Results:\n{class_name}\n"
+
+            # Heat Map Name
+            # Split the file path by the directory separator '/'
+            parts = image_path.split('/')
+            # Get the last two directory names and the file name
+            last_two_directories = '_'.join(parts[-3:-1])
+            file_name = parts[-1]
+            # Construct the desired string with the class name
+            desired_string = f"{last_two_directories}_{file_name}_{class_name}"
+
+            # Create subplot
+            fig = plt.figure(figsize=(12, 5))
+            gs = GridSpec(1, 3, width_ratios=[2, 2, 1], wspace=0.1)  # Set wspace to adjust space between subplots
+
+            # Plot original image
+            ax_original = fig.add_subplot(gs[0])
+            ax_original.imshow(imgOriginal)
+            ax_original.axis('off')
+
+            # Plot heatmap
+            ax_heatmap = fig.add_subplot(gs[1])
+            ax_heatmap.imshow(img)
+            ax_heatmap.axis('off')
+
+            # Plot legend
+            ax_legend = fig.add_subplot(gs[2])
+            ax_legend.text(0, 0, legend_text, fontsize=10, color='black', bbox=dict(facecolor='lightgrey', alpha=0.5))
+            ax_legend.axis('off')
+
+            # Convert plot to image
+            image = plot_to_image()
+
+            # if SAVE_IMAGES:
+            #   plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
+            # plt.show()
+
+            return image,desired_string
 
         
 def init_working_space():

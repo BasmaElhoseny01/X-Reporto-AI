@@ -18,9 +18,21 @@ class HeatMap(nn.Module):
 
         # Optimal Thresholds
         self.optimal_thresholds=[]
-        
+        self.gradients=None
+
+        # Gradients
+    def get_gradients(self):
+        return self.gradients
+
+    def activations_hook(self, grad):
+        self.gradients = grad
+    
     def forward(self, x):
         features=self.model.features(x) # shape: (batch_size, 1024, 7, 7)
+
+        # Register the hook
+        # features.register_hook(self.activations_hook)
+
         # Apply Global Average Pooling to feature maps
         y_pred = F.adaptive_avg_pool2d(features, (1, 1)) # shape: (batch_size, 1024, 1, 1)
         
