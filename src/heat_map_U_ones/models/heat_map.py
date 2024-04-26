@@ -18,9 +18,21 @@ class HeatMap(nn.Module):
 
         # Optimal Thresholds
         self.optimal_thresholds=[]
-        
+        self.gradients=None
+
+        # Gradients
+    def get_gradients(self):
+        return self.gradients
+
+    def activations_hook(self, grad):
+        self.gradients = grad
+    
     def forward(self, x):
         features=self.model.features(x) # shape: (batch_size, 1024, 7, 7)
+
+        # Register the hook
+        # features.register_hook(self.activations_hook)
+
         # Apply Global Average Pooling to feature maps
         y_pred = F.adaptive_avg_pool2d(features, (1, 1)) # shape: (batch_size, 1024, 1, 1)
         
@@ -52,19 +64,19 @@ class HeatMap(nn.Module):
 
 
 
-from torchinfo import summary
+# from torchinfo import summary
 
 
-model= HeatMap().to('cuda')
-# print(model)
+# model= HeatMap().to('cuda')
+# # print(model)
 
-print("Model Summary")
-summary(model, input_size=(4, 3, 224, 224) )
+# print("Model Summary")
+# summary(model, input_size=(4, 3, 224, 224) )
 
-# run forwad pass
-print("Demo of Data Flow")
-input_data = torch.randn(4,3,224, 224).to('cuda')
-output=model.to('cuda')(input_data)
+# # run forwad pass
+# print("Demo of Data Flow")
+# input_data = torch.randn(4,3,224, 224).to('cuda')
+# output=model.to('cuda')(input_data)
 # Apply softmax activation
 
 
