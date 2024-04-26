@@ -83,11 +83,13 @@ class HeatMapGeneration():
                     _,y_scores,features=self.model(images)#torch.Size([2, 1024, 7, 7])                    
                     
                     # For Each Image in the Batch Generate the heat Map
-                    for i , img in enumerate(images):
-                        image,image_title=self.generate_one_heat_map(images_path[i],features[i],gold_labels=targets[i],pred_labels=y_scores[i],thresholds=self.model.optimal_thresholds)
+                    for i , image in enumerate(images):
+                        for j,class_finding in enumerate(CLASSES):                        
+                            image_class_heat_map,image_title=self.generate_heat_map_per_class(image=image,image_path=images_path[i],features=features[i],class_index=j,class_name=class_finding,gold_label=targets[i][j],pred_label=y_scores[i][j],class_threshold=self.model.optimal_thresholds[j])
 
                         # [TensorBoard] Write Image to Board
-                        self.tensor_board_writer.add_image(f'HeatMaps/{image_title}', image,dataformats='HWC')            
+                        self.tensor_board_writer.add_image(f'HeatMaps/{image_title}/{class_finding}', image_class_heat_map,dataformats='HWC')            
+               
                 logging.info("Done Generation")
                 return 
             
@@ -160,7 +162,7 @@ class HeatMapGeneration():
 
             return image,desired_string
         
-        def generate_heat_map_per_class(self,image_path,features,class_index:int,class_name:str):
+        def generate_heat_map_per_class(self,image,image_path,features,class_index:int,class_name:str,gold_label,pred_label,class_threshold):
             # Get the heatmap for the class
 
             #---- Generate heatmap
@@ -182,7 +184,8 @@ class HeatMapGeneration():
             npHeatmap = npHeatmap / np.max(npHeatmap)
 
             #---- Blend original and heatmap
-            imgOriginal = cv2.imread(image_path, 1)
+            # imgOriginal = cv2.imread(image_path, 1)
+            imgOriginal = image
 
             imgOriginal = cv2.resize(imgOriginal, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
 
@@ -195,16 +198,18 @@ class HeatMapGeneration():
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
             # Construct the legend
-            legend_text = f"Results:\n{class_name}\n"
+            legend_text = f"Results:\n{class_name}"+f": *{gold_label}, {pred_label:.2f},{1*(pred_label>class_threshold)}\n"
 
             # Heat Map Name
             # Split the file path by the directory separator '/'
             parts = image_path.split('/')
+
             # Get the last two directory names and the file name
             last_two_directories = '_'.join(parts[-3:-1])
             file_name = parts[-1]
+
             # Construct the desired string with the class name
-            desired_string = f"{last_two_directories}_{file_name}_{class_name}"
+            desired_string = f"{last_two_directories}_{file_name}"
             
             # Create subplot
             fig = plt.figure(figsize=(12, 5))
