@@ -4,6 +4,8 @@ from albumentations.pytorch import ToTensorV2
 import torch
 
 from src.x_reporto.models.x_reporto_v1 import XReportoV1
+from transformers import GPT2Tokenizer
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -17,6 +19,8 @@ class Inference:
         
         self.x_reporto.to(DEVICE)
         print("Model Loaded")
+        
+        self.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
 
 
                                
@@ -44,7 +48,21 @@ class Inference:
         # Inference Pass
         self.x_reporto.eval()
         with torch.no_grad():
-            self.x_reporto(images=image,generate_sentence=False,use_beam_search=False)
+            bounding_boxes,lm_sentences_encoded=self.x_reporto(images=image,use_beam_search=False)            
+            lm_sentences_decoded=self.tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
+            
+           
+            
+            # Results
+            # Bounding Boxes
+            image=image[0].to('cpu')
+            # def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
+            print(bounding_boxes.shape)
+            # Report
+            with open("report.txt", "w") as file:
+                # Iterate over each sentence in the list
+                for sentence in lm_sentences_decoded:
+                    file.write(sentence + "\n")
 
         
         # Input is Image
@@ -53,6 +71,7 @@ class Inference:
         # Report
 
     #     pass
+
 
 
 

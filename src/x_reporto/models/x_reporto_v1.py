@@ -333,34 +333,34 @@ class XReportoV1(nn.Module):
             # Object Detector
             self.object_detector(images=images)
             _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)
-            print("bounding_boxes",bounding_boxes.shape) #[batch_size x 29 x 4]
-            print("detected_classes",detected_classes.shape) #[batch_size x 29]
-            print(detected_classes)
-            print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
+            #print("bounding_boxes",bounding_boxes.shape) #[batch_size x 29 x 4]
+            #print("detected_classes",detected_classes.shape) #[batch_size x 29]
+            #print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
 
-            # # Binary Classifier
-            # _,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,detected_classes)
-            # # print(selected_regions)  #[batch_size x 29] 
-            # # print(selected_region_features) #[num_regions_selected_in_batch,4]
+            # Binary Classifier
+            _,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,detected_classes)
+            #print(selected_regions.shape)  #[batch_size x 29] 
+            #print(selected_region_features.shape) #[num_regions_selected_in_batch,1024]
 
-            # # _,abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
-            # # print(abnormal_regions) # Boolean Tensor of shape [batch_size x 29] 
+            # _,abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
+            # print(abnormal_regions) # Boolean Tensor of shape [batch_size x 29] 
 
 
-            # # Language Model
-            # LM_sentences=[]
-            # object_detector_features = object_detector_features[selected_regions]
-            # for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
-            #     if use_beam_search:
-            #         LM_sentences_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
-            #     else:
-            #         LM_sentences_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
-            #     LM_sentences.extend(LM_sentences_batch)
+            # Language Model
+            LM_sentences=[]
+            object_detector_features = object_detector_features[selected_regions]
+            for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
+                if use_beam_search:
+                    LM_sentences_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
+                else:
+                    LM_sentences_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                LM_sentences.extend(LM_sentences_batch)
+            # print("LM_sentences",len(LM_sentences))# [num_regions_selected_in_batch,]
 
 
 
             # return bounding_boxes,detected_classes,selected_regions,selected_region_features,LM_sentences
-            return None
+            return bounding_boxes[selected_regions],LM_sentences
         
         elif OPERATION_MODE==OperationMode.TRAINING.value and self.training:
             # Training
