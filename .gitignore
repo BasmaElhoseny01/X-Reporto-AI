@@ -74,3 +74,5 @@ cython_debug/
 #.idea/
 /datasets_test
 /datasets_try
+kept_cases.txt
+removed_cases.txt

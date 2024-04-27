@@ -2,16 +2,11 @@ import os
 import argparse
 import pandas as pd
 
-def main(data_set_path,csv_file_path,base_data_set="datasets/"):
+def main(data_set_path,csv_file_path):
 
     # Read CSV file
-    data_csv=pd.read_csv(csv_file_path)['mimic_image_file_path'].tolist()
+    data_csv=pd.read_csv(csv_file_path,usecols=['subject_id','study_id','image_id'])
 
-    # Replace backslashes with forward slashes in data_csv
-    for i in range(len(data_csv)):
-        data_csv[i] = data_csv[i].replace("\\", "/")
-        # Replace datasets/ with datasets_test/
-        data_csv[i] = data_csv[i].replace("datasets/", base_data_set)
 
     # List all folders in the directory
     folders = [folder for folder in os.listdir(data_set_path) if os.path.isdir(os.path.join(data_set_path, folder))]
@@ -25,54 +20,46 @@ def main(data_set_path,csv_file_path,base_data_set="datasets/"):
     # Print the list of folders
     print("List of folders:")
     for folder in folders:
-        # print(folder)
+        print(folder)
         # ie:P10 folders
-        for patient_folder in os.listdir(os.path.join(data_set_path, folder)):
-            if os.path.isdir(os.path.join(data_set_path, folder, patient_folder)):
+        for subject in os.listdir(os.path.join(data_set_path, folder)):
+            if os.path.isdir(os.path.join(data_set_path, folder, subject)):
             # ie:P10992759 folders
             # Check if the patient folder is a directory
-                # print(patient_folder)
+                # print(subject)
 
-                for study_folder in os.listdir(os.path.join(data_set_path, folder, patient_folder)):
+                for study_folder in os.listdir(os.path.join(data_set_path, folder, subject)):
                     # ie:S10416870 folders
                     # Check if the study folder is a directory
-                    if os.path.isdir(os.path.join(data_set_path, folder, patient_folder, study_folder)):
-                        # print(study_folder)
+                    if os.path.isdir(os.path.join(data_set_path, folder, subject, study_folder)):
+                        # print(" "+study_folder)
                         keep_case = False
-                        for image in os.listdir(os.path.join(data_set_path, folder, patient_folder, study_folder)):
+                        for image in os.listdir(os.path.join(data_set_path, folder, subject, study_folder)):
                             # Check if the image is a file
-                            if os.path.isfile(os.path.join(data_set_path, folder, patient_folder, study_folder, image)):
-                                # print(image)
+                            if os.path.isfile(os.path.join(data_set_path, folder, subject, study_folder, image)):
+                                # print("     "+image)
                                 # Get the image file path
-                                img_file_path = os.path.join(data_set_path, folder, patient_folder, study_folder, image)
-                                # Replace backslashes with forward slashes
-                                img_file_path = img_file_path.replace("\\", "/")
+                                image_id = image.split(".")[0]
+                                image_ext = image.split(".")[1]
+                                # print("subject",subject[1:],int(subject[1:]) not in data_csv['subject_id'].values)
+                                # return 
+                                # print("study_folder",study_folder[1:], int(study_folder[1:]) not in data_csv['study_id'].values)
+                                # print("image_id",image_id,image_id not in data_csv['image_id'].values)
 
-                                if img_file_path[0:2] == "./":
-                                    img_file_path = img_file_path[2:]
-                                # print(data_csv)
-                                # return
-
-                                # check if img_file_path is an image file
-                                if img_file_path not in data_csv:
-                                # and (img_file_path[-4:] == ".jpg" or img_file_path[-4:] == ".png" or img_file_path[-5:] == ".jpeg" or img_file_path[-4:] == ".gif"):
-                                    # Check if the image is in the CSV file
-                                    # Remove the image
-                                    # print(data_csv)
-                                    # print(img_file_path)
-                                    # os.remove(img_file_path)
-                                    print(f"Removed {image} from {folder}/{patient_folder}/{study_folder}")
-                                    # return 
+                                if image_ext!="html" and (int(subject[1:]) not in data_csv['subject_id'].values or int(study_folder[1:]) not in data_csv['study_id'].values or image_id not in data_csv['image_id'].values):
+                                    img_file_path = os.path.join(data_set_path, folder, subject, study_folder, image)
+                                    img_file_path = img_file_path.replace("\\", "/")
+                                    os.remove(img_file_path)
+                                    print(f"Removed {img_file_path}")
                                 else:
                                     keep_case = True
-                                    print(f"Kept {image} from {folder}/{patient_folder}/{study_folder}")
-                                    
+                                    # print(f"Kept {folder}/{subject}/{study_folder}/{image}")
 
 
                         if keep_case:
-                            kept_cases.append(f"{folder}/{patient_folder}/{study_folder}")
+                            kept_cases.append(f"{folder}/{subject}/{study_folder}")
                         else:
-                            removed_cases.append(f"{folder}/{patient_folder}/{study_folder}")
+                            removed_cases.append(f"{folder}/{subject}/{study_folder}")
 
     # Save the kept and removed cases to a text file
     with open("kept_cases.txt", "w") as f:
@@ -95,11 +82,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", required=True, help="Path to the CSV file")
     parser.add_argument("--data_set", required=True, help="Path to the dataset")
-    parser.add_argument("--base_data_set", required=False, help="Path to the base dataset", default="datasets/")
 
     args = parser.parse_args()
     # Call the main function with the provided file path argument
-    # main(data_set_path="./datasets_test/mimic-cxr-jpg/files",csv_file_path='./datasets/train_full.csv',base_data_set="datasets_test/")
-    main(data_set_path=args.data_set,csv_file_path=args.csv,base_data_set=args.base_data_set)
+    main(data_set_path=args.data_set,csv_file_path=args.csv)
 
-# python remove_side_view.py --csv ./datasets/heat_map_train_final.csv --data_set ./datasets_try/mimic-cxr-jpg/files --base_data_set datasets_try/
+# python ./scripts/remove_side_view.py --csv ./datasets/heat_map_train_final.csv --data_set ./datasets_try/mimic-cxr-jpg/files

@@ -392,7 +392,7 @@ def save_model(model,name):
             os.makedirs(destination_dir)
             # Save to Drive
             subprocess.run(["cp", source_path, destination_path])
-            logging.info(f"Model Saved Sucessfully to drive")
+            logging.info(f"Model Saved Successfully to drive")
             
         except Exception as e:
             logging.info(f"Failed to save model to Drive. Reason: {e}")
@@ -459,7 +459,7 @@ def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_sta
 
     checkpoint_path='check_points/'+str(RUN)+'/checkpoint.pth'
     torch.save(checkpoint, checkpoint_path)
-    logging.info('Saved Check point at' + checkpoint_path)
+    logging.info('Saved Check point at ' + checkpoint_path)
 
     if SAVE_TO_DRIVE:
       try:
