@@ -38,11 +38,11 @@ class XReportoV1(nn.Module):
 
         self.object_detector = ObjectDetector().create_model()
 
-        if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+        if OPERATION_MODE==OperationMode.INFERENCE.value or MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
         
-        if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+        if OPERATION_MODE==OperationMode.INFERENCE.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             config = Config()
             # load small gpt2 config
             config.d_model = 768
@@ -69,10 +69,8 @@ class XReportoV1(nn.Module):
             # self.language_model.half()
             # self.language_model.convert_to_half()
 
-        if RECOVER==True:
-            # Don't Load any module the check point will be loaded Later :
-            logging.debug("No Modules are loaded in x_reporto_v1 due to Recovery Mode")
-            #TODO: Add a check point to load the model
+        if OPERATION_MODE==OperationMode.INFERENCE.value:
+            print("Inference Mode")
 
         elif OPERATION_MODE==OperationMode.TRAINING.value:
             if CONTINUE_TRAIN:
@@ -173,7 +171,7 @@ class XReportoV1(nn.Module):
                             # if  GENERATE_REPORT:
                             #     load_model(model=self.language_model,name='LM_best')
 
-        elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.TESTING.value or OPERATION_MODE==OperationMode.EVALUATION.value:
+        elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.EVALUATION.value:
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 logging.info("Loading object_detector .....")
                 print("Loading object_detector .....")
