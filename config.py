@@ -36,7 +36,7 @@ TRAIN_ROI=False # Train only ROI of the object detector
 
 FREEZE_OBJECT_DETECTOR=False
 
-RUN = "2"
+RUN = "3"
 EPOCHS=10
 BATCH_SIZE=64
 # BATCH_SIZE=2
@@ -87,7 +87,9 @@ heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
 # Logging
 PERIODIC_LOGGING=True
 
-CHECKPOINT_EVERY_N=400
+CHECKPOINT_EVERY_N=1
+SAVE_TO_DRIVE=True
+
 AVERAGE_EPOCH_LOSS_EVERY=5
 RECOVER=False
  

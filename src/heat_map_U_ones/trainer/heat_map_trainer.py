@@ -1,3 +1,5 @@
+import subprocess
+
 # Logging
 from logger_setup import setup_logging
 import logging
@@ -182,6 +184,7 @@ class HeatMapTrainer:
 
             # saving model per epoch
             self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=validation_average_loss)
+
 
         logging.info("Training Done")
         

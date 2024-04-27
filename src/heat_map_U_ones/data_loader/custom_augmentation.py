@@ -31,8 +31,8 @@ class TransformLibrary(object):
     def __init__(self, transform_type:str ='train'):
         if (transform_type == 'train'):
             self.transform =A.Compose([
-            # A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
-            A.Resize(height=HEAT_MAP_IMAGE_SIZE, width=HEAT_MAP_IMAGE_SIZE, p=1.0),
+            A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
+            # A.Resize(height=HEAT_MAP_IMAGE_SIZE, width=HEAT_MAP_IMAGE_SIZE, p=1.0),
 
             # A.RandomCrop(height=256, width=256, p=1.0),
             # A.RandomHorizontalFlip(),
@@ -40,19 +40,19 @@ class TransformLibrary(object):
             #  rotate between -2 and 2 degrees
             A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE)),
             
-            # # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
-            # A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+            # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
+            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
 
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2(p=1.0),], p=1.0)
                     
         else:
             self.transform = A.Compose([
-            A.Resize(height=HEAT_MAP_IMAGE_SIZE, width=HEAT_MAP_IMAGE_SIZE, p=1.0),
-            # A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
+            # A.Resize(height=HEAT_MAP_IMAGE_SIZE, width=HEAT_MAP_IMAGE_SIZE, p=1.0),
+            A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
       
-            # # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
-            # A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+            # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
+            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
 
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2(p=1.0),])
