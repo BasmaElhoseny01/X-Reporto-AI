@@ -40,6 +40,7 @@ class XReportoV1(nn.Module):
 
         if OPERATION_MODE==OperationMode.INFERENCE.value or MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
+        if OPERATION_MODE!=OperationMode.INFERENCE.value:
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
         
         if OPERATION_MODE==OperationMode.INFERENCE.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
@@ -71,10 +72,9 @@ class XReportoV1(nn.Module):
 
         if OPERATION_MODE==OperationMode.INFERENCE.value:
             # Load the models
-            self.object_detector.model.load_state_dict(torch.load(object_detector_path))
-            self.binary_classifier_region_abnormal.model.load_state_dict(torch.load(abnormal_classifier_path))
-            self.binary_classifier_selection_region.model.load_state_dict(torch.load(region_classifier_path))
-            self.language_model.model.load_state_dict(torch.load(language_model_path))
+            self.object_detector.load_state_dict(torch.load(object_detector_path))
+            self.binary_classifier_selection_region.load_state_dict(torch.load(region_classifier_path))
+            self.language_model.load_state_dict(torch.load(language_model_path))
 
         elif OPERATION_MODE==OperationMode.TRAINING.value:
             if CONTINUE_TRAIN:
@@ -333,9 +333,10 @@ class XReportoV1(nn.Module):
             # Object Detector
             self.object_detector(images=images)
             _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)
-            # print(bounding_boxes) #[batch_size x 29 x 4]
-            # print(detected_classes) #[batch_size x 29]
-            # print(object_detector_features) # [batch_size x 29 x 1024]
+            print("bounding_boxes",bounding_boxes.shape) #[batch_size x 29 x 4]
+            print("detected_classes",detected_classes.shape) #[batch_size x 29]
+            print(detected_classes)
+            print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
 
             # # Binary Classifier
             # _,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,detected_classes)
