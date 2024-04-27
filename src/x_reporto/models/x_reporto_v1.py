@@ -32,7 +32,7 @@ class XReportoV1(nn.Module):
         - language_model (CustomGPT2): Language model for generating reports.
     """
 
-    def __init__(self):
+    def __init__(self,object_detector_path=None,region_classifier_path=None,abnormal_classifier_path=None,language_model_path=None):
         super().__init__()
         self.num_classes=30
 
@@ -70,7 +70,11 @@ class XReportoV1(nn.Module):
             # self.language_model.convert_to_half()
 
         if OPERATION_MODE==OperationMode.INFERENCE.value:
-            print("Inference Mode")
+            # Load the models
+            self.object_detector.model.load_state_dict(torch.load(object_detector_path))
+            self.binary_classifier_region_abnormal.model.load_state_dict(torch.load(abnormal_classifier_path))
+            self.binary_classifier_selection_region.model.load_state_dict(torch.load(region_classifier_path))
+            self.language_model.model.load_state_dict(torch.load(language_model_path))
 
         elif OPERATION_MODE==OperationMode.TRAINING.value:
             if CONTINUE_TRAIN:
@@ -321,8 +325,43 @@ class XReportoV1(nn.Module):
                     - stop (bool): If True, the batch index has reached the end of the dataset.
 
        '''
+
         stop=False
-        if OPERATION_MODE==OperationMode.TRAINING.value and self.training:
+        if OPERATION_MODE==OperationMode.INFERENCE.value:
+            print("Inference Mode Forward Pass")
+
+            # Object Detector
+            self.object_detector(images=images)
+            _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)
+            # print(bounding_boxes) #[batch_size x 29 x 4]
+            # print(detected_classes) #[batch_size x 29]
+            # print(object_detector_features) # [batch_size x 29 x 1024]
+
+            # # Binary Classifier
+            # _,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,detected_classes)
+            # # print(selected_regions)  #[batch_size x 29] 
+            # # print(selected_region_features) #[num_regions_selected_in_batch,4]
+
+            # # _,abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
+            # # print(abnormal_regions) # Boolean Tensor of shape [batch_size x 29] 
+
+
+            # # Language Model
+            # LM_sentences=[]
+            # object_detector_features = object_detector_features[selected_regions]
+            # for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
+            #     if use_beam_search:
+            #         LM_sentences_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
+            #     else:
+            #         LM_sentences_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+            #     LM_sentences.extend(LM_sentences_batch)
+
+
+
+            # return bounding_boxes,detected_classes,selected_regions,selected_region_features,LM_sentences
+            return None
+        
+        elif OPERATION_MODE==OperationMode.TRAINING.value and self.training:
             # Training
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
@@ -472,22 +511,22 @@ class XReportoV1(nn.Module):
                     gc.collect()
                     return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop
                 
-            elif OPERATION_MODE==OperationMode.EVALUATION.value or OPERATION_MODE==OperationMode.TESTING.value:
+            elif OPERATION_MODE==OperationMode.EVALUATION.value:
                 # selected_regions=torch.ones_like(selected_regions)
-                LM_sentances=[]
+                LM_sentences=[]
                 object_detector_features = object_detector_features[selected_regions]
                 for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
                     if use_beam_search:
-                        LM_sentencses_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
+                        LM_sentences_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
                     else:
-                        LM_sentencses_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
-                    LM_sentances.extend(LM_sentencses_batch)
+                        LM_sentences_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                    LM_sentences.extend(LM_sentences_batch)
                 if delete:
                     # Free GPU memory
                     object_detector_features=object_detector_features.to('cpu')
                     del object_detector_features
                     torch.cuda.empty_cache()
-                return LM_sentances,selected_regions
+                return LM_sentences,selected_regions
 
        
     def filter_inputs_to_language_model(self, selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets):
