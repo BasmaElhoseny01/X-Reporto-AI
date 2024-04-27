@@ -1,5 +1,3 @@
-import subprocess
-
 # Logging
 from logger_setup import setup_logging
 import logging

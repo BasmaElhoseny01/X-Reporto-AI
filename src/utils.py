@@ -383,10 +383,19 @@ def save_model(model,name):
 
     if SAVE_TO_DRIVE:
         try:
+          # Source and destination file paths
+          source_path = f"models/{RUN}/{name}.pth"
+          destination_path = f"/content/drive/MyDrive/models/{RUN}/{name}.pth"
+
+          destination_dir = os.path.dirname(destination_path)
+          if not os.path.exists(destination_dir):
+            os.makedirs(destination_dir)
             # Save to Drive
-            subprocess.run(["cp", f"models/" + str(RUN) + '/' + name + ".pth", f"/content/drive/MyDrive/models/" + str(RUN) + '/' + name + ".pth"])
+            subprocess.run(["cp", source_path, destination_path])
+            logging.info(f"Model Saved Sucessfully to drive")
+            
         except Exception as e:
-            print(f"Failed to save model to Drive. Reason: {e}")
+            logging.info(f"Failed to save model to Drive. Reason: {e}")
 
 def load_model(model,name):
     '''
@@ -450,15 +459,24 @@ def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_sta
 
     checkpoint_path='check_points/'+str(RUN)+'/checkpoint.pth'
     torch.save(checkpoint, checkpoint_path)
+    logging.info('Saved Check point at' + checkpoint_path)
 
     if SAVE_TO_DRIVE:
-        try:
-            # Save to Drive
-            subprocess.run(["cp", checkpoint_path, f"/content/drive/MyDrive/check_points/{RUN}/checkpoint.pth"])
-        except Exception as e:
-            print(f"Failed to save checkpoint to Drive. Reason: {e}")
+      try:
+          # Destination directory
+          destination_dir = f"/content/drive/MyDrive/check_points/{RUN}/"
+
+          # Check if the destination directory exists, create it if not
+          if not os.path.exists(destination_dir):
+              os.makedirs(destination_dir)
+
+          # Copy the checkpoint file to the destination directory
+          subprocess.run(["cp", checkpoint_path, f"{destination_dir}checkpoint.pth"])
+          
+          logging.info("Checkpoint saved successfully to Drive.")
+      except Exception as e:
+          logging.info(f"Failed to save checkpoint to Drive. Reason: {e}")
             
-    logging.info('Saved Check point at' + checkpoint_path)
 
 def load_checkpoint(run):
     checkpoint_path='check_points/'+str(run)+'/checkpoint.pth'

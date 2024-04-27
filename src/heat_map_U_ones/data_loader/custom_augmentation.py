@@ -41,7 +41,7 @@ class TransformLibrary(object):
             A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE)),
             
             # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
-            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT),
 
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2(p=1.0),], p=1.0)
@@ -52,7 +52,7 @@ class TransformLibrary(object):
             A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
       
             # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
-            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT),
 
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             ToTensorV2(p=1.0),])
