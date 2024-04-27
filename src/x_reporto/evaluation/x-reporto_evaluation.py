@@ -91,6 +91,7 @@ class XReportoEvaluation():
         }
         # intialize LM_scores
         LM_scores = {   
+        "all": {
         "BLEU1-Sentence": 0,
         "BLEU2-Sentence": 0,
         "BLEU3-Sentence": 0,
@@ -100,6 +101,29 @@ class XReportoEvaluation():
         "BLEU-report":0,
         "METEOR-report":0,
         "ROUGE-report":0,
+        },
+        "normal": {
+        "BLEU1-Sentence": 0,
+        "BLEU2-Sentence": 0,
+        "BLEU3-Sentence": 0,
+        "BLEU4-Sentence": 0,
+        "METEOR-Sentence": 0,
+        "ROUGE-Sentence": 0,
+        "BLEU-report":0,
+        "METEOR-report":0,
+        "ROUGE-report":0,
+        },
+        "abnormal": {
+        "BLEU1-Sentence": 0,
+        "BLEU2-Sentence": 0,
+        "BLEU3-Sentence": 0,
+        "BLEU4-Sentence": 0,
+        "METEOR-Sentence": 0,
+        "ROUGE-Sentence": 0,
+        "BLEU-report":0,
+        "METEOR-report":0,
+        "ROUGE-report":0,
+        },
         }
 
         self.model.eval()
@@ -138,16 +162,16 @@ class XReportoEvaluation():
 
         #compute score for all sentences
         filtered_gen_sents,filtered_ref_sents=self.filter_empty_sentences(LM_sentances_generated_reference["generated_sentences"],LM_sentances_generated_reference["reference_sentences"])
-        self.compute_LM_score_by_sentence(filtered_gen_sents,filtered_ref_sents,LM_scores)
+        self.compute_LM_score_by_sentence("all",filtered_gen_sents,filtered_ref_sents,LM_scores)
         #compute score for normal selected regions
         filtered_gen_sents,filtered_ref_sents=self.filter_empty_sentences(LM_sentances_generated_reference["generated_sentences_normal_selected_regions"],LM_sentances_generated_reference["reference_sentences_normal_selected_regions"])
-        self.compute_LM_score_by_sentence(filtered_gen_sents,filtered_ref_sents,LM_scores)
+        self.compute_LM_score_by_sentence("normal",filtered_gen_sents,filtered_ref_sents,LM_scores)
         #compute score for abnormal selected regions
         filtered_gen_sents,filtered_ref_sents=self.filter_empty_sentences(LM_sentances_generated_reference["generated_sentences_abnormal_selected_regions"],LM_sentances_generated_reference["reference_sentences_abnormal_selected_regions"])
-        self.compute_LM_score_by_sentence(filtered_gen_sents,filtered_ref_sents,LM_scores)
+        self.compute_LM_score_by_sentence("abnormal",filtered_gen_sents,filtered_ref_sents,LM_scores)
         return LM_scores
     
-    def compute_LM_score_by_sentence(self,generated_sentences,reference_sentences,LM_scores):
+    def compute_LM_score_by_sentence(self,name,generated_sentences,reference_sentences,LM_scores):
         '''
         compute_LM_score_by_sentence
         '''
@@ -156,12 +180,12 @@ class XReportoEvaluation():
         reference_sentences_converted = self.convert_for_pycoco_scorer(reference_sentences)
         # compute the score
         Bleu_score = self.bleu_score.compute_score(generated_sentences_converted, reference_sentences_converted)
-        LM_scores["BLEU1-Sentence"] =Bleu_score[0][0]
-        LM_scores["BLEU2-Sentence"] =Bleu_score[0][1]
-        LM_scores["BLEU3-Sentence"] = Bleu_score[0][2]
-        LM_scores["BLEU4-Sentence"] = Bleu_score[0][3]
-        LM_scores["ROUGE-Sentence"] = self.rouge.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
-        LM_scores["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
+        LM_scores[name]["BLEU1-Sentence"] = Bleu_score[0][0]
+        LM_scores[name]["BLEU2-Sentence"] = Bleu_score[0][1]
+        LM_scores[name]["BLEU3-Sentence"] = Bleu_score[0][2]
+        LM_scores[name]["BLEU4-Sentence"] = Bleu_score[0][3]
+        LM_scores[name]["ROUGE-Sentence"] = self.rouge.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
+        LM_scores[name]["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
 
     def convert_for_pycoco_scorer(self,sents):
         '''

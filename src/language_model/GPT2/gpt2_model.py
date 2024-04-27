@@ -415,9 +415,10 @@ class CustomGPT2(nn.Module):
                 num_beam_hyps_to_keep=beam_size,
             )
         
-        beam_scores = torch.zeros((batch_size, beam_size), dtype=torch.float, device= device)
-        beam_scores[:, 1:] = -1e9
-        beam_scores = beam_scores.view((batch_size * beam_size,))
+        # initialize beam_scores which stores the score of each token in the beam
+        beam_scores = torch.zeros((batch_size, beam_size), dtype=torch.float, device= device) # (batch_size, beam_size)
+        beam_scores[:, 1:] = -1e9 # setting the score of all tokens except the first one to -inf
+        beam_scores = beam_scores.view((batch_size * beam_size,)) # (batch_size * beam_size,)
 
         # beam search
         while True:
@@ -430,34 +431,36 @@ class CustomGPT2(nn.Module):
             
             # calculate probabilities of logits
             next_token_scores = nn.functional.log_softmax(logits, dim=-1)  # (batch_size * beam_size, vocab_size)
-           
+        
             # add beam_scores of previous sentences to all probabilities of tokens
-            next_token_scores = next_token_scores + beam_scores[:, None].expand_as(next_token_scores)
+            next_token_scores = next_token_scores + beam_scores[:, None].expand_as(next_token_scores) # (batch_size * beam_size , vocab_size)
 
             # reshape next_token_scores to (batch_size, beam_size * vocab_size)
-            next_token_scores = next_token_scores.view((batch_size, beam_size * self.config.vocab_size))
+            next_token_scores = next_token_scores.view((batch_size, beam_size * self.config.vocab_size)) # (batch_size, beam_size * vocab_size)
 
             # select top-k tokens
-            next_token_scores, next_tokens = torch.topk(next_token_scores, k=beam_size, dim=1,largest=True, sorted=True)
+            next_token_scores, next_tokens = torch.topk(next_token_scores, k=beam_size*2, dim=1,largest=True, sorted=True) # (batch_size, beam_size*2) , (batch_size, beam_size*2)
             # get indices of top-k tokens
             # beam_idx = next_tokens 
             # beam_idx = next_tokens // self.config.vocab_size
                 
-            beam_idx = torch.div(next_tokens, self.config.vocab_size, rounding_mode="floor")
-            next_tokens = next_tokens % self.config.vocab_size
-           
+            next_indices = torch.div(next_tokens, self.config.vocab_size, rounding_mode="floor") # (batch_size, beam_size*2)
+            next_tokens = next_tokens % self.config.vocab_size # (batch_size, beam_size*2)           
 
             # calculate beam_scores
             beam_outputs = beam_scorer.process(
-                input_ids, next_token_scores, next_tokens, beam_idx, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id+1
+                input_ids, next_token_scores, next_tokens, next_indices, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id+1
             )
-            beam_scores = beam_outputs["next_beam_scores"]
-            beam_next_tokens = beam_outputs["next_beam_tokens"]
-            beam_idx = beam_outputs["next_beam_indices"]
+            beam_scores = beam_outputs["next_beam_scores"] # (batch_size * beam_size,)
+            beam_next_tokens = beam_outputs["next_beam_tokens"] # (batch_size * beam_size,)
+            beam_idx = beam_outputs["next_beam_indices"] # (batch_size * beam_size,)
 
             # update input_ids, attention mask and length for the next step
-            beam_next_tokens = beam_next_tokens.view((batch_size * beam_size, 1))
-            input_ids = torch.cat([input_ids, beam_next_tokens], dim=-1)
+            # beam_next_tokens = beam_next_tokens.view((batch_size * beam_size, 1))
+
+            # input_ids = torch.cat([input_ids, beam_next_tokens], dim=-1)
+            #TODO: test if the following line is necessary
+            input_ids = torch.cat([input_ids[beam_idx, :], beam_next_tokens.unsqueeze(-1)], dim=-1)
             model_kwargs = self.update_model_kwargs(model_kwargs=model_kwargs, presents=presents)
 
             # check if there is past layer
