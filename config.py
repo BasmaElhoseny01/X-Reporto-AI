@@ -19,14 +19,15 @@ class OperationMode(Enum):
     TRAINING = 1
     VALIDATION = 2
     EVALUATION = 3
-    TESTING = 4
+    INFERENCE= 4
+    TESTING = 5
 
 
 # device
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-# Training / validation / EVALUATION / Testing 
-OPERATION_MODE=3
+# Training / validation / EVALUATION / Inference/ Testing / 
+OPERATION_MODE=4
 
 
 # Model Stage
