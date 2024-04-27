@@ -390,9 +390,9 @@ def save_model(model,name):
           destination_dir = os.path.dirname(destination_path)
           if not os.path.exists(destination_dir):
             os.makedirs(destination_dir)
-            # Save to Drive
-            subprocess.run(["cp", source_path, destination_path])
-            logging.info(f"Model Saved Successfully to drive")
+          # Save to Drive
+          subprocess.run(["cp", source_path, destination_path])
+          logging.info(f"Model Saved Successfully to drive")
             
         except Exception as e:
             logging.info(f"Failed to save model to Drive. Reason: {e}")
