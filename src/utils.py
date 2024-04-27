@@ -384,7 +384,7 @@ def save_model(model,name):
     if SAVE_TO_DRIVE:
         try:
             # Save to Drive
-            subprocess.run(["cp", f"models/" + str(RUN) + '/' + name + ".pth", f"/content/drive/MyDrive/models/" + str(RUN) + '/' + name + ".pth"])
+            subprocess.run(["cp", f"models/" + str(RUN) + '/' + name + ".pth", f"/content/drive/MyDrive/MIMIC/models/" + str(RUN) + '/' + name + ".pth"])
         except Exception as e:
             print(f"Failed to save model to Drive. Reason: {e}")
 
@@ -454,10 +454,10 @@ def save_checkpoint(epoch:int,batch_index:int,optimizer_state:Dict,scheduler_sta
     if SAVE_TO_DRIVE:
         try:
             # Save to Drive
-            subprocess.run(["cp", checkpoint_path, f"/content/drive/MyDrive/check_points/{RUN}/checkpoint.pth"])
+            subprocess.run(["cp", checkpoint_path, f"/content/drive/MyDrive/MIMIC/check_points/{RUN}/checkpoint.pth"])
         except Exception as e:
             print(f"Failed to save checkpoint to Drive. Reason: {e}")
-            
+
     logging.info('Saved Check point at' + checkpoint_path)
 
 def load_checkpoint(run):
