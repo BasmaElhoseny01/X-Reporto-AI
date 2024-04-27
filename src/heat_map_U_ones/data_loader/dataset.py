@@ -13,8 +13,8 @@ from src.heat_map_U_ones.data_loader.custom_augmentation import CustomAugmentati
 class HeatMapDataset(Dataset):
     def __init__(self, dataset_path, transform_type:str ='train'):
         # Read CSV
-        self.data_info = pd.read_csv(dataset_path,nrows=100)
-        # self.data_info = pd.read_csv(dataset_path)
+        # self.data_info = pd.read_csv(dataset_path,nrows=100)
+        self.data_info = pd.read_csv(dataset_path)
 
         self.image_pathes=self.data_info.iloc[:,3]
 
