@@ -55,7 +55,7 @@ def proccess_images(csv_file_path,type_data_to_save):
     for idx in tqdm(range(len(data_info))):
         img_path =data_info.iloc[idx, 3]
         img_path = os.path.join(os.getcwd(), img_path)
-        image = cv2.imread(img_path)
+        image = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
         if image is  None:
             print(f"Image at {img_path} is None")
             continue
@@ -73,13 +73,13 @@ def proccess_images(csv_file_path,type_data_to_save):
 
 
 if __name__ == '__main__':
-    proccess_images('datasets/train.csv','train')
-    # h5file = h5py.File(osp.join(dataset_dir, 'train.h5'), 'r')
-    # images,labels = read_many_hdf5(h5file)
-    # # Image._show(Image.fromarray(labels[0]))
-    # print(images[0].shape)
-    # labels[0]= labels[0] / 255.0
-    # images[0]= images[0] / 255.0
-    # plb.imshow(images[0])
-    # plb.show()
+    # proccess_images('datasets/train.csv','train_2d')
+    h5file = h5py.File(osp.join(save_data_h5_dir, 'train_2d.h5'), 'r')
+    images,labels = read_many_hdf5(h5file)
+    # Image._show(Image.fromarray(labels[0]))
+    print(images[0].shape)
+    labels[0]= labels[0] 
+    images[0]= images[0] 
+    plb.imshow(images[0])
+    plb.show()
 
