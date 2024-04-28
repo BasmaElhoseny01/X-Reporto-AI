@@ -6,6 +6,8 @@ DEPTH=3
 LOAD_EPOCH=1000
 VERBOSE=True
 NUM_THREADS=4
+#  n_epochs
+N_EPOCHS= 1000
 ITG=1
 ITD=2
 LMSE=0.5
@@ -15,7 +17,10 @@ CONTINUE_TRAIN=True
 TRAIN_DATA= "./dataset/noisy4train.h5"
 TEST_DATA= "./dataset/noisy4test.h5"
 NAME="tomogan"
+GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"
+NUM_THREADS=4
+PRINT_FREQ=200
 # training:
 #   n_epochs: 1000
 #   print_freq: 200
@@ -32,6 +37,3 @@ CHECKPOINTS_DIR="./checkpoints"
 # evaluation:
 #   results_dir: ./results
 #   num_test: 10
-#   name: tomogan
-#   gpu_ids: 0
-#   checkpoints_dir: ./checkpoints
