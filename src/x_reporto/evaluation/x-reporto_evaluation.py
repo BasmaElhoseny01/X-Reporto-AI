@@ -62,7 +62,7 @@ class XReportoEvaluation():
     def evaluate(self):
         #validate the model
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:  
-            validation_total_loss,obj_detector_scores,region_selection_scores,region_abnormal_scores = self.validate_and_evalute_object_detection_and_classifier()
+            validation_total_loss,obj_detector_scores,region_selection_scores,region_abnormal_scores = self.validate_and_evaluate_object_detection_and_classifier()
             
             # logging precision and recall of the object detector
             logging.info(f"Precision: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])}")
@@ -70,15 +70,20 @@ class XReportoEvaluation():
             logging.info(f"F1-Score: {2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])))}")
             
             # [Tensor Board] Update the Board by the scalers for that Run
-            self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores)
+            self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores,LM_scores=None)
         else:
-            print(self.validate_and_evalute_language_model())
+            LM_scores=self.validate_and_evaluate_language_model()
+
+            # logging the scores
+
+            # Update [Tensor Board] the Tensor Board
+            self.update_tensor_board_score(obj_detector_scores=None,region_selection_scores=None,region_abnormal_scores=None,LM_scores=LM_scores)
+
                           
-    def validate_and_evalute_language_model(self):
+    def validate_and_evaluate_language_model(self):
         '''
         validate_language_model
         '''
-        print("Start Evaluting")
         # make model in Evaluation mode
         tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
         LM_sentances_generated_reference = {
@@ -89,7 +94,7 @@ class XReportoEvaluation():
         "reference_sentences_normal_selected_regions": [],
         "reference_sentences_abnormal_selected_regions": [],
         }
-        # intialize LM_scores
+        # initialize LM_scores
         LM_scores = {   
         "all": {
         "BLEU1-Sentence": 0,
@@ -209,14 +214,14 @@ class XReportoEvaluation():
                 filtered_ref_sents.append(ref_sent)
         return filtered_gen_sents,filtered_ref_sents
 
-    def validate_and_evalute_object_detection_and_classifier(self):
+    def validate_and_evaluate_object_detection_and_classifier(self):
         '''
-        validate_during_evalute_object_detection_and_classifier
+        validate_during_evaluate_object_detection_and_classifier
         '''
 
-        obj_detector_scores , region_selection_scores , region_abnormal_scores = self.initalize_scorces()
+        obj_detector_scores , region_selection_scores , region_abnormal_scores = self.initialize_scores()
 
-        # TODO Add inside initalize_scorces
+        # TODO Add inside initialize_scores
         obj_detector_scores["true_positive"] = 0
         obj_detector_scores["false_positive"] = 0
         obj_detector_scores["false_negative"] = 0
@@ -740,9 +745,9 @@ class XReportoEvaluation():
         return generated_reports
 
 
-    def initalize_scorces(self):
+    def initialize_scores(self):
         '''
-        initalize_scorces
+        initialize_scores
         '''
         obj_detector_scores = {}
         obj_detector_scores["sum_intersection_area_per_region"] = torch.zeros(29, device=DEVICE)
@@ -869,7 +874,7 @@ class XReportoEvaluation():
             img_id+=1
 
 
-    def update_tensor_board_score(self,obj_detector_scores,region_selection_scores,region_abnormal_scores):
+    def update_tensor_board_score(self,obj_detector_scores,region_selection_scores,region_abnormal_scores,LM_scores):
         '''
         Update Tensor Board by the Scores
         '''
@@ -879,26 +884,26 @@ class XReportoEvaluation():
         # for region_indx, score in enumerate(correct_iou):
         #     # [Tensor Board]: Metric IOU
         #     self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1)
-        
-        avg_iou = obj_detector_scores["iou_per_region"] / obj_detector_scores["exist_region"]
-        logging.debug(f"avg_iou: {avg_iou}")
-        for region_indx, score in enumerate(avg_iou):
-            # [Tensor Board]: Metric IOU
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1) 
-        
-        # [Tensor Board]: Metric Num_detected_regions_per_image
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
-
-        # add true positive, false positive, and false negative to tensor board
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/True Positive',obj_detector_scores['true_positive'],global_step=0)
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/False Positive',obj_detector_scores['false_positive'],global_step=0)
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/False Negative',obj_detector_scores['false_negative'],global_step=0)
-
-        # add precision, recall, and f1 score to tensor board
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Precision',obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive']),global_step=0)
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Recall',obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative']),global_step=0)
-        self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/F1-Score',2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative']))),global_step=0)
+        if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:
+            avg_iou = obj_detector_scores["iou_per_region"] / obj_detector_scores["exist_region"]
+            logging.debug(f"avg_iou: {avg_iou}")
+            for region_indx, score in enumerate(avg_iou):
+                # [Tensor Board]: Metric IOU
+                self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Object_Detector/Region_IOU',score,global_step=region_indx+1) 
             
+            # [Tensor Board]: Metric Num_detected_regions_per_image
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Avgerage Num_detected_regions_per_image',obj_detector_scores['avg_num_detected_regions_per_image'],global_step=0)
+
+            # add true positive, false positive, and false negative to tensor board
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/True Positive',obj_detector_scores['true_positive'],global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/False Positive',obj_detector_scores['false_positive'],global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/False Negative',obj_detector_scores['false_negative'],global_step=0)
+
+            # add precision, recall, and f1 score to tensor board
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Precision',obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive']),global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/Recall',obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative']),global_step=0)
+            self.tensor_board_writer.add_scalar('Evaluation_Metric_Object_Detector/F1-Score',2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative']))),global_step=0)
+                
         # (2) CLassifiers
         if MODEL_STAGE==ModelStage.CLASSIFIER.value:
             # [Tensor Board]: Metric Region Selection Classifier
@@ -929,6 +934,43 @@ class XReportoEvaluation():
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_F1-Score',region_abnormal_scores["f1 for regions"][region_indx],global_step=region_indx+1)
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Precison',region_abnormal_scores["precision for regions"][region_indx],global_step=region_indx+1)
                 self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Region/Abnormal_Selection_Recall',region_abnormal_scores["recall for regions"][region_indx],global_step=region_indx+1)
+
+
+        # (3) Language Model
+        if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
+            # [Tensor Board]: Metric BLEU
+            # ALL
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU1-Sentence',LM_scores["all"]['BLEU1-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU2-Sentence',LM_scores["all"]['BLEU2-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU3-Sentence',LM_scores["all"]['BLEU3-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU4-Sentence',LM_scores["all"]['BLEU4-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/METEOR-Sentence',LM_scores["all"]['METEOR-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/ROUGE-Sentence',LM_scores["all"]['ROUGE-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU-report',LM_scores["all"]['BLEU-report'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/METEOR-report',LM_scores["all"]['METEOR-report'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/ROUGE-report',LM_scores["all"]['ROUGE-report'],global_step=0)
+
+            # Normal
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU1-Sentence',LM_scores["normal"]['BLEU1-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU2-Sentence',LM_scores["normal"]['BLEU2-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU3-Sentence',LM_scores["normal"]['BLEU3-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU4-Sentence',LM_scores["normal"]['BLEU4-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/METEOR-Sentence',LM_scores["normal"]['METEOR-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/ROUGE-Sentence',LM_scores["normal"]['ROUGE-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU-report',LM_scores["normal"]['BLEU-report'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/METEOR-report',LM_scores["normal"]['METEOR-report'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/ROUGE-report',LM_scores["normal"]['ROUGE-report'],global_step=0)
+
+            # Abnormal
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU1-Sentence',LM_scores["abnormal"]['BLEU1-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU2-Sentence',LM_scores["abnormal"]['BLEU2-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU3-Sentence',LM_scores["abnormal"]['BLEU3-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU4-Sentence',LM_scores["abnormal"]['BLEU4-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/METEOR-Sentence',LM_scores["abnormal"]['METEOR-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/ROUGE-Sentence',LM_scores["abnormal"]['ROUGE-Sentence'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU-report',LM_scores["abnormal"]['BLEU-report'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/METEOR-report',LM_scores["abnormal"]['METEOR-report'],global_step=0)
+            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/ROUGE-report',LM_scores["abnormal"]['ROUGE-report'],global_step=0)
 
 
 def collate_fn(batch):

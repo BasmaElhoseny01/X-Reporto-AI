@@ -29,7 +29,6 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 
 # Training / validation / EVALUATION / Inference/ Testing / 
 OPERATION_MODE=4
-# Model Stage
 MODEL_STAGE=3
 
 SEED=31
@@ -96,7 +95,7 @@ ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 # Region Selection Classifier Hyper Parameters
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
-
+BERTSCORE_SIMILARITY_THRESHOLD = 0.9 
 ############################################################# Heat Map Configurations ############################################################
 HEAT_MAP_IMAGE_SIZE=224
 CLASSES=['Atelectasis', 'Cardiomegaly', 'Edema', 'Lung Opacity', 'No Finding', 'Pleural Effusion', 'Pneumonia', 'Support Devices']
@@ -109,6 +108,8 @@ else:
     SAVE_TO_DRIVE = True
 # SAVE_TO_DRIVE=False # don't change this in server mode
 SAVE_IMAGES=False # don't change this in server mode
+DRAW_TENSOR_BOARD=100 # Draw Tensor Board every N batches
+
 
  
 
@@ -157,12 +158,14 @@ def log_config():
     logging.info(f"LM_WEIGHT: {LM_WEIGHT}")
     logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
     logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
+    logging.info(f"BERTSCORE_SIMILARITY_THRESHOLD: {BERTSCORE_SIMILARITY_THRESHOLD}")
 
     logging.info(f"HEAT_MAP_IMAGE_SIZE: {HEAT_MAP_IMAGE_SIZE}")
     logging.info(f"CLASSES: {CLASSES}")
 
     logging.info(f"SAVE_TO_DRIVE: {SAVE_TO_DRIVE}")
     logging.info(f"SAVE_IMAGES: {SAVE_IMAGES}")
+    logging.info(f"DRAW_TENSOR_BOARD: {DRAW_TENSOR_BOARD}")
 
     return
 
@@ -215,12 +218,14 @@ def get_config():
     "LM_WEIGHT": LM_WEIGHT,
     "ABNORMAL_CLASSIFIER_POS_WEIGHT": ABNORMAL_CLASSIFIER_POS_WEIGHT,
     "REGION_SELECTION_CLASSIFIER_POS_WEIGHT": REGION_SELECTION_CLASSIFIER_POS_WEIGHT,
+    "BERTSCORE_SIMILARITY_THRESHOLD": BERTSCORE_SIMILARITY_THRESHOLD,
 
     "HEAT_MAP_IMAGE_SIZE": HEAT_MAP_IMAGE_SIZE,
     "CLASSES": CLASSES,
 
     "SAVE_TO_DRIVE": SAVE_TO_DRIVE,
     "SAVE_IMAGES": SAVE_IMAGES,
+    "DRAW_TENSOR_BOARD": DRAW_TENSOR_BOARD
     }
     return config
 
@@ -228,9 +233,9 @@ def get_config():
 
 
 
-if __name__ == "__main__":
-    config = get_config()
-    print(config)
+# if __name__ == "__main__":
+#     config = get_config()
+#     print(config)
 
 
 
