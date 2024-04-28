@@ -3,6 +3,9 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import torch
 
+from src.utils import plot_single_image
+
+# Modules
 from src.x_reporto.models.x_reporto_v1 import XReportoV1
 from transformers import GPT2Tokenizer
 
@@ -56,6 +59,8 @@ class Inference:
             # Results
             # Bounding Boxes
             image=image[0].to('cpu')
+            # plot_single_image(image.permute(1,2,0).numpy(),bounding_boxes[0].tolist())
+            plot_single_image(image=image.permute(1,2,0),bounding_boxes=bounding_boxes)
             # def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
             print(bounding_boxes.shape)
             # Report

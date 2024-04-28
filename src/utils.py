@@ -330,7 +330,8 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
         # # Display the image
         # ax.imshow(img[0])
 
-def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
+
+def plot_single_image(img: np.ndarray, boxes: List[List[float]], save_path: str = None):
     """
     Function that draws bounding boxes on the image.
 
@@ -338,14 +339,18 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
         img (np.ndarray): Input image as numpy array (shape: [H, W, C]).
         boxes (List[List[float]]): List of bounding boxes.
             Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
+        save_path (str, optional): Path to save the image. If None, the image will be displayed instead. Defaults to None.
 
     Returns:
         None
 
     Notes:
-        - Displays the image with bounding boxes.
-        - Each box is represented as a rectangle on the image.
+        - If save_path is provided, the image will be saved with bounding boxes.
+        - If save_path is None, the image will be displayed with bounding boxes.
     """
+    print(img.shape)
+    print(boxes)
+    return
     cmap = plt.get_cmap("tab20b")
     height, width = img.shape[1:]
     # Create figure and axes
@@ -368,9 +373,14 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
 
         # Add the patch to the Axes
         ax.add_patch(rect)
-    plt.show()
+    
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
 
-
+# Example usage:
+# plot_single_image(image_array, bounding_boxes, save_path="output_image.png")
 def save_model(model,name):
     '''
     Save the X-Reporto model to a file.
