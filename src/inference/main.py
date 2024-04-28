@@ -31,7 +31,7 @@ class Inference:
     def generate_image_report(self,image_path):
         # Read the image
         image = cv2.imread(image_path,cv2.IMREAD_UNCHANGED)
-        print(image.shape)
+        #print(image.shape)
 
         transform = A.Compose([
             A.LongestMaxSize(max_size=512, interpolation=cv2.INTER_AREA),
@@ -57,12 +57,12 @@ class Inference:
            
             
             # Results
-            # Bounding Boxes
             image=image[0].to('cpu')
-            # plot_single_image(image.permute(1,2,0).numpy(),bounding_boxes[0].tolist())
-            plot_single_image(image=image.permute(1,2,0),bounding_boxes=bounding_boxes)
-            # def plot_single_image(img: np.ndarray, boxes: List[List[float]]):
-            print(bounding_boxes.shape)
+            bounding_boxes=bounding_boxes.to('cpu')
+            
+            # Bounding Boxes
+            plot_single_image(img=image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
+
             # Report
             with open("report.txt", "w") as file:
                 # Iterate over each sentence in the list
@@ -136,3 +136,4 @@ if __name__=="__main__":
     #torch.save(lm.state_dict(), "models/LM_best.pth")
     
     
+# python -m src.inference.main

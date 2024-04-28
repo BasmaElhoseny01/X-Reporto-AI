@@ -331,7 +331,7 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
         # ax.imshow(img[0])
 
 
-def plot_single_image(img: np.ndarray, boxes: List[List[float]], save_path: str = None):
+def plot_single_image(img: np.ndarray, boxes: List[List[float]],grayscale:bool=False ,save_path: str = None):
     """
     Function that draws bounding boxes on the image.
 
@@ -340,6 +340,7 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]], save_path: str 
         boxes (List[List[float]]): List of bounding boxes.
             Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
         save_path (str, optional): Path to save the image. If None, the image will be displayed instead. Defaults to None.
+        grayscale (bool, optional): Whether to display the image in grayscale. Defaults to False.
 
     Returns:
         None
@@ -347,17 +348,18 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]], save_path: str 
     Notes:
         - If save_path is provided, the image will be saved with bounding boxes.
         - If save_path is None, the image will be displayed with bounding boxes.
+        - If grayscale is True, the image will be displayed in grayscale.
     """
-    print(img.shape)
-    print(boxes)
-    return
-    cmap = plt.get_cmap("tab20b")
-    height, width = img.shape[1:]
+    #cmap = plt.get_cmap("tab20b")
+    height, width = img.shape[0:2]
     # Create figure and axes
     fig, ax = plt.subplots(1, figsize=(16, 8))
 
     # Display the image
-    ax.imshow(img[0])
+    if grayscale:
+        ax.imshow(np.squeeze(img), cmap='gray')
+    else:
+        ax.imshow(img)
     
     for i, box in enumerate(boxes):
         width = box[2] - box[0]
