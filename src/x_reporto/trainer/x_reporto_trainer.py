@@ -88,7 +88,7 @@ class XReportoTrainer():
         # create learning rate scheduler
         # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
         # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
-        if Linear_Schecdular:
+        if Linear_Schedular:
             self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
         else:
             self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
@@ -236,7 +236,7 @@ class XReportoTrainer():
             # validate the model no touch :)
             self.model.eval()
             validation_average_loss= self.validate_during_training(epoch=epoch) 
-            if Linear_Schecdular:
+            if Linear_Schedular:
                 self.lr_scheduler.step()
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
             print(f'Validation Average Loss: {validation_average_loss:.4f}')
@@ -393,7 +393,7 @@ class XReportoTrainer():
             
             # update the learning rate according to the validation loss if decrease
             # self.lr_scheduler.step(validation_total_loss)
-            if not Linear_Schecdular:
+            if not Linear_Schedular:
                 self.lr_scheduler.step(validation_total_loss)
             # self.lr_scheduler.step()
 

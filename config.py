@@ -20,7 +20,7 @@ class OperationMode(Enum):
     VALIDATION = 2
     EVALUATION = 3
     INFERENCE= 4
-    TESTING = 5
+    TESTING = 5 #[TODO: Remove this]
 
 
 ############################################################# Global Configuration ############################################################
@@ -29,12 +29,8 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 
 # Training / validation / EVALUATION / Inference/ Testing / 
 OPERATION_MODE=4
-
-
 # Model Stage
 MODEL_STAGE=3
-
-Linear_Schecdular=True # Linear Schecdular if True, Plateau Schecdular if False
 
 SEED=31
 
@@ -57,11 +53,10 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=True
 FREEZE = True
 
-RUN = "5"
-EPOCHS=6
-BATCH_SIZE=16
-# BATCH_SIZE=1
-#   TODO: change to 64
+RUN = "2"
+EPOCHS = 6
+BATCH_SIZE = 16
+LM_Batch_Size = 1
 EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
@@ -70,6 +65,7 @@ LEARNING_RATE=0.0005
 LR_BETA_1=0.9
 LR_BETA_2=0.999
 
+Linear_Schedular=True # Linear Schedular if True, Plateau Schedular if False [X-Reporto]
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only focus on significant changes
@@ -87,10 +83,10 @@ PERIODIC_LOGGING=True
 
 ############################################################# Modules Configurations ############################################################
 # Weights of each model
+OBJECT_DETECTOR_WEIGHT = 1
 ABNORMAL_CLASSIFIER_WEIGHT = 2.5
 REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
 LM_WEIGHT = 1
-OBJECT_DETECTOR_WEIGHT = 1
 
 # Abnormal Binary Classifier Hyper Parameters
 ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
@@ -99,13 +95,12 @@ REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 
 ############################################################# Heat Map Configurations ############################################################
-# HeatMap Classifier Weights
 HEAT_MAP_IMAGE_SIZE=224
 CLASSES=['Atelectasis', 'Cardiomegaly', 'Edema', 'Lung Opacity', 'No Finding', 'Pleural Effusion', 'Pneumonia', 'Support Devices']
 
 ############################################################# Saving Configurations ############################################################
-SAVE_TO_DRIVE=True
-SAVE_IMAGES=True
+SAVE_TO_DRIVE=False # don't change this in server mode
+SAVE_IMAGES=False # don't change this in server mode
 
  
 
@@ -127,6 +122,7 @@ def log_config():
     logging.info(f"TRAIN_RPN: {TRAIN_RPN}")
     logging.info(f"TRAIN_ROI: {TRAIN_ROI}")
     logging.info(f"FREEZE_OBJECT_DETECTOR: {FREEZE_OBJECT_DETECTOR}")
+    logging.info(f"FREEZE: {FREEZE}")
     logging.info(f"RUN: {RUN}")
     logging.info(f"EPOCHS: {EPOCHS}")
     logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
@@ -136,6 +132,7 @@ def log_config():
     logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
     logging.info(f"LR_BETA_1: {LR_BETA_1}")
     logging.info(f"LR_BETA_2: {LR_BETA_2}")
+    logging.info(f"Linear_Schedular: {Linear_Schedular}")
     logging.info(f"SCHEDULAR_STEP_SIZE: {SCHEDULAR_STEP_SIZE}")
     logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
     logging.info(f"THRESHOLD_LR_SCHEDULER: {THRESHOLD_LR_SCHEDULER}")
@@ -146,9 +143,10 @@ def log_config():
     logging.info(f"DEBUG: {DEBUG}")
     logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
 
+    logging.info(f"OBJECT_DETECTOR_WEIGHT: {OBJECT_DETECTOR_WEIGHT}")
     logging.info(f"ABNORMAL_CLASSIFIER_WEIGHT: {ABNORMAL_CLASSIFIER_WEIGHT}")
     logging.info(f"REGION_SELECTION_CLASSIFIER_WEIGHT: {REGION_SELECTION_CLASSIFIER_WEIGHT}")
-    logging.info(f"OBJECT_DETECTOR_WEIGHT: {OBJECT_DETECTOR_WEIGHT}")
+    logging.info(f"LM_WEIGHT: {LM_WEIGHT}")
     logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
     logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
 
@@ -182,6 +180,7 @@ def get_config():
     "TRAIN_RPN": TRAIN_RPN,
     "TRAIN_ROI": TRAIN_ROI,
     "FREEZE_OBJECT_DETECTOR": FREEZE_OBJECT_DETECTOR,
+    "FREEZE": FREEZE,
     "RUN": RUN,
     "EPOCHS": EPOCHS,
     "BATCH_SIZE": BATCH_SIZE,
@@ -191,6 +190,7 @@ def get_config():
     "LEARNING_RATE": LEARNING_RATE,
     "LR_BETA_1": LR_BETA_1,
     "LR_BETA_2": LR_BETA_2,
+    "Linear_Schedular": Linear_Schedular,
     "SCHEDULAR_STEP_SIZE": SCHEDULAR_STEP_SIZE,
     "SCHEDULAR_GAMMA": SCHEDULAR_GAMMA,
     "THRESHOLD_LR_SCHEDULER": THRESHOLD_LR_SCHEDULER,
@@ -201,9 +201,10 @@ def get_config():
     "DEBUG": DEBUG,
     "PERIODIC_LOGGING": PERIODIC_LOGGING,
 
+    "OBJECT_DETECTOR_WEIGHT": OBJECT_DETECTOR_WEIGHT,
     "ABNORMAL_CLASSIFIER_WEIGHT": ABNORMAL_CLASSIFIER_WEIGHT,
     "REGION_SELECTION_CLASSIFIER_WEIGHT": REGION_SELECTION_CLASSIFIER_WEIGHT,
-    "OBJECT_DETECTOR_WEIGHT": OBJECT_DETECTOR_WEIGHT,
+    "LM_WEIGHT": LM_WEIGHT,
     "ABNORMAL_CLASSIFIER_POS_WEIGHT": ABNORMAL_CLASSIFIER_POS_WEIGHT,
     "REGION_SELECTION_CLASSIFIER_POS_WEIGHT": REGION_SELECTION_CLASSIFIER_POS_WEIGHT,
 
@@ -219,7 +220,9 @@ def get_config():
 
 
 
-
+if __name__ == "__main__":
+    config = get_config()
+    print(config)
 
 
 
