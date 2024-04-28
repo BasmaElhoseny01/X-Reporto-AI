@@ -79,7 +79,10 @@ AVERAGE_EPOCH_LOSS_EVERY=5
 DEBUG=True
 
 # Logging
-PERIODIC_LOGGING=True
+if os.environ.get('GITHUB_REF') == 'refs/heads/main':
+    PERIODIC_LOGGING = True  # MUST BE TRUE IN SERVER MODE
+else:
+    PERIODIC_LOGGING=True
 
 ############################################################# Modules Configurations ############################################################
 # Weights of each model
@@ -99,7 +102,12 @@ HEAT_MAP_IMAGE_SIZE=224
 CLASSES=['Atelectasis', 'Cardiomegaly', 'Edema', 'Lung Opacity', 'No Finding', 'Pleural Effusion', 'Pneumonia', 'Support Devices']
 
 ############################################################# Saving Configurations ############################################################
-SAVE_TO_DRIVE=False # don't change this in server mode
+# Check if the script is running from the main branch
+if os.environ.get('GITHUB_REF') == 'refs/heads/main':
+    SAVE_TO_DRIVE = False  # MUST BE FALSE IN SERVER MODE
+else:
+    SAVE_TO_DRIVE = True
+# SAVE_TO_DRIVE=False # don't change this in server mode
 SAVE_IMAGES=False # don't change this in server mode
 
  
