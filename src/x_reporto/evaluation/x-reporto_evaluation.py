@@ -29,7 +29,7 @@ from src.language_model.GPT2.config import Config
 from torch.utils.tensorboard import SummaryWriter
 import torchmetrics
 from pycocoevalcap.bleu.bleu import Bleu
-from pycocoevalcap.meteor.meteor import Meteor
+# from pycocoevalcap.meteor.meteor import Meteor
 from pycocoevalcap.rouge.rouge import Rouge
 from collections import defaultdict
 import evaluate
@@ -48,18 +48,28 @@ class XReportoEvaluation():
         self.model = model
         self.model.to(DEVICE)
         self.evaluation_csv_path = evaluation_csv_path
-        self.data_loader_val = DataLoader(dataset=CustomDataset(self.evaluation_csv_path), batch_size=BATCH_SIZE, shuffle=False, num_workers=2, collate_fn=collate_fn)
+        # Load dataset 
+        dataset=CustomDataset(self.evaluation_csv_path)
+        logging.info("Evaluation dataset loaded")
+        
+        # DataLoader
+        self.data_loader_val = DataLoader( dataset=dataset,batch_size=BATCH_SIZE, shuffle=False, num_workers=2, collate_fn=collate_fn)
+        logging.info(f"Evaluation DataLoader Loaded Size: {len(self.data_loader_val)}")
+
+        # Tensor Board Writer
         self.tensor_board_writer=tensor_board_writer
-        logging.info("Evalution dataset loaded")
+
         # load bleu score
         # calculating a score based on the n-gram overlap between them.
         self.bleu_score = Bleu(4)
         self.rouge = Rouge() 
         # self.bleu_score.weights = [1/4, 1/4, 1/4, 1/4]
         # calculating a score based on the harmonic mean of precision and recall.
-        self.meteor = Meteor()
+        # self.meteor = Meteor()
 
     def evaluate(self):
+        logging.info("Start Evaluation")
+
         #validate the model
         if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value or MODEL_STAGE==ModelStage.CLASSIFIER.value:  
             validation_total_loss,obj_detector_scores,region_selection_scores,region_abnormal_scores = self.validate_and_evaluate_object_detection_and_classifier()
@@ -78,6 +88,8 @@ class XReportoEvaluation():
 
             # Update [Tensor Board] the Tensor Board
             self.update_tensor_board_score(obj_detector_scores=None,region_selection_scores=None,region_abnormal_scores=None,LM_scores=LM_scores)
+
+        logging.info("Evaluation Results Added to Tensor Board")
 
                           
     def validate_and_evaluate_language_model(self):
@@ -101,10 +113,10 @@ class XReportoEvaluation():
         "BLEU2-Sentence": 0,
         "BLEU3-Sentence": 0,
         "BLEU4-Sentence": 0,
-        "METEOR-Sentence": 0,
+        # "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
         "BLEU-report":0,
-        "METEOR-report":0,
+        # "METEOR-report":0,
         "ROUGE-report":0,
         },
         "normal": {
@@ -112,10 +124,10 @@ class XReportoEvaluation():
         "BLEU2-Sentence": 0,
         "BLEU3-Sentence": 0,
         "BLEU4-Sentence": 0,
-        "METEOR-Sentence": 0,
+        # "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
         "BLEU-report":0,
-        "METEOR-report":0,
+        # "METEOR-report":0,
         "ROUGE-report":0,
         },
         "abnormal": {
@@ -123,10 +135,10 @@ class XReportoEvaluation():
         "BLEU2-Sentence": 0,
         "BLEU3-Sentence": 0,
         "BLEU4-Sentence": 0,
-        "METEOR-Sentence": 0,
+        # "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
         "BLEU-report":0,
-        "METEOR-report":0,
+        # "METEOR-report":0,
         "ROUGE-report":0,
         },
         }
@@ -190,7 +202,7 @@ class XReportoEvaluation():
         LM_scores[name]["BLEU3-Sentence"] = Bleu_score[0][2]
         LM_scores[name]["BLEU4-Sentence"] = Bleu_score[0][3]
         LM_scores[name]["ROUGE-Sentence"] = self.rouge.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
-        LM_scores[name]["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
+        # LM_scores[name]["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
 
     def convert_for_pycoco_scorer(self,sents):
         '''
@@ -302,7 +314,7 @@ class XReportoEvaluation():
                 logging.debug(f"True Positive: {obj_detector_scores['true_positive']}, False Positive: {obj_detector_scores['false_positive']}, False Negative: {obj_detector_scores['false_negative']}")
                 # update scores for Classifiers metrics
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value:
-                    logging.info("Evalute Classifier ")
+                    logging.info("Evaluate Classifier ")
                     # update scores for region selection metrics
                     self.update_region_selection_metrics(region_selection_scores=region_selection_scores,selected_regions= selected_regions,region_has_sentence= selection_classifier_targets ,region_is_abnormal= abnormal_classifier_targets,class_detected= object_detector_detected_classes)
                     # update scores for region abnormal detection metrics
@@ -939,40 +951,50 @@ class XReportoEvaluation():
         # (3) Language Model
         if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             # [Tensor Board]: Metric BLEU
-            # ALL
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU1-Sentence',LM_scores["all"]['BLEU1-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU2-Sentence',LM_scores["all"]['BLEU2-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU3-Sentence',LM_scores["all"]['BLEU3-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU4-Sentence',LM_scores["all"]['BLEU4-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/METEOR-Sentence',LM_scores["all"]['METEOR-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/ROUGE-Sentence',LM_scores["all"]['ROUGE-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/BLEU-report',LM_scores["all"]['BLEU-report'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/METEOR-report',LM_scores["all"]['METEOR-report'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/all/ROUGE-report',LM_scores["all"]['ROUGE-report'],global_step=0)
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metric_Language_Model/BLEU1-Sentence',{
+                "all":LM_scores["all"]['BLEU1-Sentence'],
+                "normal":LM_scores["normal"]['BLEU1-Sentence'],
+                "abnormal":LM_scores["abnormal"]['BLEU1-Sentence']
+                })
+            
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metric_Language_Model/BLEU2-Sentence',{
+                "all":LM_scores["all"]['BLEU2-Sentence'],
+                "normal":LM_scores["normal"]['BLEU2-Sentence'],
+                "abnormal":LM_scores["abnormal"]['BLEU2-Sentence']
+                })
+            
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metric_Language_Model/BLEU3-Sentence',{
+                "all":LM_scores["all"]['BLEU3-Sentence'],
+                "normal":LM_scores["normal"]['BLEU3-Sentence'],
+                "abnormal":LM_scores["abnormal"]['BLEU3-Sentence']
+                })
+            
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metric_Language_Model/BLEU4-Sentence',{
+                "all":LM_scores["all"]['BLEU4-Sentence'],
+                "normal":LM_scores["normal"]['BLEU4-Sentence'],
+                "abnormal":LM_scores["abnormal"]['BLEU4-Sentence']
+                })
+            
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metric_Language_Model/ROUGE-Sentence',{
+                "all":LM_scores["all"]['ROUGE-Sentence'],
+                "normal":LM_scores["normal"]['ROUGE-Sentence'],
+                "abnormal":LM_scores["abnormal"]['ROUGE-Sentence']
+                })
+            
 
-            # Normal
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU1-Sentence',LM_scores["normal"]['BLEU1-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU2-Sentence',LM_scores["normal"]['BLEU2-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU3-Sentence',LM_scores["normal"]['BLEU3-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU4-Sentence',LM_scores["normal"]['BLEU4-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/METEOR-Sentence',LM_scores["normal"]['METEOR-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/ROUGE-Sentence',LM_scores["normal"]['ROUGE-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/BLEU-report',LM_scores["normal"]['BLEU-report'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/METEOR-report',LM_scores["normal"]['METEOR-report'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/normal/ROUGE-report',LM_scores["normal"]['ROUGE-report'],global_step=0)
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metric_Language_Model/BLEU-report',{
+                "all":LM_scores["all"]['BLEU-report'],
+                "normal":LM_scores["normal"]['BLEU-report'],
+                "abnormal":LM_scores["abnormal"]['BLEU-report']
+                })
+            
 
-            # Abnormal
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU1-Sentence',LM_scores["abnormal"]['BLEU1-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU2-Sentence',LM_scores["abnormal"]['BLEU2-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU3-Sentence',LM_scores["abnormal"]['BLEU3-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU4-Sentence',LM_scores["abnormal"]['BLEU4-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/METEOR-Sentence',LM_scores["abnormal"]['METEOR-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/ROUGE-Sentence',LM_scores["abnormal"]['ROUGE-Sentence'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/BLEU-report',LM_scores["abnormal"]['BLEU-report'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/METEOR-report',LM_scores["abnormal"]['METEOR-report'],global_step=0)
-            self.tensor_board_writer.add_scalar(f'Evaluation_Metric_Language_Model/abnormal/ROUGE-report',LM_scores["abnormal"]['ROUGE-report'],global_step=0)
-
-
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metric_Language_Model/ROUGE-report',{
+                "all":LM_scores["all"]['ROUGE-report'],
+                "normal":LM_scores["normal"]['ROUGE-report'],
+                "abnormal":LM_scores["abnormal"]['ROUGE-report']
+                })
+            
 def collate_fn(batch):
     batch = list(filter(lambda x: x is not None, batch))
     image_shape = batch[0][0]["image"].size()

@@ -96,14 +96,14 @@ if __name__=="__main__":
     # For Debugging
     # Create Object detector
     # object_detector = ObjectDetector().create_model()
-    # torch.save(object_detector.state_dict(), "models/object_detector.pth")
+    # torch.save(object_detector.state_dict(), "models/object_detector_best.pth")
 
 
     #selection_region = BinaryClassifierSelectionRegion().create_model()
-    #torch.save(selection_region.state_dict(), "models/binary_classifier_selection_region.pth")
+    #torch.save(selection_region.state_dict(), "models/region_classifier_best.pth")
     
-    # region_abnormal=BinaryClassifierRegionAbnormal.create_model()
-    # torch.save(region_abnormal.state_dict(), "models/binary_classifier_region_abnormal.pth")
+    # region_abnormal=BinaryClassifierRegionAbnormal().create_model()
+    # torch.save(region_abnormal.state_dict(), "models/abnormal_classifier_best.pth")
     
     # lm=CustomGPT2
     # config = Config()
@@ -128,6 +128,6 @@ if __name__=="__main__":
     #image_config.num_layers = 24
     #image_config.vocab_size = 50257
     #lm = CustomGPT2(config,image_config)
-    #torch.save(lm.state_dict(), "models/LM.pth")
+    #torch.save(lm.state_dict(), "models/LM_best.pth")
     
     

@@ -13,3 +13,8 @@ torchsummary
 torch
 pandas
 matplotlib
+spacy
+tensorflow
+torchmetrics
+pycocoevalcap
+evaluate
