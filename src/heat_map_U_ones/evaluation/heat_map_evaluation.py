@@ -88,6 +88,8 @@ class HeatMapEvaluation():
         self.model.eval()
         with torch.no_grad():
             for batch_idx,(images,targets,_) in enumerate(self.data_loader_eval):
+                logging.info(f"Batch {batch_idx}/{len(self.data_loader_eval)} ....")
+
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 targets=targets.to(DEVICE) 
@@ -112,12 +114,11 @@ class HeatMapEvaluation():
         y_pred,scores,_=self.model(images)
         mask = (targets != -1).float()
 
-        # print("y_pred shape",y_pred.shape)
-        # print("targets shape",targets.shape)
         # apply mask to the targets
         targets = targets * mask
         y_pred = y_pred * mask
-        # Calculate Loss
+
+        # Calculate Loss [CHECK the loss function as in the training script]
         Total_loss=nn.BCEWithLogitsLoss(reduction='sum')(y_pred,targets)
         
         features=None
@@ -197,6 +198,7 @@ class HeatMapEvaluation():
       best_thresholds=thresholds
 
 
+      # # Find the best threshold for each class [Fine Tuning the threshold for each class]
       # thresholds=np.array(np.arange(0, 1.1, 0.1))
       # threshold_best=None
       # best_thresholds=[]
@@ -257,10 +259,7 @@ class HeatMapEvaluation():
       # classification metrics
       for metric,values in classification_metrics.items():
         self.tensor_board_writer.add_scalars(f'Evaluation_Metrics/{metric}', values)
-
-
-
-        
+       
 
 def init_working_space():
 

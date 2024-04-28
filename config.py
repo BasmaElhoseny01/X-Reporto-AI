@@ -21,6 +21,7 @@ class OperationMode(Enum):
     TESTING = 4
 
 
+############################################################# Global Configuration ############################################################
 # device
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -29,8 +30,21 @@ OPERATION_MODE=1
 # Model Stage
 MODEL_STAGE=2
 
-# Training Process Parameters
-CONTINUE_TRAIN=False# Continue training
+SEED=31
+
+############################################################# Data Configurations ############################################################
+# Paths to the external files
+training_csv_path = 'NAN'
+validating_csv_path = 'NAN'
+evaluation_csv_path:str = 'NAN'
+
+heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
+heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
+heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
+
+#############################################################Training Process Parameters############################################################
+CONTINUE_TRAIN=False # Continue training
+RECOVER=False # Recover from the last checkpoint
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
@@ -39,7 +53,6 @@ FREEZE_OBJECT_DETECTOR=False
 RUN = "3"
 EPOCHS=10
 BATCH_SIZE=64
-# BATCH_SIZE=2
 LM_Batch_Size=1
 
 EFFECTIVE_BATCH_SIZE = BATCH_SIZE
@@ -55,93 +68,91 @@ SCHEDULAR_GAMMA=0.8 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-1 # Threshold for measuring the new optimum, to only focus on significant changes
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
+#############################################################  Debugging Configurations ############################################################
+CHECKPOINT_EVERY_N=2 # Save checkpoint every N epochs
+AVERAGE_EPOCH_LOSS_EVERY=5
+
+# Debugging COnfigurations
+DEBUG=True
+
+# Logging
+PERIODIC_LOGGING=True
+
+############################################################# Modules Configurations ############################################################
 # Weights of each model
 ABNORMAL_CLASSIFIER_WEIGHT = 2.5
 REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
 OBJECT_DETECTOR_WEIGHT = 1
 
-# Debgging COnfigurations
-DEBUG=True
-
-# Modules Configurations:
 # Abnormal Binary Classifier Hyper Parameters
 ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
 # Region Selection Classifier Hyper Parameters
 REGION_SELECTION_CLASSIFIER_POS_WEIGHT= 2.24
 
 
+############################################################# Heat Map Configurations ############################################################
 # HeatMap Classifier Weights
 HEAT_MAP_IMAGE_SIZE=224
 CLASSES=['Atelectasis', 'Cardiomegaly', 'Edema', 'Lung Opacity', 'No Finding', 'Pleural Effusion', 'Pneumonia', 'Support Devices']
 
-
-# Paths to the external files
-training_csv_path = 'NAN'
-validating_csv_path = 'NAN'
-evaluation_csv_path:str = 'NAN'
-
-heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
-heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
-heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
-
-# Logging
-PERIODIC_LOGGING=True
-
-CHECKPOINT_EVERY_N=1
+############################################################# Saving Configurations ############################################################
 SAVE_TO_DRIVE=True
-
-AVERAGE_EPOCH_LOSS_EVERY=5
-RECOVER=False
- 
-
 SAVE_IMAGES=True
-SEED=31
+
+ 
 
 def log_config():
     logging.info(f"DEVICE: {DEVICE}")
-
     logging.info(f"OPERATION_MODE: {OPERATION_MODE}")
     logging.info(f"MODEL_STAGE: {MODEL_STAGE}")
-
-    logging.info(f"CONTINUE_TRAIN: {CONTINUE_TRAIN}")
-    logging.info(f"TRAIN_RPN: {TRAIN_RPN}")
-    logging.info(f"TRAIN_ROI: {TRAIN_ROI}")
-
-    logging.info(f"FREEZE_OBJECT_DETECTOR: {FREEZE_OBJECT_DETECTOR}")
-
-    logging.info(f"RUN: {RUN}")
-    logging.info(f"EPOCHS: {EPOCHS}")
-    logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
-    logging.info(f"EFFECTIVE_BATCH_SIZE: {EFFECTIVE_BATCH_SIZE}")
-    logging.info(f"ACCUMULATION_STEPS: {ACCUMULATION_STEPS}")
-    logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
-
-    logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
-    logging.info(f"SCHEDULAR_STEP_SIZE: {SCHEDULAR_STEP_SIZE}")
-    logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
-
-    logging.info(f"DEBUG: {DEBUG}")
-    # logging.info(f"GENERATE_REPORT: {GENERATE_REPORT}")
-
-    logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
-    logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
-    logging.info(f"OBJECT_DETECTOR_WEIGHT: {OBJECT_DETECTOR_WEIGHT}")
-    logging.info(f"ABNORMAL_CLASSIFIER_WEIGHT: {ABNORMAL_CLASSIFIER_WEIGHT}")
-    logging.info(f"REGION_SELECTION_CLASSIFIER_WEIGHT: {REGION_SELECTION_CLASSIFIER_WEIGHT}")
+    logging.info(f"SEED: {SEED}")
 
     logging.info(f"training_csv_path: {training_csv_path}")
     logging.info(f"validating_csv_path: {validating_csv_path}")
     logging.info(f"evaluation_csv_path: {evaluation_csv_path}")
-
-
     logging.info(f"heat_map_training_csv_path {heat_map_training_csv_path}")
     logging.info(f"heat_map_validating_csv_path {heat_map_validating_csv_path}")
     logging.info(f"heat_map_evaluation_csv_path {heat_map_evaluation_csv_path}")
 
-    logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
+    logging.info(f"CONTINUE_TRAIN: {CONTINUE_TRAIN}")
+    logging.info(f"RECOVER: {RECOVER}")
+    logging.info(f"TRAIN_RPN: {TRAIN_RPN}")
+    logging.info(f"TRAIN_ROI: {TRAIN_ROI}")
+    logging.info(f"FREEZE_OBJECT_DETECTOR: {FREEZE_OBJECT_DETECTOR}")
+    logging.info(f"RUN: {RUN}")
+    logging.info(f"EPOCHS: {EPOCHS}")
+    logging.info(f"BATCH_SIZE: {BATCH_SIZE}")
+    logging.info(f"LM_Batch_Size: {LM_Batch_Size}")
+    logging.info(f"EFFECTIVE_BATCH_SIZE: {EFFECTIVE_BATCH_SIZE}")
+    logging.info(f"ACCUMULATION_STEPS: {ACCUMULATION_STEPS}")
+    logging.info(f"LEARNING_RATE: {LEARNING_RATE}")
+    logging.info(f"LR_BETA_1: {LR_BETA_1}")
+    logging.info(f"LR_BETA_2: {LR_BETA_2}")
+    logging.info(f"SCHEDULAR_STEP_SIZE: {SCHEDULAR_STEP_SIZE}")
+    logging.info(f"SCHEDULAR_GAMMA: {SCHEDULAR_GAMMA}")
+    logging.info(f"THRESHOLD_LR_SCHEDULER: {THRESHOLD_LR_SCHEDULER}")
+    logging.info(f"COOLDOWN_LR_SCHEDULER: {COOLDOWN_LR_SCHEDULER}")
 
     logging.info(f"CHECKPOINT_EVERY_N: {CHECKPOINT_EVERY_N}")
-    logging.info(f"RECOVER: {RECOVER}")
+    logging.info(f"AVERAGE_EPOCH_LOSS_EVERY: {AVERAGE_EPOCH_LOSS_EVERY}")
+    logging.info(f"DEBUG: {DEBUG}")
+    logging.info(f"PERIODIC_LOGGING: {PERIODIC_LOGGING}")
+
+    logging.info(f"ABNORMAL_CLASSIFIER_WEIGHT: {ABNORMAL_CLASSIFIER_WEIGHT}")
+    logging.info(f"REGION_SELECTION_CLASSIFIER_WEIGHT: {REGION_SELECTION_CLASSIFIER_WEIGHT}")
+    logging.info(f"OBJECT_DETECTOR_WEIGHT: {OBJECT_DETECTOR_WEIGHT}")
+    logging.info(f"ABNORMAL_CLASSIFIER_POS_WEIGHT: {ABNORMAL_CLASSIFIER_POS_WEIGHT}")
+    logging.info(f"REGION_SELECTION_CLASSIFIER_POS_WEIGHT: {REGION_SELECTION_CLASSIFIER_POS_WEIGHT}")
+
+    logging.info(f"HEAT_MAP_IMAGE_SIZE: {HEAT_MAP_IMAGE_SIZE}")
+    logging.info(f"CLASSES: {CLASSES}")
+
+    logging.info(f"SAVE_TO_DRIVE: {SAVE_TO_DRIVE}")
+    logging.info(f"SAVE_IMAGES: {SAVE_IMAGES}")
+
+    return
+
+
 
 def get_config():
     # Get the Configuration dictionary to be saved in check point
@@ -149,30 +160,58 @@ def get_config():
     "DEVICE": DEVICE,
     "OPERATION_MODE":OPERATION_MODE,
     "MODEL_STAGE": MODEL_STAGE,
+    "SEED": SEED,
+
+    "training_csv_path": training_csv_path,
+    "validating_csv_path": validating_csv_path,
+    "evaluation_csv_path": evaluation_csv_path,
+    "heat_map_training_csv_path": heat_map_training_csv_path,
+    "heat_map_validating_csv_path": heat_map_validating_csv_path,
+    "heat_map_evaluation_csv_path": heat_map_evaluation_csv_path,
+
     "CONTINUE_TRAIN": CONTINUE_TRAIN,
+    "RECOVER": RECOVER,
     "TRAIN_RPN": TRAIN_RPN,
     "TRAIN_ROI": TRAIN_ROI,
     "FREEZE_OBJECT_DETECTOR": FREEZE_OBJECT_DETECTOR,
     "RUN": RUN,
     "EPOCHS": EPOCHS,
     "BATCH_SIZE": BATCH_SIZE,
+    "LM_Batch_Size": LM_Batch_Size,
     "EFFECTIVE_BATCH_SIZE": EFFECTIVE_BATCH_SIZE,
     "ACCUMULATION_STEPS": ACCUMULATION_STEPS,
-    "LM_Batch_Size": LM_Batch_Size,
     "LEARNING_RATE": LEARNING_RATE,
+    "LR_BETA_1": LR_BETA_1,
+    "LR_BETA_2": LR_BETA_2,
     "SCHEDULAR_STEP_SIZE": SCHEDULAR_STEP_SIZE,
     "SCHEDULAR_GAMMA": SCHEDULAR_GAMMA,
+    "THRESHOLD_LR_SCHEDULER": THRESHOLD_LR_SCHEDULER,
+    "COOLDOWN_LR_SCHEDULER": COOLDOWN_LR_SCHEDULER,
+
+    "CHECKPOINT_EVERY_N":CHECKPOINT_EVERY_N,
+    "AVERAGE_EPOCH_LOSS_EVERY":AVERAGE_EPOCH_LOSS_EVERY,
     "DEBUG": DEBUG,
-    # "GENERATE_REPORT": GENERATE_REPORT,
+    "PERIODIC_LOGGING": PERIODIC_LOGGING,
+
+    "ABNORMAL_CLASSIFIER_WEIGHT": ABNORMAL_CLASSIFIER_WEIGHT,
+    "REGION_SELECTION_CLASSIFIER_WEIGHT": REGION_SELECTION_CLASSIFIER_WEIGHT,
+    "OBJECT_DETECTOR_WEIGHT": OBJECT_DETECTOR_WEIGHT,
     "ABNORMAL_CLASSIFIER_POS_WEIGHT": ABNORMAL_CLASSIFIER_POS_WEIGHT,
     "REGION_SELECTION_CLASSIFIER_POS_WEIGHT": REGION_SELECTION_CLASSIFIER_POS_WEIGHT,
-    "training_csv_path": training_csv_path,
-    "validation_csv_path": validating_csv_path,
-    "PERIODIC_LOGGING": PERIODIC_LOGGING,
-    "CHECKPOINT_EVERY_N":CHECKPOINT_EVERY_N,
-    }
 
+    "HEAT_MAP_IMAGE_SIZE": HEAT_MAP_IMAGE_SIZE,
+    "CLASSES": CLASSES,
+
+    "SAVE_TO_DRIVE": SAVE_TO_DRIVE,
+    "SAVE_IMAGES": SAVE_IMAGES,
+    }
     return config
+
+
+
+
+
+
 
 
 

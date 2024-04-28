@@ -177,7 +177,7 @@ class HeatMapTrainer:
             self.tensor_board_writer.add_scalar('Training/Learning Rate',new_lr,epoch+1)
 
 
-            # Add Optimal Thresholds to teh Model
+            # Add Optimal Thresholds to the Model
             # self.model.optimal_thresholds=optimal_thresholds
 
             # saving model per epoch
@@ -203,13 +203,9 @@ class HeatMapTrainer:
 
           mask = (targets != -1).float()
 
-          # print("y_pred shape",y_pred.shape)
-          # print("targets shape",targets.shape)
           # apply mask to the targets
           targets = targets * mask
 
-
-          # print(targets)
           # y_pred = y_pred * mask
           
           # Cumulate all predictions ans labels
@@ -230,23 +226,21 @@ class HeatMapTrainer:
         # create mask for the targets if the target is -1 then it is 0 else 1
         mask = (targets != -1).float()
 
-        # print("y_pred shape",y_pred.shape)
-        # print("targets shape",targets.shape)
         # apply mask to the targets
         targets = targets * mask
         y_pred = y_pred * mask
+
         # VIP DON'T FORGET TO UPDATE ONE IN EVALUATION :D
-        # Total_loss=self.criterion(y_pred,targets)*images[0].size(0)   #3-channels       
         Total_loss=self.criterion(y_pred,targets)      
 
         if not validate_during_training:
-            # logging.debug(f"epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}")
+            logging.debug(f"epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}")
             # [Tensor Board]: Avg Batch Loss
             self.tensor_board_writer.add_scalar('Training/Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
             return Total_loss
         else:
-            # logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
+            logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss 
             self.tensor_board_writer.add_scalar('Validation/Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
