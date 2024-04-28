@@ -21,6 +21,11 @@ GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"
 NUM_THREADS=4
 PRINT_FREQ=200
+LR=1e-4
+RESULTS_DIR='/results'
+VGG_PATH=""
+LR_POLICY="Linear",
+
 # training:
 #   n_epochs: 1000
 #   print_freq: 200

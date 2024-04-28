@@ -10,6 +10,7 @@ from PIL import Image
 import h5py
 import numpy as np
 from tqdm import tqdm
+from src.denoiser.data_loader.generate_noise import *
 
 def store_many_hdf5(h5file, images, labels):
     """ Stores an array of images to HDF5.
@@ -60,7 +61,22 @@ def proccess_images(csv_file_path,type_data_to_save):
             print(f"Image at {img_path} is None")
             continue
         image=np.array(image).astype("float32")
-        label ,image= generate_noise(image)
+        choise= np.random.choice([0,1,2,3,4,5,6])
+        image = cv2.resize(image, (512, 512))
+        if choise == 0:
+            image,label= add_block_pixel_noise(image, probability=0.05)
+        elif choise == 1:
+            image,label= add_convolve_noise(image, sigma=1.5, sigma_noise=25) 
+        elif choise == 2:
+            image,label= add_keep_patch_noise(image, height_patch_size=image.shape[0]-25,width_patch_size=image.shape[1]-25 )
+        elif choise == 3:
+            image,label= add_pad_rotate_project_noise(image, max_rotation=2)
+        elif choise == 4:
+            image,label= add_gaussian_projection_noise(image, sigma=0.1)
+        elif choise == 5:
+            image,label= add_line_strip_noise(image, strip_width=5, intensity=0.5)
+        else:
+            image,label= np.copy(image),np.copy(image)
         image = cv2.resize(image, (512, 512))
         label = cv2.resize(label, (512,512))
         images.append(image)
@@ -73,13 +89,15 @@ def proccess_images(csv_file_path,type_data_to_save):
 
 
 if __name__ == '__main__':
-    # proccess_images('datasets/train.csv','train_2d')
-    h5file = h5py.File(osp.join(save_data_h5_dir, 'train_2d.h5'), 'r')
-    images,labels = read_many_hdf5(h5file)
-    # Image._show(Image.fromarray(labels[0]))
-    print(images[0].shape)
-    labels[0]= labels[0] 
-    images[0]= images[0] 
-    plb.imshow(images[0])
-    plb.show()
+    proccess_images('datasets/train.csv','train_noise')
+    # h5file = h5py.File(osp.join(save_data_h5_dir, 'train_2d.h5'), 'r')
+    # images,labels = read_many_hdf5(h5file)
+    # # Image._show(Image.fromarray(labels[0]))
+    # print(images[0].shape)
+    # labels[0]= labels[0] 
+    # images[0]= images[0] 
+    # plb.imshow(images[0])
+    # plb.show()
 
+
+#  python -m src.denoiser.data_loader.data_storing 

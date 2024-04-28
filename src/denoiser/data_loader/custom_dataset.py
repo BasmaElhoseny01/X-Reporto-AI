@@ -42,7 +42,6 @@ def gen_train_batch_bg(data_file_h5, mb_size, in_depth, img_size):
     with h5py.File(data_file_h5, 'r') as hdf_fd:
         X = hdf_fd['images'][:].astype(np.float32)
         Y = hdf_fd['labels'][:].astype(np.float32)
-        print("X shape: ", X.shape)
     while True:
         idx = np.random.randint(0, X.shape[0]-in_depth, mb_size)
         if(X.shape[1]-img_size <= 0):
@@ -51,11 +50,8 @@ def gen_train_batch_bg(data_file_h5, mb_size, in_depth, img_size):
             crop_idx = np.random.randint(0, X.shape[1]-img_size)
         batch_X = np.array([X[s_idx : (s_idx+in_depth)] for s_idx in idx])
         batch_X = batch_X[:, :, crop_idx:(crop_idx+img_size), crop_idx:(crop_idx+img_size)]
-        c=0
-        print(c)
         batch_Y = np.expand_dims([Y[s_idx+in_depth//2] for s_idx in idx], 1)
         batch_Y = batch_Y[:, :, crop_idx:(crop_idx+img_size), crop_idx:(crop_idx+img_size)]
-        c+=1
         yield batch_X, batch_Y
 
 def get1batch4test(data_file_h5, in_depth):
@@ -97,7 +93,7 @@ def get_predictions_batch(x_fn, in_depth):
         yield np.expand_dims(batch_X, 0), np.zeros((1, size, size, 1))
 
 if __name__ == '__main__':
-    mb_data_iter = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_2d.h5", mb_size=2, in_depth=3, img_size=512), max_prefetch=16)  
+    mb_data_iter = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_noise.h5", mb_size=2, in_depth=3, img_size=512), max_prefetch=16)  
     for i in range(2):
         x, y = mb_data_iter.next()
         print("X shape: ", x.shape)
