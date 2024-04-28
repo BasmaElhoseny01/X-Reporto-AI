@@ -7,6 +7,7 @@ import h5py, glob
 from pathlib import Path
 import random
 import matplotlib.pylab as plb
+from src.denoiser.utils import *
 
 
 class bkgdGen(threading.Thread):
@@ -64,7 +65,6 @@ def get1batch4test(data_file_h5, in_depth):
     idx = (X.shape[0]//2, )
     batch_X = np.array([X[s_idx : (s_idx+in_depth)] for s_idx in idx])
     batch_Y = np.expand_dims([Y[s_idx+in_depth//2] for s_idx in idx], 1) 
-
     return batch_X.astype(np.float32) , batch_Y.astype(np.float32)
 
 
@@ -94,6 +94,22 @@ def get_predictions_batch(x_fn, in_depth):
 
 if __name__ == '__main__':
     mb_data_iter = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_noise.h5", mb_size=2, in_depth=3, img_size=512), max_prefetch=16)  
-    for i in range(2):
-        x, y = mb_data_iter.next()
-        print("X shape: ", x.shape)
+    i=0
+    x_prev_0=0
+    x_curr_200=0
+    x, y = mb_data_iter.next()
+    save2image(y[0,0,:,:], "y.png")
+
+    save2image(x[0,3//2,:,:], "x.png")
+    # while True:
+    #     print(i)
+    #     if i==0:
+    #         x_prev_0=y
+    #     if i==200:
+            # x_curr_200=y
+        #     if np.mean(np.abs(x_prev_0 - x_curr_200)) ==0:
+        #         print("zero at ",i)
+        #     sys.exit()
+        # i+=1
+        # print("X shape: ", x.shape)
+
