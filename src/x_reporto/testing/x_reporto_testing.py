@@ -139,7 +139,7 @@ class XReportoTesting():
            
             logging.debug(f'object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')            
            #TODO plot image in tensor board
-            plot_single_image(images=images, boxes=object_detector_boxes)
+            # plot_single_image(images=images, boxes=object_detector_boxes) [CHECK Function] edited
             # # [Tensor Board]: Object Detector Avg Batch Loss
             # self.tensor_board_writer.add_scalar('Object Detector Avg Batch Loss',object_detector_losses_summation,batch_idx)
             # # [Tensor Board]: Total Batch Loss

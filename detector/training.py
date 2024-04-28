@@ -288,35 +288,6 @@ def plot_image(img,labels, boxes,prdictedLabels,prdictedBoxes):
         # Display the image
         ax.imshow(img[0])
 
-# display the image with the bounding boxes (only true boxes or only predicted boxes)
-def plot_single_image(img, boxes):
-    '''
-    Function that draws the BBoxes on the image.
-
-    inputs:
-        img: input-image as numpy.array (shape: [H, W, C])
-        boxes: list of bounding boxes (Format [N, 4] => N times [xmin, ymin, xmax, ymax])
-    '''
-    cmap = plt.get_cmap("tab20b")
-    height, width = img.shape[1:]
-    # Create figure and axes
-    fig, ax = plt.subplots(1, figsize=(16, 8))
-    # Display the image
-    ax.imshow(img[0])
-    for i, box in enumerate(boxes):
-        width = box[2] - box[0]
-        height = box[3] - box[1]
-        rect = patches.Rectangle(
-            (box[0], box[1]),
-            width,
-            height,
-            linewidth=1,  # Increase linewidth
-            edgecolor="white",  # Set the box border color
-            facecolor="none",  # Set facecolor to none
-        )
-        # Add the patch to the Axes
-        ax.add_patch(rect)
-    plt.show()
 
 if __name__ == '__main__':
     trainer = Object_detector_trainer(model= torchvision.models.detection.fasterrcnn_resnet50_fpn(weights=None, num_classes=30))
