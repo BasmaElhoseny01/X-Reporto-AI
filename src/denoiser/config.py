@@ -16,6 +16,8 @@ TRAIN_DATA= "./dataset/noisy4train.h5"
 TEST_DATA= "./dataset/noisy4test.h5"
 NAME="tomogan"
 CHECKPOINTS_DIR="./checkpoints"
+LR=1e-4
+RESULTS_DIR='/results'
 # training:
 #   n_epochs: 1000
 #   print_freq: 200
