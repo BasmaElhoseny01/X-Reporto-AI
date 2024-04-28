@@ -101,13 +101,3 @@ if __name__ == '__main__':
     for i in range(2):
         x, y = mb_data_iter.next()
         print("X shape: ", x.shape)
-    # print size of mb_data_iter
-    # print(sys.getsizeof(mb_data_iter))
-
-
-    # c=0
-    # while(True):
-    #     if X_mb is None:
-    #         break
-    #     c+=1
-    # print("Total number of batches: ", c)

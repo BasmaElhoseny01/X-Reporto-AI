@@ -26,6 +26,7 @@ class DenoiserTrainer():
 
     def train(self):
         with mlflow.start_run() as run:
+
             mlflow.log_param("batch_size", BATCH_SIZE)
             mlflow.log_param("depth", DEPTH)
             mlflow.log_param("epochs", EPOCHS)
@@ -54,22 +55,21 @@ class DenoiserTrainer():
                     print('%s; dloss: %.2f (r%.3f, f%.3f), disc_elapse: %.2fs/itr, gan_elapse: %.2fs/itr' % (itr_prints_gen,\
                     self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
                     (time.time() - time_dit_st)/ITD, time.time()-time_git_st))
-
             
                 if epoch % (200//ITG) == 0:
                     with torch.no_grad():
-                        X222, y222 = get1batch4test(data_file_h5=TEST_DATA, in_depth=DEPTH)
-                        self.model.set_input((X222, y222))
+                        X_test, y_test = get1batch4test(data_file_h5=TEST_DATA, in_depth=DEPTH)
+                        self.model.set_input((X_test, y_test))
                         self.model.forward()
                         pred_img = self.model.fake_C
 
                         save2image(pred_img[0,0,:,:].detach().cpu().numpy(), '%s/it%05d.png' % (self.itr_out_dir, epoch))
                         if epoch == 0: 
-                            save2image(y222[0,0,:,:], '%s/gtruth.png' % (self.itr_out_dir))
-                            save2image(X222[0,DEPTH//2,:,:], '%s/noisy.png' % (self.itr_out_dir))
+                            save2image(y_test[0,0,:,:], '%s/gtruth.png' % (self.itr_out_dir))
+                            save2image(X_test[0,DEPTH//2,:,:], '%s/noisy.png' % (self.itr_out_dir))
                             
             mlflow.log_artifacts(self.itr_out_dir)
-            (ssim, psnr) = eval_metrics(y222[0,0,:,:], pred_img[0,0,:,:].detach().cpu().numpy())
+            (ssim, psnr) = eval_metrics(y_test[0,0,:,:], pred_img[0,0,:,:].detach().cpu().numpy())
             mlflow.log_metric("ssim", ssim)
             mlflow.log_metric("psnr", psnr)
 
