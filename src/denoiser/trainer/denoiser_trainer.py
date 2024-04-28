@@ -10,28 +10,29 @@ import torchvision.models as models
 import mlflow
 from src.denoiser.utils import *
 from src.denoiser.models.gan_model import TomoGAN
-
-opt = {
-    "name": NAME,
-    "gpu_ids":0,
-    "checkpoints_dir":CHECKPOINTS_DIR,
-    "batch_size":BATCH_SIZE,
-    "image_size":IMAGE_SIZE,
-    "depth":DEPTH,
-    "load_epoch":LOAD_EPOCH,
-    "verbose":VERBOSE,
-    "lr":LR,
-    "lr_policy":"Linear",
-    "vgg_path":"src\denoiser\models\vgg19_weights_notop.h5",
-    "lmse":LMSE,
-    "lperc":LPERC,
-    "ladv":LADV,
-    "continue_train":CONTINUE_TRAIN,
-    "results_dir":RESULTS_DIR
-}
+from src.denoiser.options.train_option import TrainOptions
+# opt = {
+#     "name": NAME,
+#     "gpu_ids":0,
+#     "checkpoints_dir":CHECKPOINTS_DIR,
+#     "batch_size":BATCH_SIZE,
+#     "image_size":IMAGE_SIZE,
+#     "depth":DEPTH,
+#     "load_epoch":LOAD_EPOCH,
+#     "verbose":VERBOSE,
+#     "lr":LR,
+#     "lr_policy":"Linear",
+#     "vgg_path":"src\denoiser\models\vgg19_weights_notop.h5",
+#     "lmse":LMSE,
+#     "lperc":LPERC,
+#     "ladv":LADV,
+#     "continue_train":CONTINUE_TRAIN,
+#     "results_dir":RESULTS_DIR
+# }
 class DenoiserTrainer():
     def __init__(self):
-        self.model = TomoGAN(opt)
+        self.arg=TrainOptions()
+        self.model = TomoGAN(self.arg)
         self.data_genrator = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_noise.h5", mb_size=BATCH_SIZE, in_depth=DEPTH, img_size=IMAGE_SIZE), max_prefetch=16)
         self.itr_out_dir = NAME + '-itrOut'
         if os.path.isdir(self.itr_out_dir): 
