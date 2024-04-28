@@ -118,18 +118,19 @@ class CustomDataset(Dataset):
             # print(tokenize_phrase)
             # sys.exit()
             # print("start Tokenize")
+            # get max sequence length in tokenized phrase
+            max_seq_len = max([len(tokenize_phrase_lst) for tokenize_phrase_lst in tokenize_phrase["input_ids"]])
             language_model_sample["bbox_phrase"]=bbox_phrases
-            padded_lists_by_pad_token = [tokenize_phrase_lst + [Config.pad_token_id] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
-            padded_lists_by_ignore_token = [tokenize_phrase_lst + [Config.ignore_index] * (Config.max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
+            padded_lists_by_pad_token = [tokenize_phrase_lst + [Config.pad_token_id] * (max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
+            padded_lists_by_ignore_token = [tokenize_phrase_lst + [Config.ignore_index] * (max_seq_len - len(tokenize_phrase_lst)) for tokenize_phrase_lst in tokenize_phrase["input_ids"]]
             language_model_sample["input_ids"]=padded_lists_by_pad_token
             language_model_sample["label_ids"]=padded_lists_by_ignore_token
-            padded_mask = [mask_phrase_lst + [0] * (Config.max_seq_len - len(mask_phrase_lst)) for mask_phrase_lst in tokenize_phrase["attention_mask"]]
+            padded_mask = [mask_phrase_lst + [0] * (max_seq_len - len(mask_phrase_lst)) for mask_phrase_lst in tokenize_phrase["attention_mask"]]
             language_model_sample["attention_mask"]=padded_mask
             # convert the label to tensor
             language_model_sample["input_ids"] = torch.tensor(language_model_sample["input_ids"], dtype=torch.long)
             language_model_sample["label_ids"] = torch.tensor(language_model_sample["label_ids"], dtype=torch.long)
             language_model_sample["attention_mask"] = torch.tensor(language_model_sample["attention_mask"], dtype=torch.long)
-
 
             # print("end Tokenize")
             return object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample

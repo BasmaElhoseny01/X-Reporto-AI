@@ -70,7 +70,7 @@ class TransformLibrary(object):
                         [
                             A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
                             A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                            A.Normalize(mean=MEAN, std=MEAN),
+                            A.Normalize(mean=MEAN, std=STD),
                             ToTensorV2(),
                         ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=['class_labels'])
                     )

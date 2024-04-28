@@ -23,7 +23,7 @@ from src.x_reporto.data_loader.custom_dataset import CustomDataset
 # Utils 
 from src.utils import plot_image,save_model,save_checkpoint,load_checkpoint,seed_worker,empty_folder
 from config import *
-
+from src.language_model.GPT2.config import Config
 Last_Loss=0
 def Threshold_Schecdular(Current_Loss:float):
 
@@ -86,12 +86,15 @@ class XReportoTrainer():
         self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
 
         # create learning rate scheduler
-        self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
+        # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
         # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
-        
+        if Linear_Schecdular:
+            self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
+        else:
+            self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
         
         # create dataset
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val')
         logging.info("Train dataset loaded")
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         logging.info("Validation dataset loaded")
@@ -99,10 +102,10 @@ class XReportoTrainer():
         # create data loader
         g = torch.Generator()
         g.manual_seed(SEED)
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, worker_init_fn=seed_worker, generator=g)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=False, num_workers=2, worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
       
-        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
 
         # initialize the best loss to a large value
@@ -158,14 +161,18 @@ class XReportoTrainer():
                     selection_classifier_targets = selection_classifier_targets.to(DEVICE)
                     abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
                 
+                # with torch.autocast(device_type="cuda", dtype=torch.float16):
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Language Model
                     # Moving Language Model Targets to Device
                     LM_targets = LM_targets.to(DEVICE)
-                    input_ids = LM_inputs['input_ids'].to(DEVICE)
-                    attention_mask = LM_inputs['attention_mask'].to(DEVICE)
+                    input_ids = LM_inputs['input_ids']
+                    attention_mask = LM_inputs['attention_mask']
+                    input_ids = input_ids.to(DEVICE)
+                    attention_mask = attention_mask.to(DEVICE)
                     loopLength= input_ids.shape[1]
-                    Total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
+                    # Total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
+                    Total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=epoch,batch_idx=batch_idx,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=False)
                     epoch_loss += Total_loss
                 else:
                     Total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
@@ -181,18 +188,28 @@ class XReportoTrainer():
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
                     logging.debug(f'[Accumlative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    # Free GPU memory from any thing after the update
+                    del images
+                    del object_detector_targets
+                    del selection_classifier_targets
+                    del abnormal_classifier_targets
+                    del LM_inputs
+                    del LM_targets
+
                     
-                
+                torch.cuda.empty_cache()
+                gc.collect()
                 # Get the new learning rate
                 new_lr = self.optimizer.param_groups[0]['lr']
                 logging.info(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
+                print(f"Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Learning Rate: {new_lr:.10f}")
                 # [Tensor Board]: Learning Rate
                 self.tensor_board_writer.add_scalar('Learning Rate',new_lr,epoch * len(self.data_loader_train) + batch_idx)
 
                 if (batch_idx+1)%100==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
-                   
+                    print(f'[Every 100 Batch]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)}, Average Cumulative Epoch Loss : {epoch_loss/(batch_idx+1):.4f}')
                     # [Tensor Board]: Epoch Average loss
                     self.tensor_board_writer.add_scalar('Epoch Average Loss/Every 100 Step',epoch_loss/(batch_idx+1),epoch * len(self.data_loader_train) + batch_idx)
 
@@ -206,6 +223,8 @@ class XReportoTrainer():
             
             # [Logging]: Average Loss for epoch where each image is seen once
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
+            # [Print]: Average Loss for epoch where each image is seen once
+            print(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
             # [Tensor Board]: Epoch Average loss
             self.tensor_board_writer.add_scalar('Epoch Average Loss/Every Epoch',epoch_loss/(len(self.data_loader_train)),epoch+1)
             
@@ -217,7 +236,10 @@ class XReportoTrainer():
             # validate the model no touch :)
             self.model.eval()
             validation_average_loss= self.validate_during_training(epoch=epoch) 
+            if Linear_Schecdular:
+                self.lr_scheduler.step()
             logging.info(f'Validation Average Loss: {validation_average_loss:.4f}')
+            print(f'Validation Average Loss: {validation_average_loss:.4f}')
             self.tensor_board_writer.add_scalar('Average [Validation] Loss/Every Epoch',validation_average_loss,epoch+1)
             self.model.train()             
             
@@ -278,7 +300,7 @@ class XReportoTrainer():
       
         if not validate_during_training:
             logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
-          
+            print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss Object Detector 
             self.tensor_board_writer.add_scalar('Avg Batch Losses/Object Detector',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
             # [Tensor Board]: Avg Batch Loss Selection Classifier
@@ -290,6 +312,7 @@ class XReportoTrainer():
        
         if validate_during_training:
             logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
+            print(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} total_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss Object Detector 
             self.tensor_board_writer.add_scalar('Avg Batch Losses[Validation]/Object Detector',object_detector_losses_summation,epoch * len(self.data_loader_train) + batch_idx)
             # [Tensor Board]: Avg Batch Loss Selection Classifier
@@ -308,26 +331,25 @@ class XReportoTrainer():
         return Total_loss
 
     def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,epoch:int,batch_idx:int,loopLength:int,LM_Batch_Size:int,validate_during_training:bool=False):
-        for batch in range(BATCH_SIZE):
+        # define the total loss as it may be in backward pass
+        Total_loss = torch.tensor(0.0, requires_grad=True).to(DEVICE)
+        batch_size = images.shape[0]
+        stop=False
+        for batch in range(batch_size):
             total_LM_losses=0
-            for i in range(0,loopLength,LM_Batch_Size):
+            # check if object detector targets are not deleted
+            # Forward Pass
+            object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,language_model_targets=LM_targets,batch=batch,index=0,delete = True,validate_during_training=validate_during_training)
+            # Backward pass
+            object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
+            Total_loss+=object_detector_losses_summation.clone() * OBJECT_DETECTOR_WEIGHT
+            Total_loss+=selection_classifier_losses * REGION_SELECTION_CLASSIFIER_WEIGHT
+            Total_loss+=abnormal_binary_classifier_losses * ABNORMAL_CLASSIFIER_WEIGHT
+            Total_loss+=LM_losses * LM_WEIGHT
+            total_LM_losses+=LM_losses * LM_WEIGHT
 
-                # Forward Pass
-                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets= object_detector_targets,selection_classifier_targets= selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,batch=batch,index=i,validate_during_training=validate_during_training)
-
-                if stop:
-                    break
-                # Backward pass
-                Total_loss=None
-                object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-                Total_loss=object_detector_losses_summation.clone()
-                Total_loss+=selection_classifier_losses
-                Total_loss+=abnormal_binary_classifier_losses
-                Total_loss+=LM_losses
-                total_LM_losses+=LM_losses
-
-                logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-
+            logging.debug(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+            print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
             # Free GPU memory
             del LM_losses
             del object_detector_losses
@@ -360,7 +382,9 @@ class XReportoTrainer():
                     input_ids = LM_inputs['input_ids'].to(DEVICE)
                     attention_mask = LM_inputs['attention_mask'].to(DEVICE)
                     loopLength= input_ids.shape[1]
-                    validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
+                    total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=epoch,batch_idx=batch_idx,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
+                    validation_total_loss+=total_loss
+                    # validation_total_loss+=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=True)
                 else:
                     total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,validate_during_training=True)
                     validation_total_loss+=total_loss
@@ -368,7 +392,9 @@ class XReportoTrainer():
             validation_total_loss/=(len(self.data_loader_val))
             
             # update the learning rate according to the validation loss if decrease
-            self.lr_scheduler.step(validation_total_loss)
+            # self.lr_scheduler.step(validation_total_loss)
+            if not Linear_Schecdular:
+                self.lr_scheduler.step(validation_total_loss)
             # self.lr_scheduler.step()
 
             return validation_total_loss
@@ -407,14 +433,46 @@ def collate_fn(batch):
         input_ids.append(LM_batch['input_ids'])
         attention_mask.append(LM_batch['attention_mask'])
 
+    # check if batch_size >1
+    if len(batch)>1:
+        # pad phrases to the same length 
+        # input_ids is list of tensors
+        max_seq_len = max([len(tokenize_phrase_lst[0]) for tokenize_phrase_lst in input_ids])
+        # print("max_seq_len",max_seq_len)
+        # each tensor in list input_ids is padded to max_seq_len
+        new_input_ids=[]
+        new_attention_mask=[]
+        new_LM_targets=[]
+        for i in range(len(input_ids)):
+            # each tensor in list input_ids is padded to max_seq_len
+            new_input_ids.append([])
+            new_attention_mask.append([])
+            new_LM_targets.append([])
+            for j in range(len(input_ids[i])):
+                # concatenate the tensor with pad_token_id to the max_seq_len
+                new_input_ids[i].append(torch.cat((input_ids[i][j], torch.tensor([Config.pad_token_id] * (max_seq_len - len(input_ids[i][j])), dtype=torch.long))))
+                # concatenate the tensor with ignore_index to the max_seq_len
+                new_attention_mask[i].append(torch.cat((attention_mask[i][j], torch.tensor([0] * (max_seq_len - len(attention_mask[i][j])), dtype=torch.long))))
+                # concatenate the tensor with ignore_index to the max_seq_len
+                new_LM_targets[i].append(torch.cat((LM_targets[i][j], torch.tensor([Config.ignore_index] * (max_seq_len - len(LM_targets[i][j])), dtype=torch.long))))
+
+        input_ids=new_input_ids
+        attention_mask=new_attention_mask
+        LM_targets=new_LM_targets
+        # convert the list of tensors to tensor
+        input_ids = [torch.stack(input_id) for input_id in input_ids]
+        attention_mask = [torch.stack(mask) for mask in attention_mask]
+        LM_targets = [torch.stack(target) for target in LM_targets]
 
     selection_classifier_targets=torch.stack(selection_classifier_targets)
     abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
     LM_targets=torch.stack(LM_targets)
     LM_inputs['input_ids']=torch.stack(input_ids)
     LM_inputs['attention_mask']=torch.stack(attention_mask)
-
+    # print("inside Custon dataset")
+    # print("length of each phrase in the batch", LM_inputs['input_ids'].shape)
     return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
+
 
 def init_working_space():
     # Creating run folder
@@ -492,6 +550,7 @@ def main():
         # No check point
         # Start New Training
         trainer.train()
+        # trainer.
 
         # TODO Remove
         #sys.exit()

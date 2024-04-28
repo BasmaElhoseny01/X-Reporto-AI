@@ -24,7 +24,7 @@ class Config:
     - use_checkpointing (bool): Whether to use gradient checkpointing for memory efficiency.
     - debug (bool): Enable debugging mode if True.
     """
-    max_seq_len = 1024
+    max_seq_len = 300
     d_model = 1024
     d_ff1 = 1024
     d_ff2 = 1024
@@ -34,9 +34,9 @@ class Config:
     num_layers = 24
     vocab_size = 50257
     ignore_index = -100
-    bos_token = ""  
-    eos_token = ""
-    pad_token = ""
+    bos_token = "<|endoftext|>"  
+    eos_token = "<|endoftext|>"
+    pad_token = "<|endoftext|>"
     pad_token_id = 50256
     bos_token_id = 50256
     eos_token_id = 50256

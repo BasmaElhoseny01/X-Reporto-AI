@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from src.language_model.GPT2.conv1d import Conv1D
 import math
+import sys
 
 class CustomGPT2MultiHeadAttention(nn.Module):
     """
@@ -68,16 +69,23 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         Returns:
         - Tuple[torch.Tensor]: Output tensor after applying pseudo-attention and attention probabilities.
         """
-        scores = torch.matmul(query, key.transpose(-1, -2)) / math.sqrt(query.size(-1))  # (batch_size, h, max_seq_len, max_seq_len+1)
+        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(query.size(-1))  # (batch_size, h, max_seq_len, max_seq_len+1)
         query_length, key_length = query.size(-2), key.size(-2)
         # in training, key_length = 1025, query_length = 1024 , causal_mask_selected = (1, 1, 1024, 1025)
         causal_mask_selected = causal_mask[:, :, key_length - query_length : key_length, :key_length]
         # Need to be a tensor, otherwise we get error: `RuntimeError: expected scalar type float but found double`.
         # Need to be on the same device, otherwise `RuntimeError: ..., x and y to be on the same device`
-        
+        # save causal_mask_selected in txt file
+        # with open('causal_mask_selected.txt', 'w') as f:
+        #     f.write(str(causal_mask_selected))
         scores = torch.where(causal_mask_selected, scores.to(scores.dtype), mask_value) # (batch_size, h, max_seq_len, max_seq_len+1)
 
+        # write scores to txt file
         if mask is not None:
+            # save mask in txt file
+            # with open('mask.txt', 'w') as f:
+            #     f.write(str(mask))
+            # sys.exit()
             scores = scores + mask
             # apply softmax to scores
         p_attn = F.softmax(scores, dim=-1)  # (batch_size, h, max_seq_len, max_seq_len+1)

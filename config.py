@@ -5,6 +5,7 @@ from enum import Enum
 
 # Suppress TensorFlow INFO level logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 # Suppress Plt INFO level logs
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
@@ -18,17 +19,22 @@ class OperationMode(Enum):
     TRAINING = 1
     VALIDATION = 2
     EVALUATION = 3
-    TESTING = 4
+    INFERENCE= 4
+    TESTING = 5
 
 
 ############################################################# Global Configuration ############################################################
 # device
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-# Training / validation / EVALUATION / Testing 
-OPERATION_MODE=1
+# Training / validation / EVALUATION / Inference/ Testing / 
+OPERATION_MODE=4
+
+
 # Model Stage
-MODEL_STAGE=2
+MODEL_STAGE=3
+
+Linear_Schecdular=True # Linear Schecdular if True, Plateau Schecdular if False
 
 SEED=31
 
@@ -48,14 +54,15 @@ RECOVER=False # Recover from the last checkpoint
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
-FREEZE_OBJECT_DETECTOR=False
+FREEZE_OBJECT_DETECTOR=True
+FREEZE = True
 
-RUN = "3"
-EPOCHS=10
-BATCH_SIZE=64
-LM_Batch_Size=1
-
-EFFECTIVE_BATCH_SIZE = BATCH_SIZE
+RUN = "5"
+EPOCHS=6
+BATCH_SIZE=16
+# BATCH_SIZE=1
+#   TODO: change to 64
+EFFECTIVE_BATCH_SIZE = 64
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
 LEARNING_RATE=0.0005
@@ -65,7 +72,7 @@ LR_BETA_2=0.999
 
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
 SCHEDULAR_GAMMA=0.8 # value multiply lr with
-THRESHOLD_LR_SCHEDULER=1e-1 # Threshold for measuring the new optimum, to only focus on significant changes
+THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only focus on significant changes
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
 #############################################################  Debugging Configurations ############################################################
@@ -82,6 +89,7 @@ PERIODIC_LOGGING=True
 # Weights of each model
 ABNORMAL_CLASSIFIER_WEIGHT = 2.5
 REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
+LM_WEIGHT = 1
 OBJECT_DETECTOR_WEIGHT = 1
 
 # Abnormal Binary Classifier Hyper Parameters

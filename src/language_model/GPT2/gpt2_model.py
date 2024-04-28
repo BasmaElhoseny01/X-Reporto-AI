@@ -68,6 +68,7 @@ class CustomGPT2(nn.Module):
         self.fc = nn.Linear(self.d_model, self.vocab_size)
         self.init_weights()
         self.load_pretrained_weights()
+        self.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
         
     def init_weights(self):
         """
@@ -79,6 +80,7 @@ class CustomGPT2(nn.Module):
         """
         Convert model parameters to half precision (float16).
         """
+        
         self.fc.weight.data = self.fc.weight.data.half()
         self.fc.bias.data = self.fc.bias.data.half()
         for i in range(self.num_layers):
@@ -207,7 +209,6 @@ class CustomGPT2(nn.Module):
         # compute model output logits
         logits = self.fc(hidden_states) 
 
-       
         loss = None
         if labels is not None:
             # move labels to correct device to enable model parallelism
@@ -220,12 +221,10 @@ class CustomGPT2(nn.Module):
             shift_labels = labels[..., 1:].contiguous()
             del labels
 
-            
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
             # convert logits dtype to float32
             shift_logits = shift_logits.to(dtype=torch.float32)
-         
                 
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             return (loss,shift_logits) 
@@ -258,8 +257,8 @@ class CustomGPT2(nn.Module):
                 remove_prefix_length = input_ids.shape[1] - 1
 
             input_ids = input_ids[:, remove_prefix_length:]
-            if token_type_ids is not None:
-                token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
+            # if token_type_ids is not None:
+            #     token_type_ids = token_type_ids[:, -input_ids.shape[1] :]
 
         attention_mask = kwargs.get("attention_mask", None)
         position_ids = kwargs.get("position_ids", None)
@@ -340,6 +339,11 @@ class CustomGPT2(nn.Module):
                 # Multinomial sampling based on the top-k probabilities
                 sampled_index = torch.multinomial(top_k_probs, 1).item()
                 next_token=top_k_indices[0, sampled_index].item()
+                # print top k tokens
+                # print("top_k_indices: ",top_k_indices)
+                tokens = self.tokenizer.convert_ids_to_tokens(top_k_indices[0])
+                # print("top_k_tokens: ",tokens)
+                # print("top_k_indices: ",top_k_indices)
             # concatenate the new token
             next_token = next_token * all_sequences_to_generate + self.config.pad_token_id * (1 - all_sequences_to_generate)
 
@@ -411,9 +415,10 @@ class CustomGPT2(nn.Module):
                 num_beam_hyps_to_keep=beam_size,
             )
         
-        beam_scores = torch.zeros((batch_size, beam_size), dtype=torch.float, device= device)
-        beam_scores[:, 1:] = -1e9
-        beam_scores = beam_scores.view((batch_size * beam_size,))
+        # initialize beam_scores which stores the score of each token in the beam
+        beam_scores = torch.zeros((batch_size, beam_size), dtype=torch.float, device= device) # (batch_size, beam_size)
+        beam_scores[:, 1:] = -1e9 # setting the score of all tokens except the first one to -inf
+        beam_scores = beam_scores.view((batch_size * beam_size,)) # (batch_size * beam_size,)
 
         # beam search
         while True:
@@ -426,34 +431,36 @@ class CustomGPT2(nn.Module):
             
             # calculate probabilities of logits
             next_token_scores = nn.functional.log_softmax(logits, dim=-1)  # (batch_size * beam_size, vocab_size)
-           
+        
             # add beam_scores of previous sentences to all probabilities of tokens
-            next_token_scores = next_token_scores + beam_scores[:, None].expand_as(next_token_scores)
+            next_token_scores = next_token_scores + beam_scores[:, None].expand_as(next_token_scores) # (batch_size * beam_size , vocab_size)
 
             # reshape next_token_scores to (batch_size, beam_size * vocab_size)
-            next_token_scores = next_token_scores.view((batch_size, beam_size * self.config.vocab_size))
+            next_token_scores = next_token_scores.view((batch_size, beam_size * self.config.vocab_size)) # (batch_size, beam_size * vocab_size)
 
             # select top-k tokens
-            next_token_scores, next_tokens = torch.topk(next_token_scores, k=beam_size, dim=1,largest=True, sorted=True)
+            next_token_scores, next_tokens = torch.topk(next_token_scores, k=beam_size*2, dim=1,largest=True, sorted=True) # (batch_size, beam_size*2) , (batch_size, beam_size*2)
             # get indices of top-k tokens
             # beam_idx = next_tokens 
             # beam_idx = next_tokens // self.config.vocab_size
                 
-            beam_idx = torch.div(next_tokens, self.config.vocab_size, rounding_mode="floor")
-            next_tokens = next_tokens % self.config.vocab_size
-           
+            next_indices = torch.div(next_tokens, self.config.vocab_size, rounding_mode="floor") # (batch_size, beam_size*2)
+            next_tokens = next_tokens % self.config.vocab_size # (batch_size, beam_size*2)           
 
             # calculate beam_scores
             beam_outputs = beam_scorer.process(
-                input_ids, next_token_scores, next_tokens, beam_idx, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id+1
+                input_ids, next_token_scores, next_tokens, next_indices, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id+1
             )
-            beam_scores = beam_outputs["next_beam_scores"]
-            beam_next_tokens = beam_outputs["next_beam_tokens"]
-            beam_idx = beam_outputs["next_beam_indices"]
+            beam_scores = beam_outputs["next_beam_scores"] # (batch_size * beam_size,)
+            beam_next_tokens = beam_outputs["next_beam_tokens"] # (batch_size * beam_size,)
+            beam_idx = beam_outputs["next_beam_indices"] # (batch_size * beam_size,)
 
             # update input_ids, attention mask and length for the next step
-            beam_next_tokens = beam_next_tokens.view((batch_size * beam_size, 1))
-            input_ids = torch.cat([input_ids, beam_next_tokens], dim=-1)
+            # beam_next_tokens = beam_next_tokens.view((batch_size * beam_size, 1))
+
+            # input_ids = torch.cat([input_ids, beam_next_tokens], dim=-1)
+            #TODO: test if the following line is necessary
+            input_ids = torch.cat([input_ids[beam_idx, :], beam_next_tokens.unsqueeze(-1)], dim=-1)
             model_kwargs = self.update_model_kwargs(model_kwargs=model_kwargs, presents=presents)
 
             # check if there is past layer
@@ -470,6 +477,79 @@ class CustomGPT2(nn.Module):
                 break
 
             seq_len +=1
-        # return the generated tokens
+        # print("input_ids length: ",input_ids.size())
+        sequence_outputs = beam_scorer.finalize(
+            input_ids,
+            beam_scores,
+            next_tokens,
+            beam_idx,
+            pad_token_id=self.config.pad_token_id,
+            eos_token_id=self.config.eos_token_id+1,
+            max_length=max_length+1,
+        )
+        # print("sequence_outputs: ",sequence_outputs)
+        return  sequence_outputs["sequences"]
         return input_ids
-   
+
+if __name__ == "__main__":
+    config = Config()
+    # load small gpt2 config
+    config.d_model = 768
+    config.d_ff1 = 768
+    config.d_ff2 = 768
+    config.d_ff3 = 768
+    config.num_heads = 12
+    config.num_layers = 12
+    config.vocab_size = 50257
+    config.pretrained_model = "gpt2"
+    config.max_seq_len = 1024
+    config.ignore_index = -100
+    image_config = Config()
+    image_config.d_model = 1024
+    image_config.d_ff1 = 1024
+    image_config.d_ff2 = 768
+    image_config.d_ff3 = 768
+    image_config.num_heads = 16
+    image_config.num_layers = 24
+    image_config.vocab_size = 50257
+    model = CustomGPT2(config,image_config)
+    model.train()
+    # model.convert_to_half()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    print(model)
+    summary(model, input_size=(1, 1, 768), device="cpu")
+
+    # test the model full forward pass and backward pass
+    batch_size = 1
+    seq_len = 1024
+    input_ids = torch.randint(0, config.vocab_size, (batch_size, seq_len))
+    attention_mask = torch.ones((batch_size, seq_len))
+    image_hidden_states = torch.randn((batch_size, 1, 1024))
+    labels = torch.randint(0, config.vocab_size, (batch_size, seq_len))
+    input_ids = input_ids.to(device)
+    attention_mask = attention_mask.to(device)
+    image_hidden_states = image_hidden_states.to(device)
+    labels = labels.to(device)
+    for i in range(10):
+        print(f"Running forward and backward pass {i+1}")
+        output = model(
+        input_ids = input_ids,
+        layer_past = None,
+        attention_mask = attention_mask,
+        position_ids = None,
+        inputs_embeds = None,
+        image_hidden_states = image_hidden_states,
+        labels = labels,
+        use_cache = None,
+        output_attentions = None,
+        seq_len = None
+        )
+        # print(output)
+        loss = output[0]
+        loss.backward()
+        print("Model forward and backward pass successful")
+        print("All tests passed!")
+
+    
+
