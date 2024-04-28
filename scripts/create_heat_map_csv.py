@@ -2,6 +2,16 @@ import pandas as pd
 import argparse
 
 def merge_csv(df1, df2):
+    """
+    Merge two DataFrames based on 'subject_id' and 'study_id' columns and select specific columns.
+
+    Args:
+        df1 (DataFrame): First DataFrame.
+        df2 (DataFrame): Second DataFrame.
+
+    Returns:
+        DataFrame: Merged DataFrame with selected columns.
+    """
     # Merge the DataFrames
     mergedColumn = ["subject_id","study_id"]
     merged_df = pd.merge(df1, df2, on=mergedColumn)
@@ -43,4 +53,5 @@ if __name__ == '__main__':
     print("CSV files merged successfully!") 
 
 
-#  python .\scripts\create_heat_map_csv.py --csv_path "./datasets/train.csv" --new_csv_path "./datasets/heat_map_train.csv"
+# Usage:
+# python .\scripts\create_heat_map_csv.py --csv_path "./datasets/train.csv" --new_csv_path "./datasets/heat_map_train.csv"

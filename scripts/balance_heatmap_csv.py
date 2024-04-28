@@ -60,6 +60,14 @@ def plot_histogram(df,dataset_description):
     plt.show()
 
 def balance_heatmap_csv(csv_path,plot):
+    """
+    Balances the heatmap CSV file by converting null values to zeros and saves the balanced CSV.
+
+    Args:
+        csv_path (str): Path to the input CSV file.
+        plot (bool, optional): Whether to plot histograms before and after balancing. Defaults to False.
+    """
+
     # Read CSV File
     df = pd.read_csv(csv_path)
 
@@ -100,6 +108,9 @@ def balance_heatmap_csv(csv_path,plot):
     new_df.to_csv(output_path, index=False)
     print("Balanced CSV saved to", output_path)
 
+
+
+# Script to balance the heatmap csv file
 if __name__ == "__main__":
     # Take csv path as argument
     
@@ -112,5 +123,7 @@ if __name__ == "__main__":
     balance_heatmap_csv(args.csv_path,args.plot)
 
     print("Heatmap CSV balanced successfully!")
+
+# Usage:
 # python .\scripts\balance_heatmap_csv.py --csv_path "./datasets/heat_map_train.csv"
 # python .\scripts\balance_heatmap_csv.py --csv_path "./datasets/heat_map_train.csv"  --plot
