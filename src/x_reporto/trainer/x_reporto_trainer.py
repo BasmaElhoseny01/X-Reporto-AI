@@ -94,7 +94,7 @@ class XReportoTrainer():
             self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
         
         # create dataset
-        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='val')
+        self.dataset_train = CustomDataset(dataset_path= training_csv_path, transform_type='train')
         logging.info("Train dataset loaded")
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         logging.info("Validation dataset loaded")
@@ -102,10 +102,10 @@ class XReportoTrainer():
         # create data loader
         g = torch.Generator()
         g.manual_seed(SEED)
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=False, num_workers=2, worker_init_fn=seed_worker, generator=g)
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=8, worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
       
-        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn,batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
 
         # initialize the best loss to a large value
