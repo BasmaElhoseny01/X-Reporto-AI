@@ -5,7 +5,7 @@ from enum import Enum
 
 # Suppress TensorFlow INFO level logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
 # Suppress Plt INFO level logs
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
@@ -28,16 +28,17 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Inference/ Testing / 
-OPERATION_MODE=4
+OPERATION_MODE=3
 MODEL_STAGE=3
 
 SEED=31
 
 ############################################################# Data Configurations ############################################################
 # Paths to the external files
-training_csv_path = 'NAN'
-validating_csv_path = 'NAN'
-evaluation_csv_path:str = 'NAN'
+training_csv_path = 'datasets/train.csv'
+validation_csv_path = 'datasets/valid.csv'
+evaluation_csv_path = 'datasets/valid.csv'
+test_csv_path:str = 'datasets/test.csv'
 
 heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
@@ -52,14 +53,14 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=True
 FREEZE = True
 
-RUN = "2"
-EPOCHS = 6
-BATCH_SIZE = 16
-LM_Batch_Size = 1
-EFFECTIVE_BATCH_SIZE = 64
+RUN = "6"
+EPOCHS = 1
+BATCH_SIZE = 1
+LM_Batch_Size = 29
+EFFECTIVE_BATCH_SIZE = 1
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
-LEARNING_RATE=0.0005
+LEARNING_RATE=0.0001
 
 LR_BETA_1=0.9
 LR_BETA_2=0.999
@@ -71,8 +72,8 @@ THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only f
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
 #############################################################  Debugging Configurations ############################################################
-CHECKPOINT_EVERY_N=2 # Save checkpoint every N epochs
-AVERAGE_EPOCH_LOSS_EVERY=5
+CHECKPOINT_EVERY_N=200 # Save checkpoint every N epochs
+AVERAGE_EPOCH_LOSS_EVERY=10
 
 # Debugging COnfigurations
 DEBUG=True
@@ -88,7 +89,7 @@ else:
 OBJECT_DETECTOR_WEIGHT = 1
 ABNORMAL_CLASSIFIER_WEIGHT = 2.5
 REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
-LM_WEIGHT = 1
+LM_WEIGHT = 2
 
 # Abnormal Binary Classifier Hyper Parameters
 ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0
@@ -105,7 +106,7 @@ CLASSES=['Atelectasis', 'Cardiomegaly', 'Edema', 'Lung Opacity', 'No Finding', '
 if os.environ.get('GITHUB_REF') == 'refs/heads/main':
     SAVE_TO_DRIVE = False  # MUST BE FALSE IN SERVER MODE
 else:
-    SAVE_TO_DRIVE = True
+    SAVE_TO_DRIVE = False
 # SAVE_TO_DRIVE=False # don't change this in server mode
 SAVE_IMAGES=False # don't change this in server mode
 DRAW_TENSOR_BOARD=100 # Draw Tensor Board every N batches
@@ -120,7 +121,7 @@ def log_config():
     logging.info(f"SEED: {SEED}")
 
     logging.info(f"training_csv_path: {training_csv_path}")
-    logging.info(f"validating_csv_path: {validating_csv_path}")
+    logging.info(f"validating_csv_path: {validation_csv_path}")
     logging.info(f"evaluation_csv_path: {evaluation_csv_path}")
     logging.info(f"heat_map_training_csv_path {heat_map_training_csv_path}")
     logging.info(f"heat_map_validating_csv_path {heat_map_validating_csv_path}")
@@ -180,7 +181,7 @@ def get_config():
     "SEED": SEED,
 
     "training_csv_path": training_csv_path,
-    "validating_csv_path": validating_csv_path,
+    "validating_csv_path": validation_csv_path,
     "evaluation_csv_path": evaluation_csv_path,
     "heat_map_training_csv_path": heat_map_training_csv_path,
     "heat_map_validating_csv_path": heat_map_validating_csv_path,

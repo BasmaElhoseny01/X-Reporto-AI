@@ -265,6 +265,15 @@ class XReportoTrainer():
             elif MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                 #Save language model
                 self.save_model(model=self.model.language_model,name='LM',epoch=epoch,validation_loss=validation_average_loss)       
+
+                # Save Object Detector
+                self.save_model(model=self.model.object_detector,name="object_detector",epoch=epoch,validation_loss=validation_average_loss)
+
+                # Save Region Selection Classifier
+                self.save_model(model=self.model.binary_classifier_selection_region,name="region_classifier",epoch=epoch,validation_loss=validation_average_loss)
+                # Save Abnormal Classifier
+                self.save_model(model=self.model.binary_classifier_region_abnormal,name="abnormal_classifier",epoch=epoch,validation_loss=validation_average_loss)
+               
             
         # save the best model            
         logging.info("Training Done")
@@ -543,15 +552,22 @@ def main():
         trainer.best_loss=checkpoint['best_loss']
 
         #######################################################################
-        logging.inf("Extracting Model From CHeck Point")
-        logging.info(f"trainer.best_loss:{trainer.best_loss}")
-        logging.info(f"trainer.best_loss:{trainer.best_loss}")
+        # logging.info("Extracting Model From CHeck Point")
+        # logging.info(f"trainer.best_loss:{trainer.best_loss}")
+        # logging.info(f"trainer.best_loss:{trainer.best_loss}")
 
-        #[CHECK]
-        trainer.save_model(model=trainer.model.language_model,name='LM',epoch="half",validation_loss="-1")
-        logging.info("Saved Model from check point")
+        # #[CHECK]
+        # # trainer.save_model(model=trainer.model.language_model,name='LM',epoch=0,validation_loss=trainer.best_loss)
+        # # Save Object Detector
+        # trainer.save_model(model=trainer.model.object_detector,name="object_detector",epoch=0,validation_loss=trainer.best_loss)    
+        # # Save Region Selection Classifier
+        # trainer.save_model(model=trainer.model.binary_classifier_selection_region,name="region_classifier",epoch=0,validation_loss=trainer.best_loss)
+        # # Save Abnormal Classifier
+        # trainer.save_model(model=trainer.model.binary_classifier_region_abnormal,name="abnormal_classifier",epoch=0,validation_loss=trainer.best_loss)
 
-        return
+        # logging.info("Saved Model from check point")
+
+        # return
         #######################################################################
 
         # trainer.test_data_loader()

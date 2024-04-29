@@ -25,6 +25,8 @@ class CustomDataset(Dataset):
         self.checkpoint=checkpoint
         self.tokenizer = Tokenizer(self.checkpoint)
         self.data_info = pd.read_csv(dataset_path, header=None)
+        # limit number of rows
+        s
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
 
