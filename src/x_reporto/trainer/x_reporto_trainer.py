@@ -542,6 +542,18 @@ def main():
         # Load best_loss
         trainer.best_loss=checkpoint['best_loss']
 
+        #######################################################################
+        logging.inf("Extracting Model From CHeck Point")
+        logging.info(f"trainer.best_loss:{trainer.best_loss}")
+        logging.info(f"trainer.best_loss:{trainer.best_loss}")
+
+        #[CHECK]
+        trainer.save_model(model=trainer.model.language_model,name='LM',epoch="half",validation_loss="-1")
+        logging.info("Saved Model from check point")
+
+        return
+        #######################################################################
+
         # trainer.test_data_loader()
         # Start Train form checkpoint ends
         trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
