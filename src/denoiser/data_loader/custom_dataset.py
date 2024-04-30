@@ -40,9 +40,14 @@ class bkgdGen(threading.Thread):
 
 def gen_train_batch_bg(data_file_h5, mb_size, in_depth, img_size):
     X, Y = None, None
-    with h5py.File(data_file_h5, 'r') as hdf_fd:
+    # with h5py.File(data_file_h5, 'r') as hdf_fd:
+    with h5py.File("datasets/noisy4test.h5", 'r') as hdf_fd:
         X = hdf_fd['images'][:].astype(np.float32)
-        Y = hdf_fd['labels'][:].astype(np.float32)
+        # Y = hdf_fd['labels'][:].astype(np.float32)
+    with h5py.File("datasets/clean4test.h5", 'r') as hdf_fd:
+        # Y = hdf_fd['labels'][:].astype(np.float32)
+        Y = hdf_fd['images'][:].astype(np.float32)
+        
     while True:
         idx = np.random.randint(0, X.shape[0]-in_depth, mb_size)
         if(X.shape[1]-img_size <= 0):
@@ -50,9 +55,9 @@ def gen_train_batch_bg(data_file_h5, mb_size, in_depth, img_size):
         else:
             crop_idx = np.random.randint(0, X.shape[1]-img_size)
         batch_X = np.array([X[s_idx : (s_idx+in_depth)] for s_idx in idx])
-        batch_X = batch_X[:, :, crop_idx:(crop_idx+img_size), crop_idx:(crop_idx+img_size)]
+        # batch_X = batch_X[:, :, crop_idx:(crop_idx+img_size), crop_idx:(crop_idx+img_size)]
         batch_Y = np.expand_dims([Y[s_idx+in_depth//2] for s_idx in idx], 1)
-        batch_Y = batch_Y[:, :, crop_idx:(crop_idx+img_size), crop_idx:(crop_idx+img_size)]
+        # batch_Y = batch_Y[:, :, crop_idx:(crop_idx+img_size), crop_idx:(crop_idx+img_size)]
         yield batch_X, batch_Y
 
 def get1batch4test(data_file_h5, in_depth):
@@ -98,9 +103,12 @@ if __name__ == '__main__':
     x_prev_0=0
     x_curr_200=0
     x, y = mb_data_iter.next()
+    print("x shape: ", x.shape)
     save2image(y[0,0,:,:], "y.png")
+    save2image(x[0,0,:,:], "x_1.png")
+    save2image(x[0,1,:,:], "x_2.png")
+    save2image(x[0,2,:,:], "x_3.png")
 
-    save2image(x[0,3//2,:,:], "x.png")
     # while True:
     #     print(i)
     #     if i==0:

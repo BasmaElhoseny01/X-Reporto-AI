@@ -47,3 +47,8 @@ cython_debug/
 *.pth
 /logs
 /tensor_boards
+src/denoiser/data_loader/custom_dataset.py
+x_1.png
+x_2.png
+x_3.png
+y.png
