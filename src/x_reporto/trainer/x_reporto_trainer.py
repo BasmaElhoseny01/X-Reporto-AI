@@ -1,6 +1,6 @@
 # Logging
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+# import os
+# os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 from logger_setup import setup_logging
 import logging
 

@@ -4,9 +4,9 @@ import os
 from enum import Enum
 
 # Suppress TensorFlow INFO level logs
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
 # os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+# os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 # Suppress Plt INFO level logs
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
@@ -30,10 +30,10 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Inference/ Testing / 
-OPERATION_MODE=3
+OPERATION_MODE=1
 MODEL_STAGE=3
 
-SEED=28
+SEED=24
 
 ############################################################# Data Configurations ############################################################
 # Paths to the external files
@@ -57,18 +57,18 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=True
 FREEZE = True
 
-RUN = "heat_map_1"
-# RUN = "7"
-# EPOCHS = 1
-EPOCHS = 10
-BATCH_SIZE = 16
-# BATCH_SIZE = 1
-LM_Batch_Size = 29
+# RUN = "heat_map_2"
+RUN = "7"
+EPOCHS = 1
+# EPOCHS = 10
+# BATCH_SIZE = 32
+BATCH_SIZE = 1
+LM_Batch_Size = 1
 EFFECTIVE_BATCH_SIZE = BATCH_SIZE
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
-LEARNING_RATE=0.0000512000
-# LEARNING_RATE=0.00005
+# LEARNING_RATE=0.0000512000
+LEARNING_RATE=0.00005
 LR_BETA_1=0.9
 LR_BETA_2=0.999
 

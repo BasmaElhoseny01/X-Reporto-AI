@@ -42,4 +42,5 @@ class Config:
     eos_token_id = 50256
     pretrained_model = "healx/gpt-2-pubmed-medium"
     use_checkpointing = True
+    # use_checkpointing = False
     debug = False

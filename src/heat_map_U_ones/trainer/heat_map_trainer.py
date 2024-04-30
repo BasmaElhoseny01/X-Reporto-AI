@@ -8,7 +8,6 @@ import os
 import gc
 from tqdm import tqdm
 import sys
-import tensorflow as tf
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -64,7 +63,7 @@ class HeatMapTrainer:
         g = torch.Generator()
         g.manual_seed(SEED)
         # [Fix] No of Workers & Shuffle
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=8,
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=2,
                                             worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         
@@ -242,6 +241,8 @@ class HeatMapTrainer:
         # VIP DON'T FORGET TO UPDATE ONE IN EVALUATION :D
         Total_loss=self.criterion(y_pred,targets)/BATCH_SIZE
 
+        if(Total_loss>100000):
+            Total_loss=0.0
         # del 
         del y_pred
         torch.cuda.empty_cache()

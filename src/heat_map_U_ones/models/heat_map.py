@@ -1,3 +1,4 @@
+import sys
 from torch import nn
 import torch
 from torchvision.models import ResNet50_Weights
@@ -7,12 +8,12 @@ import torch.nn.functional as F
 
 from torchsummary import summary
 from config import *
-
-
+import numpy as np
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
         self.model = models.densenet121(pretrained=True)
+        # self.model = models.densenet121(pretrained=False)
         self.model.classifier = nn.Linear(self.model.classifier.in_features, len(CLASSES))
         
 
@@ -29,6 +30,29 @@ class HeatMap(nn.Module):
     
     def forward(self, x):
         features=self.model.features(x) # shape: (batch_size, 1024, 7, 7)
+        # print(features)
+        # sys.exit()
+        # torch.save(x, 'heat_map_input.pth')
+
+        # has_nan = torch.isnan(x).any().item()
+
+        # if has_nan:
+        #     print("Input data contains NaN values.")
+        # else:
+            # print("Input data does not contain NaN values.")
+        # craete tensor of random no of size 16,3,224,224
+        # x = torch.randn(16, 3, 224, 224).to('cuda')
+
+        # temp = models.densenet121(pretrained=True).cuda()
+
+        # features=temp.features(x) # shape: (batch_size, 1024, 7, 7)
+        # print(features)
+        # sys.exit()
+        # features=models.densenet121(pretrained=True).to('cuda')(x)
+
+   
+        # print(features)
+        # sys.exit()
 
         # Register the hook
         # features.register_hook(self.activations_hook)
