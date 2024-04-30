@@ -1,6 +1,6 @@
 
 EPOCHS =200
-BATCH_SIZE=2
+BATCH_SIZE=1
 IMAGE_SIZE=512
 DEPTH=3
 LOAD_EPOCH=1000
@@ -9,13 +9,13 @@ NUM_THREADS=4
 #  n_epochs
 N_EPOCHS= 1000
 ITG=1
-ITD=2
+ITD=1
 LMSE=0.5
 LPERC=2.0
 LADV=20
 CONTINUE_TRAIN=True
-TRAIN_DATA= "./dataset/noisy4train.h5"
-TEST_DATA= "./dataset/noisy4test.h5"
+TRAIN_DATA= "./datasets/train_noise.h5"
+TEST_DATA= "./datasets/noisy4test.h5"
 NAME="tomogan"
 GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"
@@ -23,7 +23,7 @@ NUM_THREADS=4
 PRINT_FREQ=200
 LR=1e-4
 RESULTS_DIR='/results'
-VGG_PATH=""
+VGG_PATH="src/denoiser/models/vgg19_weights_notop.h5"
 LR_POLICY="Linear",
 
 # training:

@@ -39,6 +39,8 @@ class bkgdGen(threading.Thread):
         return self
 
 def gen_train_batch_bg(data_file_h5, mb_size, in_depth, img_size):
+    #TODO:
+    # just one image as inout and one image as output dont make this rubbish
     X, Y = None, None
     # with h5py.File(data_file_h5, 'r') as hdf_fd:
     with h5py.File("datasets/noisy4test.h5", 'r') as hdf_fd:
@@ -50,6 +52,7 @@ def gen_train_batch_bg(data_file_h5, mb_size, in_depth, img_size):
         
     while True:
         idx = np.random.randint(0, X.shape[0]-in_depth, mb_size)
+        print("idx: ", idx)
         if(X.shape[1]-img_size <= 0):
             crop_idx = 0
         else:

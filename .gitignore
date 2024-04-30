@@ -4,6 +4,7 @@ __pycache__/
 # Data sets
 All datasets
 datasets
+mlruns
 
 test_detector
 .env

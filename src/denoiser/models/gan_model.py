@@ -50,6 +50,11 @@ class UNet(nn.Module):
         x = self.up3(x, x1)
         x = self.conv2(x)
         x = self.conv3(x)
+        # TODO: 
+        # add tach layer the output from -1 to 1
+        # add 1 then devide by 2 to normalize
+        # the output should be gray scale
+        # no one make this rubish and calc loss on linear space
         return x
 
         
@@ -115,9 +120,11 @@ class TomoGAN(BaseModel):
 
         if self.isTrain:
             #TODO: we can use resnet50 as feature extractor / vgg19 first 16 layer pretrained on imagenet or loadt the model  
-            vgg19_dict = torch.load(opt.vgg_path)
-            vgg19 = models.vgg19(pretrained=False)
-            vgg19.load_state_dict(vgg19_dict)
+
+            vgg19 = models.vgg19(pretrained=True)
+            # vgg19.load_state_dict(torch.load(opt.vgg_path))
+
+            # vgg19.load_state_dict(vgg19_dict)
             if torch.cuda.is_available():
                 vgg19.features.cuda()
             self.criterionGAN = GANLoss(self.device, gan_mode='vanilla')
