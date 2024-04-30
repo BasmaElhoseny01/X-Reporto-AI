@@ -17,6 +17,7 @@ from transformers import GPT2Tokenizer
 from transformers.generation.beam_search import BeamSearchScorer
 from torchsummary import summary
 
+import sys
 class CustomGPT2(nn.Module):
     def __init__(self, config,image_config):
         """
@@ -122,6 +123,8 @@ class CustomGPT2(nn.Module):
                 self.blocks[i].ff.fc1.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_fc.bias.data
                 self.blocks[i].ff.fc2.weight.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.weight.data.T
                 self.blocks[i].ff.fc2.bias.data = gpt_with_lm_head.transformer.h[i].mlp.c_proj.bias.data
+            
+            print("loaded pre-trained weights successfully")
 
     def forward(self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -160,10 +163,17 @@ class CustomGPT2(nn.Module):
             image_hidden_states = self.image_to_text(image_hidden_states)
 
         input_ids = input_ids.view(-1, input_ids.size(-1))
+        # if torch.isnan(input_ids).any():
+        #     print("error: input_ids contains nan")
+        #     sys.exit()
         
         # apply embedding layers
         if inputs_embeds is None:
             hidden_states = self.wte(input_ids) # (batch_size, seq_len, d_model)
+
+        # if torch.isnan(hidden_states).any():
+        #     print("1 error: hidden_states contains nan")
+        #     sys.exit()
 
         if position_ids is None:
             # apply positional encoding layer
@@ -180,7 +190,6 @@ class CustomGPT2(nn.Module):
             attention_mask = torch.cat((ones, attention_mask), dim=-1)
             attention_mask = attention_mask.to(dtype=hidden_states.dtype)  # fp16 compatibility
             attention_mask = (1.0 - attention_mask) * -10000.0  #do masking
-
 
         presents = ()
         if use_cache is False:
@@ -199,6 +208,7 @@ class CustomGPT2(nn.Module):
             if self.config.use_checkpointing:
                 outputs = torch.utils.checkpoint.checkpoint(self.blocks[i], hidden_states,attention_mask, image_hidden_states,layer_past[i],use_cache,output_attentions)
                 hidden_states = outputs[0]
+
             else:
                 outputs = self.blocks[i](hidden_states, image_hidden_states=image_hidden_states,attention_mask=attention_mask,layer_past=layer_past[i],use_cache=use_cache,output_attentions=output_attentions)
                 hidden_states = outputs[0]
@@ -206,6 +216,8 @@ class CustomGPT2(nn.Module):
                 present = outputs[1]
                 presents = presents + (present,)
             
+        
+
         # compute model output logits
         logits = self.fc(hidden_states) 
 
@@ -224,7 +236,9 @@ class CustomGPT2(nn.Module):
             # Flatten the tokens
             loss_fct = CrossEntropyLoss(ignore_index=self.ignore_index)
             # convert logits dtype to float32
+
             shift_logits = shift_logits.to(dtype=torch.float32)
+
                 
             loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
             return (loss,shift_logits) 
@@ -399,20 +413,21 @@ class CustomGPT2(nn.Module):
         total_size = batch_size*beam_size
 
         input_ids = torch.full(size=(total_size, 1), fill_value=self.config.bos_token_id, dtype=torch.int64, device=device)
-        attention_mask = torch.ones(size=(batch_size, 1), dtype=torch.int64, device=device)
+        attention_mask = torch.ones(size=(total_size, 1), dtype=torch.int64, device=device)
         model_kwargs = {"attention_mask": attention_mask,
                         "use_cache": True}
         
         # convert image_hidden_state from batch_size to total_size by copying the same hidden state
-        image_hidden_states = image_hidden_states.repeat(1,beam_size,1)
- 
+        # image_hidden_states = image_hidden_states.repeat(1,beam_size,1).view(total_size,-1)
+        
+
         beam_scorer = BeamSearchScorer(
                 batch_size=batch_size,
                 num_beams=beam_size,
                 device=device,
                 length_penalty=1.0,  # length_penalty > 0.0 encourages the model to generate shorter sequences
                 do_early_stopping=False,
-                num_beam_hyps_to_keep=beam_size,
+                num_beam_hyps_to_keep=1,
             )
         
         # initialize beam_scores which stores the score of each token in the beam
@@ -449,7 +464,7 @@ class CustomGPT2(nn.Module):
 
             # calculate beam_scores
             beam_outputs = beam_scorer.process(
-                input_ids, next_token_scores, next_tokens, next_indices, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id+1
+                input_ids, next_token_scores, next_tokens, next_indices, pad_token_id=self.config.pad_token_id,eos_token_id=self.config.eos_token_id
             )
             beam_scores = beam_outputs["next_beam_scores"] # (batch_size * beam_size,)
             beam_next_tokens = beam_outputs["next_beam_tokens"] # (batch_size * beam_size,)
@@ -471,20 +486,20 @@ class CustomGPT2(nn.Module):
                     layer_past=model_kwargs["layer_past"], beam_idx=beam_idx
                 )
                 
-
+            seq_len +=1
             # if all sentences are finished or if we exceed the maximum length
             if beam_scorer.is_done or (seq_len >= max_length):
                 break
 
-            seq_len +=1
+
         # print("input_ids length: ",input_ids.size())
         sequence_outputs = beam_scorer.finalize(
             input_ids,
             beam_scores,
             next_tokens,
-            beam_idx,
+            next_indices,
             pad_token_id=self.config.pad_token_id,
-            eos_token_id=self.config.eos_token_id+1,
+            eos_token_id=self.config.eos_token_id,
             max_length=max_length+1,
         )
         # print("sequence_outputs: ",sequence_outputs)

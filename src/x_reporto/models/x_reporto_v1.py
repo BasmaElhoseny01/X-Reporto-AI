@@ -104,7 +104,7 @@ class XReportoV1(nn.Module):
                     print("Loading abnormal_classifier .....")
                     load_model(model=self.binary_classifier_region_abnormal,name='abnormal_classifier_best')
 
-                    if FREEZE_OBJECT_DETECTOR and FREEZE:
+                    if FREEZE_OBJECT_DETECTOR or FREEZE:
                         # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                         for param in self.object_detector.object_detector.parameters():
                             param.requires_grad = False
@@ -145,7 +145,7 @@ class XReportoV1(nn.Module):
                     print("Loading object_detector .....")
                     load_model(model=self.object_detector,name='object_detector_best')
 
-                    if FREEZE_OBJECT_DETECTOR and FREEZE:
+                    if FREEZE_OBJECT_DETECTOR or FREEZE:
                         # Freezing Object Detector Model [including Backbone, RPN, RoI Heads]
                         for param in self.object_detector.object_detector.parameters():
                             param.requires_grad = False
@@ -518,9 +518,9 @@ class XReportoV1(nn.Module):
                 object_detector_features = object_detector_features[selected_regions]
                 for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
                     if use_beam_search:
-                        LM_sentences_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
+                        LM_sentences_batch=self.language_model.beam_search(max_length=100,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =8,device=DEVICE,debug=False)
                     else:
-                        LM_sentences_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                        LM_sentences_batch=self.language_model.generate(max_length=100,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
                     LM_sentences.extend(LM_sentences_batch)
                 if delete:
                     # Free GPU memory

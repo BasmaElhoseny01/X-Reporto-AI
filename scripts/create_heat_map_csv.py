@@ -54,4 +54,4 @@ if __name__ == '__main__':
 
 
 # Usage:
-# python .\scripts\create_heat_map_csv.py --csv_path "./datasets/train.csv" --new_csv_path "./datasets/heat_map_train.csv"
+# python ./scripts/create_heat_map_csv.py --csv_path "./datasets/train.csv" --new_csv_path "./datasets/heat_map_train.csv"

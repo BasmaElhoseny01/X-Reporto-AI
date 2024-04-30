@@ -64,7 +64,7 @@ class HeatMapTrainer:
         g = torch.Generator()
         g.manual_seed(SEED)
         # [Fix] No of Workers & Shuffle
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=2,
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=8,
                                             worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         
@@ -120,10 +120,13 @@ class HeatMapTrainer:
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
                     
-                    #logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1},'+f'Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
-                  
+                    # logging.debug(f'[Accumulative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1},'+f'Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
+                    del images
+                    del targets
 
-            
+                torch.cuda.empty_cache()
+                gc.collect()  
+
                 if (batch_idx+1)%AVERAGE_EPOCH_LOSS_EVERY==0:
                     # Every 100 Batch print Average Loss for epoch till Now
                     logging.info(f'[Every {AVERAGE_EPOCH_LOSS_EVERY} Steps]: Epoch {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)},'+
@@ -133,16 +136,15 @@ class HeatMapTrainer:
                     self.tensor_board_writer.add_scalar(f'Training/Epoch Average Loss [Every {AVERAGE_EPOCH_LOSS_EVERY} Steps]'
                                                       ,epoch_loss/(batch_idx+1)
                                                       ,epoch * len(self.data_loader_train) + batch_idx)
-                    
-                    
+                                 
+                # Checkpoint every N steps inside epochs        
+                total_steps+=1            
+                if(total_steps%CHECKPOINT_EVERY_N == 0):
+                    save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
+                                    scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
+                                    best_loss=self.best_loss,epoch_loss=epoch_loss)
+                    total_steps=0
             # END OF EPOCH
-            # Checkpoint every N steps inside epochs        
-            total_steps+=1            
-            if(total_steps%CHECKPOINT_EVERY_N == 0):
-                save_checkpoint(epoch=epoch,batch_index=batch_idx,optimizer_state=self.optimizer.state_dict(),
-                                scheduler_state_dict=self.lr_scheduler.state_dict(),model_state=self.model.state_dict(),
-                                best_loss=self.best_loss,epoch_loss=epoch_loss)
-                total_steps=0
                 
             # [Logging]: Average Loss for epoch where each image is seen once
             logging.info(f'Epoch {epoch+1}/{EPOCHS}, Average epoch loss : {epoch_loss/(len(self.data_loader_train)):.4f}')
@@ -194,23 +196,30 @@ class HeatMapTrainer:
           
       with torch.no_grad():
         for batch_idx, (images, targets,_) in enumerate(self.data_loader_val):
-          # Move inputs to Device
-          images = images.to(DEVICE)
-          targets=targets.to(DEVICE)
+            if batch_idx % 10 == 0:
+                logging.info(f"[Every 10 batches]Computing ROC for Training Batch {batch_idx + 1}/{len(self.data_loader_train)}")
+            # Move inputs to Device
+            images = images.to(DEVICE)
+            targets=targets.to(DEVICE)
 
-          # Forward Pass
-          _,y_scores,_=self.model(images)  # Return is y_pred,y_scores
+            # Forward Pass
+            _,y_scores,_=self.model(images)  # Return is y_pred,y_scores
 
-          mask = (targets != -1).float()
+            mask = (targets != -1).float()
 
-          # apply mask to the targets
-          targets = targets * mask
+            # apply mask to the targets
+            targets = targets * mask
 
-          # y_pred = y_pred * mask
-          
-          # Cumulate all predictions ans labels
-          all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-          all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+            # y_pred = y_pred * mask
+            
+            # Cumulate all predictions ans labels
+            all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+            all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+
+            del images
+            del targets
+            torch.cuda.empty_cache()
+            gc.collect()
 
       optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:],tensor_board_card="Training")
       return optimal_thresholds
@@ -219,7 +228,6 @@ class HeatMapTrainer:
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
         # Forward Pass
         y_pred,y_scores,_=self.model(images)  # Return is y_pred,y_scores
-
 
         # targets shape is [batch_size, num_labels]
         # y_pred shape is [batch_size, num_labels]
@@ -230,17 +238,23 @@ class HeatMapTrainer:
         targets = targets * mask
         y_pred = y_pred * mask
 
+
         # VIP DON'T FORGET TO UPDATE ONE IN EVALUATION :D
-        Total_loss=self.criterion(y_pred,targets)      
+        Total_loss=self.criterion(y_pred,targets)/BATCH_SIZE
+
+        # del 
+        del y_pred
+        torch.cuda.empty_cache()
+        gc.collect()
 
         if not validate_during_training:
-            logging.debug(f"epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}")
+            logging.debug(f"epoch: {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_train)} heatmap_Loss: {Total_loss:.4f}")
             # [Tensor Board]: Avg Batch Loss
             self.tensor_board_writer.add_scalar('Training/Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
             return Total_loss
         else:
-            logging.debug(f'Validation epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
+            logging.debug(f'Validation epoch: {epoch+1}/{EPOCHS}, Batch {batch_idx + 1}/{len(self.data_loader_val)} heatmap_Loss: {Total_loss:.4f}')
             # [Tensor Board]: Avg Batch Loss 
             self.tensor_board_writer.add_scalar('Validation/Avg Batch Losses',Total_loss,epoch * len(self.data_loader_train) + batch_idx)
 
@@ -272,6 +286,11 @@ class HeatMapTrainer:
                 all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
                 all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
 
+
+                del images
+                del targets
+                torch.cuda.empty_cache()
+                gc.collect() 
 
             # average validation_total_loss
             validation_total_loss/=(len(self.data_loader_val))
@@ -369,7 +388,7 @@ def init_working_space():
     # Creating tensor_board folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     # current_datetime="test"
-    tensor_board_folder_path="./tensor_boards/heat_maps/" +  str(RUN) + f"/train_{current_datetime}"
+    tensor_board_folder_path="./tensor_boards/" +  str(RUN) + f"/train_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")

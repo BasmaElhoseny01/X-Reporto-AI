@@ -126,8 +126,19 @@ class CustomGPT2MultiHeadAttention(nn.Module):
         v = v.view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)  # (batch_size, num_heads, max_seq_len, d_model//num_heads)
 
         if image_hidden_states is not None and layer_past is None:
-            k_image = self.u_k(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
-            v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
+            # k_image = self.u_k(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
+            # v_image = self.u_v(image_hidden_states).view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
+            k_image = self.u_k(image_hidden_states)
+            v_image = self.u_v(image_hidden_states)
+            if k_image.size(0) != k.size(0):
+                num_beams = k.size(0) // k_image.size(0)
+                print(f"num_beams: {num_beams}")
+                logging.info(f"num_beams: {num_beams}")
+                k_image = k_image.repeat_interleave(num_beams, dim=0)
+                v_image = v_image.repeat_interleave(num_beams, dim=0)
+            # correct the shape of k_image, v_image
+            k_image = k_image.view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
+            v_image = v_image.view(batch_size, -1, self.num_heads, self.d_model // self.num_heads).transpose(1, 2)
             k = torch.cat((k_image, k), dim=2)
             v = torch.cat((v_image, v), dim=2)
 

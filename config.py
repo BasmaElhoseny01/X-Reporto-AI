@@ -5,6 +5,8 @@ from enum import Enum
 
 # Suppress TensorFlow INFO level logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+# os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 # Suppress Plt INFO level logs
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
@@ -31,21 +33,23 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 OPERATION_MODE=3
 MODEL_STAGE=3
 
-SEED=31
+SEED=28
 
 ############################################################# Data Configurations ############################################################
 # Paths to the external files
 training_csv_path = 'datasets/train.csv'
-validation_csv_path = 'datasets/valid.csv'
-evaluation_csv_path = 'datasets/valid.csv'
+validation_csv_path = 'datasets/valid_full.csv'
+evaluation_csv_path = 'datasets/valid_full.csv'
 test_csv_path:str = 'datasets/test.csv'
 
-heat_map_training_csv_path:str = 'datasets/heat_map_train.csv'
-heat_map_validating_csv_path:str = 'datasets/heat_map_val.csv'
-heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
+heat_map_training_csv_path:str = 'datasets/heat_map_train_balanced.csv'
+heat_map_validating_csv_path:str = 'datasets/heat_map_val_balanced.csv'
+# heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
+heat_map_evaluation_csv_path:str = 'datasets/heat_map_val_balanced.csv'
+
 
 #############################################################Training Process Parameters############################################################
-CONTINUE_TRAIN=False # Continue training
+CONTINUE_TRAIN=True # Continue training
 RECOVER=False # Recover from the last checkpoint
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
@@ -53,26 +57,29 @@ TRAIN_ROI=False # Train only ROI of the object detector
 FREEZE_OBJECT_DETECTOR=True
 FREEZE = True
 
-RUN = "6"
-EPOCHS = 1
-BATCH_SIZE = 1
+RUN = "heat_map_1"
+# RUN = "7"
+# EPOCHS = 1
+EPOCHS = 10
+BATCH_SIZE = 16
+# BATCH_SIZE = 1
 LM_Batch_Size = 29
-EFFECTIVE_BATCH_SIZE = 1
+EFFECTIVE_BATCH_SIZE = BATCH_SIZE
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
-LEARNING_RATE=0.0001
-
+LEARNING_RATE=0.0000512000
+# LEARNING_RATE=0.00005
 LR_BETA_1=0.9
 LR_BETA_2=0.999
 
 Linear_Schedular=True # Linear Schedular if True, Plateau Schedular if False [X-Reporto]
 SCHEDULAR_STEP_SIZE=1 # Number of epochs with no improvement after which learning rate will be reduced
-SCHEDULAR_GAMMA=0.8 # value multiply lr with
+SCHEDULAR_GAMMA=0.9 # value multiply lr with
 THRESHOLD_LR_SCHEDULER=1e-3 # Threshold for measuring the new optimum, to only focus on significant changes
 COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal operation after lr has been reduced.
 
 #############################################################  Debugging Configurations ############################################################
-CHECKPOINT_EVERY_N=200 # Save checkpoint every N epochs
+CHECKPOINT_EVERY_N=200 # Save checkpoint every N Steps
 AVERAGE_EPOCH_LOSS_EVERY=10
 
 # Debugging COnfigurations
@@ -87,9 +94,9 @@ else:
 ############################################################# Modules Configurations ############################################################
 # Weights of each model
 OBJECT_DETECTOR_WEIGHT = 1
-ABNORMAL_CLASSIFIER_WEIGHT = 2.5
-REGION_SELECTION_CLASSIFIER_WEIGHT = 2.5
-LM_WEIGHT = 2
+ABNORMAL_CLASSIFIER_WEIGHT = 4
+REGION_SELECTION_CLASSIFIER_WEIGHT = 4
+LM_WEIGHT = 1
 
 # Abnormal Binary Classifier Hyper Parameters
 ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0

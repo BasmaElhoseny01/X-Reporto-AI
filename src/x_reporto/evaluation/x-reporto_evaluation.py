@@ -53,7 +53,7 @@ class XReportoEvaluation():
         logging.info("Evaluation dataset loaded")
         
         # DataLoader
-        self.data_loader_val = DataLoader( dataset=dataset,batch_size=BATCH_SIZE, shuffle=False, num_workers=2, collate_fn=collate_fn)
+        self.data_loader_val = DataLoader( dataset=dataset,batch_size=BATCH_SIZE, shuffle=False, num_workers=4, collate_fn=collate_fn)
         logging.info(f"Evaluation DataLoader Loaded Size: {len(self.data_loader_val)}")
 
         # Tensor Board Writer
@@ -85,6 +85,7 @@ class XReportoEvaluation():
             LM_scores=self.validate_and_evaluate_language_model()
 
             # logging the scores
+            print("LM_scores",LM_scores)
 
             # Update [Tensor Board] the Tensor Board
             self.update_tensor_board_score(obj_detector_scores=None,region_selection_scores=None,region_abnormal_scores=None,LM_scores=LM_scores)
@@ -147,20 +148,36 @@ class XReportoEvaluation():
         with torch.no_grad():
             epoch_loss=0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_val):
+                logging.info(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
+                
                 # Check GPU memory usage
                 images = images.to(DEVICE)              
                 # Move images to Device
                 images = torch.stack([image.to(DEVICE) for image in images])
                 abnormal_classifier_targets=abnormal_classifier_targets.to("cpu")
-                abnormal_classifier_targets=abnormal_classifier_targets[0].numpy()
-                
-                lm_sentences_encoded_selected,selected_regions = self.language_model_forward_pass(images=images)
+                # abnormal_classifier_targets=abnormal_classifier_targets[0].numpy()
+                abnormal_classifier_targets=abnormal_classifier_targets.numpy()
+                try:
+                    lm_sentences_encoded_selected,selected_regions = self.language_model_forward_pass(images=images)
+                except Exception as e:
+                    # if there is an error in the forward pass, skip the batch
+                    print("Error in the forward pass")
+                    print(e)
+                    continue
                 generated_sents_for_selected_regions=tokenizer.batch_decode(lm_sentences_encoded_selected,skip_special_tokens=True,clean_up_tokenization_spaces=True)
                 
-                reference_sentences_encoded=LM_inputs['input_ids'][0].tolist()
+                selected_regions = selected_regions.to("cpu")
+
+                # print("len(LM_inputs['input_ids'][0])",len(LM_inputs['input_ids'][0]))
+                # print("lm_sentences_encoded_selected", len(lm_sentences_encoded_selected))
+                reference_sentences_encoded=LM_inputs['input_ids']
+                reference_sentences_encoded=reference_sentences_encoded[selected_regions]
+                # print("len(reference_sentences_encoded)",len(reference_sentences_encoded))
+                # reference_sentences_encoded=LM_inputs['input_ids'][0].tolist()
                 reference_sents=tokenizer.batch_decode(reference_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
                 reference_sents = np.asarray(reference_sents)
-                ref_sentences_for_selected_regions = reference_sents[selected_regions]
+                # ref_sentences_for_selected_regions = reference_sents[selected_regions]
+                ref_sentences_for_selected_regions = reference_sents
 
                 (
                 gen_sents_for_normal_selected_regions,
@@ -177,6 +194,17 @@ class XReportoEvaluation():
                 LM_sentances_generated_reference["reference_sentences_normal_selected_regions"].extend(ref_sents_for_normal_selected_regions)
                 LM_sentances_generated_reference["reference_sentences_abnormal_selected_regions"].extend(ref_sents_for_abnormal_selected_regions)
 
+                for l in range(len(reference_sents)):
+                    # print("reference_sents[l]",reference_sents[l])
+                    # print("generated_sents_for_selected_regions[l]",generated_sents_for_selected_regions[l])
+                    # print("------------------------------------------------------------------------------------------------------------------------------------")
+                    if reference_sents[l] != "":
+                        logging.info(f"Reference Sentence: {reference_sents[l]}")
+                        logging.info(f"Generated Sentence: {generated_sents_for_selected_regions[l]}")
+                        logging.info("------------------------------------------------------------------------------------------------------------------------------------")
+
+                # print progress
+                logging.debug(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
         #compute score for all sentences
         filtered_gen_sents,filtered_ref_sents=self.filter_empty_sentences(LM_sentances_generated_reference["generated_sentences"],LM_sentances_generated_reference["reference_sentences"])
         self.compute_LM_score_by_sentence("all",filtered_gen_sents,filtered_ref_sents,LM_scores)
@@ -657,13 +685,11 @@ class XReportoEvaluation():
         return Total_loss,object_detector_boxes,object_detector_detected_classes,selected_regions,predicted_abnormal_regions
     
     def language_model_forward_pass(self,images:torch.Tensor):
-        loopLength=29
-        for batch in range(BATCH_SIZE):   
-            LM_sentances,selected_regions= self.model(images=images,use_beam_search= False)
+        LM_sentances,selected_regions= self.model(images=images,use_beam_search= True)
         torch.cuda.empty_cache()
         gc.collect()
-        return LM_sentances,selected_regions[0].tolist()
-
+        # return LM_sentances,selected_regions[0].tolist()
+        return LM_sentances,selected_regions
     ########################################################### General Fuunctions ##########################################
     
     def get_sents_for_normal_abnormal_selected_regions(self,region_is_abnormal, selected_regions, generated_sentences_for_selected_regions, reference_sentences_for_selected_regions):
@@ -815,7 +841,8 @@ class XReportoEvaluation():
                 region_tensor = region_tensor.permute(2, 0, 1)
 
                 # [Tensor Board]: Evaluation Image With Boxes
-                if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
+                if DRAW_TENSOR_BOARD :
+                # if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
                     self.tensor_board_writer.add_image(f'Object Detector/'+str(batch_idx)+'_'+str(img_id), region_tensor, global_step=j+1)
         
             if MODEL_STAGE==ModelStage.CLASSIFIER.value :
@@ -851,7 +878,8 @@ class XReportoEvaluation():
                     region_selection_tensor = region_selection_tensor.permute(2, 0, 1)
 
                     # [Tensor Board]: Evaluation Image With Boxes
-                    if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
+                    # if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
+                    if DRAW_TENSOR_BOARD :
                         self.tensor_board_writer.add_image(f'Region Selection Classifier/'+str(batch_idx)+'_'+str(img_id), region_selection_tensor, global_step=j+1)            
           
                 # sys.exit()
@@ -879,7 +907,8 @@ class XReportoEvaluation():
                     abnormal_region_tensor = abnormal_region_tensor.permute(2, 0, 1)
 
                     # [Tensor Board]: Evaluation Image With Boxes
-                    if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
+                    if DRAW_TENSOR_BOARD:
+                    # if DRAW_TENSOR_BOARD and j%DRAW_TENSOR_BOARD ==0:
                         self.tensor_board_writer.add_image(f'Abnormal Classifier/'+str(batch_idx)+'_'+str(img_id), abnormal_region_tensor, global_step=j+1)            
            
             # Increment Image Id

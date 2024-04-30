@@ -29,7 +29,7 @@ def convert_nulls_to_zeros(df):
         df[column] = df[column].replace(np.nan, -1.0)
     return df
 
-def plot_histogram(df,dataset_description):
+def plot_histogram(df,dataset_description,plot=False,save=False):
     zeros=[]
     nulls=[]
     ones=[]
@@ -55,11 +55,16 @@ def plot_histogram(df,dataset_description):
     plt.xlabel('Columns')
     plt.ylabel('Frequency')
     plt.title('Frequency of Labels per class (' + dataset_description+')')
-    plt.xticks(index + bar_width, df.columns, rotation='vertical')
+    plt.xticks(index + bar_width, df.columns, rotation=45)
     plt.legend()
-    plt.show()
 
-def balance_heatmap_csv(csv_path,plot):
+    # Save the plot
+    if save:
+        plt.savefig("Histogram_"+dataset_description+".png")
+    if plot:
+        plt.show()
+
+def balance_heatmap_csv(csv_path,plot,save):
     """
     Balances the heatmap CSV file by converting null values to zeros and saves the balanced CSV.
 
@@ -88,9 +93,11 @@ def balance_heatmap_csv(csv_path,plot):
     # df = df.drop(df.columns[-1], axis=1)
 
     df=df.drop(columns=["Consolidation","Enlarged Cardiomediastinum","Fracture","Lung Lesion","Pleural Other","Pneumothorax"])
+    # df=df.drop(columns=["Enlarged Cardiomediastinum","Fracture","Lung Lesion","Pleural Other"])
 
-    if plot:
-        plot_histogram(df,"Before Balancing")
+    if plot or save:
+        plot_histogram(df,"Before_Balancing",plot=plot,save=save)
+
 
 
     # convert nulls to zeros
@@ -100,8 +107,8 @@ def balance_heatmap_csv(csv_path,plot):
     new_df = pd.concat([new_df, df], axis=1)
 
     # plot histogram
-    if plot:
-        plot_histogram(df,"After Balancing")
+    if plot or save:
+        plot_histogram(df,"After_Balancing",plot=plot,save=save)
 
     # save new_df to csv
     output_path=csv_path.replace(".csv","_balanced.csv")
@@ -117,13 +124,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv_path', type=str, help='Path to the csv file')
     parser.add_argument('--plot', action="store_true", help='Plot histogram of the labels')
+    parser.add_argument('--save', action="store_true", help='Save histogram of the labels')
 
     args = parser.parse_args()
 
-    balance_heatmap_csv(args.csv_path,args.plot)
+    balance_heatmap_csv(args.csv_path,args.plot,args.save)
 
     print("Heatmap CSV balanced successfully!")
 
 # Usage:
-# python .\scripts\balance_heatmap_csv.py --csv_path "./datasets/heat_map_train.csv"
-# python .\scripts\balance_heatmap_csv.py --csv_path "./datasets/heat_map_train.csv"  --plot
+# python ./scripts/balance_heatmap_csv.py --csv_path "./datasets/heat_map_train.csv"
+# python ./scripts/balance_heatmap_csv.py --csv_path "./datasets/heat_map_train.csv"  --plot
+# python ./scripts/balance_heatmap_csv.py --csv_path "./datasets/heat_map_train.csv"  --save

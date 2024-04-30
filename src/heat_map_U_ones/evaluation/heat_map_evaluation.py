@@ -98,10 +98,18 @@ class HeatMapEvaluation():
                 _,loss,scores=self.forward_pass(images,targets)
                 
                 evaluation_total_loss=loss
+
+                logging.info(f"Batch {batch_idx}/{len(self.data_loader_eval)} Loss: {evaluation_total_loss}")
                         
                 # Cumulate all predictions ans labels
                 all_preds = np.concatenate((all_preds, scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)         
+                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)  
+
+                del images
+                del targets
+
+            gc.collect()
+            torch.cuda.empty_cache()       
             
         return evaluation_total_loss,all_preds[1:,:],all_targets[1:,:]
     
@@ -265,7 +273,7 @@ def init_working_space():
 
     # Creating tensorboard folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    tensor_board_folder_path="./tensor_boards/" + "heat_maps/" + str(RUN)+ f"/eval_{current_datetime}"
+    tensor_board_folder_path="./tensor_boards/" + str(RUN)+ f"/eval_{current_datetime}"
     if not os.path.exists(tensor_board_folder_path):
         os.makedirs(tensor_board_folder_path)
         logging.info(f"Folder '{tensor_board_folder_path}' created successfully.")
