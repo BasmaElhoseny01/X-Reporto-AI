@@ -41,21 +41,31 @@ class DenoiserTrainer():
 
     def train(self):
         with mlflow.start_run() as run:
-            print("starting training")
             mlflow.log_param("batch_size", BATCH_SIZE)
             mlflow.log_param("depth", DEPTH)
             mlflow.log_param("epochs", EPOCHS)
             mlflow.log_param("image_size", IMAGE_SIZE)
             mlflow.log_param("generator_iterations", ITG)
             mlflow.log_param("discrimiator_iterations", ITD)
-            
+            i=0
+            gen=None
+            dis=None
             for epoch in range(EPOCHS):
+                #TODO:
+                # make normal dataloader as its better 
+                # it make sure to loop on all trainning data 
+                # make generator train many times and then train one time discriminator one time all on same example (batch) 
                 time_git_st = time.time()
+                print("i = ",i)
+
                 for _ge in range(ITG):
                     X_mb, y_mb = self.data_genrator.next()
-                    print("set_input for G")
+                    if i==0:
+                      gen=np.copy(X_mb)
+                    else:
+                      dis=np.copy(X_mb)
+                    i+=X_mb.shape[0]
                     self.model.set_input((X_mb, y_mb))
-                    print("forward G")
                     self.model.backward_G()
 
                 itr_prints_gen = '[Info] Epoch: %05d, gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f), gen_elapse: %.2fs/itr' % (\
@@ -63,14 +73,25 @@ class DenoiserTrainer():
                                 self.model.loss_G_Perc*LPERC, (time.time() - time_git_st)/ITG, )
                 time_dit_st = time.time()
 
+                if np.all(gen == dis) :
+                    print("identical")
+                    break
+                else:
+                    print("nooooooooooooooooo")
+
                 for de in range(ITD):
                     X_mb, y_mb = self.data_genrator.next()
-                    print("set_input for D")
+                    dis=np.copy(X_mb)
+                    i+=X_mb.shape[0]
                     self.model.set_input((X_mb, y_mb))
-                    print("forward_D")
                     self.model.backward_D()
                 
-                with open("outputs/iter_logs.txt", "w") as f:
+                if np.all(gen == dis) :
+                    print("identical")
+                    break
+                else:
+                    print("nooooooooooooooooo")
+                with open("src/denoiser/outputs/iter_logs.txt", "w") as f:
                     print('%s; dloss: %.2f (r%.3f, f%.3f), disc_elapse: %.2fs/itr, gan_elapse: %.2fs/itr' % (itr_prints_gen,\
                     self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
                     (time.time() - time_dit_st)/ITD, time.time()-time_git_st))
@@ -78,12 +99,9 @@ class DenoiserTrainer():
                 if epoch % (200//ITG) == 0:
                     with torch.no_grad():
                         X_test, y_test = get1batch4test(data_file_h5=TEST_DATA, in_depth=DEPTH)
-                        print("set_input for test")
                         self.model.set_input((X_test, y_test))
-                        print("forward test")
                         self.model.forward()
                         pred_img = self.model.fake_C
-                        print("saving images")
                         save2image(pred_img[0,0,:,:].detach().cpu().numpy(), '%s/it%05d.png' % (self.itr_out_dir, epoch))
                         if epoch == 0: 
                             save2image(y_test[0,0,:,:], '%s/gtruth.png' % (self.itr_out_dir))
