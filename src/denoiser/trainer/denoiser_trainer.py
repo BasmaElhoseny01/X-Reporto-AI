@@ -55,62 +55,53 @@ class DenoiserTrainer():
                 # make normal dataloader as its better 
                 # it make sure to loop on all trainning data 
                 # make generator train many times and then train one time discriminator one time all on same example (batch) 
-                time_git_st = time.time()
-                print("i = ",i)
+                for batch_idx,batch in enumerate(self.data_genrator):
+                    X_mb, y_mb = batch["image"], batch["label"]
+                    for _ge in range(ITG):
+                        self.model.set_input((X_mb, y_mb))
+                        self.model.backward_G()
 
-                for _ge in range(ITG):
-                    X_mb, y_mb = self.data_genrator.next()
-                    if i==0:
-                      gen=np.copy(X_mb)
-                    else:
-                      dis=np.copy(X_mb)
-                    i+=X_mb.shape[0]
-                    self.model.set_input((X_mb, y_mb))
-                    self.model.backward_G()
+                    itr_prints_gen = '[Info] Epoch: %05d, gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f)'(\
+                                epoch, self.model.loss_G, self.model.loss_G_MSE*LMSE, self.model.loss_G_GAN*LADV, \
+                                    self.model.loss_G_Perc*LPERC )
 
-                itr_prints_gen = '[Info] Epoch: %05d, gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f), gen_elapse: %.2fs/itr' % (\
-                            epoch, self.model.loss_G, self.model.loss_G_MSE*LMSE, self.model.loss_G_GAN*LADV, \
-                                self.model.loss_G_Perc*LPERC, (time.time() - time_git_st)/ITG, )
-                time_dit_st = time.time()
-
-                if np.all(gen == dis) :
-                    print("identical")
-                    break
-                else:
-                    print("nooooooooooooooooo")
-
-                for de in range(ITD):
-                    X_mb, y_mb = self.data_genrator.next()
-                    dis=np.copy(X_mb)
-                    i+=X_mb.shape[0]
-                    self.model.set_input((X_mb, y_mb))
-                    self.model.backward_D()
+                    for de in range(ITD):
+                        self.model.set_input((X_mb, y_mb))
+                        self.model.backward_D()
+                    
+                    with open("src/denoiser/outputs/iter_logs.txt", "w") as f:
+                        print('%s; dloss: %.2f (r%.3f, f%.3f)' % (itr_prints_gen,\
+                        self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
+                        ))
                 
-                if np.all(gen == dis) :
-                    print("identical")
-                    break
-                else:
-                    print("nooooooooooooooooo")
-                with open("src/denoiser/outputs/iter_logs.txt", "w") as f:
-                    print('%s; dloss: %.2f (r%.3f, f%.3f), disc_elapse: %.2fs/itr, gan_elapse: %.2fs/itr' % (itr_prints_gen,\
-                    self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
-                    (time.time() - time_dit_st)/ITD, time.time()-time_git_st))
-            
-                if epoch % (200//ITG) == 0:
-                    with torch.no_grad():
-                        X_test, y_test = get1batch4test(data_file_h5=TEST_DATA, in_depth=DEPTH)
+                # evaluate after finish one epoch
+                with torch.no_grad():
+                    X_test, y_test = get1batch4test(data_file_h5=TEST_DATA, in_depth=DEPTH)
+                    for batch_idx,batch in enumerate(self.data_test_genrator):
+                        X_test, y_test = batch["image"], batch["label"]
                         self.model.set_input((X_test, y_test))
                         self.model.forward()
                         pred_img = self.model.fake_C
-                        save2image(pred_img[0,0,:,:].detach().cpu().numpy(), '%s/it%05d.png' % (self.itr_out_dir, epoch))
-                        if epoch == 0: 
-                            save2image(y_test[0,0,:,:], '%s/gtruth.png' % (self.itr_out_dir))
-                            save2image(X_test[0,DEPTH//2,:,:], '%s/noisy.png' % (self.itr_out_dir))
+                        lossMSE = self.model.criterionMSE(pred_img, y_test)
+                        lossPerc = self.model.criterionPixel(pred_img, y_test)
+                        lossAdv = self.model.criterionGAN(self.model.netD(pred_img), True)
+                        lossG = lossMSE*LMSE + lossPerc*LPERC + lossAdv*LADV
+                        print('[Info] Test: gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f)' % (lossG, lossMSE, lossAdv, lossPerc))
+                        
+                        for i in range(0, X_test.shape[0], 1):
                             
-            mlflow.log_artifacts(self.itr_out_dir)
-            (ssim, psnr) = eval_metrics(y_test[0,0,:,:], pred_img[0,0,:,:].detach().cpu().numpy())
-            mlflow.log_metric("ssim", ssim)
-            mlflow.log_metric("psnr", psnr)
+                            save2image(y_test[i,0,:,:], '%s/gtruth_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                            save2image(X_test[i,DEPTH//2,:,:], '%s/noisy_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                            save2image(pred_img[i,0,:,:].detach().cpu().numpy(), '%s/pred_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                        # if epoch == 0: 
+                        #     save2image(y_test[0,0,:,:], '%s/gtruth.png' % (self.itr_out_dir))
+                        #     save2image(X_test[0,DEPTH//2,:,:], '%s/noisy.png' % (self.itr_out_dir))
+                        
+
+                    mlflow.log_artifacts(self.itr_out_dir)
+                    (ssim, psnr) = eval_metrics(y_test[0,0,:,:], pred_img[0,0,:,:].detach().cpu().numpy())
+                    mlflow.log_metric("ssim", ssim)
+                    mlflow.log_metric("psnr", psnr)
 
         sys.stdout.flush()
 
