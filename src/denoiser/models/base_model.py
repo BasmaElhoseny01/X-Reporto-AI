@@ -40,6 +40,7 @@ class BaseModel(ABC):
         self.optimizers = []
         self.image_paths = []
         self.metric = 0  # used for learning rate policy 'plateau'
+        print("train",self.isTrain)
 
 
     @abstractmethod

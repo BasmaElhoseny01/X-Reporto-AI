@@ -8,6 +8,7 @@ from src.denoiser.models.unet_parts import OutConv, DoubleConv, Down, Up
 from src.denoiser.models.base_model import BaseModel
 from src.denoiser.models.loss_functions import GANLoss, PixelLoss
 import torchvision.models as models
+from torchvision.models.vgg import VGG19_Weights
 
 
 
@@ -125,7 +126,7 @@ class TomoGAN(BaseModel):
         if self.isTrain:
             #TODO: we can use resnet50 as feature extractor / vgg19 first 16 layer pretrained on imagenet or loadt the model  
 
-            vgg19 = models.vgg19(pretrained=True)
+            vgg19 = models.vgg19(weights=VGG19_Weights.DEFAULT)
             # vgg19.load_state_dict(torch.load(opt.vgg_path))
 
             # vgg19.load_state_dict(vgg19_dict)
@@ -151,8 +152,8 @@ class TomoGAN(BaseModel):
         X_mb, y_mb = input[0], input[1]
         #X_mb = np.transpose(X_mb, (0, 3, 1, 2))
         #y_mb = np.transpose(y_mb, (0, 3, 1, 2))
-        self.real_B = torch.tensor(X_mb, dtype=torch.float32, requires_grad=True).to(self.device)
-        self.real_C = torch.tensor(y_mb, dtype=torch.float32, requires_grad=True).to(self.device)
+        self.real_B = X_mb.to(self.device)
+        self.real_C = y_mb.to(self.device)
         
     
     def forward(self):
@@ -188,15 +189,22 @@ class TomoGAN(BaseModel):
         self.set_requires_grad(self.netD, False)
         self.set_requires_grad(self.netG, True)
         self.optimizer_G.zero_grad()
+        # print("zero grad")
         gen_C = self.netG(self.real_B)
         pred_fake = self.netD(gen_C)
-        self.loss_G_GAN = self.criterionGAN(pred_fake, True)
-
+        self.loss_G_GAN = self.criterionGAN(pred_fake, True) * self.opt.ladv
+        # print("loss_G_GAN", self.loss_G_GAN)
         self.loss_G_MSE = self.criterionMSE(gen_C, self.real_C) * self.opt.lmse
+        # print("loss_G_MSE", self.loss_G_MSE)
         self.loss_G_Perc = self.criterionPixel(gen_C, self.real_C) * self.opt.lperc
+        # print("loss_G_Perc", self.loss_G_Perc)
         self.loss_G = self.loss_G_GAN + self.loss_G_MSE + self.loss_G_Perc
+        # print("loss_G", self.loss_G)
+        # print("before backward")
         self.loss_G.backward()
+        # print("after backward")
         self.optimizer_G.step()
+        # print("after step")
     
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)

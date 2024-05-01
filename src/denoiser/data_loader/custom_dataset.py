@@ -7,6 +7,7 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from src.denoiser.data_loader.generate_noise import *
 import matplotlib.pylab as plb
+from src.denoiser.config import*
 
 class CustomDataset(Dataset):
     def __init__(self, csv_file_path: str):
@@ -21,10 +22,11 @@ class CustomDataset(Dataset):
             img_path = os.path.join(os.getcwd(), img_path)
             image = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
             image=np.array(image).astype("float32")
-            image = cv2.resize(image, (1024, 1024))
+            image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
             if image is  None:
                 assert image is not None, f"Image at {img_path} is None"
             choise= np.random.choice([0,1,2,3,4,5,6])
+            choise=0
             if choise == 0:
                 image,label= add_block_pixel_noise(image, probability=0.05)
             elif choise == 1:
@@ -39,8 +41,10 @@ class CustomDataset(Dataset):
                 image,label= add_line_strip_noise(image, strip_width=5, intensity=0.5)
             else:
                 image,label= np.copy(image),np.copy(image)
-            image = cv2.resize(image, (1024, 1024))
-            label = cv2.resize(label, (1024,1024))
+            image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
+            label = cv2.resize(label, (IMAGE_SIZE,IMAGE_SIZE))
+            image = np.expand_dims(image, axis=0)
+            label = np.expand_dims(label, axis=0)
             return image, label
         except Exception as e:
             print(e)
@@ -56,8 +60,8 @@ if __name__ == "__main__":
         print(image.shape, label.shape)
         break
     # display the first image
-    plb.imshow(image[0])
+    plb.imshow(image[0][0])
     plb.show()
-    plb.imshow(label[0])
+    plb.imshow(label[0][0])
     plb.show()
 

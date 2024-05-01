@@ -1,21 +1,21 @@
 
-EPOCHS =200
+EPOCHS =10
 BATCH_SIZE=1
 IMAGE_SIZE=512
-DEPTH=3
+DEPTH=1
 LOAD_EPOCH=1000
 VERBOSE=True
 NUM_THREADS=4
 #  n_epochs
-N_EPOCHS= 1000
-ITG=1
-ITD=1
-LMSE=0.5
-LPERC=2.0
-LADV=20
-CONTINUE_TRAIN=True
-TRAIN_DATA= "./datasets/train_noise.h5"
-TEST_DATA= "./datasets/noisy4test.h5"
+N_EPOCHS= 10
+ITG=4
+ITD=2
+LMSE=1
+LPERC=4.0
+LADV=40
+CONTINUE_TRAIN=False
+TRAIN_DATA= "datasets/train-200.csv"
+TEST_DATA= "datasets/val.csv"
 NAME="tomogan"
 GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"
