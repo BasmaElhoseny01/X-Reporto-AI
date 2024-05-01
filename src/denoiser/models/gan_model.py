@@ -36,6 +36,7 @@ class UNet(nn.Module):
         self.up3 = Up(32, 32)
         self.conv2 = OutConv(32, 16, relu=True)
         self.conv3 = OutConv(16, channels_out, relu=False)
+        self.tanh = nn.Tanh()
     
     def forward(self, x):
         x1 = self.inc(x)
@@ -55,6 +56,9 @@ class UNet(nn.Module):
         # add 1 then devide by 2 to normalize
         # the output should be gray scale
         # no one make this rubish and calc loss on linear space
+        x = self.tanh(x)
+        x = (x + 1) / 2
+
         return x
 
         
@@ -161,7 +165,7 @@ class TomoGAN(BaseModel):
         #save2image(self.fake_C[0,0,:,:].detach().cpu().numpy(), self.image_paths[0])
         #save2image(self.real_C[0,0,:,:].detach().cpu().numpy(), self.image_paths[1])
         #save2image(self.real_B[0,0:self.depth//2,:,:], self.image_paths[2])
-        
+    
     
     def backward_D(self):
         self.set_requires_grad(self.netD, True)
@@ -210,10 +214,20 @@ class TomoGAN(BaseModel):
     
 
 if __name__ == "__main__":
-    batch_size = 3
-    pictures = torch.randint(0, 256, (batch_size, 1024, 1024))
-    print(pictures.shape)
-    net_G = UNet(batch_size, 1)
-    generated = net_G(pictures)
-    #print(generated.shape) 
+    
+    # Test the model unet
+    model = UNet(1, 1)
+    x = torch.randn((1,1,512,512))
+    y = model(x)
+    print(y.shape)
+    print(y)
+    # Test the discriminator
+    model = Discriminator(512)
+    x = torch.randn((1,1,512,512))
+    y = model(x)
+    print(y.shape)
+    print(y)
+    
+
+# python -m src.denoiser.models.gan_model
     
