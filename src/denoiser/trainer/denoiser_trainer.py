@@ -1,5 +1,5 @@
 
-from src.denoiser.data_loader.custom_dataset import *
+from src.denoiser.data_loader.custom_dataset_paper import *
 from src.denoiser.config import *
 import torch
 import torch.nn as nn
