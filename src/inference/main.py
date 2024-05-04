@@ -68,10 +68,12 @@ class Inference:
             plot_single_image(img=image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
 
             # Report
-            with open("report.txt", "w") as file:
+            report_path='report.txt'
+            with open(report_path, "w") as file:
                 # Iterate over each sentence in the list
                 for sentence in lm_sentences_decoded:
                     file.write(sentence + "\n")
+                print("Report Saved Successfully at: ",report_path)
 
         
         # Input is Image

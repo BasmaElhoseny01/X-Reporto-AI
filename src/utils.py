@@ -350,7 +350,13 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]],grayscale:bool=F
         - If save_path is None, the image will be displayed with bounding boxes.
         - If grayscale is True, the image will be displayed in grayscale.
     """
-    #cmap = plt.get_cmap("tab20b")
+    # Maximum number of colors
+    max_colors = 30
+    
+    # Generate distinct colors
+    cmap = plt.get_cmap('tab20')
+    colors = [cmap(i) for i in range(max_colors)]
+
     height, width = img.shape[0:2]
     # Create figure and axes
     fig, ax = plt.subplots(1, figsize=(16, 8))
@@ -364,12 +370,13 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]],grayscale:bool=F
     for i, box in enumerate(boxes):
         width = box[2] - box[0]
         height = box[3] - box[1]
+        color = colors[i % max_colors]  # Select color from the generated list
         rect = patches.Rectangle(
             (box[0], box[1]),
             width,
             height,
             linewidth=1,  # Increase linewidth
-            edgecolor="white",  # Set the box border color
+            edgecolor=color,  # Set the box border color
             facecolor="none",  # Set facecolor to none
         )
 
@@ -378,6 +385,7 @@ def plot_single_image(img: np.ndarray, boxes: List[List[float]],grayscale:bool=F
     
     if save_path:
         plt.savefig(save_path)
+        print("Image Saved Sucessfully at ",save_path)
     else:
         plt.show()
 
