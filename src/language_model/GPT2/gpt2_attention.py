@@ -132,8 +132,6 @@ class CustomGPT2MultiHeadAttention(nn.Module):
             v_image = self.u_v(image_hidden_states)
             if k_image.size(0) != k.size(0):
                 num_beams = k.size(0) // k_image.size(0)
-                print(f"num_beams: {num_beams}")
-                logging.info(f"num_beams: {num_beams}")
                 k_image = k_image.repeat_interleave(num_beams, dim=0)
                 v_image = v_image.repeat_interleave(num_beams, dim=0)
             # correct the shape of k_image, v_image
