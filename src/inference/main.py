@@ -7,6 +7,7 @@ import torch
 
 # Utility functions
 from src.utils import plot_single_image
+from config import OPERATION_MODE,OperationMode
 
 # Models
 from src.x_reporto.models.x_reporto_v1 import XReportoV1
@@ -82,13 +83,15 @@ class Inference:
 
 if __name__=="__main__":
     # Take image path from command line
+    if OperationMode.INFERENCE.value!=OPERATION_MODE :
+        raise Exception("Operation Mode is not Inference Mode")
     parser = argparse.ArgumentParser()
     parser.add_argument('image_path', type=str, help='Path to the image file')
 
     args = parser.parse_args()
 
     image_path = args.image_path
-    print(image_path)
+    print("inferencing input at",image_path)
 
     
     # Initialize the Inference class
