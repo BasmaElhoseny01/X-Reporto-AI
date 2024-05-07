@@ -57,8 +57,8 @@ class UNet(nn.Module):
         # add 1 then devide by 2 to normalize
         # the output should be gray scale
         # no one make this rubish and calc loss on linear space
-        x = self.tanh(x)
-        x = (x + 1) / 2
+        # x = self.tanh(x)
+        # x = (x + 1) / 2
 
         return x
 

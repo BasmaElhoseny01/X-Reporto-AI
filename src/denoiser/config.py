@@ -1,5 +1,5 @@
 
-EPOCHS =10
+EPOCHS =100
 BATCH_SIZE=1
 IMAGE_SIZE=512
 DEPTH=1
@@ -11,11 +11,12 @@ N_EPOCHS= 10
 ITG=4
 ITD=2
 LMSE=1
-LPERC=4.0
-LADV=40
+LPERC=100
+LADV=20
+
 CONTINUE_TRAIN=False
-TRAIN_DATA= "datasets/train-200.csv"
-TEST_DATA= "datasets/val.csv"
+TRAIN_DATA= "datasets/train.csv"
+TEST_DATA= "datasets/train.csv"
 NAME="tomogan"
 GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"
