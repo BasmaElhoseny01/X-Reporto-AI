@@ -38,10 +38,10 @@ class DenoiserTrainer():
         self.model = TomoGAN(self.arg)
         # self.data_genrator = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_noise.h5", mb_size=BATCH_SIZE, in_depth=DEPTH, img_size=IMAGE_SIZE), max_prefetch=16)
         self.train_dataset = CustomDataset(csv_file_path=TRAIN_DATA)
-        # self.test_dataset = CustomDataset(csv_file_path=TEST_DATA)
+        self.test_dataset = CustomDataset(csv_file_path=TEST_DATA)
         self.train_dataloader = torch.utils.data.DataLoader(self.train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_THREADS)
-        # self.test_dataloader = torch.utils.data.DataLoader(self.test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_THREADS)
-
+        self.test_dataloader = torch.utils.data.DataLoader(self.test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_THREADS)
+        
         self.itr_out_dir = NAME + '-itrOut'
         if os.path.isdir(self.itr_out_dir): 
             shutil.rmtree(self.itr_out_dir)
@@ -91,7 +91,7 @@ class DenoiserTrainer():
                     # X_test, y_test = get1batch4test(data_file_h5=TEST_DATA, in_depth=DEPTH)
                     total_ssims = 0
                     total_psnrs = 0
-                    for batch_idx,(image, lable) in enumerate(self.train_dataloader):
+                    for batch_idx,(image, lable) in enumerate(self.test_dataloader):
                         X_test, y_test = image, lable
                         # move to gpu
                         X_test = X_test.to(self.model.device)
@@ -125,7 +125,7 @@ class DenoiserTrainer():
                             total_psnrs += psnr
                             mlflow.log_metric("ssim", ssim)
                         mlflow.log_metric("psnr", psnr)
-                    print('[Info] Test: AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/len(self.train_dataloader), total_psnrs/len(self.train_dataloader)))
+                    print('[Info] Test: AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/len(self.test_dataloader), total_psnrs/len(self.test_dataloader)))
 
         sys.stdout.flush()
 

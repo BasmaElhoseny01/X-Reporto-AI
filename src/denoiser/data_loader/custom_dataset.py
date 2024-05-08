@@ -45,6 +45,9 @@ class CustomDataset(Dataset):
             label = cv2.resize(label, (IMAGE_SIZE,IMAGE_SIZE))
             image = np.expand_dims(image, axis=0)
             label = np.expand_dims(label, axis=0)
+            image /= 255.0
+            label /= 255.0
+            
             return image, label
         except Exception as e:
             print(e)

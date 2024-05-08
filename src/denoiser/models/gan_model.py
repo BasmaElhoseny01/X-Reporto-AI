@@ -26,12 +26,16 @@ class UNet(nn.Module):
         self.conv1 = DoubleConv(8, 32)
         self.down1 = Down(32, 64)
         self.down2 = Down(64, 128)
-        self.down3 = Down(128, 128)
+        self.down3 = Down(128, 256)
+        self.down4 = Down(256, 512)
+        self.down5 = Down(512, 512)
         self.bottom = nn.Sequential(
-            nn.Conv2d(kernel_size=3, in_channels=128, out_channels=128, padding=1),
+            nn.Conv2d(kernel_size=3, in_channels=512, out_channels=512, padding=1),
             nn.ReLU()
         )
 
+        self.up01 = Up(512, 256)
+        self.up10 = Up(256, 128)
         self.up1 = Up(128, 64)
         self.up2 = Up(64, 32)
         self.up3 = Up(32, 32)
@@ -41,17 +45,21 @@ class UNet(nn.Module):
     
     def forward(self, x):
         x1 = self.inc(x)
-        x1 = self.conv1(x1)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x4 = self.bottom(x4)
-
-        x = self.up1(x4, x3)
-        x = self.up2(x, x2)
-        x = self.up3(x, x1)
+        x2 = self.conv1(x1)
+        x3 = self.down1(x2)
+        x4 = self.down2(x3)
+        x5 = self.down3(x4)
+        x6 = self.down4(x5)
+        x7 = self.down5(x6)
+        x7 = self.bottom(x7)
+        x = self.up01(x7, x6)
+        x = self.up10(x, x5)
+        x = self.up1(x, x4)
+        x = self.up2(x, x3)
+        x = self.up3(x, x2)
         x = self.conv2(x)
         x = self.conv3(x)
+        
         # TODO: 
         # add tach layer the output from -1 to 1
         # add 1 then devide by 2 to normalize
