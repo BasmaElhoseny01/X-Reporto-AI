@@ -25,6 +25,8 @@ def eval_metrics(actual, pred):
     # move actual to cpu
     actual = actual.detach().cpu().numpy()
     actual = (actual-np.min(actual) )/ (np.max(actual) - np.min(actual))
+    pred = (pred-np.min(pred) )/ (np.max(pred) - np.min(pred))
+
     ssim = compare_ssim(actual, pred, data_range=1, full=True)[0]
     mse = np.mean((actual - pred) ** 2) 
     if(mse == 0): 

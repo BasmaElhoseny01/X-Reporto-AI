@@ -125,7 +125,7 @@ class DenoiserTrainer():
                             total_psnrs += psnr
                             mlflow.log_metric("ssim", ssim)
                         mlflow.log_metric("psnr", psnr)
-                    print('[Info] Test: AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/len(self.test_dataloader), total_psnrs/len(self.test_dataloader)))
+                    print('[Info] Test: AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
 
         sys.stdout.flush()
 
