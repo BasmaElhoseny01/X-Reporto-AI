@@ -14,9 +14,11 @@ LMSE=1
 LPERC=100
 LADV=20
 
-CONTINUE_TRAIN=False
+OUTPUT_DIR="src/denoiser/denoiser_models"
+CONTINUE_TRAIN=True
 TRAIN_DATA= "datasets/train.csv"
 TEST_DATA= "datasets/trainX.csv"
+# TEST_DATA= "datasets/train.csv"
 NAME="tomogan"
 GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"

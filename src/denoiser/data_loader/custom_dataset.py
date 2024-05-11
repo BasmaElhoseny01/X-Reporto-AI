@@ -25,26 +25,33 @@ class CustomDataset(Dataset):
             image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
             if image is  None:
                 assert image is not None, f"Image at {img_path} is None"
-            choise= np.random.choice([0,1,2,3,4,5,6])
-            choise=0
+            choise= np.random.choice([0,1,2,3])
+            # choise=1
             if choise == 0:
                 image,label= add_block_pixel_noise(image, probability=0.05)
             elif choise == 1:
-                image,label= add_convolve_noise(image, sigma=1.5, sigma_noise=25) 
+                image,label= add_convolve_noise(image, sigma=1, sigma_noise=18) 
             elif choise == 2:
-                image,label= add_keep_patch_noise(image, height_patch_size=image.shape[0]-25,width_patch_size=image.shape[1]-25 )
+                image,label= add_salt_and_pepper_noise(image, salt_prob=0.05, pepper_prob=0.05)
             elif choise == 3:
-                image,label= add_pad_rotate_project_noise(image, max_rotation=2)
-            elif choise == 4:
-                image,label= add_gaussian_projection_noise(image, sigma=0.1)
-            elif choise == 5:
-                image,label= add_line_strip_noise(image, strip_width=5, intensity=0.5)
+                image,label= add_gaussian_projection_noise(image, sigma=20)
+            # elif choise == 4:
+            #     image,label= add_pad_rotate_project_noise(image, max_rotation=2)
+            # elif choise == 5:
+            #     image,label= add_line_strip_noise(image, strip_width=5, intensity=0.5)
+            # if choise == 6:
+            #     image,label= add_keep_patch_noise(image, height_patch_size=image.shape[0]-25,width_patch_size=image.shape[1]-25 )
             else:
                 image,label= np.copy(image),np.copy(image)
             image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
             label = cv2.resize(label, (IMAGE_SIZE,IMAGE_SIZE))
             image = np.expand_dims(image, axis=0)
             label = np.expand_dims(label, axis=0)
+            # check for image and label type is float32
+            if image.dtype != np.float32:
+                image = image.astype(np.float32)
+            if label.dtype != np.float32:
+                label = label.astype(np.float32)
             image /= 255.0
             label /= 255.0
             

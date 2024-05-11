@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from skimage.metrics import structural_similarity as compare_ssim
 
 # Block-Pixels: where each pixel is set to zero with probability p
 def add_block_pixel_noise(image, probability=0.05):
@@ -20,7 +21,7 @@ def add_block_pixel_noise(image, probability=0.05):
     return noisy_image,image
 
 # Convolve-Noise: where images are convolved with a Gaussian kernel k, and noise is added.
-def add_convolve_noise(image, sigma=1.0, mean=0, sigma_noise=25):
+def add_convolve_noise(image, sigma=1.0, mean=0, sigma_noise=18):
     """
     Add Convolve-Noise to an image.
     
@@ -196,19 +197,64 @@ def add_line_strip_noise(image, strip_width=5, intensity=0.5):
     
     return copy_image,image
 
+def add_salt_and_pepper_noise(image, salt_prob, pepper_prob):
+    """
+    Add salt and pepper noise to the image.
+    
+    Parameters:
+        image (numpy.ndarray): Input image.
+        salt_prob (float): Probability of adding salt noise.
+        pepper_prob (float): Probability of adding pepper noise.
+        
+    Returns:
+        numpy.ndarray: Image with salt and pepper noise added.
+    """
+    noisy_image = np.copy(image)
+    salt_mask = np.random.random(image.shape) < salt_prob
+    pepper_mask = np.random.random(image.shape) < pepper_prob
+    
+    noisy_image[salt_mask] = 255
+    noisy_image[pepper_mask] = 0
+    
+    return noisy_image,image
+
+
+
+
+def eval_metrics(actual, pred):
+    # move actual to cpu
+    actual = (actual-np.min(actual) )/ (np.max(actual) - np.min(actual))
+    pred = (pred-np.min(pred) )/ (np.max(pred) - np.min(pred))
+
+    ssim = compare_ssim(actual, pred, data_range=1, full=True)[0]
+    mse = np.mean((actual - pred) ** 2) 
+    if(mse == 0): 
+        psnr = 100
+    else:
+        max_pixel = 1
+        psnr = 20 * np.log10(max_pixel / np.sqrt(mse))
+    return ssim, psnr
 if __name__ == "__main__":
    
     # Load image
-    image = plt.imread("Logo.jpg")
+    img_path = "datasets/mimic-cxr-jpg/files/p10/p10001884/s50279568/3892f17f-8fa034e8-e9b81865-01c48bbb-b9452626.jpg"
+    image = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
+    image=np.array(image).astype("float32")
     image = cv2.resize(image, (512, 512))
+    print(image.shape)
     # noisy_image,image = add_block_pixel_noise(image, probability=0.05)
-    # noisy_image,image = add_convolve_noise(image, sigma=1.5, sigma_noise=25) 
+    noisy_image,image = add_convolve_noise(image) 
     # noisy_image,image = add_keep_patch_noise(image, height_patch_size=500,width_patch_size=500 ) #keep patch noise is the size we want to keep
     ########### noisy_image,image = add_extract_patch_noise(image, height_patch_size=512,width_patch_size=25)  # Adjust patch size as needed
     # noisy_image,image = add_pad_rotate_project_noise(image, max_rotation=2) 
-    # noisy_image,image = add_gaussian_projection_noise(image, sigma=0.1)
-    noisy_image,image = add_line_strip_noise(image, strip_width=5, intensity=0.5)
+    # noisy_image,image = add_gaussian_projection_noise(image, sigma=20)
+    # noisy_image,image = add_line_strip_noise(image, strip_width=5, intensity=0.5)
+    # noisy_image,image = add_salt_and_pepper_noise(image, salt_prob=0.05, pepper_prob=0.05)
     # Display images
+    # normalize the images
+    ssim, psnr = eval_metrics(image, noisy_image)
+    print("PSNR:", psnr)
+    print("SSIM:", ssim)
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
     plt.imshow(image, cmap="gray")

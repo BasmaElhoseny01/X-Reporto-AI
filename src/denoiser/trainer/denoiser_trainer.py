@@ -46,8 +46,16 @@ class DenoiserTrainer():
         if os.path.isdir(self.itr_out_dir): 
             shutil.rmtree(self.itr_out_dir)
         os.mkdir(self.itr_out_dir) 
+        if CONTINUE_TRAIN:
+            self.load_model()
+    
+    def load_model(self):
+        self.model.load_models()
+    def save_model(self):
+        self.model.save_models()
 
     def train(self):
+        best_ssim = 0
         with mlflow.start_run() as run:
             mlflow.log_param("batch_size", BATCH_SIZE)
             mlflow.log_param("depth", DEPTH)
@@ -125,6 +133,11 @@ class DenoiserTrainer():
                             total_psnrs += psnr
                             mlflow.log_metric("ssim", ssim)
                         mlflow.log_metric("psnr", psnr)
+                        
+                    if total_ssims/(len(self.test_dataloader)*BATCH_SIZE) > best_ssim:
+                        best_ssim = total_ssims/(len(self.test_dataloader)*BATCH_SIZE)
+                        self.save_model()
+
                     print('[Info] Test: AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
 
         sys.stdout.flush()
