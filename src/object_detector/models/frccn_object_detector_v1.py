@@ -21,6 +21,7 @@ from src.object_detector.models.feature_extraction import FeatureNetwork
 import sys
 
 from config import TRAIN_ROI, TRAIN_RPN
+from src.utils import save_model
 
 '''
 image is grey scale 1*512*512 [Grey Scale 512*512]  
@@ -206,7 +207,8 @@ class FrcnnObjectDetectorV1(nn.Module):
         # Getting Proposals of RPN Bounding Boxes
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
         proposals, proposal_losses = self.rpn(images, features, targets)
-
+        print("saving resnt model")
+        save_model(self.backbone, "resnet50.pth")
 
         if TRAIN_RPN:
             # Turn Off Object ROI output 

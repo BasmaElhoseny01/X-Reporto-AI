@@ -8,7 +8,7 @@ from typing import Optional, List, Dict
 
 from config import *
 # Utils 
-from src.utils import load_model
+from src.utils import load_model,save_model
 
 # Modules
 from src.object_detector.models.object_detector_factory import ObjectDetector
@@ -333,6 +333,7 @@ class XReportoV1(nn.Module):
             # Object Detector
             self.object_detector(images=images)
             _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)
+            # save_model(model=self.object_detector,name='resnet50_best')
             #print("bounding_boxes",bounding_boxes.shape) #[batch_size x 29 x 4]
             #print("detected_classes",detected_classes.shape) #[batch_size x 29]
             #print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
