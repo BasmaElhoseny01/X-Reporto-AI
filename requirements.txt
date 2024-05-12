@@ -1,20 +1,37 @@
+jaxlib @ https://storage.googleapis.com/jax-releases/cuda12/jaxlib-0.4.26+cuda12.cudnn89-cp310-cp310-manylinux2014_x86_64.whl#sha256=813cf1fe3e7ca4dbf5327d6e7b4fc8521e92d8bba073ee645ae0d5d036a25750 
+
+tensorboard==2.15.2
+tensorboard-data-server==0.7.2
+tensorflow @ https://storage.googleapis.com/colab-tf-builds-public-09h6ksrfwbb9g9xv/tensorflow-2.15.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=a2ec79931350b378c1ef300ca836b52a55751acb71a433582508a07f0de57c42
+tensorflow-datasets==4.9.4
+tensorflow-estimator==2.15.0
+tensorflow-gcs-config==2.15.0
+tensorflow-hub==0.16.1
+tensorflow-io-gcs-filesystem==0.37.0
+tensorflow-metadata==1.15.0
+tensorflow-probability==0.23.0
+tf_keras==2.15.1
+
+torch @ https://download.pytorch.org/whl/cu121/torch-2.2.1%2Bcu121-cp310-cp310-linux_x86_64.whl#sha256=1adf430f01ff649c848ac021785e18007b0714fdde68e4e65bd0c640bf3fb8e1
+torchaudio @ https://download.pytorch.org/whl/cu121/torchaudio-2.2.1%2Bcu121-cp310-cp310-linux_x86_64.whl#sha256=23f6236429e2bf676b820e8e7221a1d58aaf908bff2ba2665aa852df71a97961
+torchdata==0.7.1
+torch-summary
+torchsummary==1.5.1
+torchmetrics
+torchtext==0.17.1
+torchvision @ https://download.pytorch.org/whl/cu121/torchvision-0.17.1%2Bcu121-cp310-cp310-linux_x86_64.whl#sha256=27af47915f6e762c1d44e58e8088d22ac97445668f9f793524032b2baf4f34bd
+tornado==6.3.3
+tqdm==4.66.4
 transformers
+
+pandas
+matplotlib
+
+
 spacy
 spacy-transformers
 albumentations
-torch-summary
 imagesize
 gdown
-tensorboard
-pycocoevalcap
-evaluate
-torchvision
-torchsummary
-torch
-pandas
-matplotlib
-spacy
-tensorflow
-torchmetrics
 pycocoevalcap
 evaluate
