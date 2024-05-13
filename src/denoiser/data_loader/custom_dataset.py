@@ -20,6 +20,8 @@ class CustomDataset(Dataset):
         try:
             img_path =self.data_info.iloc[idx, 3]
             img_path = os.path.join(os.getcwd(), img_path)
+            # replace \ with / for windows
+            img_path = img_path.replace("\\", "/")
             image = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
             image=np.array(image).astype("float32")
             image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
