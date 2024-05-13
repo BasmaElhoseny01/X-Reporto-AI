@@ -11,10 +11,11 @@ import imagesize
 import spacy
 import torch
 from tqdm import tqdm
-
+from PIL import Image
+import sys
 from data_preprocessing.constants import ANATOMICAL_REGIONS, IMAGE_IDS_TO_IGNORE, SUBSTRINGS_TO_REMOVE
 import data_preprocessing.section_parser as sp
-from paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg, path_full_dataset,path_dataset,path_dataset_csv
+from data_preprocessing.paths import path_chest_imagenome, path_mimic_cxr, path_mimic_cxr_jpg, path_full_dataset,path_dataset,path_dataset_csv
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -25,24 +26,29 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s]: %(message)s")
 log = logging.getLogger(__name__)
 
 
-NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 10
+# NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
+NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 20000
 
 
 class DataPreprocessing:
-    def __init__(self,train_only = False):
+    def __init__(self,train_only = False,valid_only = False,test_only = False,valid_test_only = False,fix_bboxes = True):
         self.path_chest_imagenome = path_chest_imagenome
         self.path_mimic_cxr = path_mimic_cxr
         self.path_mimic_cxr_jpg = path_mimic_cxr_jpg
         self.path_full_dataset = path_full_dataset
-
-        self.path_to_images_to_avoid = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits", "images_to_avoid.csv")
-
-        self.image_ids_to_avoid = self.get_images_to_avoid()
-
-        if train_only:
-            self.csv_files_dict = self.get_train_files()
-        else:
-            self.csv_files_dict = self.get_train_val_test_csv_files()
+        if fix_bboxes == False:
+            self.path_to_images_to_avoid = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits", "images_to_avoid.csv")
+            self.image_ids_to_avoid = self.get_images_to_avoid()
+            if train_only:
+                self.csv_files_dict = self.get_train_files()
+            elif valid_only:
+                self.csv_files_dict = self.get_val_files()
+            elif test_only:
+                self.csv_files_dict = self.get_test_files()
+            elif valid_test_only:
+                self.csv_files_dict = self.get_val_test_csv_files()
+            else:
+                self.csv_files_dict = self.get_train_val_test_csv_files()
     def get_train_files(self):
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(path_chest_imagenome, "silver_dataset", "splits")
@@ -55,6 +61,18 @@ class DataPreprocessing:
         """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
         path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
         return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["train", "valid", "test"]}
+    def get_val_files(self):
+        """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
+        path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
+        return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["valid"]} 
+    def get_test_files(self):
+        """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
+        path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
+        return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["test"]}
+    def get_val_test_csv_files(self):
+        """Return a dict with datasets as keys and paths to the corresponding csv files in the chest-imagenome dataset as values"""
+        path_to_splits_folder = os.path.join(self.path_chest_imagenome, "silver_dataset", "splits")
+        return {dataset: os.path.join(path_to_splits_folder, dataset) + ".csv" for dataset in ["valid", "test"]}
     def get_images_to_avoid(self):
         image_ids_to_avoid = set()
 
@@ -69,7 +87,7 @@ class DataPreprocessing:
                 image_ids_to_avoid.add(image_id)
 
         return image_ids_to_avoid
-    def create_new_csv_files(self):
+    def create_new_csv_files(self,check_images = False):
         if os.path.exists(self.path_full_dataset):
             log.error(f"Full dataset folder already exists at {self.path_full_dataset}.")
             log.error("Delete dataset folder or rename variable path_full_dataset in src/path_datasets_and_weights.py before running script to create new folder!")
@@ -77,12 +95,12 @@ class DataPreprocessing:
 
         os.mkdir(self.path_full_dataset)
         for dataset, path_csv_file in self.csv_files_dict.items():
-            self.create_new_csv_file(dataset, path_csv_file)
+            self.create_new_csv_file(dataset, path_csv_file,check_images=check_images)
 
-    def create_new_csv_file(self, dataset, path_csv_file):
+    def create_new_csv_file(self, dataset, path_csv_file,check_images = False):
         log.info(f"Creating new {dataset}.csv file...")
 
-        csv_rows = self.get_rows(dataset, path_csv_file, self.image_ids_to_avoid)
+        csv_rows = self.get_rows(dataset, path_csv_file, self.image_ids_to_avoid,check_images=check_images)
 
         self.write_rows_in_new_csv_file(dataset, csv_rows)
 
@@ -170,8 +188,9 @@ class DataPreprocessing:
 
             if region_name not in ANATOMICAL_REGIONS:
                 continue
-
+            #TODO: remove
             phrases = self.convert_phrases_to_single_string(attribute["phrases"], sentence_tokenizer)
+            # phrases = None
             is_abnormal = self.determine_if_abnormal(attribute["attributes"])
 
             attributes_dict[region_name] = (phrases, is_abnormal)
@@ -214,7 +233,7 @@ class DataPreprocessing:
 
             return sum(1 for row in csv_reader)
     
-    def get_rows(self, dataset: str, path_csv_file: str, image_ids_to_avoid: set) -> list[list]:
+    def get_rows(self, dataset: str, path_csv_file: str, image_ids_to_avoid: set,check_images:bool = False) -> list[list]:
         
         csv_rows = []
         num_rows_created = 0
@@ -238,7 +257,7 @@ class DataPreprocessing:
         num_images_without_29_regions = 0
         missing_images = []
         missing_reports = []
-
+        incorrect = 0
         with open(path_csv_file) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=",")
 
@@ -265,7 +284,7 @@ class DataPreprocessing:
                 image_file_path = row[4].replace(".dcm", ".jpg")
                 mimic_image_file_path = os.path.join(self.path_mimic_cxr_jpg, image_file_path)
 
-                if not os.path.exists(mimic_image_file_path):
+                if not os.path.exists(mimic_image_file_path) and check_images:
                     missing_images.append(mimic_image_file_path)
                     continue
 
@@ -296,7 +315,10 @@ class DataPreprocessing:
                 bbox_phrase_exist_vars = []
                 bbox_is_abnormal_vars = []
 
-                width, height = imagesize.get(mimic_image_file_path)
+                if check_images:
+                    width, height = imagesize.get(mimic_image_file_path)
+                # scaling_factor_height = height / 224
+                # scaling_factor_width = width / 224
 
                 # counter to see if given image contains bbox coordinates for all 29 regions
                 # if image does not bbox coordinates for 29 regions, it's still added to the train and test dataset,
@@ -312,13 +334,16 @@ class DataPreprocessing:
                     x2 = obj_dict["original_x2"]
                     y2 = obj_dict["original_y2"]
 
+
                     region_to_bbox_coordinates_dict[region_name] = [x1, y1, x2, y2]
 
                 for anatomical_region in ANATOMICAL_REGIONS:
                     bbox_coords = region_to_bbox_coordinates_dict.get(anatomical_region, None)
 
                     # if there are no bbox coordinates or they are faulty, then don't add them to image information
-                    if bbox_coords is None or self.coordinates_faulty(height, width, *bbox_coords):
+                    # if bbox_coords is None :
+                    #     num_faulty_bboxes += 1
+                    if check_images and (bbox_coords is None or self.coordinates_faulty(height, width, *bbox_coords)):
                         num_faulty_bboxes += 1
                     else:
                         x1, y1, x2, y2 = bbox_coords
@@ -326,10 +351,11 @@ class DataPreprocessing:
                         # it is possible that the bbox is only partially inside the image height and width (if e.g. x1 < 0, whereas x2 > 0)
                         # to prevent these cases from raising an exception, we set the coordinates to 0 if coordinate < 0, set to width if x-coordinate > width
                         # and set to height if y-coordinate > height
-                        x1 = self.check_coordinate(x1, width)
-                        y1 = self.check_coordinate(y1, height)
-                        x2 = self.check_coordinate(x2, width)
-                        y2 = self.check_coordinate(y2, height)
+                        if check_images:
+                            x1 = self.check_coordinate(x1, width)
+                            y1 = self.check_coordinate(y1, height)
+                            x2 = self.check_coordinate(x2, width)
+                            y2 = self.check_coordinate(y2, height)
 
                         bbox_coords = [x1, y1, x2, y2]
 
@@ -473,4 +499,92 @@ class DataPreprocessing:
         image = image / 255.
         image = (image - mean) / std
         return image
-   
+    def adjust_bounding_boxes(self,csv_file: str,new_csv_file: str) -> None:
+        total_num_rows = self.get_total_num_rows(csv_file)
+        old_height ,old_width = 224,224
+        with open(csv_file) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=",")
+            # write the header line in the new csv file
+            with open(new_csv_file, "w") as f:
+                writer = csv.writer(f)
+                writer.writerow(next(csv_reader))
+            count_faulty = 0
+            for row in tqdm(csv_reader, total=total_num_rows):
+                mimic_image_file_path = row[3]
+                # replace \ with / in mimic_image_file_path
+                mimic_image_file_path = mimic_image_file_path.replace("\\", "/")
+                # update the row with the new bbox coordinates
+                row[3] = row[3].replace("\\", "/")
+                # check if the image exists
+                if not os.path.exists(mimic_image_file_path):
+                    print(mimic_image_file_path)
+                    continue
+
+                # read the image
+                # image = cv2.imread(mimic_image_file_path, cv2.IMREAD_UNCHANGED)
+                width,height = get_image_dimensions(mimic_image_file_path)
+                # height, width = image.shape
+
+                # calculate the scaling factors
+                scaling_factor_height = height / old_height
+                scaling_factor_width = width / old_width
+
+                # get the bbox coordinates
+                bbox_coordinates = row[4]
+                # convert the bbox coordinates string to a list of lists
+                bbox_coordinates = eval(bbox_coordinates)
+                bbox_coordinates = np.array(bbox_coordinates)
+                bbox_coordinates = bbox_coordinates.reshape(-1, 4)
+                new_bbox_coordinates = []
+                is_faulty = False
+                for bbox in bbox_coordinates:
+                    x1, y1, x2, y2 = bbox
+
+                    # scale the bbox coordinates
+                    # check if the bbox coordinates are faulty
+                    if self.coordinates_faulty(height, width, x1, y1, x2, y2):
+                        is_faulty = True
+                        print("faulty "+str(count_faulty))
+                        count_faulty +=1
+                        break
+                        
+                    # check if the bbox coordinates are within the image dimensions
+                    x1 = self.check_coordinate(x1, width)
+                    y1 = self.check_coordinate(y1, height)
+                    x2 = self.check_coordinate(x2, width)
+                    y2 = self.check_coordinate(y2, height)
+
+
+                    bbox = [x1, y1, x2, y2]
+                    # bbox = np.array(bbox)
+                    new_bbox_coordinates.append(bbox)
+                
+                if is_faulty:
+                    continue
+                # update the row with the new bbox coordinates
+                row[4] = new_bbox_coordinates
+
+                # write the updated row in the csv file
+                with open(new_csv_file, "a") as f:
+                    writer = csv.writer(f)
+                    writer.writerow(row)
+
+def get_image_dimensions(image_path):
+    try:
+        # Open the image file without loading its contents
+        with Image.open(image_path) as img:
+            # Get the dimensions (width, height) of the image
+            width, height = img.size
+            return width, height
+    except FileNotFoundError:
+        print("File not found.")
+    except Exception as e:
+        print("An error occurred:", e)
+
+if __name__=="__main__":
+    data=DataPreprocessing(train_only=False,valid_only=False,test_only = True,valid_test_only=False,fix_bboxes=False)
+    check_images = True
+    data.create_new_csv_files(check_images=check_images)
+    # data.adjust_bounding_boxes("./datasets/train.csv","./datasets/newtrain.csv")
+
+# python -m data_preprocessing.create

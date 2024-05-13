@@ -14,12 +14,18 @@ from torchvision.transforms import v2
 from PIL import Image
 import random
 from torchvision import transforms
+# Logging
+# from logger_setup import setup_logging
+# import logging
+# from config import *
+
+# setup_logging(log_file_path='./logs/x_reporto_trainer.log',bash=True,periodic_logger=PERIODIC_LOGGING)
 
 # Parameters
 IMAGE_INPUT_SIZE=512
 MEAN=0.474
 STD=0.301
-ANGLE=150
+ANGLE=2
 
 # implement transforms as augmentation with gaussian noise, random rotation
 
@@ -39,7 +45,8 @@ class TransformLibrary(object):
     
     def __init__(self, transform_type:str ='train'):
         if (transform_type == 'train'):
-            #print("TransformLibrary called in init train")
+            print("TransformLibrary called in init train")
+            # logging.info("TransformLibrary called in init train")
             self.transform =A.Compose(
                 [
                     # we want the long edge of the image to be resized to IMAGE_INPUT_SIZE, and the short edge of the image to be padded to IMAGE_INPUT_SIZE on both sides,
@@ -50,7 +57,7 @@ class TransformLibrary(object):
                     A.GaussNoise(),
                     #  rotate between -2 and 2 degrees
                     # A.Affine(rotate=(-ANGLE, ANGLE)),
-                    A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE),keep_ratio=True),
+                    A.Affine(mode=cv2.BORDER_CONSTANT, cval=0, rotate=(-ANGLE, ANGLE)),
 
                     # PadIfNeeded: pads both sides of the shorter edge with 0's (black pixels)
                     A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
@@ -63,7 +70,7 @@ class TransformLibrary(object):
                         [
                             A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
                             A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                            A.Normalize(mean=MEAN, std=MEAN),
+                            A.Normalize(mean=MEAN, std=STD),
                             ToTensorV2(),
                         ], bbox_params=A.BboxParams(format="pascal_voc", label_fields=['class_labels'])
                     )

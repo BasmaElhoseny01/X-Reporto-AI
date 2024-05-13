@@ -1,0 +1,17 @@
+1.
+2.
+3.
+4.
+5.
+
+Chest X-Ray DataSet Papers:
+0. ....: ChestX-Ray Dataset Description 
+1. ChestX-ray8 Hospital-scale Chest X-ray Database and Benchmarks.pdf:
+	. Describing Data set of chestX-Ray8 which has 8 main disaeses Class and small portion of Diseases Bounding Box
+	. Perfect Explaination for locatization of dieases[Heat Map] is attached in the pdf Paper :D
+2. TorchXRayVision.pdf:
+	. library of chest X-ray datasets and models
+	. Perfect Statsiics on the classes of datasets + Segmentation masks
+3. CheXNet: Radiologist-Level Pneumonia Detection on Chest X-Rays with Deep Learning.pdf
+	. Pneumonia Detection + extenstion to the 14 class of diseases
+	. Loss is Weighted loss cross entrropy
