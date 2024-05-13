@@ -1,7 +1,7 @@
 from src.denoiser.options.base_option import BaseOptions
 import yaml
 from src.denoiser.config import*
-class TrainOptions(BaseOptions):
+class TestOptions(BaseOptions):
 
     def __init__(self):
         BaseOptions.__init__(self)
@@ -17,10 +17,10 @@ class TrainOptions(BaseOptions):
         self.lmse = LMSE
         self.lperc = LPERC
         self.ladv = LADV
-        self.train_data = TRAIN_DATA
         self.test_data =TEST_DATA
         self.lr_policy = LR_POLICY
-        self.continue_train = CONTINUE_TRAIN 
-        self.resnet_path = RESNET_PATH
-        self.isTrain = True
-        
+        self.continue_train = True 
+
+        self.results_dir = RESULTS_DIR
+        self.phase = 'test'
+        self.isTrain = False

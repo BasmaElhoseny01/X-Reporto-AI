@@ -38,10 +38,13 @@ class DenoiserTrainer():
         self.model = TomoGAN(self.arg)
         # self.data_genrator = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_noise.h5", mb_size=BATCH_SIZE, in_depth=DEPTH, img_size=IMAGE_SIZE), max_prefetch=16)
         self.train_dataset = CustomDataset(csv_file_path=TRAIN_DATA)
-        self.test_dataset = CustomDataset(csv_file_path=TEST_DATA)
+        self.test_dataset = CustomDataset(csv_file_path=EVAL_DATA)
         self.train_dataloader = torch.utils.data.DataLoader(self.train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_THREADS)
         self.test_dataloader = torch.utils.data.DataLoader(self.test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_THREADS)
         
+        self.schedular_gen = optim.lr_scheduler.StepLR(self.model.optimizer_G, step_size=15, gamma=0.5)
+        self.schedular_dis = optim.lr_scheduler.StepLR(self.model.optimizer_D, step_size=15, gamma=0.5)
+
         self.itr_out_dir = NAME + '-itrOut'
         if os.path.isdir(self.itr_out_dir): 
             shutil.rmtree(self.itr_out_dir)
@@ -55,7 +58,7 @@ class DenoiserTrainer():
         self.model.save_models()
 
     def train(self):
-        best_ssim = 0
+        best_psnt = 0
         with mlflow.start_run() as run:
             mlflow.log_param("batch_size", BATCH_SIZE)
             mlflow.log_param("depth", DEPTH)
@@ -67,6 +70,7 @@ class DenoiserTrainer():
             for epoch in range(EPOCHS):
                 print('[Info] Epoch: %i' % (epoch))
                 total_epochs_loss = 0
+                adv_loss = 10000000000
               #TODO:
               # make normal dataloader as its better 
               # it make sure to loop on all trainning data 
@@ -74,26 +78,34 @@ class DenoiserTrainer():
 
                 for batch_idx,(image, lable) in enumerate(self.train_dataloader):
                     X_mb, y_mb = image, lable
+                    # itr_prints_gen=''
+                    # if GEN:
                     for _ge in range(ITG):
                         self.model.set_input((X_mb, y_mb))
                         self.model.backward_G()
 
                     itr_prints_gen = ' Epoch: %i,batch %i, gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f)' % (\
-                     epoch,batch_idx, self.model.loss_G, self.model.loss_G_MSE, self.model.loss_G_GAN, \
-                         self.model.loss_G_Perc, )
+                    epoch,batch_idx, self.model.loss_G, self.model.loss_G_MSE, self.model.loss_G_GAN, \
+                        self.model.loss_G_Perc, )
                     total_epochs_loss += self.model.loss_G
+                      
+                      # with open("src/denoiser/outputs/iter_logs.txt", "w") as f:
+                      #   print('%s;' % (itr_prints_gen ))
 
+                    # else :
                     for de in range(ITD):
                         self.model.set_input((X_mb, y_mb))
                         self.model.backward_D()
-                    
+                  
                     with open("src/denoiser/outputs/iter_logs.txt", "w") as f:
                         print('%s; dloss: %.2f (r%.3f, f%.3f)' % (itr_prints_gen,\
                         self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
                         ))
               
                 print("average loss for epoch %d is %.2f" % (epoch, total_epochs_loss/len(self.train_dataloader)))
-
+                # if not GEN and adv_loss>self.model.loss_D :
+                #     adv_loss = self.model.loss_D
+                #     self.save_model()
                 # evaluate after finish one epoch
                 with torch.no_grad():
                     # X_test, y_test = get1batch4test(data_file_h5=TEST_DATA, in_depth=DEPTH)
@@ -131,15 +143,17 @@ class DenoiserTrainer():
                             (ssim, psnr) = eval_metrics(y_test[i,0,:,:], pred_img[i,0,:,:].detach().cpu().numpy())
                             total_ssims += ssim
                             total_psnrs += psnr
-                            mlflow.log_metric("ssim", ssim)
-                        mlflow.log_metric("psnr", psnr)
                         
-                    if total_ssims/(len(self.test_dataloader)*BATCH_SIZE) > best_ssim:
-                        best_ssim = total_ssims/(len(self.test_dataloader)*BATCH_SIZE)
+                    if total_psnrs/(len(self.test_dataloader)*BATCH_SIZE) > best_psnt :
+                        best_psnt = total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)
                         self.save_model()
 
-                    print('[Info] Test: AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
-
+                    print('[Info] Evaluation : AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
+                # if GEN:
+                self.schedular_gen.step()
+                # else:
+                self.schedular_dis.step()
+            print('[Info] Best PSNR: %.2f' % (best_psnt))
         sys.stdout.flush()
 
 if __name__ == "__main__":

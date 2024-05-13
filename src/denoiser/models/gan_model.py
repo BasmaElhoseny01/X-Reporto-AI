@@ -8,10 +8,31 @@ from src.denoiser.models.unet_parts import OutConv, DoubleConv, Down, Up
 from src.denoiser.models.base_model import BaseModel
 from src.denoiser.models.loss_functions import GANLoss, PixelLoss
 import torchvision.models as models
-from torchvision.models.vgg import VGG19_Weights
+from torchvision.models import VGG19_Weights
 from src.denoiser.config import OUTPUT_DIR
+from torchvision.models import resnet50, ResNet50_Weights
 
 
+class FeatureNetwork(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = None
+        self.feature_extractor = None
+        self.out_channels = None
+        self.image_size = None
+        self.device = None
+        self.model = None
+        self.feature_extractor = None
+        self.feature_extractor = resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.feature_extractor.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.out_channels = self.feature_extractor.layer4[-1].conv3.out_channels
+        self.feature_extractor = nn.Sequential(*list(self.feature_extractor.children())[:-2])
+        # self.feature_extractor.out_channels = self.feature_extractor.layer4[-1].conv3.out_channels
+        self.image_size = 512
+    
+    def __call__(self, x):
+        return self.feature_extractor(x)
+    
 
 def calculate_feature_output_size(img_size, kernel_size, padding, stride):
     return int((img_size - kernel_size + 2*padding)/stride) + 1
@@ -117,7 +138,7 @@ class TomoGAN(BaseModel):
         BaseModel.__init__(self, opt)
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         self.visual_names = ['real_B', 'fake_C', 'real_C']
-        if self.isTrain:
+        if self.isTrain :
             self.model_names = ['G', 'D']
         else:
             self.model_names = ['G']
@@ -135,22 +156,26 @@ class TomoGAN(BaseModel):
         if self.isTrain:
             #TODO: we can use resnet50 as feature extractor / vgg19 first 16 layer pretrained on imagenet or loadt the model  
 
+            # vgg19 = FeatureNetwork()
+            # vgg19.load_state_dict(torch.load(opt.resnet_path))
+
             vgg19 = models.vgg19(weights=VGG19_Weights.DEFAULT)
+            vgg19= vgg19.features
             # vgg19.load_state_dict(torch.load(opt.vgg_path))
 
             # vgg19.load_state_dict(vgg19_dict)
             if torch.cuda.is_available():
-                vgg19.features.cuda()
+                vgg19.cuda()
             self.criterionGAN = GANLoss(self.device, gan_mode='vanilla')
             self.criterionMSE = torch.nn.MSELoss()
-            self.criterionPixel = PixelLoss(vgg19.features, self.device)
+            self.criterionPixel = PixelLoss(vgg19, self.device)
 
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(0.5, 0.999))
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(0.5, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
             if torch.cuda.is_available():
-                vgg19.features.cuda()
+                vgg19.cuda()
         else:
             web_dir = os.path.join(opt.results_dir, opt.name, str(opt.load_epoch))
             self.image_paths = ['{}/images/{}.png'.format(web_dir, 'reconstructed'),
@@ -217,11 +242,13 @@ class TomoGAN(BaseModel):
     
     def save_models(self):
         torch.save(self.netG.state_dict(), os.path.join(OUTPUT_DIR, 'netG.pth'))
-        torch.save(self.netD.state_dict(), os.path.join(OUTPUT_DIR, 'netD.pth'))
+        if self.isTrain:
+          torch.save(self.netD.state_dict(), os.path.join(OUTPUT_DIR, 'netD.pth'))
     
     def load_models(self):
         self.netG.load_state_dict(torch.load(os.path.join(OUTPUT_DIR, 'netG.pth')))
-        self.netD.load_state_dict(torch.load(os.path.join(OUTPUT_DIR, 'netD.pth')))
+        if self.isTrain:
+          self.netD.load_state_dict(torch.load(os.path.join(OUTPUT_DIR, 'netD.pth')))
 
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)

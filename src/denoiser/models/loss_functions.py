@@ -53,6 +53,8 @@ class PixelLoss(nn.Module):
     def __call__(self, prediction, target):
         vggf_gt = self.feature_extractor(torch.cat([target, target, target], 1)).to(self.device)
         vggf_gen = self.feature_extractor(torch.cat([prediction, prediction, prediction], 1)).to(self.device)
+        # vggf_gt = self.feature_extractor(target).to(self.device)
+        # vggf_gen = self.feature_extractor(prediction).to(self.device)
         loss = nn.MSELoss()
         return loss(vggf_gt, vggf_gen)
 
