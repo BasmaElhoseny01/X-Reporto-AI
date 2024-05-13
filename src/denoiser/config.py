@@ -1,6 +1,6 @@
 
 EPOCHS =100
-BATCH_SIZE=2
+BATCH_SIZE=16
 IMAGE_SIZE=512
 DEPTH=1
 LOAD_EPOCH=1000
@@ -16,10 +16,10 @@ LADV=20
 # GEN=True
 
 OUTPUT_DIR="src/denoiser/denoiser_models"
-CONTINUE_TRAIN=True
-TRAIN_DATA= "datasets/train.csv"
-TEST_DATA= "datasets/trainX.csv"
-EVAL_DATA= "datasets/trainX.csv"
+CONTINUE_TRAIN=False
+TRAIN_DATA= "datasets/traindata.csv"
+TEST_DATA= "datasets/evaldata.csv"
+EVAL_DATA= "datasets/testdata.csv"
 # TEST_DATA= "datasets/train.csv"
 NAME="tomogan"
 GPU_IDS=0

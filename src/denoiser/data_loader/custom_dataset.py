@@ -26,7 +26,7 @@ class CustomDataset(Dataset):
             if image is  None:
                 assert image is not None, f"Image at {img_path} is None"
             choise= np.random.choice([0,1,2,3,4])
-            choise=2
+            # choise=2
             if choise == 0:
                 image,label= add_block_pixel_noise(image, probability=0.05)
             elif choise == 1:
