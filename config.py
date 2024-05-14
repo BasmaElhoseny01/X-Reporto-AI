@@ -30,7 +30,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Inference/ Testing / 
-OPERATION_MODE=4
+OPERATION_MODE=1
 MODEL_STAGE=3
 
 SEED=24
@@ -49,26 +49,26 @@ heat_map_evaluation_csv_path:str = 'datasets/heat_map_val_balanced.csv'
 
 
 #############################################################Training Process Parameters############################################################
-CONTINUE_TRAIN=True # Continue training
+CONTINUE_TRAIN=False # Continue training
 RECOVER=False # Recover from the last checkpoint
 TRAIN_RPN=False # Tain only RPN of the object detector
 TRAIN_ROI=False # Train only ROI of the object detector
 
-FREEZE_OBJECT_DETECTOR=True
-FREEZE = True
+FREEZE_OBJECT_DETECTOR=False
+FREEZE = False
 
-# RUN = "heat_map_2"
-RUN = "7"
-EPOCHS = 1
-# EPOCHS = 10
-# BATCH_SIZE = 32
-BATCH_SIZE = 1
-LM_Batch_Size = 1
+RUN = "heat_map_4"
+# RUN = "7"
+# EPOCHS = 1
+EPOCHS = 5
+BATCH_SIZE = 32
+# BATCH_SIZE = 4
+LM_Batch_Size = 64
 EFFECTIVE_BATCH_SIZE = BATCH_SIZE
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 
-# LEARNING_RATE=0.0000512000
-LEARNING_RATE=0.00005
+LEARNING_RATE=0.0000512000
+# LEARNING_RATE=0.00003
 LR_BETA_1=0.9
 LR_BETA_2=0.999
 
@@ -80,7 +80,7 @@ COOLDOWN_LR_SCHEDULER= 0 # Number of epochs to wait before resuming normal opera
 
 #############################################################  Debugging Configurations ############################################################
 CHECKPOINT_EVERY_N=200 # Save checkpoint every N Steps
-AVERAGE_EPOCH_LOSS_EVERY=10
+AVERAGE_EPOCH_LOSS_EVERY=50
 
 # Debugging COnfigurations
 DEBUG=True
@@ -96,7 +96,7 @@ else:
 OBJECT_DETECTOR_WEIGHT = 1
 ABNORMAL_CLASSIFIER_WEIGHT = 4
 REGION_SELECTION_CLASSIFIER_WEIGHT = 4
-LM_WEIGHT = 1
+LM_WEIGHT = 2
 
 # Abnormal Binary Classifier Hyper Parameters
 ABNORMAL_CLASSIFIER_POS_WEIGHT= 6.0

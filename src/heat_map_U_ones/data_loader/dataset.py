@@ -20,10 +20,14 @@ class HeatMapDataset(Dataset):
 
         # Select Columns of Class
         self.data_info = self.data_info.loc[:, self.data_info.columns.isin(CLASSES)]
-          
-        # Replace Uncertain Labels
-        # self.data_info.iloc = self.data_info.replace(np.nan, 0.0)
-        # self.data_info.iloc = self.data_info.replace(-1.0, 1.0)
+        
+        # if (transform_type != 'train'):
+        # Make sure CLASSES is a list of valid column names in self.data_info
+        valid_columns = [col for col in CLASSES if col in self.data_info.columns]
+
+        # Replace -1.0 with 1.0 in specified columns
+        self.data_info[valid_columns] = self.data_info[valid_columns].replace(-1.0, 0.0) #[OLd NAns]
+        # self.data_info[valid_columns] = self.data_info[valid_columns].replace(np.nan, -1.0)
           
         # Get the headers
         self.headers = self.data_info.columns.tolist()

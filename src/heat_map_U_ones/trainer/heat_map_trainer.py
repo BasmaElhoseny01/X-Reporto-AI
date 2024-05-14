@@ -63,11 +63,11 @@ class HeatMapTrainer:
         g = torch.Generator()
         g.manual_seed(SEED)
         # [Fix] No of Workers & Shuffle
-        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=2,
+        self.data_loader_train = DataLoader(dataset=self.dataset_train,batch_size=BATCH_SIZE, shuffle=True, num_workers=8,
                                             worker_init_fn=seed_worker, generator=g)
         logging.info(f"Training DataLoader Loaded Size: {len(self.data_loader_train)}")
         
-        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
+        self.data_loader_val = DataLoader(dataset=self.dataset_val,batch_size=BATCH_SIZE, shuffle=False, num_workers=8)
         logging.info(f"Validation DataLoader Loaded Size: {len(self.data_loader_val)}")
         
         # Best Loss
@@ -156,6 +156,9 @@ class HeatMapTrainer:
             gc.collect()
 
 
+            # [TODO] Reove this just for prevent crash
+            self.save_model(model=self.model,name="heat_map",epoch=epoch,validation_loss=5)
+
             # Compute ROC
             # [TODO] Fix
             self.model.optimal_thresholds=self.compute_training_ROC(epoch=epoch)
@@ -188,7 +191,9 @@ class HeatMapTrainer:
         logging.info("Training Done")
         
     def compute_training_ROC(self,epoch):
-      logging.info("Computing ROC for Training .....")
+      logging.info("Computing ROC for Training [0.5]*10.....")
+      optimal_thresholds=0.5*np.ones(len(CLASSES))  # [STOP]    
+      return optimal_thresholds
 
       all_preds= np.zeros((1, len(CLASSES)))
       all_targets= np.zeros((1, len(CLASSES)))
@@ -217,6 +222,7 @@ class HeatMapTrainer:
 
             del images
             del targets
+            del mask
             torch.cuda.empty_cache()
             gc.collect()
 
@@ -284,12 +290,13 @@ class HeatMapTrainer:
                 validation_total_loss+=total_loss
 
                 # Cumulate all predictions ans labels
-                all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+                # all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+                # all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
 
 
                 del images
                 del targets
+                del y_scores
                 torch.cuda.empty_cache()
                 gc.collect() 
 
