@@ -11,6 +11,7 @@ import torchvision.models as models
 from torchvision.models import VGG19_Weights
 from src.denoiser.config import OUTPUT_DIR
 from torchvision.models import resnet50, ResNet50_Weights
+from src.denoiser.options.train_option import TrainOptions
 
 
 class FeatureNetwork(nn.Module):
@@ -192,6 +193,10 @@ class TomoGAN(BaseModel):
     
     def forward(self):
         self.fake_C = self.netG(self.real_B)
+        # standrize the output to be between 0 and 1
+        # self.fake_C = (self.fake_C + 1) / 2
+        self.fake_C = (self.fake_C - self.fake_C.min()) / (self.fake_C.max() - self.fake_C.min())
+            
     
     def compute_visuals(self):
         self.fake_C = self.fake_C[0,0,:,:]
@@ -268,17 +273,27 @@ class TomoGAN(BaseModel):
 if __name__ == "__main__":
     
     # Test the model unet
-    model = UNet(1, 1)
+    # model = UNet(1, 1)
+    # x = torch.randn((1,1,512,512))
+    # y = model(x)
+    # print(y.shape)
+    # print(y.max(), y.min())
+    # # Test the discriminator
+    # model = Discriminator(512)
+    # x = torch.randn((1,1,512,512))
+    # y = model(x)
+    # print(y.shape)
+    # print(y.max(), y.min())
+    opt=TrainOptions()
+    model = TomoGAN(opt=opt)
     x = torch.randn((1,1,512,512))
-    y = model(x)
-    print(y.shape)
-    print(y)
-    # Test the discriminator
-    model = Discriminator(512)
-    x = torch.randn((1,1,512,512))
-    y = model(x)
-    print(y.shape)
-    print(y)
+    y = torch.randn((1,1,512,512))
+    model.set_input((x, y))
+    model.forward()
+    faks=model.fake_C
+    print(faks)
+    print(faks.max(), faks.min())
+ 
     
 
 # python -m src.denoiser.models.gan_model

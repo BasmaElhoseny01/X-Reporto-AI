@@ -117,6 +117,11 @@ else:
 # SAVE_TO_DRIVE=False # don't change this in server mode
 SAVE_IMAGES=False # don't change this in server mode
 DRAW_TENSOR_BOARD=100 # Draw Tensor Board every N batches
+############################################################## data_loader Configurations ############################################################
+IMAGE_INPUT_SIZE=512
+MEAN=0.474
+STD=0.301
+ANGLE=2
 
 
  
