@@ -20,7 +20,7 @@ class CustomDataset(Dataset):
                         [
                             A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
                             A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                            A.Normalize(mean=MEAN, std=STD),
+                            # A.Normalize(mean=MEAN, std=STD),
                             ToTensorV2(),
                         ]
                     )
@@ -57,11 +57,18 @@ class CustomDataset(Dataset):
             #     image,label= add_keep_patch_noise(image, height_patch_size=image.shape[0]-25,width_patch_size=image.shape[1]-25 )
             else:
                 image,label= np.copy(image),np.copy(image)
+            
+            if image.dtype != np.float32:
+                image = image.astype(np.float32)
+            if label.dtype != np.float32:
+                label = label.astype(np.float32)
+            image /= 255.0
+            label /= 255.0
+            
             image=self.transform(image=image)["image"]
             label=self.transform(image=label)["image"]
-            image = (image - image.min()) / (image.max() - image.min())
-            label = (label - label.min()) / (label.max() - label.min())
-            
+            # image = (image - image.min()) / (image.max() - image.min())
+            # label = (label - label.min()) / (label.max() - label.min())
             return image, label
         except Exception as e:
             print(e)
