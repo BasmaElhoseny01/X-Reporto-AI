@@ -59,6 +59,7 @@ class DenoiserTrainer():
 
     def train(self):
         best_psnt = 0
+        best_ssim = 0
         with mlflow.start_run() as run:
             mlflow.log_param("batch_size", BATCH_SIZE)
             mlflow.log_param("depth", DEPTH)
@@ -144,9 +145,13 @@ class DenoiserTrainer():
                             total_ssims += ssim
                             total_psnrs += psnr
                         
+                    if total_ssims/(len(self.test_dataloader)*BATCH_SIZE) > best_ssim :
+                        best_ssim = total_ssims/(len(self.test_dataloader)*BATCH_SIZE)
+                        self.save_model()
                     if total_psnrs/(len(self.test_dataloader)*BATCH_SIZE) > best_psnt :
                         best_psnt = total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)
-                        self.save_model()
+                        torch.save(self.model.netG, os.path.join(OUTPUT_DIR, 'netGpsnr.pth'))
+                        torch.save(self.model.netD, os.path.join(OUTPUT_DIR, 'netDpsnr.pth'))
 
                     print('[Info] Evaluation : AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
                 # if GEN:
