@@ -195,7 +195,7 @@ class TomoGAN(BaseModel):
         self.fake_C = self.netG(self.real_B)
         # standrize the output to be between 0 and 1
         # self.fake_C = (self.fake_C + 1) / 2
-        self.fake_C = (self.fake_C - self.fake_C.min()) / (self.fake_C.max() - self.fake_C.min())
+        # self.fake_C = (self.fake_C - self.fake_C.min()) / (self.fake_C.max() - self.fake_C.min())
             
     
     def compute_visuals(self):
