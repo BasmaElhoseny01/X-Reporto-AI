@@ -20,6 +20,7 @@ def save2image(d_img, filename):
         f_img = f_img
     # normalize the image
     f_img = (f_img - np.min(f_img)) / (np.max(f_img) - np.min(f_img))
+    f_img = f_img * 255
     f_img = f_img.astype(np.uint8)
     imageio.imwrite(filename, f_img)
 
