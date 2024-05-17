@@ -11,7 +11,7 @@ import mlflow
 from src.denoiser.utils import *
 from src.denoiser.models.gan_model import TomoGAN
 from src.denoiser.options.train_option import TrainOptions
-from src.denoiser.data_loader.custom_dataset import CustomDataset
+from src.denoiser.data_loader.custom_dataset_old import CustomDataset
 
 
 # opt = {
