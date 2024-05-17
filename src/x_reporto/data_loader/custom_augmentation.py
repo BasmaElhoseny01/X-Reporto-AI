@@ -122,8 +122,8 @@ class CustomTransform(object):
 
         image = self.transform(Image.fromarray(image))
         #print size of image
-        print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image.size()[1])
-        print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image)
+        # print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image.size()[1])
+        # print("ooooooooooooooooooooooooooooooooooooooooooooooooooooo",image)
         transformed_bbox=[apply_transform_to_bbox(bboxes[i], self.transform.transforms[-3], image.size())for i in range(len(bboxes))] 
         return {'image':image,'bboxes':transformed_bbox,'class_labels':class_labels}
 

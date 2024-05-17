@@ -5,7 +5,14 @@ import numpy as np
 from PIL import Image
 import os
 from skimage.metrics import structural_similarity as compare_ssim
-
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+from config import *
+import cv2
+transform =  A.Compose(
+                        [
+                            A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+                        ])
 def save2image(d_img, filename):
     img = d_img
     _min, _max = img.min(), img.max()
@@ -18,6 +25,8 @@ def save2image(d_img, filename):
         f_img = f_img.detach().cpu().numpy()
     else:
         f_img = f_img
+    # add padding
+    f_img = transform(image=f_img)["image"]
     # normalize the image
     f_img = (f_img - np.min(f_img)) / (np.max(f_img) - np.min(f_img))
     f_img = f_img * 255

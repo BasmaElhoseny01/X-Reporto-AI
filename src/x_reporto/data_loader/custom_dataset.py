@@ -13,9 +13,11 @@ from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from torchvision.transforms import v2
 import ast
+from torch.utils.data import Dataset, DataLoader
 from src.x_reporto.data_loader.custom_augmentation import CustomAugmentation
 from src.x_reporto.data_loader.tokenizer import Tokenizer
 from src.language_model.GPT2.config import Config
+import matplotlib.pylab as plb
 class CustomDataset(Dataset):
     def __init__(self, dataset_path: str, transform_type:str ='train',checkpoint:str='healx/gpt-2-pubmed-medium'):
         self.dataset_path = dataset_path # path to csv file
@@ -180,3 +182,18 @@ class CustomDataset(Dataset):
         LM_inputs['attention_mask']=torch.stack(attention_mask)
         print("inside Custon dataset")
         return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
+if __name__ == "__main__":
+    # create a dataset object
+    dataset = CustomDataset("datasets/train.csv",transform_type='val')
+    # create a dataloader object
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
+    # get the first batch
+    for object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample in dataloader:
+        print(object_detector_sample["image"].shape )
+        break
+    # display the first image
+    # image = image.numpy()
+    # label = label.numpy()
+    print(object_detector_sample["image"].max(), object_detector_sample["image"].min())
+    plb.imshow(object_detector_sample["image"][0][0],cmap="gray")
+    plb.show()

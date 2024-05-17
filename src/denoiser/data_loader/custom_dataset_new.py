@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from src.denoiser.data_loader.generate_noise import *
 import matplotlib.pylab as plb
 from src.denoiser.config import*
+from config import *
 
 class CustomDataset(Dataset):
     def __init__(self, csv_file_path: str):
@@ -24,11 +25,12 @@ class CustomDataset(Dataset):
             img_path = img_path.replace("\\", "/")
             image = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
             image=np.array(image).astype("float32")
-            image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
+            # image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
+            image=self.longest_max_size(image=image,max_size=IMAGE_SIZE)
             if image is  None:
                 assert image is not None, f"Image at {img_path} is None"
             choise= np.random.choice([0,1,2,3,4])
-            # choise=2
+            # choise=3
             if choise == 0:
                 image,label= add_block_pixel_noise(image, probability=0.05)
             elif choise == 1:
@@ -37,16 +39,11 @@ class CustomDataset(Dataset):
                 image,label= add_salt_and_pepper_noise(image, salt_prob=0.05, pepper_prob=0.05)
             elif choise == 3:
                 image,label= add_gaussian_projection_noise(image, sigma=20)
-            # elif choise == 4:
-            #     image,label= add_pad_rotate_project_noise(image, max_rotation=2)
-            # elif choise == 5:
-            #     image,label= add_line_strip_noise(image, strip_width=5, intensity=0.5)
-            # if choise == 6:
-            #     image,label= add_keep_patch_noise(image, height_patch_size=image.shape[0]-25,width_patch_size=image.shape[1]-25 )
             else:
                 image,label= np.copy(image),np.copy(image)
-            image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
-            label = cv2.resize(label, (IMAGE_SIZE,IMAGE_SIZE))
+            # image = cv2.resize(image, (IMAGE_SIZE, IMAGE_SIZE))
+            # label = cv2.resize(label, (IMAGE_SIZE,IMAGE_SIZE))
+
             image = np.expand_dims(image, axis=0)
             label = np.expand_dims(label, axis=0)
             # check for image and label type is float32
@@ -61,6 +58,36 @@ class CustomDataset(Dataset):
         except Exception as e:
             print(e)
             return None
+
+    def longest_max_size(self,image, max_size, interpolation=cv2.INTER_AREA):
+        """
+        Resize the image such that the longest side matches max_size, maintaining the aspect ratio.
+
+        Args:
+        image (numpy.ndarray): Input image.
+        max_size (int): Desired size of the longest side of the image.
+        interpolation (int): Interpolation method (default is cv2.INTER_AREA).
+
+        Returns:
+        numpy.ndarray: Resized image.
+        """
+        # Get the dimensions of the image
+        height, width = image.shape[:2]
+
+        # Determine the scaling factor
+        if height > width:
+            scale_factor = max_size / height
+        else:
+            scale_factor = max_size / width
+
+        # Calculate new dimensions
+        new_width = int(width * scale_factor)
+        new_height = int(height * scale_factor)
+
+        # Resize the image
+        resized_image = cv2.resize(image, (new_width, new_height), interpolation=interpolation)
+        
+        return resized_image
         
 if __name__ == "__main__":
     # create a dataset object
@@ -72,8 +99,8 @@ if __name__ == "__main__":
         print(image.shape, label.shape)
         break
     # display the first image
-    plb.imshow(image[0][0],cmap="gray")
+    plb.imshow(image[0][0])
     plb.show()
-    plb.imshow(label[0][0],cmap="gray")
+    plb.imshow(label[0][0])
     plb.show()
 
