@@ -49,14 +49,18 @@ class DenoiserTrainer():
         if os.path.isdir(self.itr_out_dir): 
             shutil.rmtree(self.itr_out_dir)
         os.mkdir(self.itr_out_dir) 
+        
         if CONTINUE_TRAIN:
             self.load_model()
+
+        if LOAD_FROM_BATCH:
+            self.model.load_every_batch()
     
     def load_model(self):
         self.model.load_models()
     def save_model(self):
         self.model.save_models()
-
+    
     def train(self):
         best_psnt = 0
         best_ssim = 0
@@ -102,7 +106,10 @@ class DenoiserTrainer():
                         print('%s; dloss: %.2f (r%.3f, f%.3f)' % (itr_prints_gen,\
                         self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
                         ))
-              
+                
+                    if ((batch_idx+1) % PRINT_FREQ) == 0:
+                      self.model.save_every_batch()
+
                 print("average loss for epoch %d is %.2f" % (epoch, total_epochs_loss/len(self.train_dataloader)))
                 # if not GEN and adv_loss>self.model.loss_D :
                 #     adv_loss = self.model.loss_D

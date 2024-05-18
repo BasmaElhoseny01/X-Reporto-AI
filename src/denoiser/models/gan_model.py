@@ -9,7 +9,7 @@ from src.denoiser.models.base_model import BaseModel
 from src.denoiser.models.loss_functions import GANLoss, PixelLoss
 import torchvision.models as models
 from torchvision.models import VGG19_Weights
-from src.denoiser.config import OUTPUT_DIR
+from src.denoiser.config import OUTPUT_DIR,BATCH_OUTPUT_DIR
 from torchvision.models import resnet50, ResNet50_Weights
 from src.denoiser.options.train_option import TrainOptions
 
@@ -255,6 +255,14 @@ class TomoGAN(BaseModel):
         if self.isTrain:
           self.netD.load_state_dict(torch.load(os.path.join(OUTPUT_DIR, 'netD.pth')))
 
+    def save_every_batch(self):
+        torch.save(self.netG.state_dict(), os.path.join(BATCH_OUTPUT_DIR, 'batch_netG.pth'))
+        torch.save(self.netD.state_dict(), os.path.join(BATCH_OUTPUT_DIR, 'batch_netD.pth'))
+        
+    def load_every_batch(self):
+        self.netG.load_state_dict(torch.load(os.path.join(BATCH_OUTPUT_DIR, 'batch_netG.pth')))
+        self.netD.load_state_dict(torch.load(os.path.join(BATCH_OUTPUT_DIR, 'batch_netD.pth')))
+        
     def optimize_parameters(self):
         self.forward()                   # compute fake images: G(A)
         # update D
