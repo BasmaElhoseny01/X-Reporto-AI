@@ -31,6 +31,7 @@ RESULTS_DIR='/results'
 VGG_PATH="src/denoiser/models/vgg19_weights_notop.h5"
 LR_POLICY="Linear"
 RESNET_PATH="src/denoiser/denoiser_models/resnet50.pth"
+IMAGE_INPUT_SIZE=512
 
 # training:
 #   n_epochs: 1000

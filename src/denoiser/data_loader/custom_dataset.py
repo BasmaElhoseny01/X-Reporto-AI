@@ -9,7 +9,7 @@ from src.denoiser.data_loader.generate_noise import *
 import matplotlib.pylab as plb
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-from config import *
+# from config import *
 from src.denoiser.config import*
 
 class CustomDataset(Dataset):
