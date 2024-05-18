@@ -7,10 +7,10 @@ import pandas as pd
 from torch.utils.data import Dataset, DataLoader
 from src.denoiser.data_loader.generate_noise import *
 import matplotlib.pylab as plb
-from src.denoiser.config import*
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from config import *
+from src.denoiser.config import*
 
 class CustomDataset(Dataset):
     def __init__(self, csv_file_path: str):
@@ -20,6 +20,14 @@ class CustomDataset(Dataset):
                         [
                             A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
                             # A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+                            # A.Normalize(mean=MEAN, std=STD),
+                            # ToTensorV2(),
+                        ]
+                    )
+        self.transform2 =  A.Compose(
+                        [
+                            # A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
+                            A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
                             # A.Normalize(mean=MEAN, std=STD),
                             # ToTensorV2(),
                         ]
@@ -50,6 +58,10 @@ class CustomDataset(Dataset):
                 image,label= add_gaussian_projection_noise(image, sigma=20)
             else:
                 image,label= np.copy(image),np.copy(image)
+
+            image=self.transform2(image=image)["image"]
+            label=self.transform2(image=label)["image"]
+
             if image.dtype != np.float32:
                 image = image.astype(np.float32)
             if label.dtype != np.float32:
@@ -138,3 +150,4 @@ if __name__ == "__main__":
     plb.imshow(label[0][0],cmap="gray")
     plb.show()
 
+# python -m src.denoiser.data_loader.custom_dataset

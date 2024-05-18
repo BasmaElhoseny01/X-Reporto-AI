@@ -26,7 +26,7 @@ def save2image(d_img, filename):
     else:
         f_img = f_img
     # add padding
-    f_img = transform(image=f_img)["image"]
+    # f_img = transform(image=f_img)["image"]
     # normalize the image
     f_img = (f_img - np.min(f_img)) / (np.max(f_img) - np.min(f_img))
     f_img = f_img * 255

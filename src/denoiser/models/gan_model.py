@@ -286,12 +286,12 @@ if __name__ == "__main__":
     # print(y.max(), y.min())
     opt=TrainOptions()
     model = TomoGAN(opt=opt)
-    x = torch.randn((1,1,512,512))
-    y = torch.randn((1,1,512,512))
+    x = torch.randn((1,1,512,389))
+    y = torch.randn((1,1,512,389))
     model.set_input((x, y))
     model.forward()
     faks=model.fake_C
-    print(faks)
+    print(faks.shape)
     print(faks.max(), faks.min())
  
     

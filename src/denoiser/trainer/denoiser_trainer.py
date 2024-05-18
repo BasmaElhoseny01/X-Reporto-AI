@@ -1,6 +1,5 @@
 
 # from src.denoiser.data_loader.custom_dataset_paper import *
-from src.denoiser.config import *
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -11,7 +10,8 @@ import mlflow
 from src.denoiser.utils import *
 from src.denoiser.models.gan_model import TomoGAN
 from src.denoiser.options.train_option import TrainOptions
-from src.denoiser.data_loader.custom_dataset_old import CustomDataset
+from src.denoiser.data_loader.custom_dataset import CustomDataset
+from src.denoiser.config import *
 
 
 # opt = {
@@ -67,7 +67,7 @@ class DenoiserTrainer():
             mlflow.log_param("image_size", IMAGE_SIZE)
             mlflow.log_param("generator_iterations", ITG)
             mlflow.log_param("discrimiator_iterations", ITD)
-            print('[Info] Start training')
+            print('[Info] Start training Epochs ',EPOCHS)
             for epoch in range(EPOCHS):
                 print('[Info] Epoch: %i' % (epoch))
                 total_epochs_loss = 0
