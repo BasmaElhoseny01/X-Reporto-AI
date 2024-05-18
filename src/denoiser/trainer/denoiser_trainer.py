@@ -42,8 +42,8 @@ class DenoiserTrainer():
         self.train_dataloader = torch.utils.data.DataLoader(self.train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=NUM_THREADS)
         self.test_dataloader = torch.utils.data.DataLoader(self.test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_THREADS)
         
-        self.schedular_gen = optim.lr_scheduler.StepLR(self.model.optimizer_G, step_size=15, gamma=0.5)
-        self.schedular_dis = optim.lr_scheduler.StepLR(self.model.optimizer_D, step_size=15, gamma=0.5)
+        self.schedular_gen = optim.lr_scheduler.StepLR(self.model.optimizer_G, step_size=STEP_SIZE, gamma=GAMMA)
+        self.schedular_dis = optim.lr_scheduler.StepLR(self.model.optimizer_D, step_size=STEP_SIZE, gamma=GAMMA)
 
         self.itr_out_dir = NAME + '-itrOut'
         if os.path.isdir(self.itr_out_dir): 
@@ -76,6 +76,7 @@ class DenoiserTrainer():
                 print('[Info] Epoch: %i' % (epoch))
                 total_epochs_loss = 0
                 adv_loss = 10000000000
+                avg_200_loss = 0
               #TODO:
               # make normal dataloader as its better 
               # it make sure to loop on all trainning data 
@@ -93,6 +94,7 @@ class DenoiserTrainer():
                     epoch,batch_idx, self.model.loss_G, self.model.loss_G_MSE, self.model.loss_G_GAN, \
                         self.model.loss_G_Perc, )
                     total_epochs_loss += self.model.loss_G
+                    avg_200_loss += self.model.loss_G
                       
                       # with open("src/denoiser/outputs/iter_logs.txt", "w") as f:
                       #   print('%s;' % (itr_prints_gen ))
@@ -109,6 +111,10 @@ class DenoiserTrainer():
                 
                     if ((batch_idx+1) % PRINT_FREQ) == 0:
                       self.model.save_every_batch()
+                      print('Average loss for last 200 batches is %.2f' % (avg_200_loss/PRINT_FREQ))
+                      avg_200_loss = 0
+                      self.schedular_gen.step()
+                      self.schedular_dis.step()
 
                 print("average loss for epoch %d is %.2f" % (epoch, total_epochs_loss/len(self.train_dataloader)))
                 # if not GEN and adv_loss>self.model.loss_D :
@@ -161,10 +167,7 @@ class DenoiserTrainer():
                         torch.save(self.model.netD, os.path.join(OUTPUT_DIR, 'netDpsnr.pth'))
 
                     print('[Info] Evaluation : AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
-                # if GEN:
-                self.schedular_gen.step()
-                # else:
-                self.schedular_dis.step()
+                
             print('[Info] Best PSNR: %.2f' % (best_psnt))
         sys.stdout.flush()
 

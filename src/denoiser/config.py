@@ -15,6 +15,8 @@ LPERC=100
 LADV=20
 # GEN=True
 PRINT_FREQ=200
+STEP_SIZE=25
+GAMMA=0.2
 
 OUTPUT_DIR="src/denoiser/denoiser_models"
 BATCH_OUTPUT_DIR="src/denoiser/denoiser_models/batch_models"
@@ -30,7 +32,7 @@ NAME="tomogan"
 GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"
 NUM_THREADS=4
-LR=1e-5
+LR=1e-4
 RESULTS_DIR='/results'
 VGG_PATH="src/denoiser/models/vgg19_weights_notop.h5"
 LR_POLICY="Linear"
