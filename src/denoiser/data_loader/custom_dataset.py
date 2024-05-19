@@ -46,7 +46,7 @@ class CustomDataset(Dataset):
             image=np.array(image).astype("float32")
             if image is  None:
                 assert image is not None, f"Image at {img_path} is None"
-            choise= np.random.choice([0,1,2,3,4])
+            choise= np.random.choice([0,1,2,3,4,5])
             image=self.transform(image=image)["image"]
             if choise == 0:
                 image,label= add_block_pixel_noise(image, probability=0.05)

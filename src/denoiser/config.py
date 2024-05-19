@@ -24,9 +24,9 @@ CONTINUE_TRAIN=False
 
 LOAD_FROM_BATCH=False
 
-TRAIN_DATA= "datasets/trai.csv"
+TRAIN_DATA= "datasets/train.csv"
 TEST_DATA= "datasets/test.csv"
-EVAL_DATA= "datasets/validation.csv"
+EVAL_DATA= "datasets/val.csv"
 # TEST_DATA= "datasets/train.csv"
 NAME="tomogan"
 GPU_IDS=0

@@ -108,14 +108,22 @@ class DenoiserTrainer():
                         print('%s; dloss: %.2f (r%.3f, f%.3f)' % (itr_prints_gen,\
                         self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
                         ))
+                    with open("src/denoiser/outputs/losses.txt", "a") as f:
+                        f.write('%s; dloss: %.2f (r%.3f, f%.3f)\n' % (itr_prints_gen,\
+                        self.model.loss_D, self.model.loss_D_real.detach().cpu().numpy().mean(), self.model.loss_D_fake.detach().cpu().numpy().mean(), \
+                        ))
                 
                     if ((batch_idx+1) % PRINT_FREQ) == 0:
                       self.model.save_every_batch()
                       print('Average loss for last 200 batches is %.2f' % (avg_200_loss/PRINT_FREQ))
+                      with open("src/denoiser/outputs/losses.txt", "a") as f:
+                        f.write('Average loss for last 200 batches is %.2f\n' % (avg_200_loss/PRINT_FREQ))
                       avg_200_loss = 0
                       self.schedular_gen.step()
                       self.schedular_dis.step()
 
+                with open("src/denoiser/outputs/losses.txt", "a") as f:
+                    f.write("average loss for epoch %d is %.2f\n" % (epoch, total_epochs_loss/len(self.train_dataloader)))
                 print("average loss for epoch %d is %.2f" % (epoch, total_epochs_loss/len(self.train_dataloader)))
                 # if not GEN and adv_loss>self.model.loss_D :
                 #     adv_loss = self.model.loss_D
@@ -138,7 +146,8 @@ class DenoiserTrainer():
                         lossAdv = self.model.criterionGAN(self.model.netD(pred_img), True)
                         lossG = lossMSE*LMSE + lossPerc*LPERC + lossAdv*LADV
                         print('[Info]batch %i Test: gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f)' % (batch_idx,lossG, lossMSE, lossAdv, lossPerc))
-                        
+                        with open("src/denoiser/outputs/losses.txt", "a") as f:
+                            f.write('[Info]batch %i Test: gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f)\n' % (batch_idx,lossG, lossMSE, lossAdv, lossPerc))
                         for i in range(0, X_test.shape[0], 1):
                             # move to cpu
                             y_test = y_test.cpu()
@@ -165,10 +174,15 @@ class DenoiserTrainer():
                         best_psnt = total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)
                         torch.save(self.model.netG, os.path.join(OUTPUT_DIR, 'netGpsnr.pth'))
                         torch.save(self.model.netD, os.path.join(OUTPUT_DIR, 'netDpsnr.pth'))
-
+                    with open("src/denoiser/outputs/losses.txt", "a") as f:
+                        f.write('[Info] Evaluation : AVG SSIM: %.4f, AVG PSNR: %.2f\n' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
                     print('[Info] Evaluation : AVG SSIM: %.4f, AVG PSNR: %.2f' % (total_ssims/(len(self.test_dataloader)*BATCH_SIZE), total_psnrs/(len(self.test_dataloader)*BATCH_SIZE)))
                 
             print('[Info] Best PSNR: %.2f' % (best_psnt))
+            print('[Info] Best SSIM: %.4f' % (best_ssim))
+            with open("src/denoiser/outputs/losses.txt", "a") as f:
+                f.write('[Info] Best PSNR: %.2f\n' % (best_psnt))
+                f.write('[Info] Best SSIM: %.4f\n' % (best_ssim))
         sys.stdout.flush()
 
 if __name__ == "__main__":
