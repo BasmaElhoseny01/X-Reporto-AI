@@ -17,6 +17,7 @@ from src.binary_classifier.models.binary_classifier_region_abnormal_factory impo
 from src.language_model.GPT2.gpt2_model import CustomGPT2
 from src.language_model.GPT2.config import Config
 from transformers import GPT2Tokenizer
+from  src.x_reporto.data_loader.custom_augmentation import CustomAugmentation
 import logging
 class XReportoV1(nn.Module):
     """
@@ -552,3 +553,19 @@ class XReportoV1(nn.Module):
         valid_region_features = object_detector_features[selection_classifier_targets]
         valid_labels=language_model_targets[selection_classifier_targets]
         return valid_input_ids, valid_attention_mask, valid_region_features,valid_labels
+    
+    # def post_processing(self,images,bboxes,bbox_labels):
+    #     transform = CustomAugmentation(transform_type='test')
+    #     for i in range(images.shape[0]):
+    #         transformed = transform(image=images[i], bboxes=bboxes[i], class_labels=bbox_labels[i])
+    #         transformed_image = transformed["image"]
+    #         transformed_bboxes = transformed["bboxes"]
+    #         transformed_bbox_labels = transformed["class_labels"]
+    #         transformed_bboxes = torch.as_tensor(transformed_bboxes, dtype=torch.float32)
+    #         transformed_bbox_labels = torch.as_tensor(transformed_bbox_labels, dtype=torch.int64)
+    #         object_detector_sample = {}
+    #         object_detector_sample["image"]=transformed_image
+    #         object_detector_sample["bboxes"] = transformed_bboxes
+    #         object_detector_sample["bbox_labels"] = transformed_bbox_labels
+
+        
