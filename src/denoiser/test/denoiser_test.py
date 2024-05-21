@@ -12,6 +12,7 @@ from src.denoiser.utils import *
 from src.denoiser.models.gan_model import TomoGAN
 from src.denoiser.options.train_option import TrainOptions
 from src.denoiser.data_loader.custom_dataset import CustomDataset
+from src.denoiser.config import *
 
 class DenoiserTrainer():
     def __init__(self):
@@ -69,9 +70,9 @@ class DenoiserTrainer():
                           pred_img = pred_img.cpu()
                           X_test=X_test.cpu()
 
-                          save2image(y_test[i,0,:,:], '%s/gtruth_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
-                          save2image(X_test[i,DEPTH//2,:,:], '%s/noisy_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
-                          save2image(pred_img[i,0,:,:].detach().cpu().numpy(), '%s/pred_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                        #   save2image(y_test[i,0,:,:], '%s/gtruth_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                        #   save2image(X_test[i,DEPTH//2,:,:], '%s/noisy_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                        #   save2image(pred_img[i,0,:,:].detach().cpu().numpy(), '%s/pred_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
 
                           mlflow.log_artifacts(self.itr_out_dir)
                           (ssim, psnr) = eval_metrics(y_test[i,0,:,:], pred_img[i,0,:,:].detach().cpu().numpy())

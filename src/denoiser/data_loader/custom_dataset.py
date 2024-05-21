@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import cv2
 import torch
 import h5py
 import pandas as pd
@@ -9,7 +8,8 @@ from src.denoiser.data_loader.generate_noise import *
 import matplotlib.pylab as plb
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
-# from config import *
+from config import *
+import cv2
 from src.denoiser.config import*
 
 class CustomDataset(Dataset):
@@ -27,7 +27,7 @@ class CustomDataset(Dataset):
         self.transform2 =  A.Compose(
                         [
                             # A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
-                            A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+                            A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE,border_mode= cv2.BORDER_CONSTANT,value=0),
                             # A.Normalize(mean=MEAN, std=STD),
                             # ToTensorV2(),
                         ]

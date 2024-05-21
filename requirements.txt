@@ -35,3 +35,4 @@ imagesize
 gdown
 pycocoevalcap
 evaluate
+mlflow

@@ -9,10 +9,10 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 from config import *
 import cv2
-transform =  A.Compose(
-                        [
-                            A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
-                        ])
+# transform =  A.Compose(
+#                         [
+#                             A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE, border_mode=cv2.BORDER_CONSTANT),
+#                         ])
 def save2image(d_img, filename):
     img = d_img
     _min, _max = img.min(), img.max()

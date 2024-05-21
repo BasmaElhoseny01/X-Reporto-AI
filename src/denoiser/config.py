@@ -1,6 +1,6 @@
 
 EPOCHS = 15
-BATCH_SIZE=32
+BATCH_SIZE=12
 IMAGE_SIZE=512
 DEPTH=1
 LOAD_EPOCH=1000
@@ -15,23 +15,23 @@ LPERC=100
 LADV=20
 # GEN=True
 PRINT_FREQ=200
-STEP_SIZE=25
-GAMMA=0.2
+STEP_SIZE=50
+GAMMA=0.1
 
 OUTPUT_DIR="src/denoiser/denoiser_models"
 BATCH_OUTPUT_DIR="src/denoiser/denoiser_models/batch_models"
-CONTINUE_TRAIN=False
+CONTINUE_TRAIN=True
 
 LOAD_FROM_BATCH=False
 
 TRAIN_DATA= "datasets/train.csv"
 TEST_DATA= "datasets/test.csv"
-EVAL_DATA= "datasets/val.csv"
+EVAL_DATA= "datasets/valid.csv"
 # TEST_DATA= "datasets/train.csv"
 NAME="tomogan"
 GPU_IDS=0
 CHECKPOINTS_DIR="./checkpoints"
-NUM_THREADS=4
+NUM_THREADS=8
 LR=1e-4
 RESULTS_DIR='/results'
 VGG_PATH="src/denoiser/models/vgg19_weights_notop.h5"
