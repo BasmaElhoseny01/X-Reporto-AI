@@ -9,6 +9,7 @@ from typing import Optional, List, Dict
 from config import *
 # Utils 
 from src.utils import load_model
+import numpy as np
 
 # Modules
 from src.object_detector.models.object_detector_factory import ObjectDetector
@@ -19,7 +20,7 @@ from src.language_model.GPT2.config import Config
 from transformers import GPT2Tokenizer
 from  src.x_reporto.data_loader.custom_augmentation import CustomAugmentation
 from src.denoiser.models.gan_model import TomoGAN
-from src.denoiser.options.train_option import TrainOptions
+from src.denoiser.options.test_options import TestOptions
 import logging
 
 from albumentations.pytorch import ToTensorV2
@@ -50,7 +51,7 @@ class XReportoV1(nn.Module):
 
         self.object_detector = ObjectDetector().create_model()
 
-        self.arg=TrainOptions()
+        self.arg= self.arg=TestOptions()
         self.denoiser = TomoGAN(self.arg)
 
         if OPERATION_MODE==OperationMode.INFERENCE.value or MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
@@ -351,9 +352,21 @@ class XReportoV1(nn.Module):
             self.denoiser.set_input(images)
             self.denoiser.forward()
             images = self.denoiser.fake_C
-            images = [transform(image=image)["image"] for image in images]
-            images = torch.stack(images)
+            # images = [transform(image=image)["image"] for image in images]
+            # images = [transform(image=np.array(image.cpu()))["image"] for image in images]
+          
+            # images = torch.stack(images)
+            # Convert the batch to a list of individual images
+            images = images.cpu()
+            images_list = [images[i, 0, :, :].numpy() for i in range(images.shape[0])]
 
+            # Apply the transformation to each image
+            transformed_images_list = [transform(image=image)["image"] for image in images_list]
+
+            # Convert the list back to a batch
+            images = torch.stack(transformed_images_list)
+            # images = transformed_images.unsqueeze(1)  # Add the channel dimension back
+            images=images.cuda()
             # Object Detector
             self.object_detector(images=images)
             _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)

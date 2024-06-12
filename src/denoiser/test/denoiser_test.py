@@ -10,13 +10,13 @@ import torchvision.models as models
 import mlflow
 from src.denoiser.utils import *
 from src.denoiser.models.gan_model import TomoGAN
-from src.denoiser.options.train_option import TrainOptions
+from src.denoiser.options.test_options import TestOptions
 from src.denoiser.data_loader.custom_dataset import CustomDataset
 from src.denoiser.config import *
 
 class DenoiserTrainer():
     def __init__(self):
-        self.arg=TrainOptions()
+        self.arg=TestOptions()
         self.model = TomoGAN(self.arg)
         # self.data_genrator = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_noise.h5", mb_size=BATCH_SIZE, in_depth=DEPTH, img_size=IMAGE_SIZE), max_prefetch=16)
         self.test_dataset = CustomDataset(csv_file_path=TEST_DATA)

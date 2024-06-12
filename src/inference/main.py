@@ -54,6 +54,7 @@ def CustomDataset(img_path: str):
                 image = image.astype(np.float32)
 
             image = np.expand_dims(image, axis=0)
+            image = np.expand_dims(image, axis=0)
             image /= 255.0
             return image
 
@@ -93,7 +94,9 @@ class Inference:
         image = CustomDataset(img_path=image_path)
         
         # Move the image to GPU
-        image = image.to(DEVICE)   
+        # image = image.to(DEVICE) 
+        image = torch.tensor(image).to(DEVICE)
+        print(image.shape)
 
         # Inference Pass
         self.x_reporto.eval()
