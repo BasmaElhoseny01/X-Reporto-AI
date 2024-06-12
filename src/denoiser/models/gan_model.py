@@ -4,12 +4,13 @@ import torch.nn.functional as F
 import numpy as np
 import os
 
+from config import OUTPUT_DIR,BATCH_OUTPUT_DIR,OPERATION_MODE,OperationMode
+
 from src.denoiser.models.unet_parts import OutConv, DoubleConv, Down, Up
 from src.denoiser.models.base_model import BaseModel
 from src.denoiser.models.loss_functions import GANLoss, PixelLoss
 import torchvision.models as models
 from torchvision.models import VGG19_Weights
-from src.denoiser.config import OUTPUT_DIR,BATCH_OUTPUT_DIR
 from torchvision.models import resnet50, ResNet50_Weights
 from src.denoiser.options.train_option import TrainOptions
 
@@ -184,11 +185,17 @@ class TomoGAN(BaseModel):
                             '{}/images/blurred.png'.format(web_dir)]
     
     def set_input(self, input):
-        X_mb, y_mb = input[0], input[1]
-        #X_mb = np.transpose(X_mb, (0, 3, 1, 2))
-        #y_mb = np.transpose(y_mb, (0, 3, 1, 2))
-        self.real_B = X_mb.to(self.device)
-        self.real_C = y_mb.to(self.device)
+        if OPERATION_MODE==OperationMode.INFERENCE.value or OPERATION_MODE==OperationMode.TESTING.value or OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.EVALUATION.value:
+          X_mb = input
+          #X_mb = np.transpose(X_mb, (0, 3, 1, 2))
+          #y_mb = np.transpose(y_mb, (0, 3, 1, 2))
+          self.real_B = X_mb.to(self.device)
+        else:
+          X_mb, y_mb = input[0], input[1]
+          #X_mb = np.transpose(X_mb, (0, 3, 1, 2))
+          #y_mb = np.transpose(y_mb, (0, 3, 1, 2))
+          self.real_B = X_mb.to(self.device)
+          self.real_C = y_mb.to(self.device)
         
     
     def forward(self):

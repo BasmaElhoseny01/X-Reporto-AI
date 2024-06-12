@@ -18,7 +18,18 @@ from src.language_model.GPT2.gpt2_model import CustomGPT2
 from src.language_model.GPT2.config import Config
 from transformers import GPT2Tokenizer
 from  src.x_reporto.data_loader.custom_augmentation import CustomAugmentation
+from src.denoiser.models.gan_model import TomoGAN
+from src.denoiser.options.train_option import TrainOptions
 import logging
+
+from albumentations.pytorch import ToTensorV2
+import albumentations as A
+
+transform = A.Compose([
+                A.Normalize(mean=MEAN, std=STD),
+                ToTensorV2()
+            ])
+
 class XReportoV1(nn.Module):
     """
     A modular model for object detection and binary classification.
@@ -38,6 +49,9 @@ class XReportoV1(nn.Module):
         self.num_classes=30
 
         self.object_detector = ObjectDetector().create_model()
+
+        self.arg=TrainOptions()
+        self.denoiser = TomoGAN(self.arg)
 
         if OPERATION_MODE==OperationMode.INFERENCE.value or MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
@@ -73,6 +87,7 @@ class XReportoV1(nn.Module):
 
         if OPERATION_MODE==OperationMode.INFERENCE.value:
             # Load the models
+            self.denoiser.load_models()
             self.object_detector.load_state_dict(torch.load(object_detector_path))
             self.binary_classifier_selection_region.load_state_dict(torch.load(region_classifier_path))
             self.language_model.load_state_dict(torch.load(language_model_path))
@@ -177,6 +192,7 @@ class XReportoV1(nn.Module):
                             #     load_model(model=self.language_model,name='LM_best')
 
         elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.EVALUATION.value:
+            self.denoiser.load_models()
             if MODEL_STAGE==ModelStage.OBJECT_DETECTOR.value:
                 logging.info("Loading object_detector .....")
                 print("Loading object_detector .....")
@@ -331,6 +347,13 @@ class XReportoV1(nn.Module):
         if OPERATION_MODE==OperationMode.INFERENCE.value:
             print("Inference Mode Forward Pass")
 
+            # Denoiser 
+            self.denoiser.set_input(images)
+            self.denoiser.forward()
+            images = self.denoiser.fake_C
+            images = [transform(image=image)["image"] for image in images]
+            images = torch.stack(images)
+
             # Object Detector
             self.object_detector(images=images)
             _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)
@@ -442,6 +465,14 @@ class XReportoV1(nn.Module):
                 gc.collect()
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop
         else:
+            # Stage (0) Denoiser
+            self.denoiser.set_input(images)
+            self.denoiser.forward()
+            images = self.denoiser.fake_C
+            images = [transform(image=image)["image"] for image in images]
+            images = torch.stack(images)
+
+
             # Stage(1) Object Detector
             object_detector_losses,object_detector_boxes,object_detector_detected_classes,object_detector_features = self.object_detector(images=images, targets=object_detector_targets)
 

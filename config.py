@@ -11,6 +11,8 @@ from enum import Enum
 # Suppress Plt INFO level logs
 logging.getLogger('matplotlib.font_manager').setLevel(logging.ERROR)
 
+OUTPUT_DIR="src/denoiser/denoiser_models"
+BATCH_OUTPUT_DIR="src/denoiser/denoiser_models/batch_models"
 
 class ModelStage(Enum):
     OBJECT_DETECTOR = 1
@@ -30,7 +32,7 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Inference/ Testing / 
-OPERATION_MODE=3
+OPERATION_MODE=4
 MODEL_STAGE=3
 
 SEED=24
