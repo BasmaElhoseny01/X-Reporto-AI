@@ -13,8 +13,49 @@ from config import OPERATION_MODE,OperationMode
 from src.x_reporto.models.x_reporto_v1 import XReportoV1
 from transformers import GPT2Tokenizer
 
+from config import *
+from src.denoiser.config import*
+import numpy as np
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+transform =  A.Compose(
+                        [
+                            A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
+                        ]
+                    )
+transform2 =  A.Compose(
+                      [
+                          A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE,border_mode= cv2.BORDER_CONSTANT,value=0),
+                      ]
+                  )
+
+transform3 = A.Compose([
+                        A.Normalize(mean=0.474, std=0.301),
+                        ToTensorV2(),
+                      ]
+                 )
+
+def CustomDataset(img_path: str): 
+            img_path = os.path.join(os.getcwd(), img_path)
+            # replace \ with / for windows
+            img_path = img_path.replace("\\", "/")
+            image = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
+            image=np.array(image).astype("float32")
+            if image is  None:
+                assert image is not None, f"Image at {img_path} is None"
+            image=transform(image=image)["image"]
+            image= np.copy(image)
+
+            image=transform2(image=image)["image"]
+
+            if image.dtype != np.float32:
+                image = image.astype(np.float32)
+
+            image = np.expand_dims(image, axis=0)
+            image /= 255.0
+            return image
 
 class Inference:
     def __init__(self):
@@ -37,18 +78,20 @@ class Inference:
         image = cv2.imread(image_path,cv2.IMREAD_UNCHANGED)
         #print(image.shape)
 
-        transform = A.Compose([
-            A.LongestMaxSize(max_size=512, interpolation=cv2.INTER_AREA),
-            A.PadIfNeeded(min_height=512, min_width=512, border_mode=cv2.BORDER_CONSTANT),
-            A.Normalize(mean=0.474, std=0.301),
-            ToTensorV2(),
-        ])
-        image = transform(image=image)['image']
+        # transform = A.Compose([
+        #     A.LongestMaxSize(max_size=512, interpolation=cv2.INTER_AREA),
+        #     A.PadIfNeeded(min_height=512, min_width=512, border_mode=cv2.BORDER_CONSTANT),
+        #     A.Normalize(mean=0.474, std=0.301),
+        #     ToTensorV2(),
+        # ])
+        # image = transform(image=image)['image']
 
 
-        # Add batch dimension
-        image = image.unsqueeze(0)
+        # # Add batch dimension
+        # image = image.unsqueeze(0)
 
+        image = CustomDataset(img_path=image_path)
+        
         # Move the image to GPU
         image = image.to(DEVICE)   
 
@@ -107,3 +150,4 @@ if __name__=="__main__":
     
     
 # python -m src.inference.main "./datasets/images/00000001_000.png"
+# python -m src.inference.main "datasets\mimic-cxr-jpg\files\p11\p11001469\s54076811\d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"
