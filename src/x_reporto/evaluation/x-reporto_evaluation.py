@@ -18,7 +18,9 @@ from torch.utils.data import  DataLoader
 
 # Modules
 from src.x_reporto.models.x_reporto_factory import XReporto
-from src.x_reporto.data_loader.custom_dataset import CustomDataset
+# from src.x_reporto.data_loader.custom_dataset import CustomDataset
+from src.denoiser.data_loader.custom_dataset import CustomDataset
+
 # Utils 
 from transformers import GPT2Tokenizer
 # Utils 
@@ -33,8 +35,6 @@ from pycocoevalcap.bleu.bleu import Bleu
 from pycocoevalcap.rouge.rouge import Rouge
 from collections import defaultdict
 import evaluate
-
-
 
 
 class XReportoEvaluation():
@@ -151,9 +151,10 @@ class XReportoEvaluation():
                 logging.info(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
                 
                 # Check GPU memory usage
-                images = images.to(DEVICE)              
+                images = images.to(DEVICE)         
+     
                 # Move images to Device
-                images = torch.stack([image.to(DEVICE) for image in images])
+                images = torch.stack([torch.tensor(images).to(DEVICE) for image in images])
                 abnormal_classifier_targets=abnormal_classifier_targets.to("cpu")
                 # abnormal_classifier_targets=abnormal_classifier_targets[0].numpy()
                 abnormal_classifier_targets=abnormal_classifier_targets.numpy()
@@ -293,7 +294,9 @@ class XReportoEvaluation():
             validation_total_loss=0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,_,_) in enumerate(self.data_loader_val):
                 # Move inputs to Device
-                images = images.to(DEVICE)
+                # images = images.to(DEVICE)
+                images = torch.tensor(images).to(DEVICE)
+
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
                 if MODEL_STAGE==ModelStage.CLASSIFIER.value :
                     # Selection Classifier
