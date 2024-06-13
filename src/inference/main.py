@@ -23,19 +23,10 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 transform =  A.Compose(
                         [
                             A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
+                            A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE,border_mode= cv2.BORDER_CONSTANT),
+
                         ]
                     )
-transform2 =  A.Compose(
-                      [
-                          A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE,border_mode= cv2.BORDER_CONSTANT,value=0),
-                      ]
-                  )
-
-transform3 = A.Compose([
-                        A.Normalize(mean=0.474, std=0.301),
-                        ToTensorV2(),
-                      ]
-                 )
 
 def CustomDataset(img_path: str): 
             img_path = os.path.join(os.getcwd(), img_path)
@@ -45,10 +36,10 @@ def CustomDataset(img_path: str):
             image=np.array(image).astype("float32")
             if image is  None:
                 assert image is not None, f"Image at {img_path} is None"
-            image=transform(image=image)["image"]
-            image= np.copy(image)
+            # image=transform(image=image)["image"]
+            # image= np.copy(image)
 
-            image=transform2(image=image)["image"]
+            image=transform(image=image)["image"]
 
             if image.dtype != np.float32:
                 image = image.astype(np.float32)
@@ -76,8 +67,7 @@ class Inference:
 
     def generate_image_report(self,image_path):
         # Read the image
-        image = cv2.imread(image_path,cv2.IMREAD_UNCHANGED)
-        #print(image.shape)
+        # image = cv2.imread(image_path,cv2.IMREAD_UNCHANGED)
 
         # transform = A.Compose([
         #     A.LongestMaxSize(max_size=512, interpolation=cv2.INTER_AREA),
@@ -91,12 +81,10 @@ class Inference:
         # # Add batch dimension
         # image = image.unsqueeze(0)
 
-        image = CustomDataset(img_path=image_path)
-        
+        image = CustomDataset(img_path=image_path)        
         # Move the image to GPU
         # image = image.to(DEVICE) 
         image = torch.tensor(image).to(DEVICE)
-        print(image.shape)
 
         # Inference Pass
         self.x_reporto.eval()
