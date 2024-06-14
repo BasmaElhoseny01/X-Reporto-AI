@@ -479,11 +479,23 @@ class XReportoV1(nn.Module):
             return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop
         else:
             # Stage (0) Denoiser
+            # Denoiser 
             self.denoiser.set_input(images)
             self.denoiser.forward()
             images = self.denoiser.fake_C
-            images = [transform(image=image)["image"] for image in images]
-            images = torch.stack(images)
+            images = (images - images.min()) / (images.max() -images.min())
+            images=images.detach().cpu().numpy()
+            images = images * 255
+            images = images.astype(np.uint8)           
+            # Convert the batch to a list of individual images
+            images_list = [images[i, 0, :, :] for i in range(images.shape[0])]
+
+            # Apply the transformation to each image
+            transformed_images_list = [transform(image=image)["image"] for image in images_list]
+
+            # Convert the list back to a batch
+            images = torch.stack(transformed_images_list)
+            images=images.cuda()
 
 
             # Stage(1) Object Detector

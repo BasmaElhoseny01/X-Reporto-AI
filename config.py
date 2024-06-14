@@ -32,8 +32,8 @@ class OperationMode(Enum):
 DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 # Training / validation / EVALUATION / Inference/ Testing / 
-OPERATION_MODE=4
-MODEL_STAGE=3
+OPERATION_MODE=3
+MODEL_STAGE=1
 
 SEED=24
 
