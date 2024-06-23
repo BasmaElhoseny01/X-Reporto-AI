@@ -116,16 +116,17 @@ class CustomDataset(Dataset):
             except Exception as e:
                 # create a list of empty strings of size 29
                 bbox_phrases = [""] * 29
+
             # get the bbox_labels
             bbox_phrase_exists = self.data_info.iloc[idx, 7]
             # get the bbox_labels
             bbox_is_abnormal = self.data_info.iloc[idx, 8]
-            try:
-                # convert the string representation of labels into list
-                bbox_phrases = eval(bbox_phrases)
-            except Exception as e:
-                # create a list of empty strings of size 29
-                bbox_phrases = [""] * 29
+            # try:
+            #     # convert the string representation of labels into list
+            #     bbox_phrases = eval(bbox_phrases)
+            # except Exception as e:
+            #     # create a list of empty strings of size 29
+            #     bbox_phrases = [""] * 29
 
             # Safely evaluate the string and convert it to a Python list
             bbox_phrase_exists = ast.literal_eval(bbox_phrase_exists)
@@ -165,6 +166,7 @@ class CustomDataset(Dataset):
             language_model_sample["input_ids"] = torch.tensor(language_model_sample["input_ids"], dtype=torch.long)
             language_model_sample["label_ids"] = torch.tensor(language_model_sample["label_ids"], dtype=torch.long)
             language_model_sample["attention_mask"] = torch.tensor(language_model_sample["attention_mask"], dtype=torch.long)
+            print("sentences",language_model_sample["label_ids"])
             return denoiser_sample, object_detector_sample,selection_classifier_sample,abnormal_classifier_sample,language_model_sample
         except Exception as e:
             print(e)

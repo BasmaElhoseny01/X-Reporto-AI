@@ -1073,6 +1073,7 @@ def collate_fn(batch):
     LM_targets=torch.stack(LM_targets)
     LM_inputs['input_ids']=torch.stack(input_ids)
     LM_inputs['attention_mask']=torch.stack(attention_mask)
+    print("Lm_targets",LM_targets)
     return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
 def init_working_space():

@@ -174,6 +174,37 @@ class CustomDataset(Dataset):
             input_ids.append(LM_batch['input_ids'])
             attention_mask.append(LM_batch['attention_mask'])
 
+            # check if batch_size >1
+        if len(batch)>1:
+            # pad phrases to the same length 
+            # input_ids is list of tensors
+            max_seq_len = max([len(tokenize_phrase_lst[0]) for tokenize_phrase_lst in input_ids])
+            # print("max_seq_len",max_seq_len)
+            # each tensor in list input_ids is padded to max_seq_len
+            new_input_ids=[]
+            new_attention_mask=[]
+            new_LM_targets=[]
+            for i in range(len(input_ids)):
+                # each tensor in list input_ids is padded to max_seq_len
+                new_input_ids.append([])
+                new_attention_mask.append([])
+                new_LM_targets.append([])
+                for j in range(len(input_ids[i])):
+                    # concatenate the tensor with pad_token_id to the max_seq_len
+                    new_input_ids[i].append(torch.cat((input_ids[i][j], torch.tensor([Config.pad_token_id] * (max_seq_len - len(input_ids[i][j])), dtype=torch.long))))
+                    # concatenate the tensor with ignore_index to the max_seq_len
+                    new_attention_mask[i].append(torch.cat((attention_mask[i][j], torch.tensor([0] * (max_seq_len - len(attention_mask[i][j])), dtype=torch.long))))
+                    # concatenate the tensor with ignore_index to the max_seq_len
+                    new_LM_targets[i].append(torch.cat((LM_targets[i][j], torch.tensor([Config.ignore_index] * (max_seq_len - len(LM_targets[i][j])), dtype=torch.long))))
+
+            input_ids=new_input_ids
+            attention_mask=new_attention_mask
+            LM_targets=new_LM_targets
+            # convert the list of tensors to tensor
+            input_ids = [torch.stack(input_id) for input_id in input_ids]
+            attention_mask = [torch.stack(mask) for mask in attention_mask]
+            LM_targets = [torch.stack(target) for target in LM_targets]
+
 
         selection_classifier_targets=torch.stack(selection_classifier_targets)
         abnormal_classifier_targets=torch.stack(abnormal_classifier_targets)
@@ -182,6 +213,7 @@ class CustomDataset(Dataset):
         LM_inputs['attention_mask']=torch.stack(attention_mask)
         print("inside Custon dataset")
         return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
+
 if __name__ == "__main__":
     # create a dataset object
     dataset = CustomDataset("datasets/train.csv",transform_type='val')
