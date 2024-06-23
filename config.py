@@ -33,16 +33,16 @@ DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 
 # Training / validation / EVALUATION / Inference/ Testing / 
 OPERATION_MODE=3
-MODEL_STAGE=1
+MODEL_STAGE=3
 
 SEED=24
 
 ############################################################# Data Configurations ############################################################
 # Paths to the external files
 training_csv_path = 'datasets/train.csv'
-validation_csv_path = 'datasets/valid_full.csv'
-evaluation_csv_path = 'datasets/valid_full.csv'
-test_csv_path:str = 'datasets/test.csv'
+validation_csv_path = 'datasets/train.csv'
+evaluation_csv_path = 'datasets/train.csv'
+test_csv_path:str = 'datasets/train.csv'
 
 heat_map_training_csv_path:str = 'datasets/heat_map_train_balanced.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val_balanced.csv'
@@ -63,9 +63,9 @@ RUN = "heat_map_4"
 # RUN = "7"
 # EPOCHS = 1
 EPOCHS = 5
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 # BATCH_SIZE = 4
-LM_Batch_Size = 64
+LM_Batch_Size = 32
 EFFECTIVE_BATCH_SIZE = BATCH_SIZE
 ACCUMULATION_STEPS = EFFECTIVE_BATCH_SIZE//BATCH_SIZE
 

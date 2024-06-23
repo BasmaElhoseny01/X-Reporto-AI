@@ -79,6 +79,11 @@ class XReportoEvaluation():
             logging.info(f"Recall: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])}")
             logging.info(f"F1-Score: {2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])))}")
             
+            print(f"Precision: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])}")
+            print(f"Recall: {obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])}")
+            print(f"F1-Score: {2 * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) * (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])) / ((obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_positive'])) + (obj_detector_scores['true_positive'] / (obj_detector_scores['true_positive'] + obj_detector_scores['false_negative'])))}")
+            
+            print(f"final_result,{obj_detector_scores['iou_per_region']/obj_detector_scores['exist_region']} ")
             # [Tensor Board] Update the Board by the scalers for that Run
             self.update_tensor_board_score(obj_detector_scores,region_selection_scores,region_abnormal_scores,LM_scores=None)
         else:
@@ -151,10 +156,10 @@ class XReportoEvaluation():
                 logging.info(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
                 
                 # Check GPU memory usage
-                images = images.to(DEVICE)         
+                images = images.to(DEVICE)
      
                 # Move images to Device
-                images = torch.stack([torch.tensor(images).to(DEVICE) for image in images])
+                images = torch.stack([torch.tensor(image).to(DEVICE) for image in images])
                 abnormal_classifier_targets=abnormal_classifier_targets.to("cpu")
                 # abnormal_classifier_targets=abnormal_classifier_targets[0].numpy()
                 abnormal_classifier_targets=abnormal_classifier_targets.numpy()
@@ -165,6 +170,7 @@ class XReportoEvaluation():
                     print("Error in the forward pass")
                     print(e)
                     continue
+
                 generated_sents_for_selected_regions=tokenizer.batch_decode(lm_sentences_encoded_selected,skip_special_tokens=True,clean_up_tokenization_spaces=True)
                 
                 selected_regions = selected_regions.to("cpu")
@@ -329,7 +335,7 @@ class XReportoEvaluation():
                 validation_total_loss+=Total_loss
                 
                 # update scores for object detector metrics
-                self.update_object_detector_metrics(obj_detector_scores, object_detector_boxes, object_detector_targets, object_detector_detected_classes)
+                # self.update_object_detector_metrics(obj_detector_scores, object_detector_boxes, object_detector_targets, object_detector_detected_classes)
                 # compute the confusion metric
                 # log batch index
                 logging.debug(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
@@ -391,7 +397,7 @@ class XReportoEvaluation():
                     region_abnormal_scores["recall for regions"][region_indx]= (region_abnormal_scores["false_positive"][region_indx])/ (region_abnormal_scores["true_positive"][region_indx]+region_abnormal_scores["false_negative"][region_indx])
                     region_abnormal_scores["f1 for regions"][region_indx]= (2*region_abnormal_scores["precision for regions"][region_indx]*region_abnormal_scores["recall for regions"][region_indx])/(region_abnormal_scores["precision for regions"][region_indx]+region_abnormal_scores["recall for regions"][region_indx])
                 
-               
+            print(obj_detector_scores)
             return validation_total_loss,obj_detector_scores,region_selection_scores,region_abnormal_scores
    
     ################################################ Object Detector Functions #################################################
@@ -416,7 +422,7 @@ class XReportoEvaluation():
         def compute_intersection_and_union_area_per_region(detections, targets, class_detected):
             # pred_boxes is of shape [batch_size x 29 x 4] and contains the predicted region boxes with the highest score (i.e. top-1)
             # they are sorted in the 2nd dimension, meaning the 1st of the 29 boxes corresponds to the 1st region/class,
-     
+
             pred_boxes = detections
             # targets is a list of dicts, with each dict containing the key "boxes" that contain the gt boxes of a single image
             # gt_boxes is of shape [batch_size x 29 x 4]
@@ -424,6 +430,8 @@ class XReportoEvaluation():
             # print("gt_boxes[..., 0]",gt_boxes[..., 0])
             # print("pred_boxes[..., 0]",pred_boxes[..., 0])
             # below tensors are of shape [batch_size x 29]
+            print("prdictions shape ",pred_boxes.shape)
+            print("gt_boxes shape ",gt_boxes.shape)
             x0_max = torch.maximum(pred_boxes[..., 0], gt_boxes[..., 0])
             y0_max = torch.maximum(pred_boxes[..., 1], gt_boxes[..., 1])
             x1_min = torch.minimum(pred_boxes[..., 2], gt_boxes[..., 2])
@@ -669,7 +677,7 @@ class XReportoEvaluation():
 
         # Forward Pass
         object_detector_losses,object_detector_boxes,object_detector_detected_classes,selection_classifier_losses,selected_regions,abnormal_binary_classifier_losses,predicted_abnormal_regions,_,_,_= self.model(images,None,None, object_detector_targets ,selection_classifier_targets,abnormal_classifier_targets,None)
-        
+
         # Backward pass
         Total_loss=None
         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
