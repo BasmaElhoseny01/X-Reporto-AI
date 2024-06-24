@@ -1,11 +1,40 @@
-__pycache__/
-*.pyc
-
 # Data sets
 All datasets
 datasets
+mlruns
+dataset_old_csvs
 
+# Logs
+logs/
+!logs/empty.txt
+
+logs/*
+# Tensor Board
+tensor_boards/
+!tensor_boards/empty.txt
+
+# All modules
+*.pth
+
+# Assets
+images
+# Ignore all files in the assets folder
+assets/*
+# Except for text files
+!assets/empty.txt
+*.png
+*.jpg
+
+# Tests
+test.py
 test_detector
+
+__pycache__/
+*.pyc
+
+*.ipynb_checkpoints/
+
+# Env Variables
 .env
 .venv
 env/
@@ -45,3 +74,17 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 *.pth
+/logs
+/tensor_boards
+src/denoiser/data_loader/custom_dataset.py
+x_1.png
+x_2.png
+x_3.png
+y.png
+/tomogan-itrOut
+/datasets_test
+/datasets_try
+kept_cases.txt
+removed_cases.txt
+/models
+/mlruns
