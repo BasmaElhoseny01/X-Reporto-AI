@@ -148,12 +148,12 @@ class HeatMapEvaluation():
 
             # Optimal Threshold
             # Compute Youden's J statistic
-            # j_statistic = tpr - fpr
+            j_statistic = tpr - fpr
 
             # Find the index of the threshold that maximizes J statistic
-            # optimal_threshold_index = np.argmax(j_statistic)
-            # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]-0.1
-            # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]
+            optimal_threshold_index = np.argmax(j_statistic)
+            self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]-0.1
+            self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]
 
 
             # Plotting
