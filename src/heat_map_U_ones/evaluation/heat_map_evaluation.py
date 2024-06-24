@@ -267,7 +267,57 @@ class HeatMapEvaluation():
       # classification metrics
       for metric,values in classification_metrics.items():
         self.tensor_board_writer.add_scalars(f'Evaluation_Metrics/{metric}', values)
-       
+
+    def error_analysis(self):
+        '''
+        Error Analysis
+        '''
+        # get best examples with lowest loss and worst examples with highest loss
+
+        losses=[]
+        
+        self.model.eval()
+        with torch.no_grad():
+            for batch_idx,(images,targets,_) in enumerate(self.data_loader_eval):
+                logging.info(f"Batch {batch_idx}/{len(self.data_loader_eval)} ....")
+
+                # Move inputs to Device
+                images = images.to(DEVICE)
+                targets=targets.to(DEVICE) 
+
+                # Forward Pass [TODO]
+                _,loss,scores=self.forward_pass(images,targets)
+                
+                evaluation_total_loss=loss
+
+                # add loss to the list with the index
+                losses.append((evaluation_total_loss,batch_idx))
+
+                print(f"Batch {batch_idx}/{len(self.data_loader_eval)} Loss: {evaluation_total_loss}")
+
+                del images
+                del targets
+
+            gc.collect()
+            torch.cuda.empty_cache()       
+        
+        # Sort the losses
+        losses.sort(key=lambda x: x[0], reverse=True)
+
+        # Get the best and worst examples
+        best_examples=[]
+        worst_examples=[]
+        for i in range(20):
+            best_examples.append(losses[i])
+            worst_examples.append(losses[-i-1])
+        # save indices of best and worst examples
+        best_indices=[index for loss,index in best_examples]
+        worst_indices=[index for loss,index in worst_examples]
+
+        # save it in file as numpy array
+        np.save("best_examples.npy",best_indices)
+        np.save("worst_examples.npy",worst_indices)
+        
 
 def init_working_space():
 

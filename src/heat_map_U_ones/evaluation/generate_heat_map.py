@@ -331,7 +331,6 @@ class HeatMapGeneration():
 
             return image,desired_string
 
-        
 def init_working_space():
 
     # Creating tensorboard folder
