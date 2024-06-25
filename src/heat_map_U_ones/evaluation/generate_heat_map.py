@@ -69,6 +69,10 @@ class HeatMapGeneration():
             
             
         def generate(self):
+
+            self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
+            0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
+            
             with torch.no_grad():
                 logging.info(f"Generating Heat Maps")
                 for batch_idx,(images,targets,images_path) in enumerate(self.data_loader_eval):
