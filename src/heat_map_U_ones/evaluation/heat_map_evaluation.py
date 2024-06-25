@@ -120,7 +120,7 @@ class HeatMapEvaluation():
         '''
         # Forward Pass
         y_pred,scores,_=self.model(images)
-        mask = (targets != -1).float()
+        mask = (targets != 0).float()
 
         # apply mask to the targets
         targets = targets * mask
@@ -163,6 +163,8 @@ class HeatMapEvaluation():
             # Plotting
             # Plot Line with optimal threshold in legend
             plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (auc, self.model.optimal_thresholds[i]), linewidth=2)
+
+            logging.info(CLASSES[i] +"AUC"+str(auc)+ "Optimal Threshold" +str(self.model.optimal_thresholds[i]) )
 
             # Store AUC
             AUCs[CLASSES[i]]=auc
@@ -357,8 +359,11 @@ def main():
     # Create an HeatMap Evaluation instance with the HeatMap model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
-    # Start Evaluation
-    evaluator.evaluate()        
+    # # Start Evaluation
+    # evaluator.evaluate()   
+    #   
+    # Error Analysis
+    evaluator.error_analysis() 
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
