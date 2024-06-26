@@ -70,8 +70,13 @@ class HeatMapGeneration():
             
         def generate(self):
 
-            self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
-            0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
+            # Option(1) Explicit Set the optimal threshold from the training (Computed from evaluation on the training data :D)
+            # self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
+            # 0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
+
+
+            # Option(3) Use the optimal thresholds Saved in the model :D [Default]
+
             
             with torch.no_grad():
                 logging.info(f"Generating Heat Maps")

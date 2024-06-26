@@ -146,8 +146,9 @@ class HeatMapEvaluation():
             # AUC
             auc = metrics.auc(fpr, tpr)
 
-            # Optimal Threshold
-            # Compute Youden's J statistic
+            # Option(1) Compute Optimal Threshold from Evaluation Data
+            # # Optimal Threshold
+            # # Compute Youden's J statistic
             # j_statistic = tpr - fpr
 
             # # Find the index of the threshold that maximizes J statistic
@@ -155,10 +156,11 @@ class HeatMapEvaluation():
             # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]-0.1
             # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]
 
-            self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
-            0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
+            # Option(2) Explicit Set the optimal threshold from the training (Computed from evaluation on the training data :D)
+            # self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
+            # 0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
 
-
+            # Option(3) Use the optimal thresholds Saved in the model :D [Default]
 
             # Plotting
             # Plot Line with optimal threshold in legend
