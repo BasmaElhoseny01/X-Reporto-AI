@@ -96,7 +96,18 @@ class HeatMapGeneration():
                           image_class_heat_map,image_title=self.generate_heat_map_per_class(image_path=images_path[i],features=features[i],class_index=j,class_name=class_finding,gold_label=targets[i][j],pred_label=y_scores[i][j],class_threshold=self.model.optimal_thresholds[j])
 
                           # [TensorBoard] Write Image to Board
-                          self.tensor_board_writer.add_image(f'HeatMaps/{image_title}/{class_finding}', image_class_heat_map,dataformats='HWC')            
+                          self.tensor_board_writer.add_image(f'HeatMaps/{image_title}/{class_finding}', image_class_heat_map,dataformats='HWC')  
+
+                          # [Save Heat Maps into separate image files]
+                          if (True): 
+                            # Define the path for saving the heat map image
+                            image_filename = f'{image_title}_{class_finding}.png'
+                            image_path = os.path.join('./', image_filename)
+                            logging.info(image_path)
+                            sys.exit()
+
+                            # Save the heat map image
+                            cv2.imwrite(image_path, cv2.cvtColor(image_class_heat_map, cv2.COLOR_RGB2BGR))         
                
                 logging.info("Done Generation")
                 return 

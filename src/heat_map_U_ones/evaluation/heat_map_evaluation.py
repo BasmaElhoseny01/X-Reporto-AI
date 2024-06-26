@@ -300,6 +300,7 @@ class HeatMapEvaluation():
                 # Forward Pass [TODO]
                 _,loss,scores=self.forward_pass(images,targets)
                 
+                # Calculate Loss [ASSUMED THE BATCH SIZE IS 1]
                 evaluation_total_loss=loss
 
                 # add loss to the list with the index
@@ -367,11 +368,11 @@ def main():
     # Create an HeatMap Evaluation instance with the HeatMap model
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
-    # # Start Evaluation
-    # evaluator.evaluate()   
+    # Start Evaluation
+    evaluator.evaluate()   
     #   
     # Error Analysis
-    evaluator.error_analysis() 
+    # evaluator.error_analysis() 
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script
