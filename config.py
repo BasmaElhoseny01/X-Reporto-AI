@@ -47,8 +47,7 @@ test_csv_path:str = 'datasets/train.csv'
 heat_map_training_csv_path:str = 'datasets/heat_map_train_balanced.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val_balanced.csv'
 # heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
-# heat_map_evaluation_csv_path:str = 'datasets/heat_map_val_balanced.csv'
-heat_map_evaluation_csv_path:str = 'datasets/heat_map_val_balanced_index_filtered_best.csv'
+heat_map_evaluation_csv_path:str = 'datasets/heat_map_val_balanced.csv'
 
 
 #############################################################Training Process Parameters############################################################
