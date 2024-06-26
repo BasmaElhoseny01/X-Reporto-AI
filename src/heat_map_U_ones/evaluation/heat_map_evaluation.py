@@ -168,6 +168,10 @@ class HeatMapEvaluation():
 
             logging.info(CLASSES[i] +"AUC"+str(auc)+ "Optimal Threshold" +str(self.model.optimal_thresholds[i]) )
 
+            # Save Optimal Thresholds to .txt file
+            np.savetxt('optimal_thresholds.txt', self.model.optimal_thresholds)
+            logging.info("Optimal Thresholds Saved to optimal_thresholds.txt")
+
             # Store AUC
             AUCs[CLASSES[i]]=auc
         
@@ -316,15 +320,17 @@ class HeatMapEvaluation():
         best_examples=[]
         worst_examples=[]
         for i in range(20):
-            best_examples.append(losses[i])
-            worst_examples.append(losses[-i-1])
+            worst_examples.append(losses[i])
+            best_examples.append(losses[-i-1])
         # save indices of best and worst examples
         best_indices=[index for loss,index in best_examples]
         worst_indices=[index for loss,index in worst_examples]
 
         # save it in file as numpy array
         np.save("best_examples.npy",best_indices)
+        logging.info("Best Examples Saved at: best_examples.npy")
         np.save("worst_examples.npy",worst_indices)
+        logging.info("Worst Examples Saved at: worst_examples.npy")
         
 
 def init_working_space():
