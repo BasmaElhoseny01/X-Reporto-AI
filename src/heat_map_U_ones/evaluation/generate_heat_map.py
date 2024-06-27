@@ -103,9 +103,7 @@ class HeatMapGeneration():
                             # Define the path for saving the heat map image
                             image_filename = f'{image_title}_{class_finding}.png'
                             image_path = os.path.join('./', image_filename)
-                            logging.info(image_path)
-                            sys.exit()
-
+                        
                             # Save the heat map image
                             cv2.imwrite(image_path, cv2.cvtColor(image_class_heat_map, cv2.COLOR_RGB2BGR))         
                
