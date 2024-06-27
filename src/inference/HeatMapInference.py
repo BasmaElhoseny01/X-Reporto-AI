@@ -1,6 +1,6 @@
 import argparse
 import cv2
-
+import os
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import torch
@@ -48,7 +48,7 @@ class HeatMapInference:
         self.heat_map_model=HeatMap()
 
         # Load the model
-        self.heat_map_model.load_state_dict(torch.load('models/heat_map_4/heat_map_best.pth'))
+        self.heat_map_model.load_state_dict(torch.load('models/heat_map.pth'))
 
         # Move to Device
         self.heat_map_model.to(DEVICE)
@@ -82,18 +82,21 @@ class HeatMapInference:
         assert image is not None, f"Image at {img_path} is None"
 
         # convert the image from BGR to RGB
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
 
         # to float32 
         image=np.array(image).astype("float32")
 
         # Apply Transformations
         image=self.heat_map_transform(image=image)["image"]
+              
+        # Add batch dimension
+        image = image.unsqueeze(0)
 
         return image
 
    
-    def generate_template_based_report(self,image_path,bool):
+    def generate_template_based_report(self,image_path):
         '''
         Generate Heat Map for the given image path + Template Based Report
 
@@ -104,11 +107,8 @@ class HeatMapInference:
                 - Summation of probabilities
                 - Summation of Areas of the heat map locations 
         '''
-        print("Heat Map Generation")
-
         # Load the image
         image=self._load_and_process_image(img_path=image_path)
-        print(image)
 
         with torch.no_grad():
             image=image.to(DEVICE)
@@ -116,10 +116,14 @@ class HeatMapInference:
             # Forward Pass
             _,y_scores,_=self.heat_map_model(image)
 
-
             # Results
             image = image.to("cpu")
             confidence = y_scores.to("cpu")
+            labels=[]
+            for i,class_confidence in enumerate(confidence):
+              labels=1*(confidence>self.heat_map_model.optimal_thresholds[i])
+
+            return image,labels,confidence
             
 
 if __name__=="__main__":
@@ -139,7 +143,10 @@ if __name__=="__main__":
     inference = HeatMapInference()
 
     # Generate Template Based Report & Heat Map
-    inference.generate_template_based_report()
+    image,labels,confidence=inference.generate_template_based_report(image_path)
+
+    # for i,j in zip(confidence,labels):
+    #   print(i,j)
 
           
     
