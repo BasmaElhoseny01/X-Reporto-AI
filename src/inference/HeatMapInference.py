@@ -56,6 +56,9 @@ class HeatMapInference:
         # Evaluation Mode
         self.heat_map_model.eval()
 
+        # Optimal Thrsholds
+        self.optimal_thresholds=self.heat_map_model.optimal_thresholds
+
         print("Model Loaded")
         
         self.heat_map_transform=A.Compose([
@@ -94,9 +97,8 @@ class HeatMapInference:
         image = image.unsqueeze(0)
 
         return image
-
-   
-    def generate_template_based_report(self,image_path):
+ 
+    def infer(self,image_path):
         '''
         Generate Heat Map for the given image path + Template Based Report
 
@@ -118,12 +120,31 @@ class HeatMapInference:
 
             # Results
             image = image.to("cpu")
-            confidence = y_scores.to("cpu")
+            confidence = y_scores.to("cpu").squeeze(0).tolist()
+
             labels=[]
             for i,class_confidence in enumerate(confidence):
-              labels=1*(confidence>self.heat_map_model.optimal_thresholds[i])
+              label=1*(class_confidence>self.optimal_thresholds[i])
+              labels.append(label)
 
-            return image,labels,confidence
+            template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence)
+
+            return image,labels,confidence,template_based_report
+
+    def generate_template_based_report(self,labels,confidence):
+      report=[]
+      # TODO Add Info About the Grey Area
+      template_positive = "The patient has {condition} with {confidence:.2f}% confidence."
+      template_negative = "The patient does not have {condition} with {confidence:.2f}% confidence."
+
+      for i, label in enumerate(labels):
+          confidence_percent = confidence[i] * 100
+          if label == 1:
+              report.append(template_positive.format(condition=CLASSES[i], confidence=confidence_percent))
+          else:
+              report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
+      return report
+
             
 
 if __name__=="__main__":
@@ -143,7 +164,11 @@ if __name__=="__main__":
     inference = HeatMapInference()
 
     # Generate Template Based Report & Heat Map
-    image,labels,confidence=inference.generate_template_based_report(image_path)
+    image,labels,confidence,template_based_report=inference.infer(image_path)
+    
+    print("Labels:",labels)
+    print("confidence",confidence)
+    print("Report:",template_based_report)
 
     # for i,j in zip(confidence,labels):
     #   print(i,j)
