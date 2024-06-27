@@ -120,14 +120,14 @@ class HeatMapEvaluation():
         '''
         # Forward Pass
         y_pred,scores,_=self.model(images)
-        mask = (targets != -1).float()
+        mask = (targets != 0).float()
 
         # apply mask to the targets
         targets = targets * mask
         y_pred = y_pred * mask
 
         # Calculate Loss [CHECK the loss function as in the training script]
-        Total_loss=nn.BCEWithLogitsLoss(reduction='sum')(y_pred,targets)
+        Total_loss=nn.BCEWithLogitsLoss(reduction='sum')(y_pred,targets)/BATCH_SIZE
         
         features=None
         
@@ -146,19 +146,31 @@ class HeatMapEvaluation():
             # AUC
             auc = metrics.auc(fpr, tpr)
 
-            # Optimal Threshold
-            # Compute Youden's J statistic
+            # Option(1) Compute Optimal Threshold from Evaluation Data
+            # # Optimal Threshold
+            # # Compute Youden's J statistic
             # j_statistic = tpr - fpr
 
-            # Find the index of the threshold that maximizes J statistic
+            # # Find the index of the threshold that maximizes J statistic
             # optimal_threshold_index = np.argmax(j_statistic)
             # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]-0.1
             # self.model.optimal_thresholds[i]=thresholds[optimal_threshold_index]
 
+            # Option(2) Explicit Set the optimal threshold from the training (Computed from evaluation on the training data :D)
+            # self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
+            # 0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
+
+            # Option(3) Use the optimal thresholds Saved in the model :D [Default]
 
             # Plotting
             # Plot Line with optimal threshold in legend
             plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (auc, self.model.optimal_thresholds[i]), linewidth=2)
+
+            logging.info(CLASSES[i] +"AUC"+str(auc)+ "Optimal Threshold" +str(self.model.optimal_thresholds[i]) )
+
+            # Save Optimal Thresholds to .txt file
+            np.savetxt('optimal_thresholds.txt', self.model.optimal_thresholds)
+            logging.info("Optimal Thresholds Saved to optimal_thresholds.txt")
 
             # Store AUC
             AUCs[CLASSES[i]]=auc
@@ -267,7 +279,60 @@ class HeatMapEvaluation():
       # classification metrics
       for metric,values in classification_metrics.items():
         self.tensor_board_writer.add_scalars(f'Evaluation_Metrics/{metric}', values)
-       
+
+    def error_analysis(self):
+        '''
+        Error Analysis
+        '''
+        # get best examples with lowest loss and worst examples with highest loss
+
+        losses=[]
+        
+        self.model.eval()
+        with torch.no_grad():
+            for batch_idx,(images,targets,_) in enumerate(self.data_loader_eval):
+                logging.info(f"Batch {batch_idx}/{len(self.data_loader_eval)} ....")
+
+                # Move inputs to Device
+                images = images.to(DEVICE)
+                targets=targets.to(DEVICE) 
+
+                # Forward Pass [TODO]
+                _,loss,scores=self.forward_pass(images,targets)
+                
+                # Calculate Loss [ASSUMED THE BATCH SIZE IS 1]
+                evaluation_total_loss=loss
+
+                # add loss to the list with the index
+                losses.append((evaluation_total_loss,batch_idx))
+
+                print(f"Batch {batch_idx}/{len(self.data_loader_eval)} Loss: {evaluation_total_loss}")
+
+                del images
+                del targets
+
+            gc.collect()
+            torch.cuda.empty_cache()       
+        
+        # Sort the losses
+        losses.sort(key=lambda x: x[0], reverse=True)
+
+        # Get the best and worst examples
+        best_examples=[]
+        worst_examples=[]
+        for i in range(20):
+            worst_examples.append(losses[i])
+            best_examples.append(losses[-i-1])
+        # save indices of best and worst examples
+        best_indices=[index for loss,index in best_examples]
+        worst_indices=[index for loss,index in worst_examples]
+
+        # save it in file as numpy array
+        np.save("best_examples.npy",best_indices)
+        logging.info("Best Examples Saved at: best_examples.npy")
+        np.save("worst_examples.npy",worst_indices)
+        logging.info("Worst Examples Saved at: worst_examples.npy")
+        
 
 def init_working_space():
 
@@ -304,7 +369,10 @@ def main():
     evaluator = HeatMapEvaluation(model=heat_map_model,tensor_board_writer=tensor_board_writer)
 
     # Start Evaluation
-    evaluator.evaluate()        
+    evaluator.evaluate()   
+    #   
+    # Error Analysis
+    # evaluator.error_analysis() 
 
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script

@@ -88,4 +88,4 @@ kept_cases.txt
 removed_cases.txt
 /models
 /mlruns
-/results
+/results/heat_map_results

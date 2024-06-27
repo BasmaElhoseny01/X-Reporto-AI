@@ -47,7 +47,7 @@ test_csv_path:str = 'datasets/train.csv'
 heat_map_training_csv_path:str = 'datasets/heat_map_train_balanced.csv'
 heat_map_validating_csv_path:str = 'datasets/heat_map_val_balanced.csv'
 # heat_map_evaluation_csv_path = 'datasets/heat_map_test.csv'
-heat_map_evaluation_csv_path:str = 'datasets/heat_map_train_balanced.csv'
+heat_map_evaluation_csv_path:str = 'datasets/heat_map_val_balanced.csv'
 
 
 #############################################################Training Process Parameters############################################################
@@ -63,7 +63,7 @@ RUN = "heat_map_4"
 # RUN = "7"
 # EPOCHS = 1
 EPOCHS = 5
-BATCH_SIZE = 16
+BATCH_SIZE = 1
 # BATCH_SIZE = 4
 LM_Batch_Size = 32
 EFFECTIVE_BATCH_SIZE = BATCH_SIZE

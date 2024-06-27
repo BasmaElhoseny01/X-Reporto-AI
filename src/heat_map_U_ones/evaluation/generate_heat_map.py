@@ -69,6 +69,15 @@ class HeatMapGeneration():
             
             
         def generate(self):
+
+            # Option(1) Explicit Set the optimal threshold from the training (Computed from evaluation on the training data :D)
+            # self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
+            # 0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
+
+
+            # Option(3) Use the optimal thresholds Saved in the model :D [Default]
+
+            
             with torch.no_grad():
                 logging.info(f"Generating Heat Maps")
                 for batch_idx,(images,targets,images_path) in enumerate(self.data_loader_eval):
@@ -87,7 +96,18 @@ class HeatMapGeneration():
                           image_class_heat_map,image_title=self.generate_heat_map_per_class(image_path=images_path[i],features=features[i],class_index=j,class_name=class_finding,gold_label=targets[i][j],pred_label=y_scores[i][j],class_threshold=self.model.optimal_thresholds[j])
 
                           # [TensorBoard] Write Image to Board
-                          self.tensor_board_writer.add_image(f'HeatMaps/{image_title}/{class_finding}', image_class_heat_map,dataformats='HWC')            
+                          self.tensor_board_writer.add_image(f'HeatMaps/{image_title}/{class_finding}', image_class_heat_map,dataformats='HWC')  
+
+                          # [Save Heat Maps into separate image files]
+                          if (True): 
+                            # Define the path for saving the heat map image
+                            image_filename = f'{image_title}_{class_finding}.png'
+                            image_path = os.path.join('./', image_filename)
+                            logging.info(image_path)
+                            sys.exit()
+
+                            # Save the heat map image
+                            cv2.imwrite(image_path, cv2.cvtColor(image_class_heat_map, cv2.COLOR_RGB2BGR))         
                
                 logging.info("Done Generation")
                 return 
@@ -331,7 +351,6 @@ class HeatMapGeneration():
 
             return image,desired_string
 
-        
 def init_working_space():
 
     # Creating tensorboard folder
