@@ -116,12 +116,12 @@ class HeatMapInference:
 
             severity=self.compute_severity(labels,confidence)
 
-            template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence)
+            template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
 
             return image_org,heatmap_result,labels,confidence,severity,template_based_report
 
 
-    def generate_template_based_report(self,labels,confidence):   
+    def generate_template_based_report(self,labels,confidence,heatmaps):   
         """
         Generates a report based on labels and confidence scores.
 
@@ -134,13 +134,17 @@ class HeatMapInference:
         """
         report=[]
         # TODO Add Info About the Grey Area
-        template_positive = "The patient has {condition}."
-        template_negative = "The patient does not have {condition}."
+        # template_positive = "The patient has {condition}."
+        # template_negative = "The patient does not have {condition}."
+
+        template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. The findings are primarily located in the {location}."
+        template_negative = "The patient does not have {condition} with a confidence of {confidence:.2f}%. "
 
         for i, label in enumerate(labels):
             confidence_percent = confidence[i] * 100
             if label == 1:
-                report.append(template_positive.format(condition=CLASSES[i], confidence=confidence_percent))
+                location = self.determine_heatmap_region(heatmaps[i], image=None)
+                report.append(template_positive.format(condition=CLASSES[i], confidence=confidence_percent,location=location))
             else:
                 report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
         return report
@@ -273,6 +277,121 @@ class HeatMapInference:
     #   cv2.imwrite('./blend.png',blended_image)
 
       return image_resized,heatmap_resized,blended_image
+    
+
+
+    def determine_heatmap_region(self, heatmap,image=None):
+      """
+      Determines the primary region of activation in the heatmap.
+
+      Args:
+          heatmap (numpy.ndarray): The heatmap array of shape (224, 224, 3).
+
+      Returns:
+          str: Description of the primary region.
+      """
+      # Option(1) 4 Simple regions
+      # Average the activation values across the three color channels
+      heatmap_gray = np.mean(heatmap, axis=2)
+
+      # Divide the heatmap into quadrants
+      upper_left = heatmap_gray[:112, :112].mean()
+      upper_right = heatmap_gray[:112, 112:].mean()
+      lower_left = heatmap_gray[112:, :112].mean()
+      lower_right = heatmap_gray[112:, 112:].mean()
+
+      # Regions dictionary
+      regions = {
+          "upper left lung": upper_left,
+          "upper right lung": upper_right,
+          "lower left lung": lower_left,
+          "lower right lung": lower_right
+      }
+
+      # Find the region with the highest mean activation
+      primary_region = max(regions, key=regions.get)
+
+
+      # Option(2)
+      # # Assuming the heatmap is divided into more detailed regions
+      # # You can adjust these regions based on your specific heatmap analysis
+      # regions = {
+      #     "upper left lung": heatmap[:112, :112].mean(),
+      #     "upper right lung": heatmap[:112, 112:].mean(),
+      #     "lower left lung": heatmap[112:, :112].mean(),
+      #     "lower right lung": heatmap[112:, 112:].mean(),
+      #     "left upper lobe": heatmap[:80, 30:90].mean(),
+      #     "right upper lobe": heatmap[:80, 110:170].mean(),
+      #     "left middle lobe": heatmap[70:110, 30:90].mean(),
+      #     "right middle lobe": heatmap[70:110, 110:170].mean(),
+      #     "left lower lobe": heatmap[110:, 30:90].mean(),
+      #     "right lower lobe": heatmap[110:, 110:170].mean(),
+      #     "cardiac region": heatmap[80:150, 70:130].mean(),
+      #     "mediastinum": heatmap[60:120, 50:150].mean(),
+      #     "pleural space": heatmap[150:200, 0:200].mean(),
+      #     # Add more regions as per your specific analysis or anatomical understanding
+      # }
+
+      # # Find the region with the highest mean activation
+      # primary_region = max(regions, key=regions.get)
+
+
+      # Option(3) 29 Region
+      # TODO
+      # Normalize the orientation of the image
+      # image = normalize_orientation(image)
+      # NATOMICAL_REGIONS_COORDS = {
+      #   "right lung": (112, 0, 224, 224),
+      #   "right upper lung zone": (112, 0, 224, 74),
+      #   "right mid lung zone": (112, 75, 224, 149),
+      #   "right lower lung zone": (112, 150, 224, 224),
+      #   "right hilar structures": (150, 75, 224, 149),
+      #   "right apical zone": (112, 0, 224, 37),
+      #   "right costophrenic angle": (187, 187, 224, 224),
+      #   "right hemidiaphragm": (187, 150, 224, 187),
+      #   "left lung": (0, 0, 112, 224),
+      #   "left upper lung zone": (0, 0, 112, 74),
+      #   "left mid lung zone": (0, 75, 112, 149),
+      #   "left lower lung zone": (0, 150, 112, 224),
+      #   "left hilar structures": (0, 75, 74, 149),
+      #   "left apical zone": (0, 0, 112, 37),
+      #   "left costophrenic angle": (37, 187, 112, 224),
+      #   "left hemidiaphragm": (37, 150, 112, 187),
+      #   "trachea": (37, 37, 112, 74),
+      #   "spine": (56, 112, 112, 224),
+      #   "right clavicle": (112, 0, 149, 37),
+      #   "left clavicle": (0, 0, 37, 37),
+      #   "aortic arch": (37, 37, 74, 74),
+      #   "mediastinum": (37, 74, 112, 149),
+      #   "upper mediastinum": (37, 37, 112, 74),
+      #   "svc": (37, 74, 74, 112),
+      #   "cardiac silhouette": (112, 150, 168, 224),
+      #   "cavoatrial junction": (112, 150, 168, 224),
+      #   "right atrium": (112, 150, 168, 224),
+      #   "carina": (56, 112, 112, 149),
+      #   "abdomen": (187, 150, 224, 224)
+      # }
+
+      # # Average the activation values across the three color channels
+      # heatmap_gray = np.mean(heatmap, axis=2)
+
+      # max_activation = 0
+      # primary_region = None
+
+      # for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
+      #     region_activation = heatmap_gray[y1:y2, x1:x2].mean()
+      #     if region_activation > max_activation:
+      #         max_activation = region_activation
+      #         primary_region = region
+
+      import random
+
+      # Assuming 'heatmap' and 'primary_region' are defined
+      random_number = random.randint(1000, 9999)  # Generate a random number between 1000 and 9999
+      filename = f"./_{random_number}_{primary_region}.png"
+      cv2.imwrite(filename, heatmap)
+
+      return primary_region
 
 
 
