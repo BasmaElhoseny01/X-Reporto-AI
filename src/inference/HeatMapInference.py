@@ -59,6 +59,9 @@ class HeatMapInference:
         # Optimal Thrsholds
         self.optimal_thresholds=self.heat_map_model.optimal_thresholds
 
+        # Weights for Last Layer
+        self.weights = list(self.heat_map_model.model.classifier.parameters())[-2] #torch.Size([8, 1024])
+
         print("Model Loaded")
         
         self.heat_map_transform=A.Compose([
@@ -81,14 +84,14 @@ class HeatMapInference:
         img_path = img_path.replace("\\", "/")
 
         # Read Image
-        image = cv2.imread(img_path,cv2.IMREAD_COLOR)
-        assert image is not None, f"Image at {img_path} is None"
+        original_image_RGB = cv2.imread(img_path,cv2.IMREAD_COLOR)
+        assert original_image_RGB is not None, f"Image at {img_path} is None"
 
         # convert the image from BGR to RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
+        original_image_RGB = cv2.cvtColor(original_image_RGB, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
 
         # to float32 
-        image=np.array(image).astype("float32")
+        image=np.array(original_image_RGB).astype("float32")
 
         # Apply Transformations
         image=self.heat_map_transform(image=image)["image"]
@@ -96,7 +99,7 @@ class HeatMapInference:
         # Add batch dimension
         image = image.unsqueeze(0)
 
-        return image
+        return original_image_RGB,image
  
     def infer(self,image_path):
         '''
@@ -110,32 +113,37 @@ class HeatMapInference:
                 - Summation of Areas of the heat map locations 
         '''
         # Load the image
-        image=self._load_and_process_image(img_path=image_path)
+        original_image_RGB,image=self._load_and_process_image(img_path=image_path)
 
         with torch.no_grad():
             image=image.to(DEVICE)
 
             # Forward Pass
-            _,y_scores,_=self.heat_map_model(image)
+            _,y_scores,features=self.heat_map_model(image)
 
             # Results
-            image = image.to("cpu")
+            image = image.to("cpu").squeeze(0).data.numpy().transpose(1, 2, 0) #224x224x3
             confidence = y_scores.to("cpu").squeeze(0).tolist()
+            features=features.to("cpu").squeeze(0)
 
             labels=[]
             for i,class_confidence in enumerate(confidence):
               label=1*(class_confidence>self.optimal_thresholds[i])
               labels.append(label)
 
+            heatmaps,image_heatmaps=self.generate_heat_maps(original_image_RGB,features)
+
+            severity=self.compute_severity(labels,confidence)
+
             template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence)
 
-            return image,labels,confidence,template_based_report
+            return image,heatmaps,image_heatmaps,labels,confidence,severity,template_based_report
 
     def generate_template_based_report(self,labels,confidence):
       report=[]
       # TODO Add Info About the Grey Area
-      template_positive = "The patient has {condition} with {confidence:.2f}% confidence."
-      template_negative = "The patient does not have {condition} with {confidence:.2f}% confidence."
+      template_positive = "The patient has {condition}."
+      template_negative = "The patient does not have {condition}."
 
       for i, label in enumerate(labels):
           confidence_percent = confidence[i] * 100
@@ -144,6 +152,60 @@ class HeatMapInference:
           else:
               report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
       return report
+
+    def compute_severity(self,labels,confidence):
+      return -1
+    
+    def generate_heat_maps(self,image,features):
+      '''
+      image: resized to 224x224
+      '''
+      heatmaps= np.zeros((len(CLASSES), HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE,3))
+      image_heatmaps= np.zeros((len(CLASSES), HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE,3))
+      for class_index in range(len(CLASSES)):
+          # Last layer Weights for this class
+          weights = self.weights[class_index].view(1, -1).to("cpu") # 1, 1024
+
+          heatmap,image_heatmap=self.cam_heat_map(image,weights,features)
+
+          heatmaps[class_index]=heatmap # 224x224x3
+          image_heatmaps[class_index]=image_heatmap #224x224x3
+
+      return heatmaps,image_heatmaps
+
+
+
+          
+    def cam_heat_map(self,image,weights,features):
+      # Apply Matrix multiplication to get the heatmap
+      # weights: 1024 x features: 1024, 7, 7 -> 1, 7, 7
+      heatmap = torch.matmul(weights, features.view(features.size(0), -1)).view(features.size(1), features.size(2)) # 7, 7
+      heatmap = heatmap.cpu().data.numpy() #torch.Size([7, 7])
+
+      # Apply relu
+      heatmap = np.maximum(heatmap, 0)
+
+      # Apply normalization
+      if(np.max(heatmap)!=0):
+          heatmap = heatmap / np.max(heatmap)
+
+      
+      # Blend original and HeatMap
+      
+      # 1. Resize Heat map to 224*224
+      heatmap = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #224x224x3
+
+      # 2. Resize Original RGB Image to 224x224
+      image = cv2.resize(image, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+
+
+      # 3. Apply colormap to the heat_map(weights*features) warm & cool colors 
+      heatmap = cv2.applyColorMap(np.uint8(255*heatmap), cv2.COLORMAP_JET)
+
+      # 4. image + 0.35*heatmap
+      image_heatmap = cv2.addWeighted(image,1,heatmap,0.35,0) #224x224
+
+      return heatmap,image_heatmap
 
             
 
@@ -164,10 +226,14 @@ if __name__=="__main__":
     inference = HeatMapInference()
 
     # Generate Template Based Report & Heat Map
-    image,labels,confidence,template_based_report=inference.infer(image_path)
+    image,heatmaps,image_heatmaps,labels,confidence,severity,template_based_report=inference.infer(image_path)
     
+    print("image",image.shape)
+    print("heatmaps",heatmaps.shape)
+    print("image_heatmaps",image_heatmaps.shape)
     print("Labels:",labels)
     print("confidence",confidence)
+    print("severity",severity)
     print("Report:",template_based_report)
 
     # for i,j in zip(confidence,labels):
