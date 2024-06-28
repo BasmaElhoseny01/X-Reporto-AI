@@ -78,14 +78,14 @@ class HeatMapInference:
         img_path = img_path.replace("\\", "/")
 
         # Read Image
-        original_image_RGB = cv2.imread(img_path,cv2.IMREAD_COLOR)
-        assert original_image_RGB is not None, f"Image at {img_path} is None"
+        image = cv2.imread(img_path,cv2.IMREAD_COLOR)
+        assert image is not None, f"Image at {img_path} is None"
 
         # convert the image from BGR to RGB
-        original_image_RGB = cv2.cvtColor(original_image_RGB, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
 
         # to float32 
-        image=np.array(original_image_RGB).astype("float32")
+        image=np.array(image).astype("float32")
 
         # Apply Transformations
         image=self.heat_map_transform(image=image)["image"]
@@ -93,11 +93,12 @@ class HeatMapInference:
         # Add batch dimension
         image = image.unsqueeze(0)
 
-        return original_image_RGB,image
+        return image
  
-    def infer(self,image_path):
+    def infer(self,image_path,heatmap_type:str):
         '''
         Generate Heat Map for the given image path + Template Based Report
+        heatmap_type: cam or grid_cam
 
         i/p: image Path
         o/p : Heat Map Image , 8 classification (+ the confidence), Severity, Template Based Report
@@ -107,7 +108,7 @@ class HeatMapInference:
                 - Summation of Areas of the heat map locations 
         '''
         # Load the image
-        original_image_RGB,image=self._load_and_process_image(img_path=image_path)
+        image=self._load_and_process_image(img_path=image_path)
 
         with torch.no_grad():
             image=image.to(DEVICE)
@@ -116,7 +117,7 @@ class HeatMapInference:
             _,y_scores,features=self.heat_map_model(image)
 
             # Results
-            image = image.to("cpu").squeeze(0).data.numpy().transpose(1, 2, 0) #224x224x3
+            image = image.to("cpu").squeeze(0).data.numpy().transpose(1, 2, 0)
             confidence = y_scores.to("cpu").squeeze(0).tolist()
             features=features.to("cpu").squeeze(0)
 
@@ -125,13 +126,13 @@ class HeatMapInference:
               label=1*(class_confidence>self.optimal_thresholds[i])
               labels.append(label)
 
-            heatmaps,image_heatmaps=self.generate_heat_maps(original_image_RGB,features)
+            heatmaps=self.generate_heat_maps(features,heatmap_type)
 
             severity=self.compute_severity(labels,confidence)
 
             template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence)
 
-            return image,heatmaps,image_heatmaps,labels,confidence,severity,template_based_report
+            return image,heatmaps,labels,confidence,severity,template_based_report
 
     def generate_template_based_report(self,labels,confidence):
       report=[]
@@ -150,27 +151,27 @@ class HeatMapInference:
     def compute_severity(self,labels,confidence):
       return -1
     
-    def generate_heat_maps(self,image,features):
+    def generate_heat_maps(self,features,heatmap_type:str):
       '''
-      image: resized to 224x224
+      heatmap_type: cam or grid cam
       '''
-      heatmaps= np.zeros((len(CLASSES), HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE,3))
-      image_heatmaps= np.zeros((len(CLASSES), HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE,3))
-      for class_index in range(len(CLASSES)):
-          # Last layer Weights for this class
-          weights = self.weights[class_index].view(1, -1).to("cpu") # 1, 1024
+      heatmaps= np.zeros((len(CLASSES), 7, 7))
+      if heatmap_type=="cam":
+        for class_index in range(len(CLASSES)):
+            # Last layer Weights for this class
+            weights = self.weights[class_index].view(1, -1).to("cpu") # 1, 1024
 
-          heatmap,image_heatmap=self.cam_heat_map(image,weights,features)
+            heatmap=self.cam_heat_map(weights,features) # 7x7
 
-          heatmaps[class_index]=heatmap # 224x224x3
-          image_heatmaps[class_index]=image_heatmap #224x224x3
+            heatmaps[class_index]=heatmap
 
-      return heatmaps,image_heatmaps
+
+      return heatmaps
 
 
 
           
-    def cam_heat_map(self,image,weights,features):
+    def cam_heat_map(self,weights,features):
       # Apply Matrix multiplication to get the heatmap
       # weights: 1024 x features: 1024, 7, 7 -> 1, 7, 7
       heatmap = torch.matmul(weights, features.view(features.size(0), -1)).view(features.size(1), features.size(2)) # 7, 7
@@ -183,23 +184,7 @@ class HeatMapInference:
       if(np.max(heatmap)!=0):
           heatmap = heatmap / np.max(heatmap)
 
-      
-      # Blend original and HeatMap
-      
-      # 1. Resize Heat map to 224*224
-      heatmap = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #224x224x3
-
-      # 2. Resize Original RGB Image to 224x224
-      image = cv2.resize(image, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
-
-
-      # 3. Apply colormap to the heat_map(weights*features) warm & cool colors 
-      heatmap = cv2.applyColorMap(np.uint8(255*heatmap), cv2.COLORMAP_JET)
-
-      # 4. image + 0.35*heatmap
-      image_heatmap = cv2.addWeighted(image,1,heatmap,0.35,0) #224x224
-
-      return heatmap,image_heatmap
+      return heatmap
 
             
 
@@ -220,10 +205,9 @@ if __name__=="__main__":
     inference = HeatMapInference()
 
     # Generate Template Based Report & Heat Map
-    image,heatmaps,image_heatmaps,labels,confidence,severity,template_based_report=inference.infer(image_path)
+    image,image_heatmaps,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
     
     print("image",image.shape)
-    print("heatmaps",heatmaps.shape)
     print("image_heatmaps",image_heatmaps.shape)
     print("Labels:",labels)
     print("confidence",confidence)
@@ -231,42 +215,9 @@ if __name__=="__main__":
     print("Report:",template_based_report)
 
 
-    # Save Heat Maps
-    import matplotlib
-    from matplotlib import pyplot as plt
-    from matplotlib.gridspec import GridSpec
-    from src.utils import plot_to_image    
 
     # Save image using OpenCV
     cv2.imwrite(f'original_224_224.png', image)
-
-
-    for i,cls in enumerate(CLASSES):
-      # Create subplot
-      fig = plt.figure(figsize=(12, 5))
-      gs = GridSpec(1, 3, width_ratios=[2, 2, 1], wspace=0.1)  # Set wspace to adjust space between subplots
-
-      # Plot original image
-      ax_original = fig.add_subplot(gs[0])
-      ax_original.imshow(heatmaps[i])
-      ax_original.axis('off')
-
-      # Plot heatmap
-      ax_heatmap = fig.add_subplot(gs[1])
-      ax_heatmap.imshow(image_heatmaps[i])
-      ax_heatmap.axis('off')
-
-      # Convert plot to image
-      image = plot_to_image()
-
-      # Write Image
-      cv2.imwrite(f'{cls}.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))         
-
-
-
-    # for i,j in zip(confidence,labels):
-    #   print(i,j)
-
           
     
     
