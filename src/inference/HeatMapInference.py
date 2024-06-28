@@ -57,16 +57,18 @@ class HeatMapInference:
         self.weights = list(self.heat_map_model.model.classifier.parameters())[-2] #torch.Size([8, 1024])
 
         print("Model Loaded")
+
         
         self.heat_map_transform=A.Compose([
             A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
 
             A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT),
-
+    
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             
             ToTensorV2(p=1.0)
         ])
+
 
     
     def _load_and_process_image(self, img_path: str):
@@ -78,11 +80,11 @@ class HeatMapInference:
         img_path = img_path.replace("\\", "/")
 
         # Read Image
-        image = cv2.imread(img_path,cv2.IMREAD_COLOR)
-        assert image is not None, f"Image at {img_path} is None"
+        image_org = cv2.imread(img_path,cv2.IMREAD_COLOR)
+        assert image_org is not None, f"Image at {img_path} is None"
 
         # convert the image from BGR to RGB
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
+        image = cv2.cvtColor(image_org, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
 
         # to float32 
         image=np.array(image).astype("float32")
@@ -93,7 +95,12 @@ class HeatMapInference:
         # Add batch dimension
         image = image.unsqueeze(0)
 
-        return image
+
+        # Resize Original Image to be 224*244
+        image_org = cv2.resize(image_org, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+
+
+        return image_org,image
  
     def infer(self,image_path,heatmap_type:str):
         '''
@@ -108,7 +115,7 @@ class HeatMapInference:
                 - Summation of Areas of the heat map locations 
         '''
         # Load the image
-        image=self._load_and_process_image(img_path=image_path)
+        image_org,image=self._load_and_process_image(img_path=image_path)
 
         with torch.no_grad():
             image=image.to(DEVICE)
@@ -117,7 +124,7 @@ class HeatMapInference:
             _,y_scores,features=self.heat_map_model(image)
 
             # Results
-            image = image.to("cpu").squeeze(0).data.numpy().transpose(1, 2, 0)
+            image = image.to("cpu") # Won't B used :D
             confidence = y_scores.to("cpu").squeeze(0).tolist()
             features=features.to("cpu").squeeze(0)
 
@@ -132,7 +139,8 @@ class HeatMapInference:
 
             template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence)
 
-            return image,heatmaps,labels,confidence,severity,template_based_report
+            return image_org,heatmaps,labels,confidence,severity,template_based_report
+
 
     def generate_template_based_report(self,labels,confidence):
       report=[]
@@ -217,7 +225,7 @@ if __name__=="__main__":
 
 
     # Save image using OpenCV
-    cv2.imwrite(f'original_224_224.png', image)
+    cv2.imwrite(f'original_224_224.png', image_org)
           
     
     
