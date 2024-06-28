@@ -205,10 +205,10 @@ if __name__=="__main__":
     inference = HeatMapInference()
 
     # Generate Template Based Report & Heat Map
-    image,image_heatmaps,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
+    image, heatmaps,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
     
     print("image",image.shape)
-    print("image_heatmaps",image_heatmaps.shape)
+    print("image_heatmaps",image.shape)
     print("Labels:",labels)
     print("confidence",confidence)
     print("severity",severity)
