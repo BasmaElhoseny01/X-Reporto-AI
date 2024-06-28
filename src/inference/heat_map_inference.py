@@ -96,8 +96,8 @@ class HeatMapInference:
         image = image.unsqueeze(0)
 
 
-        # Resize Original Image to be 224*244
-        image_org = cv2.resize(image_org, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+        # # Resize Original Image to be 224*244
+        # image_org = cv2.resize(image_org, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
 
 
         return image_org,image
@@ -133,13 +133,14 @@ class HeatMapInference:
               label=1*(class_confidence>self.optimal_thresholds[i])
               labels.append(label)
 
-            heatmaps=self.generate_heat_maps(features,heatmap_type)
+            heatmaps,image_resized,heatmap_resized_plts,blended_images=self.generate_heat_maps(image=image_org,features=features,heatmap_type=heatmap_type)
+            heatmap_result=(heatmaps,image_resized,heatmap_resized_plts,blended_images)
 
             severity=self.compute_severity(labels,confidence)
 
             template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence)
 
-            return image_org,heatmaps,labels,confidence,severity,template_based_report
+            return image_org,heatmap_result,labels,confidence,severity,template_based_report
 
 
     def generate_template_based_report(self,labels,confidence):
@@ -159,7 +160,7 @@ class HeatMapInference:
     def compute_severity(self,labels,confidence):
       return -1
     
-    def generate_heat_maps(self,features,heatmap_type:str):
+    def generate_heat_maps(self,image,features,heatmap_type:str):
       '''
       heatmap_type: cam or grid cam
       '''
@@ -172,14 +173,30 @@ class HeatMapInference:
             heatmap=self.cam_heat_map(weights,features) # 7x7
 
             heatmaps[class_index]=heatmap
+      
+
+      heatmap_resized_plts=np.zeros((len(CLASSES), 224, 224,3))
+      blended_images=np.zeros((len(CLASSES), 224, 224,3))
+      # Project Heat Map on the Original Image
+      for class_index in range(len(CLASSES)):
+        image_resized,heatmap_resized,blended_image=self.project_heat_map(image=image,heatmap=heatmaps[class_index])
+
+        heatmap_resized_plts[class_index]=heatmap_resized
+        blended_images[class_index]=blended_image
 
 
-      return heatmaps
+      return heatmaps,image_resized,heatmap_resized_plts,blended_images
 
 
 
           
     def cam_heat_map(self,weights,features):
+      '''
+      weights:[1, 1024]
+      features:[1024, 7, 7]
+
+      heatmap:[7,7]
+      '''
       # Apply Matrix multiplication to get the heatmap
       # weights: 1024 x features: 1024, 7, 7 -> 1, 7, 7
       heatmap = torch.matmul(weights, features.view(features.size(0), -1)).view(features.size(1), features.size(2)) # 7, 7
@@ -188,11 +205,50 @@ class HeatMapInference:
       # Apply relu
       heatmap = np.maximum(heatmap, 0)
 
-      # Apply normalization
-      if(np.max(heatmap)!=0):
+      # Apply normalization (If the maximum value is zero, normalization would lead to division by zero)
+      if(np.max(heatmap)!=0): 
           heatmap = heatmap / np.max(heatmap)
 
       return heatmap
+
+    def project_heat_map(self,image,heatmap):
+      '''
+      Overlays a heatmap onto an image.
+
+      Parameters:
+      - image: numpy.ndarray
+          Original BGR image of shape (2544, 3056, 3) with pixel values in the range [0, 255].
+      - heatmap: numpy.ndarray
+          Heatmap of shape (7, 7) with normalized values in the range [0, 1].
+
+      Returns:
+      - image_resized: numpy.ndarray
+          The original image resized to (224, 224, 3) in BGR format.
+      - heatmap_resized: numpy.ndarray
+          The heatmap resized to (224, 224, 3) in BGR format.
+      - blended_image: numpy.ndarray
+          The blended image of size (224, 224, 3) in BGR format, which is a weighted sum of the resized image and the heatmap.
+      '''
+      # Resize Image to be HEAT_MAP_IMAGE_SIZExHEAT_MAP_IMAGE_SIZEx3 (224x224x3)
+      image_resized = cv2.resize(image, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+
+      # Reize Heat Map to be same size as the image (224x224x3)
+      heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+
+      # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
+      heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
+
+      # Weighted Sum 1*img + 0.25*heatmap (224x224x3)
+      blended_image = cv2.addWeighted(image_resized,1,heatmap_resized,0.35,0)
+
+    #   cv2.imwrite('./img.png',image_resized)
+    #   cv2.imwrite('./heat.png',heatmap_resized)
+    #   cv2.imwrite('./blend.png',blended_image)
+
+      return image_resized,heatmap_resized,blended_image
+
+
+
 
             
 
@@ -213,22 +269,21 @@ if __name__=="__main__":
     inference = HeatMapInference()
 
     # Generate Template Based Report & Heat Map
-    image, heatmaps,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
+    image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
     
     print("image",image.shape)
-    print("image_heatmaps",image.shape)
     print("Labels:",labels)
     print("confidence",confidence)
     print("severity",severity)
     print("Report:",template_based_report)
 
-
-
-    # Save image using OpenCV
-    cv2.imwrite(f'original_224_224.png', image_org)
-          
+    # Destruct heat map returns
+    heatmaps,image_resized,heatmap_resized_plts,blended_images=heatmap_result
+    print("heatmaps",heatmaps.shape)
+    print("image_resized",image_resized.shape)
+    print("heatmap_resized_plts",heatmap_resized_plts.shape)
+    print("blended_images",blended_images.shape)
     
     
-    
-# python -m src.inference.main "./datasets/images/00000001_000.png"
-# python -m src.inference.main "datasets\mimic-cxr-jpg\files\p11\p11001469\s54076811\d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"
+# python -m src.inference.heat_map_inference "./datasets/images/00000001_000.png"
+# python -m src.inference.heat_map_inference "datasets\mimic-cxr-jpg\files\p11\p11001469\s54076811\d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"
