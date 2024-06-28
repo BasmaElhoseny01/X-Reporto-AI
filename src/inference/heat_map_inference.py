@@ -13,28 +13,6 @@ from config import *
 from src.heat_map_U_ones.models.heat_map import HeatMap
 
 
-
-# def CustomDataset(img_path: str): 
-#             img_path = os.path.join(os.getcwd(), img_path)
-#             # replace \ with / for windows
-#             img_path = img_path.replace("\\", "/")
-#             image = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
-#             image=np.array(image).astype("float32")
-#             if image is  None:
-#                 assert image is not None, f"Image at {img_path} is None"
-#             # image=transform(image=image)["image"]
-#             # image= np.copy(image)
-
-#             image=transform(image=image)["image"]
-
-#             if image.dtype != np.float32:
-#                 image = image.astype(np.float32)
-
-#             image = np.expand_dims(image, axis=0)
-#             image = np.expand_dims(image, axis=0)
-#             image /= 255.0
-#             return image
-           
 class HeatMapInference:
     def __init__(self):
 
@@ -58,7 +36,6 @@ class HeatMapInference:
 
         print("Model Loaded")
 
-        
         self.heat_map_transform=A.Compose([
             A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
 
@@ -68,11 +45,17 @@ class HeatMapInference:
             
             ToTensorV2(p=1.0)
         ])
-
-
     
     def _load_and_process_image(self, img_path: str):
+        """
+        Loads and processes an image from the specified path.
 
+        Args:
+            img_path (str): Path to the image file.
+
+        Returns:
+            tuple: Original image and processed image tensor.
+        """
         # Getting image path  with parent path of current folder + image path
         img_path = os.path.join(os.getcwd(), img_path)
 
@@ -94,11 +77,6 @@ class HeatMapInference:
               
         # Add batch dimension
         image = image.unsqueeze(0)
-
-
-        # # Resize Original Image to be 224*244
-        # image_org = cv2.resize(image_org, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
-
 
         return image_org,image
  
@@ -124,7 +102,7 @@ class HeatMapInference:
             _,y_scores,features=self.heat_map_model(image)
 
             # Results
-            image = image.to("cpu") # Won't B used :D
+            image = image.to("cpu") # Won't Be used :D
             confidence = y_scores.to("cpu").squeeze(0).tolist()
             features=features.to("cpu").squeeze(0)
 
@@ -143,73 +121,122 @@ class HeatMapInference:
             return image_org,heatmap_result,labels,confidence,severity,template_based_report
 
 
-    def generate_template_based_report(self,labels,confidence):
-      report=[]
-      # TODO Add Info About the Grey Area
-      template_positive = "The patient has {condition}."
-      template_negative = "The patient does not have {condition}."
+    def generate_template_based_report(self,labels,confidence):   
+        """
+        Generates a report based on labels and confidence scores.
 
-      for i, label in enumerate(labels):
-          confidence_percent = confidence[i] * 100
-          if label == 1:
-              report.append(template_positive.format(condition=CLASSES[i], confidence=confidence_percent))
-          else:
-              report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
-      return report
+        Args:
+            labels (list): A list of binary labels (1 for positive, 0 for negative) indicating the presence of conditions.
+            confidence (list): A list of confidence scores corresponding to the labels.
+
+        Returns:
+            list: A list of strings containing the report statements.
+        """
+        report=[]
+        # TODO Add Info About the Grey Area
+        template_positive = "The patient has {condition}."
+        template_negative = "The patient does not have {condition}."
+
+        for i, label in enumerate(labels):
+            confidence_percent = confidence[i] * 100
+            if label == 1:
+                report.append(template_positive.format(condition=CLASSES[i], confidence=confidence_percent))
+            else:
+                report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
+        return report
 
     def compute_severity(self,labels,confidence):
       return -1
     
     def generate_heat_maps(self,image,features,heatmap_type:str):
-      '''
-      heatmap_type: cam or grid cam
-      '''
-      heatmaps= np.zeros((len(CLASSES), 7, 7))
-      if heatmap_type=="cam":
+        """
+        Generates heat maps based on the given image and features.
+
+        Args:
+            image (numpy.ndarray): The original image array.
+            features (torch.Tensor): The features extracted from the model.
+            heatmap_type (str): Type of heat map to generate ('cam' or 'grad-cam').
+
+        Returns:
+            tuple: A tuple containing:
+                - heatmaps (numpy.ndarray): Array of heat maps for each class.
+                - image_resized (numpy.ndarray): Resized original image.
+                - heatmap_resized_plts (numpy.ndarray): Resized heat maps for plotting.
+                - blended_images (numpy.ndarray): Blended images with heat maps overlaid.
+        """
+        heatmaps= np.zeros((len(CLASSES), 7, 7))
+        if heatmap_type=="cam":
+            for class_index in range(len(CLASSES)):
+                # Last layer Weights for this class
+                weights = self.weights[class_index].view(1, -1).to("cpu") # 1, 1024
+
+                heatmap=self.cam_heat_map(weights,features) # 7x7
+
+                heatmaps[class_index]=heatmap
+
+        elif heatmap_type=="grad-cam":
+            print("grid-cam (Not Implemeneted)")
+            # We need to perform another forward pass to compute the grad
+            # Forward Pass
+
+
+        heatmap_resized_plts=np.zeros((len(CLASSES), 224, 224,3))
+        blended_images=np.zeros((len(CLASSES), 224, 224,3))
+        # Project Heat Map on the Original Image
         for class_index in range(len(CLASSES)):
-            # Last layer Weights for this class
-            weights = self.weights[class_index].view(1, -1).to("cpu") # 1, 1024
+            image_resized,heatmap_resized,blended_image=self.project_heat_map(image=image,heatmap=heatmaps[class_index])
 
-            heatmap=self.cam_heat_map(weights,features) # 7x7
-
-            heatmaps[class_index]=heatmap
-      
-
-      heatmap_resized_plts=np.zeros((len(CLASSES), 224, 224,3))
-      blended_images=np.zeros((len(CLASSES), 224, 224,3))
-      # Project Heat Map on the Original Image
-      for class_index in range(len(CLASSES)):
-        image_resized,heatmap_resized,blended_image=self.project_heat_map(image=image,heatmap=heatmaps[class_index])
-
-        heatmap_resized_plts[class_index]=heatmap_resized
-        blended_images[class_index]=blended_image
+            heatmap_resized_plts[class_index]=heatmap_resized
+            blended_images[class_index]=blended_image
 
 
-      return heatmaps,image_resized,heatmap_resized_plts,blended_images
+        return heatmaps,image_resized,heatmap_resized_plts,blended_images
 
 
 
           
     def cam_heat_map(self,weights,features):
+        """
+        Generates Class Activation Map (CAM) heat map.
+
+        Args:
+            weights (torch.Tensor): Weights for the class. Shape should be [1, 1024].
+            features (torch.Tensor): Features extracted from the model. Shape should be [1024, 7, 7].
+
+        Returns:
+            numpy.ndarray: CAM heat map of shape [7, 7].
+        """
+        # Apply Matrix multiplication to get the heatmap
+        # weights: 1024 x features: 1024, 7, 7 -> 1, 7, 7
+        heatmap = torch.matmul(weights, features.view(features.size(0), -1)).view(features.size(1), features.size(2)) # 7, 7
+        heatmap = heatmap.cpu().data.numpy() #torch.Size([7, 7])
+
+        # Apply relu
+        heatmap = np.maximum(heatmap, 0)
+
+        # Apply normalization (If the maximum value is zero, normalization would lead to division by zero)
+        if(np.max(heatmap)!=0): 
+            heatmap = heatmap / np.max(heatmap)
+
+        return heatmap
+    
+
+    def grad_cam_heat_map(self):
       '''
       weights:[1, 1024]
       features:[1024, 7, 7]
 
+      y_scores: [1] [0-1]
+
       heatmap:[7,7]
-      '''
-      # Apply Matrix multiplication to get the heatmap
-      # weights: 1024 x features: 1024, 7, 7 -> 1, 7, 7
-      heatmap = torch.matmul(weights, features.view(features.size(0), -1)).view(features.size(1), features.size(2)) # 7, 7
-      heatmap = heatmap.cpu().data.numpy() #torch.Size([7, 7])
+      '''  
+      # To be completed  https://chatgpt.com/share/f5cd2d35-d96f-48ba-8807-91809eca1ca6
+      # print("y_score",y_score)
+      # # Backward pass to get gradients of target class with respect to the feature maps
+      # self.heat_map_model.zero_grad()
+      # y_score.backward(retain_graph=True)
+      pass
 
-      # Apply relu
-      heatmap = np.maximum(heatmap, 0)
-
-      # Apply normalization (If the maximum value is zero, normalization would lead to division by zero)
-      if(np.max(heatmap)!=0): 
-          heatmap = heatmap / np.max(heatmap)
-
-      return heatmap
 
     def project_heat_map(self,image,heatmap):
       '''
@@ -270,6 +297,7 @@ if __name__=="__main__":
 
     # Generate Template Based Report & Heat Map
     image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
+    # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="grad-cam")
     
     print("image",image.shape)
     print("Labels:",labels)
@@ -285,5 +313,5 @@ if __name__=="__main__":
     print("blended_images",blended_images.shape)
     
     
-# python -m src.inference.heat_map_inference "./datasets/images/00000001_000.png"
-# python -m src.inference.heat_map_inference "datasets\mimic-cxr-jpg\files\p11\p11001469\s54076811\d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"
+# python -m src.inference.main "./datasets/images/00000001_000.png"
+# python -m src.inference.main "datasets\mimic-cxr-jpg\files\p11\p11001469\s54076811\d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"
