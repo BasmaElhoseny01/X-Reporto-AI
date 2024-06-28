@@ -114,7 +114,7 @@ class HeatMapInference:
             heatmaps,image_resized,heatmap_resized_plts,blended_images=self.generate_heat_maps(image=image_org,features=features,heatmap_type=heatmap_type)
             heatmap_result=(heatmaps,image_resized,heatmap_resized_plts,blended_images)
 
-            severity=self.compute_severity(labels,confidence)
+            severity=self.compute_severity(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
 
             template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
 
@@ -137,21 +137,66 @@ class HeatMapInference:
         # template_positive = "The patient has {condition}."
         # template_negative = "The patient does not have {condition}."
 
-        template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. The findings are primarily located in the {location}."
+        report = []
+
+        template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. " \
+                            "The findings are primarily located in the {location}. " \
+                            "Severity: {severity}."
         template_negative = "The patient does not have {condition} with a confidence of {confidence:.2f}%. "
 
         for i, label in enumerate(labels):
             confidence_percent = confidence[i] * 100
             if label == 1:
-                location = self.determine_heatmap_region(heatmaps[i], image=None)
-                report.append(template_positive.format(condition=CLASSES[i], confidence=confidence_percent,location=location))
+                severity_level, severity_score = self.heat_map_severity(heatmaps[i])
+                location = self.heatmap_region(heatmaps[i], image=None)  # Assuming you have a method for this
+                report.append(template_positive.format(condition=CLASSES[i],
+                                                      confidence=confidence_percent,
+                                                      location=location,
+                                                      severity=severity_level))
             else:
                 report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
+
         return report
 
-    def compute_severity(self,labels,confidence):
-      return -1
-    
+    def compute_severity(self, labels, confidence, heatmaps):
+        # Weights per findings
+        importance_scores = {
+            'Atelectasis': 0.2,
+            'Cardiomegaly': 0.3,
+            'Edema': 0.1,
+            'Lung Opacity': 0.05,
+            'No Finding': 0.05,
+            'Pleural Effusion': 0.15,
+            'Pneumonia': 0.08,
+            'Support Devices': 0.07,
+        }
+
+        severity_weights = []
+
+        # Compute severity score based on heatmap intensity and confidence
+        for i, label in enumerate(labels):
+            # Calculate severity score based on heatmap intensity (you can adjust this part)
+            _, severity_score = self.heat_map_severity(heatmaps[i])
+
+            # Multiply by confidence score to weigh the severity
+            weighted_severity = severity_score * confidence[i]
+
+            # Use class importance to weight the severity further
+            importance = importance_scores.get(CLASSES[i], 0.0)
+            weighted_severity *= importance
+
+            # Append the weighted severity to the list
+            severity_weights.append(weighted_severity)
+
+        # Normalize weights so they sum up to 10
+        total_weight = sum(severity_weights)
+        if total_weight > 0:
+            normalized_weight = (total_weight / sum(importance_scores.values())) * 10
+        else:
+            normalized_weight = 0
+
+        return normalized_weight
+        
     def generate_heat_maps(self,image,features,heatmap_type:str):
         """
         Generates heat maps based on the given image and features.
@@ -280,7 +325,7 @@ class HeatMapInference:
     
 
 
-    def determine_heatmap_region(self, heatmap,image=None):
+    def heatmap_region(self, heatmap,image=None):
       """
       Determines the primary region of activation in the heatmap.
 
@@ -340,60 +385,90 @@ class HeatMapInference:
       # TODO
       # Normalize the orientation of the image
       # image = normalize_orientation(image)
-      # NATOMICAL_REGIONS_COORDS = {
-      #   "right lung": (112, 0, 224, 224),
-      #   "right upper lung zone": (112, 0, 224, 74),
-      #   "right mid lung zone": (112, 75, 224, 149),
-      #   "right lower lung zone": (112, 150, 224, 224),
-      #   "right hilar structures": (150, 75, 224, 149),
-      #   "right apical zone": (112, 0, 224, 37),
-      #   "right costophrenic angle": (187, 187, 224, 224),
-      #   "right hemidiaphragm": (187, 150, 224, 187),
-      #   "left lung": (0, 0, 112, 224),
-      #   "left upper lung zone": (0, 0, 112, 74),
-      #   "left mid lung zone": (0, 75, 112, 149),
-      #   "left lower lung zone": (0, 150, 112, 224),
-      #   "left hilar structures": (0, 75, 74, 149),
-      #   "left apical zone": (0, 0, 112, 37),
-      #   "left costophrenic angle": (37, 187, 112, 224),
-      #   "left hemidiaphragm": (37, 150, 112, 187),
-      #   "trachea": (37, 37, 112, 74),
-      #   "spine": (56, 112, 112, 224),
-      #   "right clavicle": (112, 0, 149, 37),
-      #   "left clavicle": (0, 0, 37, 37),
-      #   "aortic arch": (37, 37, 74, 74),
-      #   "mediastinum": (37, 74, 112, 149),
-      #   "upper mediastinum": (37, 37, 112, 74),
-      #   "svc": (37, 74, 74, 112),
-      #   "cardiac silhouette": (112, 150, 168, 224),
-      #   "cavoatrial junction": (112, 150, 168, 224),
-      #   "right atrium": (112, 150, 168, 224),
-      #   "carina": (56, 112, 112, 149),
-      #   "abdomen": (187, 150, 224, 224)
-      # }
+      NATOMICAL_REGIONS_COORDS = {
+        "right lung": (112, 0, 224, 224),
+        "right upper lung zone": (112, 0, 224, 74),
+        "right mid lung zone": (112, 75, 224, 149),
+        "right lower lung zone": (112, 150, 224, 224),
+        "right hilar structures": (150, 75, 224, 149),
+        "right apical zone": (112, 0, 224, 37),
+        "right costophrenic angle": (187, 187, 224, 224),
+        "right hemidiaphragm": (187, 150, 224, 187),
+        "left lung": (0, 0, 112, 224),
+        "left upper lung zone": (0, 0, 112, 74),
+        "left mid lung zone": (0, 75, 112, 149),
+        "left lower lung zone": (0, 150, 112, 224),
+        "left hilar structures": (0, 75, 74, 149),
+        "left apical zone": (0, 0, 112, 37),
+        "left costophrenic angle": (37, 187, 112, 224),
+        "left hemidiaphragm": (37, 150, 112, 187),
+        "trachea": (37, 37, 112, 74),
+        "spine": (56, 112, 112, 224),
+        "right clavicle": (112, 0, 149, 37),
+        "left clavicle": (0, 0, 37, 37),
+        "aortic arch": (37, 37, 74, 74),
+        "mediastinum": (37, 74, 112, 149),
+        "upper mediastinum": (37, 37, 112, 74),
+        "svc": (37, 74, 74, 112),
+        "cardiac silhouette": (112, 150, 168, 224),
+        "cavoatrial junction": (112, 150, 168, 224),
+        "right atrium": (112, 150, 168, 224),
+        "carina": (56, 112, 112, 149),
+        "abdomen": (187, 150, 224, 224)
+      }
 
-      # # Average the activation values across the three color channels
-      # heatmap_gray = np.mean(heatmap, axis=2)
+      # Average the activation values across the three color channels
+      heatmap_gray = np.mean(heatmap, axis=2)
 
-      # max_activation = 0
-      # primary_region = None
+      max_activation = 0
+      primary_region = None
 
-      # for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
-      #     region_activation = heatmap_gray[y1:y2, x1:x2].mean()
-      #     if region_activation > max_activation:
-      #         max_activation = region_activation
-      #         primary_region = region
+      for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
+          region_activation = heatmap_gray[y1:y2, x1:x2].mean()
+          if region_activation > max_activation:
+              max_activation = region_activation
+              primary_region = region
 
-      import random
+    #   import random
 
-      # Assuming 'heatmap' and 'primary_region' are defined
-      random_number = random.randint(1000, 9999)  # Generate a random number between 1000 and 9999
-      filename = f"./_{random_number}_{primary_region}.png"
-      cv2.imwrite(filename, heatmap)
+    #   # Assuming 'heatmap' and 'primary_region' are defined
+    #   random_number = random.randint(1000, 9999)  # Generate a random number between 1000 and 9999
+    #   filename = f"./_{random_number}_{primary_region}.png"
+    #   cv2.imwrite(filename, heatmap)
 
       return primary_region
 
+    
+    def heat_map_severity(self,heatmap, significant_threshold=0.7, mild_threshold=0.3):
+        """
+        Determines the severity based on the intensity of the heatmap.
 
+        Args:
+            heatmap (numpy.ndarray): The heatmap of activations.
+            significant_threshold (float, optional): Threshold for significant finding. Defaults to 0.7.
+            mild_threshold (float, optional): Threshold for mild indication. Defaults to 0.3.
+
+        Returns:
+            tuple: A tuple containing severity level as string and severity score as int.
+                  Severity level can be "significant finding", "mild indication", or "no significant finding".
+                  Severity score is 2 for significant finding, 1 for mild indication, and 0 for no significant finding.
+        """
+        # Convert BGR to grayscale intensity for severity determination
+        # Average the activation values across the three color channels [LOSS COLOR INFO]
+        # heatmap_gray = np.mean(heatmap, axis=2)  
+
+        # Weighted average to preserve color information
+        weights = np.array([0.114, 0.587, 0.299])  # RGB channel weights for grayscale conversion
+        heatmap_gray = np.dot(heatmap[..., :3], weights)
+    
+        max_value = np.max(heatmap_gray)
+
+        if max_value >= significant_threshold * 255:  # Scale threshold to match grayscale range [0, 255]
+            return "significant finding", 2
+        elif max_value >= mild_threshold * 255:  # Scale threshold to match grayscale range [0, 255]
+            return "mild indication", 1
+        else:
+            return "no significant finding", 0
 
 
             
