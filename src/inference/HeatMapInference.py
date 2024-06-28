@@ -1,4 +1,5 @@
 import argparse
+import numpy as np
 import cv2
 import os
 import albumentations as A
@@ -6,17 +7,10 @@ from albumentations.pytorch import ToTensorV2
 import torch
 
 # Utility functions
-from config import OPERATION_MODE,OperationMode
+from config import *
 
 # Models
 from src.heat_map_U_ones.models.heat_map import HeatMap
-
-
-from config import *
-from src.denoiser.config import*
-import numpy as np
-
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 
@@ -235,6 +229,40 @@ if __name__=="__main__":
     print("confidence",confidence)
     print("severity",severity)
     print("Report:",template_based_report)
+
+
+    # Save Heat Maps
+    import matplotlib
+    from matplotlib import pyplot as plt
+    from matplotlib.gridspec import GridSpec
+    from src.utils import plot_to_image    
+
+    # Save image using OpenCV
+    cv2.imwrite(f'original_224_224.png', image)
+
+
+    for i,cls in enumerate(CLASSES):
+      # Create subplot
+      fig = plt.figure(figsize=(12, 5))
+      gs = GridSpec(1, 3, width_ratios=[2, 2, 1], wspace=0.1)  # Set wspace to adjust space between subplots
+
+      # Plot original image
+      ax_original = fig.add_subplot(gs[0])
+      ax_original.imshow(heatmaps[i])
+      ax_original.axis('off')
+
+      # Plot heatmap
+      ax_heatmap = fig.add_subplot(gs[1])
+      ax_heatmap.imshow(image_heatmaps[i])
+      ax_heatmap.axis('off')
+
+      # Convert plot to image
+      image = plot_to_image()
+
+      # Write Image
+      cv2.imwrite(f'{cls}.png', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))         
+
+
 
     # for i,j in zip(confidence,labels):
     #   print(i,j)
