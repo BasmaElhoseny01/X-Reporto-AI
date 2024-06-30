@@ -1,9 +1,10 @@
 import argparse
 import cv2
-
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import torch
+from typing import List, Tuple, Dict, Any, Union, Optional
+import evaluate
 
 # Utility functions
 from src.utils import plot_single_image
@@ -54,18 +55,30 @@ class Inference:
 
         # Read the model
         self.x_reporto = XReportoV1(object_detector_path="models/object_detector.pth",
-                               region_classifier_path="models/binary_classifier_selection_region.pth",
-                               language_model_path="models/LM.pth")
+                                binary_classifier_abnormal_region_path="models/binary_classifier_region_abnormal.pth",
+                                region_classifier_path="models/binary_classifier_selection_region.pth",
+                                language_model_path="models/LM.pth")
         
         self.x_reporto.to(DEVICE)
-        print("Model Loaded")
-        
         self.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+        self.bertScore = evaluate.load("bertscore")
 
-
-                               
+        print("Model Loaded Successfully")
 
     def generate_image_report(self,image_path):
+        """
+        Generate the report for the given image
+
+        Args:
+        image_path (str): Path to the image file
+
+        Returns:
+        image: after resizing and padding
+        bounding_boxes: bounding boxes of the selected region
+        abnormal_region: selected region
+        lm_sentences_decoded: list of generated sentences
+        report text to be saved later
+        """
         # Read the image
         # image = cv2.imread(image_path,cv2.IMREAD_UNCHANGED)
 
@@ -89,17 +102,18 @@ class Inference:
         # Inference Pass
         self.x_reporto.eval()
         with torch.no_grad():
-            bounding_boxes,lm_sentences_encoded=self.x_reporto(images=image,use_beam_search=False)            
+            # Inference Pass
+            denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded =  self.x_reporto(images=image,use_beam_search=True)  
+
+            # Decode the sentences
             lm_sentences_decoded=self.tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
-            
-           
             
             # Results
             image=image[0].to('cpu')
             bounding_boxes=bounding_boxes.to('cpu')
             
             # Bounding Boxes
-            plot_single_image(img=image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
+            plot_single_image(img = image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
 
             # Report
             report_path='report.txt'
@@ -115,7 +129,79 @@ class Inference:
         # Selected Regions / Abnormal Region
         # Report
 
-    #     pass
+        # generate the report text
+        generated_sentences, report_text = self.fix_sentences(generated_sentences=lm_sentences_decoded)
+
+        return image, bounding_boxes, abnormal_region, generated_sentences, report_text
+
+
+    def fix_sentences(self,generated_sentences: List[str]):
+        """
+        Fix the generated sentences
+        1. Remove the duplicate sentences
+        2. Remove the sentences with less than 3 words
+        3. Remove the sentences with less than 3 characters
+        4. Remove garbage sentences with random characters that has no meaning
+
+        remove the sentences that has almost same meaning
+
+        Args:
+        generated_sentences (List[str]): List of generated sentences
+
+        Returns:
+        List[str]: List of fixed sentences
+        str: Report text
+        """
+        
+        # Remove the sentences with less than 3 words
+        generated_sentences = [sentence for sentence in generated_sentences if len(sentence.split()) >= 3]
+
+        # Remove the sentences with less than 3 characters
+        generated_sentences = [sentence for sentence in generated_sentences if len(sentence) >= 3]
+
+        # Remove the duplicate sentences that has almost same meaning
+        # use bertScore function in evaluate
+        # group the similar sentences
+        similar_sentences = []
+        final_sentences = []
+        for sentence in generated_sentences:
+            # check if the sentence is similar to any of the sentence in the similar_sentences
+            is_similar = False
+            i = 0
+            for group in similar_sentences:
+                results = self.bertscore.compute(
+                            predictions=[sentence], 
+                            references= group, 
+                            lang="en", 
+                            model_type="roberta-large"
+                    )
+                if results["f1"][0] > 0.9:
+                    is_similar = True
+                    break
+                i += 1
+            if not is_similar:
+                similar_sentences.append([sentence])
+                final_sentences.append(sentence)
+            else:
+                # replace final sentence with current sentence if current sentence is longer
+                if len(sentence) > len(final_sentences[i]):
+                    final_sentences[i] = sentence
+                
+                # add the sentence to group
+                similar_sentences[i].append(sentence)
+        
+        # Remove garbage sentences with random characters that has no meaning
+        
+        
+    
+        # generate the report text
+        report_text = ""
+        for sentence in final_sentences:
+            report_text += sentence + "\n"
+
+        return final_sentences, report_text
+
+
 
 if __name__=="__main__":
     # Take image path from command line

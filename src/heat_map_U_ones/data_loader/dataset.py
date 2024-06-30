@@ -28,7 +28,7 @@ class HeatMapDataset(Dataset):
         # Replace -1.0 with 1.0 in specified columns
         self.data_info[valid_columns] = self.data_info[valid_columns].replace(-1.0, 0.0) #[OLd NAns]
         # self.data_info[valid_columns] = self.data_info[valid_columns].replace(np.nan, -1.0)
-          
+        
         # Get the headers
         self.headers = self.data_info.columns.tolist()
 
@@ -43,7 +43,7 @@ class HeatMapDataset(Dataset):
         
         # Getting image path  with parent path of current folder + image path
         img_path = os.path.join(os.getcwd(), img_path)
-      
+
         # Fix Problem of \
         img_path = img_path.replace("\\", "/")
         #Read Image  

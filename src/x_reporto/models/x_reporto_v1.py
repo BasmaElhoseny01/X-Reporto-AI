@@ -374,6 +374,8 @@ class XReportoV1(nn.Module):
             #print("detected_classes",detected_classes.shape) #[batch_size x 29]
             #print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
 
+            # Abnormal Classifier
+            _,abnormal_regions =self.binary_classifier_region_abnormal(object_detector_features,detected_classes)
             # Binary Classifier
             _,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,detected_classes)
             #print(selected_regions.shape)  #[batch_size x 29] 
@@ -396,8 +398,8 @@ class XReportoV1(nn.Module):
 
 
 
-            # return bounding_boxes,detected_classes,selected_regions,selected_region_features,LM_sentences
-            return bounding_boxes[selected_regions],LM_sentences
+            # return denoised images, bounding boxes, selected regions, abnormal regions, and generated sentences
+            return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences
         
         elif OPERATION_MODE==OperationMode.TRAINING.value and self.training:
             # Training
