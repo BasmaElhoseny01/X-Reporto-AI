@@ -365,36 +365,55 @@ class HeatMapInference:
     
 
 
-    def heatmap_region(self, heatmap,image=None):
+    def heatmap_region(self, heatmap,regions,region_boxes):
       """
       Determines the primary region of activation in the heatmap.
 
       Args:
-          heatmap (numpy.ndarray): The heatmap array of shape (224, 224, 3).
+        heatmap (numpy.ndarray): The heatmap array of shape (224, 224, 3).
+        - regions: list of regions
+        - boxes (List[List[float]]): List of bounding boxes.
+            Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
 
       Returns:
           str: Description of the primary region.
       """
-      # Option(1) 4 Simple regions
+
+      # Resize the heatmap to the original image size
+      heatmap_resized = cv2.resize(heatmap, (HeatMap.IMAGE_SIZE, HeatMap.IMAGE_SIZE))
+
       # Average the activation values across the three color channels
-      heatmap_gray = np.mean(heatmap, axis=2)
+      heatmap_gray = np.mean(heatmap_resized, axis=2)
+      
+      max_activation = 0
+      primary_region = None
 
-      # Divide the heatmap into quadrants
-      upper_left = heatmap_gray[:112, :112].mean()
-      upper_right = heatmap_gray[:112, 112:].mean()
-      lower_left = heatmap_gray[112:, :112].mean()
-      lower_right = heatmap_gray[112:, 112:].mean()
+      for region, (x1, y1, x2, y2) in zip(regions,region_boxes):
+        region_activation = heatmap_gray[y1:y2, x1:x2].mean()
+        if region_activation > max_activation:
+            max_activation = region_activation
+            primary_region = region
+        return primary_region
 
-      # Regions dictionary
-      regions = {
-          "upper left lung": upper_left,
-          "upper right lung": upper_right,
-          "lower left lung": lower_left,
-          "lower right lung": lower_right
-      }
 
-      # Find the region with the highest mean activation
-      primary_region = max(regions, key=regions.get)
+
+    # Option(1) 4 Simple regions
+    #   # Divide the heatmap into quadrants
+    #   upper_left = heatmap_gray[:112, :112].mean()
+    #   upper_right = heatmap_gray[:112, 112:].mean()
+    #   lower_left = heatmap_gray[112:, :112].mean()
+    #   lower_right = heatmap_gray[112:, 112:].mean()
+
+    #   # Regions dictionary
+    #   regions = {
+    #       "upper left lung": upper_left,
+    #       "upper right lung": upper_right,
+    #       "lower left lung": lower_left,
+    #       "lower right lung": lower_right
+    #   }
+
+    #   # Find the region with the highest mean activation
+    #   primary_region = max(regions, key=regions.get)
 
 
       # Option(2)
@@ -421,53 +440,53 @@ class HeatMapInference:
       # primary_region = max(regions, key=regions.get)
 
 
-      # Option(3) 29 Region
-      # TODO
-      # Normalize the orientation of the image
-      # image = normalize_orientation(image)
-      NATOMICAL_REGIONS_COORDS = {
-        "right lung": (112, 0, 224, 224),
-        "right upper lung zone": (112, 0, 224, 74),
-        "right mid lung zone": (112, 75, 224, 149),
-        "right lower lung zone": (112, 150, 224, 224),
-        "right hilar structures": (150, 75, 224, 149),
-        "right apical zone": (112, 0, 224, 37),
-        "right costophrenic angle": (187, 187, 224, 224),
-        "right hemidiaphragm": (187, 150, 224, 187),
-        "left lung": (0, 0, 112, 224),
-        "left upper lung zone": (0, 0, 112, 74),
-        "left mid lung zone": (0, 75, 112, 149),
-        "left lower lung zone": (0, 150, 112, 224),
-        "left hilar structures": (0, 75, 74, 149),
-        "left apical zone": (0, 0, 112, 37),
-        "left costophrenic angle": (37, 187, 112, 224),
-        "left hemidiaphragm": (37, 150, 112, 187),
-        "trachea": (37, 37, 112, 74),
-        "spine": (56, 112, 112, 224),
-        "right clavicle": (112, 0, 149, 37),
-        "left clavicle": (0, 0, 37, 37),
-        "aortic arch": (37, 37, 74, 74),
-        "mediastinum": (37, 74, 112, 149),
-        "upper mediastinum": (37, 37, 112, 74),
-        "svc": (37, 74, 74, 112),
-        "cardiac silhouette": (112, 150, 168, 224),
-        "cavoatrial junction": (112, 150, 168, 224),
-        "right atrium": (112, 150, 168, 224),
-        "carina": (56, 112, 112, 149),
-        "abdomen": (187, 150, 224, 224)
-      }
+    #   # Option(3) 29 Region
+    #   # TODO
+    #   # Normalize the orientation of the image
+    #   # image = normalize_orientation(image)
+    #   NATOMICAL_REGIONS_COORDS = {
+    #     "right lung": (112, 0, 224, 224),
+    #     "right upper lung zone": (112, 0, 224, 74),
+    #     "right mid lung zone": (112, 75, 224, 149),
+    #     "right lower lung zone": (112, 150, 224, 224),
+    #     "right hilar structures": (150, 75, 224, 149),
+    #     "right apical zone": (112, 0, 224, 37),
+    #     "right costophrenic angle": (187, 187, 224, 224),
+    #     "right hemidiaphragm": (187, 150, 224, 187),
+    #     "left lung": (0, 0, 112, 224),
+    #     "left upper lung zone": (0, 0, 112, 74),
+    #     "left mid lung zone": (0, 75, 112, 149),
+    #     "left lower lung zone": (0, 150, 112, 224),
+    #     "left hilar structures": (0, 75, 74, 149),
+    #     "left apical zone": (0, 0, 112, 37),
+    #     "left costophrenic angle": (37, 187, 112, 224),
+    #     "left hemidiaphragm": (37, 150, 112, 187),
+    #     "trachea": (37, 37, 112, 74),
+    #     "spine": (56, 112, 112, 224),
+    #     "right clavicle": (112, 0, 149, 37),
+    #     "left clavicle": (0, 0, 37, 37),
+    #     "aortic arch": (37, 37, 74, 74),
+    #     "mediastinum": (37, 74, 112, 149),
+    #     "upper mediastinum": (37, 37, 112, 74),
+    #     "svc": (37, 74, 74, 112),
+    #     "cardiac silhouette": (112, 150, 168, 224),
+    #     "cavoatrial junction": (112, 150, 168, 224),
+    #     "right atrium": (112, 150, 168, 224),
+    #     "carina": (56, 112, 112, 149),
+    #     "abdomen": (187, 150, 224, 224)
+    #   }
 
-      # Average the activation values across the three color channels
-      heatmap_gray = np.mean(heatmap, axis=2)
+    #   # Average the activation values across the three color channels
+    #   heatmap_gray = np.mean(heatmap, axis=2)
 
-      max_activation = 0
-      primary_region = None
+    #   max_activation = 0
+    #   primary_region = None
 
-      for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
-          region_activation = heatmap_gray[y1:y2, x1:x2].mean()
-          if region_activation > max_activation:
-              max_activation = region_activation
-              primary_region = region
+    #   for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
+    #       region_activation = heatmap_gray[y1:y2, x1:x2].mean()
+    #       if region_activation > max_activation:
+    #           max_activation = region_activation
+    #           primary_region = region
 
     #   import random
 
@@ -476,7 +495,7 @@ class HeatMapInference:
     #   filename = f"./_{random_number}_{primary_region}.png"
     #   cv2.imwrite(filename, heatmap)
 
-      return primary_region
+    #   return primary_region
 
     
     def heat_map_severity(self,heatmap, significant_threshold=0.7, mild_threshold=0.3):
@@ -522,13 +541,17 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('image_path', type=str, help='Path to the image file')
+    parser.add_argument('--save_path', type=str, default=None, help='Optional path to save heat maps')
+
 
     args = parser.parse_args()
     image_path = args.image_path
+    save_path = args.save_path
     
     # Initialize the Inference class
     inference = HeatMapInference()
 
+    # --------------------------------------------------------------------------------Inference--------------------------------------------------------------------------------
     # Inference
     heat_maps,labels,confidence=inference.infer(image_path,heatmap_type="cam")
 
@@ -536,11 +559,39 @@ if __name__=="__main__":
     print("confidence",confidence)
     print("heat_maps",heat_maps.shape)
 
+    # Save Heat Maps (7x7)
+    if save_path:
+        for i,heat_map in enumerate(heat_maps):
+            cv2.imwrite(f"{save_path}/heat_map_{CLASSES[i]}.png",heat_map)
+            print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heat_map_{CLASSES[i]}.png")
+
+
+    # --------------------------------------------------------------------------------Project Heat Maps--------------------------------------------------------------------------------
     # Project Heat Map on the Original Image
     image_resized,heatmap_resized_plts,blended_images=inference.project_heat_maps(image_path,heat_maps)
     print("image_resized",image_resized.shape)
     print("heatmap_resized_plts",heatmap_resized_plts.shape)
     print("blended_images",blended_images.shape)
+
+    # Save resized image
+    if save_path:
+        cv2.imwrite(f"{save_path}/image_resized.png",image_resized)
+        print(f"Saved Resized Image at {save_path}/image_resized.png")
+
+    # Save Heat Maps & Blended Images
+    if save_path:
+        for i,heatmap_resized_plt,blended_image in enumerate(zip(heatmap_resized_plts,blended_images)):
+            cv2.imwrite(f"{save_path}/heatmap_resized_plt_{CLASSES[i]}.png",heatmap_resized_plt)
+            print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heatmap_resized_plt_{CLASSES[i]}.png")
+
+            cv2.imwrite(f"{save_path}/blended_image_{CLASSES[i]}.png",blended_image)
+            print(f"Saved Blended Image for {CLASSES[i]} at {save_path}/blended_image_{CLASSES[i]}.png")
+
+    # ---------------------------------------------------------------------Locate Heat Map Region--------------------------------------------------------------------------------
+    # Locate Heat Map Region
+    for i,heat_map in enumerate(heat_maps):
+        region=inference.heatmap_region(heatmap=heat_map,regions=None,region_boxes=None)
+        print(f"Region for {CLASSES[i]}:",region)
 
     # # Compute Severity
     # severity=inference.compute_severity(labels=labels,confidence=confidence)
