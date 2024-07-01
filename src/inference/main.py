@@ -19,6 +19,7 @@ from src.denoiser.config import*
 import numpy as np
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEBUG = False
 
 
 transform =  A.Compose(
@@ -190,6 +191,9 @@ class Inference:
                 # add the sentence to group
                 similar_sentences[i].append(sentence)
         
+        if DEBUG:
+            print("Similar Sentences: ", similar_sentences)
+            print("Final Sentences: ", final_sentences)
         # Remove garbage sentences with random characters that has no meaning
         
         
@@ -199,6 +203,9 @@ class Inference:
         for sentence in final_sentences:
             report_text += sentence + "\n"
 
+        if DEBUG:
+            print("Report Text: ", report_text)
+
         return final_sentences, report_text
 
 
@@ -207,6 +214,7 @@ if __name__=="__main__":
     # Take image path from command line
     if OperationMode.INFERENCE.value!=OPERATION_MODE :
         raise Exception("Operation Mode is not Inference Mode")
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('image_path', type=str, help='Path to the image file')
 
