@@ -378,10 +378,12 @@ class HeatMapInference:
       Returns:
           str: Description of the primary region.
       """
-
       # Resize the heatmap to the original image size
-      heatmap_resized = cv2.resize(heatmap, (HeatMap.IMAGE_SIZE, HeatMap.IMAGE_SIZE))
+      heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
 
+      # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
+      heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
+      
       # Average the activation values across the three color channels
       heatmap_gray = np.mean(heatmap_resized, axis=2)
       
@@ -393,7 +395,7 @@ class HeatMapInference:
         if region_activation > max_activation:
             max_activation = region_activation
             primary_region = region
-        return primary_region
+      return primary_region,heatmap_resized
 
 
 
