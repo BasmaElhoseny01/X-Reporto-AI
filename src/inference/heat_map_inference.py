@@ -46,7 +46,7 @@ class HeatMapInference:
             ToTensorV2(p=1.0)
         ])
 
-    def read_image(self, image_path):
+    def read_image(self, img_path):
         # Getting image path  with parent path of current folder + image path
         img_path = os.path.join(os.getcwd(), img_path)
 
@@ -318,16 +318,13 @@ class HeatMapInference:
         heatmap_resized_plts=np.zeros((len(heat_maps), 224, 224,3))
         blended_images=np.zeros((len(heat_maps), 224, 224,3))
 
-        for heatmap_idx,heatmap in enumerate(heat_maps):
-            image_resized,heatmap_resized,blended_image = self.project_heat_map(image=image,heatmap=heatmap)
+        for heatmap_idx,heat_map in enumerate(heat_maps):
+            image_resized,heatmap_resized,blended_image = self.project_heat_map(image=image,heat_map=heat_map)
         
             heatmap_resized_plts[heatmap_idx]=heatmap_resized
             blended_images[heatmap_idx]=blended_image
 
         return image_resized,heatmap_resized_plts,blended_images
-
-
-
       
 
     def project_heat_map(self,image,heat_map):
@@ -360,9 +357,9 @@ class HeatMapInference:
         # Weighted Sum 1*img + 0.25*heatmap (224x224x3)
         blended_image = cv2.addWeighted(image_resized,1,heatmap_resized,0.35,0)
 
-        #   cv2.imwrite('./img.png',image_resized)
-        #   cv2.imwrite('./heat.png',heatmap_resized)
-        #   cv2.imwrite('./blend.png',blended_image)
+        # cv2.imwrite('./img.png',image_resized)
+        # cv2.imwrite('./heat.png',heatmap_resized)
+        # cv2.imwrite('./blend.png',blended_image)
 
         return image_resized,heatmap_resized,blended_image
     
@@ -545,13 +542,13 @@ if __name__=="__main__":
     print("heatmap_resized_plts",heatmap_resized_plts.shape)
     print("blended_images",blended_images.shape)
 
-    # Compute Severity
-    severity=inference.compute_severity(labels=labels,confidence=confidence)
-    print("Severity",severity)
+    # # Compute Severity
+    # severity=inference.compute_severity(labels=labels,confidence=confidence)
+    # print("Severity",severity)
 
-    # Generate Template Based Report
-    template_based_report=inference.generate_template_based_report(labels=labels,confidence=confidence)
-    print("Report:",template_based_report)
+    # # Generate Template Based Report
+    # template_based_report=inference.generate_template_based_report(labels=labels,confidence=confidence)
+    # print("Report:",template_based_report)
 
 
     # Generate Template Based Report & Heat Map
