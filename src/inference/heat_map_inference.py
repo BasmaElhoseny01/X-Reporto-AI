@@ -263,8 +263,6 @@ class HeatMapInference:
 
         # return heatmaps,image_resized,heatmap_resized_plts,blended_images
 
-
-
           
     def cam_heat_map(self,weights,features):
         """
