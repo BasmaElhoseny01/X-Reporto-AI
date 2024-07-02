@@ -45,6 +45,19 @@ class HeatMapInference:
             
             ToTensorV2(p=1.0)
         ])
+
+    def read_image(self, img_path):
+        # Getting image path  with parent path of current folder + image path
+        img_path = os.path.join(os.getcwd(), img_path)
+
+        # Fix Image Path
+        img_path = img_path.replace("\\", "/")
+
+        # Read Image
+        image = cv2.imread(img_path,cv2.IMREAD_COLOR)
+        assert image is not None, f"Image at {img_path} is None"
+
+        return image
     
     def _load_and_process_image(self, img_path: str):
         """
@@ -111,17 +124,20 @@ class HeatMapInference:
               label=1*(class_confidence>self.optimal_thresholds[i])
               labels.append(label)
 
-            heatmaps,image_resized,heatmap_resized_plts,blended_images=self.generate_heat_maps(image=image_org,features=features,heatmap_type=heatmap_type)
-            heatmap_result=(heatmaps,image_resized,heatmap_resized_plts,blended_images)
+            # heatmaps,image_resized,heatmap_resized_plts,blended_images=self.generate_heat_maps(image=image_org,features=features,heatmap_type=heatmap_type)
+            heat_maps=self.generate_heat_maps(features=features,heatmap_type=heatmap_type)
+            # heatmap_result=(heatmaps,image_resized,heatmap_resized_plts,blended_images)
 
-            severity=self.compute_severity(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
+            # severity=self.compute_severity(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
 
-            template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
+            # template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
 
-            return image_org,heatmap_result,labels,confidence,severity,template_based_report
+            # return image_org,heatmap_result,labels,confidence,severity,template_based_report
+            return heat_maps,labels,confidence
 
 
-    def generate_template_based_report(self,labels,confidence,heatmaps):   
+    # def generate_template_based_report(self,labels,confidence,heat_maps):   
+    def generate_template_based_report(self,labels,confidence):   
         """
         Generates a report based on labels and confidence scores.
 
@@ -147,57 +163,62 @@ class HeatMapInference:
         for i, label in enumerate(labels):
             confidence_percent = confidence[i] * 100
             if label == 1:
-                severity_level, severity_score = self.heat_map_severity(heatmaps[i])
-                location = self.heatmap_region(heatmaps[i], image=None)  # Assuming you have a method for this
+                # severity_level, severity_score = self.heat_map_severity(heat_maps[i])
+                # location = self.heatmap_region(heat_maps[i], image=None)  # Assuming you have a method for this
                 report.append(template_positive.format(condition=CLASSES[i],
-                                                      confidence=confidence_percent,
-                                                      location=location,
-                                                      severity=severity_level))
+                                                      confidence=confidence_percent))
+                                                    #   location=location))
+                                                    #   severity=severity_level))
             else:
                 report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
 
         return report
 
-    def compute_severity(self, labels, confidence, heatmaps):
-        # Weights per findings
-        importance_scores = {
-            'Atelectasis': 0.2,
-            'Cardiomegaly': 0.3,
-            'Edema': 0.1,
-            'Lung Opacity': 0.05,
-            'No Finding': 0.05,
-            'Pleural Effusion': 0.15,
-            'Pneumonia': 0.08,
-            'Support Devices': 0.07,
-        }
-
-        severity_weights = []
-
-        # Compute severity score based on heatmap intensity and confidence
-        for i, label in enumerate(labels):
-            # Calculate severity score based on heatmap intensity (you can adjust this part)
-            _, severity_score = self.heat_map_severity(heatmaps[i])
-
-            # Multiply by confidence score to weigh the severity
-            weighted_severity = severity_score * confidence[i]
-
-            # Use class importance to weight the severity further
-            importance = importance_scores.get(CLASSES[i], 0.0)
-            weighted_severity *= importance
-
-            # Append the weighted severity to the list
-            severity_weights.append(weighted_severity)
-
-        # Normalize weights so they sum up to 10
-        total_weight = sum(severity_weights)
-        if total_weight > 0:
-            normalized_weight = (total_weight / sum(importance_scores.values())) * 10
-        else:
-            normalized_weight = 0
-
-        return normalized_weight
+    def compute_severity(self, labels, confidence):
+        print("Compute Severity")
+        return -1
         
-    def generate_heat_maps(self,image,features,heatmap_type:str):
+        # # Weights per findings
+        # importance_scores = {
+        #     'Atelectasis': 0.2,
+        #     'Cardiomegaly': 0.3,
+        #     'Edema': 0.1,
+        #     'Lung Opacity': 0.05,
+        #     'No Finding': 0.05, #**
+        #     'Pleural Effusion': 0.15,
+        #     'Pneumonia': 0.08,
+        #     'Support Devices': 0.07, #**
+        # }
+
+        # severity_weights = []
+
+        # # Score = sum(Confidence * heat_map_Severity*weight) #[0-1]
+
+        # # Compute severity score based on heatmap intensity and confidence
+        # for i, label in enumerate(labels):
+        #     # Calculate severity score based on heatmap intensity (you can adjust this part)
+        #     _, severity_score = self.heat_map_severity(heatmaps[i])
+
+        #     # Multiply by confidence score to weigh the severity
+        #     weighted_severity = severity_score * confidence[i]
+
+        #     # Use class importance to weight the severity further
+        #     importance = importance_scores.get(CLASSES[i], 0.0)
+        #     weighted_severity *= importance
+
+        #     # Append the weighted severity to the list
+        #     severity_weights.append(weighted_severity)
+
+        # # Normalize weights so they sum up to 10
+        # total_weight = sum(severity_weights)
+        # if total_weight > 0:
+        #     normalized_weight = (total_weight / sum(importance_scores.values())) * 10
+        # else:
+        #     normalized_weight = 0
+
+        # return normalized_weight
+        
+    def generate_heat_maps(self,features,heatmap_type:str):
         """
         Generates heat maps based on the given image and features.
 
@@ -227,19 +248,20 @@ class HeatMapInference:
             print("grid-cam (Not Implemeneted)")
             # We need to perform another forward pass to compute the grad
             # Forward Pass
+        return heatmaps
 
 
-        heatmap_resized_plts=np.zeros((len(CLASSES), 224, 224,3))
-        blended_images=np.zeros((len(CLASSES), 224, 224,3))
-        # Project Heat Map on the Original Image
-        for class_index in range(len(CLASSES)):
-            image_resized,heatmap_resized,blended_image=self.project_heat_map(image=image,heatmap=heatmaps[class_index])
+        # heatmap_resized_plts=np.zeros((len(CLASSES), 224, 224,3))
+        # blended_images=np.zeros((len(CLASSES), 224, 224,3))
+        # # Project Heat Map on the Original Image
+        # for class_index in range(len(CLASSES)):
+        #     image_resized,heatmap_resized,blended_image=self.project_heat_map(image=image,heatmap=heatmaps[class_index])
 
-            heatmap_resized_plts[class_index]=heatmap_resized
-            blended_images[class_index]=blended_image
+        #     heatmap_resized_plts[class_index]=heatmap_resized
+        #     blended_images[class_index]=blended_image
 
 
-        return heatmaps,image_resized,heatmap_resized_plts,blended_images
+        # return heatmaps,image_resized,heatmap_resized_plts,blended_images
 
 
 
@@ -287,74 +309,113 @@ class HeatMapInference:
       pass
 
 
-    def project_heat_map(self,image,heatmap):
-      '''
-      Overlays a heatmap onto an image.
+    def project_heat_maps(self,image_path,heat_maps):
+        # Read Image (BGR)(original image of shape (2544, 3056, 3) with pixel values in the range [0, 255].
+        image=self.read_image(image_path)
 
-      Parameters:
-      - image: numpy.ndarray
-          Original BGR image of shape (2544, 3056, 3) with pixel values in the range [0, 255].
-      - heatmap: numpy.ndarray
-          Heatmap of shape (7, 7) with normalized values in the range [0, 1].
 
-      Returns:
-      - image_resized: numpy.ndarray
-          The original image resized to (224, 224, 3) in BGR format.
-      - heatmap_resized: numpy.ndarray
-          The heatmap resized to (224, 224, 3) in BGR format.
-      - blended_image: numpy.ndarray
-          The blended image of size (224, 224, 3) in BGR format, which is a weighted sum of the resized image and the heatmap.
-      '''
-      # Resize Image to be HEAT_MAP_IMAGE_SIZExHEAT_MAP_IMAGE_SIZEx3 (224x224x3)
-      image_resized = cv2.resize(image, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+        # Initialize Arrays
+        heatmap_resized_plts=np.zeros((len(heat_maps), 224, 224,3))
+        blended_images=np.zeros((len(heat_maps), 224, 224,3))
 
-      # Reize Heat Map to be same size as the image (224x224x3)
-      heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+        for heatmap_idx,heat_map in enumerate(heat_maps):
+            image_resized,heatmap_resized,blended_image = self.project_heat_map(image=image,heat_map=heat_map)
+        
+            heatmap_resized_plts[heatmap_idx]=heatmap_resized
+            blended_images[heatmap_idx]=blended_image
 
-      # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
-      heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
+        return image_resized,heatmap_resized_plts,blended_images
+      
 
-      # Weighted Sum 1*img + 0.25*heatmap (224x224x3)
-      blended_image = cv2.addWeighted(image_resized,1,heatmap_resized,0.35,0)
+    def project_heat_map(self,image,heat_map):
+        '''
+        Overlays a heatmap [] onto an image.
 
-    #   cv2.imwrite('./img.png',image_resized)
-    #   cv2.imwrite('./heat.png',heatmap_resized)
-    #   cv2.imwrite('./blend.png',blended_image)
+        Parameters:
+        - image: numpy.ndarray
+            Original BGR image of shape (2544, 3056, 3) with pixel values in the range [0, 255].
+        - heatmap: numpy.ndarray
+            Heatmap of shape (7, 7) with normalized values in the range [0, 1].
 
-      return image_resized,heatmap_resized,blended_image
+        Returns:
+        - image_resized: numpy.ndarray
+            The original image resized to (224, 224, 3) in BGR format.
+        - heatmap_resized: numpy.ndarray
+            The heatmap resized to (224, 224, 3) in BGR format.
+        - blended_image: numpy.ndarray
+            The blended image of size (224, 224, 3) in BGR format, which is a weighted sum of the resized image and the heatmap.
+        '''
+        # Resize Image to be HEAT_MAP_IMAGE_SIZExHEAT_MAP_IMAGE_SIZEx3 (224x224x3)
+        image_resized = cv2.resize(image, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+
+        # Resize Heat Map to be same size as the image (224x224x3)
+        heatmap_resized = cv2.resize(heat_map, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+
+        # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
+        heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
+
+        # Weighted Sum 1*img + 0.25*heatmap (224x224x3)
+        blended_image = cv2.addWeighted(image_resized,1,heatmap_resized,0.35,0)
+
+        # cv2.imwrite('./img.png',image_resized)
+        # cv2.imwrite('./heat.png',heatmap_resized)
+        # cv2.imwrite('./blend.png',blended_image)
+
+        return image_resized,heatmap_resized,blended_image
     
 
 
-    def heatmap_region(self, heatmap,image=None):
+    def heatmap_region(self, heatmap,regions,region_boxes):
       """
       Determines the primary region of activation in the heatmap.
 
       Args:
-          heatmap (numpy.ndarray): The heatmap array of shape (224, 224, 3).
+        heatmap (numpy.ndarray): The heatmap array of shape (224, 224, 3).
+        - regions: list of regions
+        - boxes (List[List[float]]): List of bounding boxes.
+            Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
 
       Returns:
           str: Description of the primary region.
       """
-      # Option(1) 4 Simple regions
+      # Resize the heatmap to the original image size
+      heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+
+      # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
+      heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
+      
       # Average the activation values across the three color channels
-      heatmap_gray = np.mean(heatmap, axis=2)
+      heatmap_gray = np.mean(heatmap_resized, axis=2)
+      
+      max_activation = 0
+      primary_region = None
 
-      # Divide the heatmap into quadrants
-      upper_left = heatmap_gray[:112, :112].mean()
-      upper_right = heatmap_gray[:112, 112:].mean()
-      lower_left = heatmap_gray[112:, :112].mean()
-      lower_right = heatmap_gray[112:, 112:].mean()
+      for region, (x1, y1, x2, y2) in zip(regions,region_boxes):
+        region_activation = heatmap_gray[y1:y2, x1:x2].mean()
+        if region_activation > max_activation:
+            max_activation = region_activation
+            primary_region = region
+      return primary_region,heatmap_resized
 
-      # Regions dictionary
-      regions = {
-          "upper left lung": upper_left,
-          "upper right lung": upper_right,
-          "lower left lung": lower_left,
-          "lower right lung": lower_right
-      }
 
-      # Find the region with the highest mean activation
-      primary_region = max(regions, key=regions.get)
+
+    # Option(1) 4 Simple regions
+    #   # Divide the heatmap into quadrants
+    #   upper_left = heatmap_gray[:112, :112].mean()
+    #   upper_right = heatmap_gray[:112, 112:].mean()
+    #   lower_left = heatmap_gray[112:, :112].mean()
+    #   lower_right = heatmap_gray[112:, 112:].mean()
+
+    #   # Regions dictionary
+    #   regions = {
+    #       "upper left lung": upper_left,
+    #       "upper right lung": upper_right,
+    #       "lower left lung": lower_left,
+    #       "lower right lung": lower_right
+    #   }
+
+    #   # Find the region with the highest mean activation
+    #   primary_region = max(regions, key=regions.get)
 
 
       # Option(2)
@@ -381,53 +442,53 @@ class HeatMapInference:
       # primary_region = max(regions, key=regions.get)
 
 
-      # Option(3) 29 Region
-      # TODO
-      # Normalize the orientation of the image
-      # image = normalize_orientation(image)
-      NATOMICAL_REGIONS_COORDS = {
-        "right lung": (112, 0, 224, 224),
-        "right upper lung zone": (112, 0, 224, 74),
-        "right mid lung zone": (112, 75, 224, 149),
-        "right lower lung zone": (112, 150, 224, 224),
-        "right hilar structures": (150, 75, 224, 149),
-        "right apical zone": (112, 0, 224, 37),
-        "right costophrenic angle": (187, 187, 224, 224),
-        "right hemidiaphragm": (187, 150, 224, 187),
-        "left lung": (0, 0, 112, 224),
-        "left upper lung zone": (0, 0, 112, 74),
-        "left mid lung zone": (0, 75, 112, 149),
-        "left lower lung zone": (0, 150, 112, 224),
-        "left hilar structures": (0, 75, 74, 149),
-        "left apical zone": (0, 0, 112, 37),
-        "left costophrenic angle": (37, 187, 112, 224),
-        "left hemidiaphragm": (37, 150, 112, 187),
-        "trachea": (37, 37, 112, 74),
-        "spine": (56, 112, 112, 224),
-        "right clavicle": (112, 0, 149, 37),
-        "left clavicle": (0, 0, 37, 37),
-        "aortic arch": (37, 37, 74, 74),
-        "mediastinum": (37, 74, 112, 149),
-        "upper mediastinum": (37, 37, 112, 74),
-        "svc": (37, 74, 74, 112),
-        "cardiac silhouette": (112, 150, 168, 224),
-        "cavoatrial junction": (112, 150, 168, 224),
-        "right atrium": (112, 150, 168, 224),
-        "carina": (56, 112, 112, 149),
-        "abdomen": (187, 150, 224, 224)
-      }
+    #   # Option(3) 29 Region
+    #   # TODO
+    #   # Normalize the orientation of the image
+    #   # image = normalize_orientation(image)
+    #   NATOMICAL_REGIONS_COORDS = {
+    #     "right lung": (112, 0, 224, 224),
+    #     "right upper lung zone": (112, 0, 224, 74),
+    #     "right mid lung zone": (112, 75, 224, 149),
+    #     "right lower lung zone": (112, 150, 224, 224),
+    #     "right hilar structures": (150, 75, 224, 149),
+    #     "right apical zone": (112, 0, 224, 37),
+    #     "right costophrenic angle": (187, 187, 224, 224),
+    #     "right hemidiaphragm": (187, 150, 224, 187),
+    #     "left lung": (0, 0, 112, 224),
+    #     "left upper lung zone": (0, 0, 112, 74),
+    #     "left mid lung zone": (0, 75, 112, 149),
+    #     "left lower lung zone": (0, 150, 112, 224),
+    #     "left hilar structures": (0, 75, 74, 149),
+    #     "left apical zone": (0, 0, 112, 37),
+    #     "left costophrenic angle": (37, 187, 112, 224),
+    #     "left hemidiaphragm": (37, 150, 112, 187),
+    #     "trachea": (37, 37, 112, 74),
+    #     "spine": (56, 112, 112, 224),
+    #     "right clavicle": (112, 0, 149, 37),
+    #     "left clavicle": (0, 0, 37, 37),
+    #     "aortic arch": (37, 37, 74, 74),
+    #     "mediastinum": (37, 74, 112, 149),
+    #     "upper mediastinum": (37, 37, 112, 74),
+    #     "svc": (37, 74, 74, 112),
+    #     "cardiac silhouette": (112, 150, 168, 224),
+    #     "cavoatrial junction": (112, 150, 168, 224),
+    #     "right atrium": (112, 150, 168, 224),
+    #     "carina": (56, 112, 112, 149),
+    #     "abdomen": (187, 150, 224, 224)
+    #   }
 
-      # Average the activation values across the three color channels
-      heatmap_gray = np.mean(heatmap, axis=2)
+    #   # Average the activation values across the three color channels
+    #   heatmap_gray = np.mean(heatmap, axis=2)
 
-      max_activation = 0
-      primary_region = None
+    #   max_activation = 0
+    #   primary_region = None
 
-      for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
-          region_activation = heatmap_gray[y1:y2, x1:x2].mean()
-          if region_activation > max_activation:
-              max_activation = region_activation
-              primary_region = region
+    #   for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
+    #       region_activation = heatmap_gray[y1:y2, x1:x2].mean()
+    #       if region_activation > max_activation:
+    #           max_activation = region_activation
+    #           primary_region = region
 
     #   import random
 
@@ -436,7 +497,7 @@ class HeatMapInference:
     #   filename = f"./_{random_number}_{primary_region}.png"
     #   cv2.imwrite(filename, heatmap)
 
-      return primary_region
+    #   return primary_region
 
     
     def heat_map_severity(self,heatmap, significant_threshold=0.7, mild_threshold=0.3):
@@ -482,29 +543,79 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('image_path', type=str, help='Path to the image file')
+    parser.add_argument('--save_path', type=str, default=None, help='Optional path to save heat maps')
+
 
     args = parser.parse_args()
     image_path = args.image_path
+    save_path = args.save_path
     
     # Initialize the Inference class
     inference = HeatMapInference()
 
-    # Generate Template Based Report & Heat Map
-    image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
-    # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="grad-cam")
-    
-    print("image",image.shape)
+    # --------------------------------------------------------------------------------Inference--------------------------------------------------------------------------------
+    # Inference
+    heat_maps,labels,confidence=inference.infer(image_path,heatmap_type="cam")
+
     print("Labels:",labels)
     print("confidence",confidence)
-    print("severity",severity)
-    print("Report:",template_based_report)
+    print("heat_maps",heat_maps.shape)
 
-    # Destruct heat map returns
-    heatmaps,image_resized,heatmap_resized_plts,blended_images=heatmap_result
-    print("heatmaps",heatmaps.shape)
+    # Save Heat Maps (7x7)
+    if save_path:
+        for i,heat_map in enumerate(heat_maps):
+            cv2.imwrite(f"{save_path}/heat_map_{CLASSES[i]}.png",heat_map)
+            print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heat_map_{CLASSES[i]}.png")
+
+
+    # --------------------------------------------------------------------------------Project Heat Maps--------------------------------------------------------------------------------
+    # Project Heat Map on the Original Image
+    image_resized,heatmap_resized_plts,blended_images=inference.project_heat_maps(image_path,heat_maps)
     print("image_resized",image_resized.shape)
     print("heatmap_resized_plts",heatmap_resized_plts.shape)
     print("blended_images",blended_images.shape)
+
+    # Save resized image
+    if save_path:
+        cv2.imwrite(f"{save_path}/image_resized.png",image_resized)
+        print(f"Saved Resized Image at {save_path}/image_resized.png")
+
+    # Save Heat Maps & Blended Images
+    if save_path:
+        for i,heatmap_resized_plt,blended_image in enumerate(zip(heatmap_resized_plts,blended_images)):
+            cv2.imwrite(f"{save_path}/heatmap_resized_plt_{CLASSES[i]}.png",heatmap_resized_plt)
+            print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heatmap_resized_plt_{CLASSES[i]}.png")
+
+            cv2.imwrite(f"{save_path}/blended_image_{CLASSES[i]}.png",blended_image)
+            print(f"Saved Blended Image for {CLASSES[i]} at {save_path}/blended_image_{CLASSES[i]}.png")
+
+    # ---------------------------------------------------------------------Locate Heat Map Region--------------------------------------------------------------------------------
+    # Locate Heat Map Region
+    for i,heat_map in enumerate(heat_maps):
+        region=inference.heatmap_region(heatmap=heat_map,regions=None,region_boxes=None)
+        print(f"Region for {CLASSES[i]}:",region)
+
+    # # Compute Severity
+    # severity=inference.compute_severity(labels=labels,confidence=confidence)
+    # print("Severity",severity)
+
+    # # Generate Template Based Report
+    # template_based_report=inference.generate_template_based_report(labels=labels,confidence=confidence)
+    # print("Report:",template_based_report)
+
+
+    # Generate Template Based Report & Heat Map
+    # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
+    # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="grad-cam")
+    
+    # print("image",image.shape)
+
+    # print("severity",severity)
+    # print("Report:",template_based_report)
+
+    # Destruct heat map returns
+    # heatmaps,image_resized,heatmap_resized_plts,blended_images=heatmap_result
+    # print("heatmaps",heatmaps.shape)
     
     
 # python -m src.inference.main "./datasets/images/00000001_000.png"
