@@ -56,7 +56,7 @@ class Inference:
 
         # Read the model
         self.x_reporto = XReportoV1(object_detector_path="models/object_detector.pth",
-                                binary_classifier_abnormal_region_path="models/binary_classifier_region_abnormal.pth",
+                                abnormal_classifier_path="models/binary_classifier_region_abnormal.pth",
                                 region_classifier_path="models/binary_classifier_selection_region.pth",
                                 language_model_path="models/LM.pth")
         
@@ -170,14 +170,18 @@ class Inference:
             is_similar = False
             i = 0
             for group in similar_sentences:
-                results = self.bertscore.compute(
+                for similar_sentence in group:
+                    results = self.bertScore.compute(
                             predictions=[sentence], 
-                            references= group, 
+                            references= [similar_sentence], 
                             lang="en", 
                             model_type="roberta-large"
                     )
-                if results["f1"][0] > 0.9:
-                    is_similar = True
+                    if results["f1"][0] > 0.9:
+                        is_similar = True
+                        break
+
+                if is_similar:
                     break
                 i += 1
             if not is_similar:
@@ -192,10 +196,13 @@ class Inference:
                 similar_sentences[i].append(sentence)
         
         if DEBUG:
-            print("Similar Sentences: ", similar_sentences)
-            print("Final Sentences: ", final_sentences)
+            # print each group and final sentence
+            for i, group in enumerate(similar_sentences):
+                print("Group: ", i)
+                for sentence in group:
+                    print(sentence)
+                print("Final Sentence: ", final_sentences[i])
         # Remove garbage sentences with random characters that has no meaning
-        
         
     
         # generate the report text

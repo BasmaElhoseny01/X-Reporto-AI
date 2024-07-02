@@ -36,3 +36,4 @@ gdown
 pycocoevalcap
 evaluate
 mlflow
+bert_score

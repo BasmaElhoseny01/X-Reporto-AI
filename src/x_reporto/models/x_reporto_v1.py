@@ -58,6 +58,7 @@ class XReportoV1(nn.Module):
 
         if OPERATION_MODE==OperationMode.INFERENCE.value or MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
             self.binary_classifier_selection_region = BinaryClassifierSelectionRegion().create_model()
+            self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
         if OPERATION_MODE!=OperationMode.INFERENCE.value:
             self.binary_classifier_region_abnormal = BinaryClassifierRegionAbnormal().create_model()
         
@@ -93,6 +94,7 @@ class XReportoV1(nn.Module):
             self.denoiser.load_models()
             self.object_detector.load_state_dict(torch.load(object_detector_path))
             self.binary_classifier_selection_region.load_state_dict(torch.load(region_classifier_path))
+            self.binary_classifier_region_abnormal.load_state_dict(torch.load(abnormal_classifier_path))
             self.language_model.load_state_dict(torch.load(language_model_path))
 
         elif OPERATION_MODE==OperationMode.TRAINING.value:
