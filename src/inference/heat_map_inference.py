@@ -39,7 +39,7 @@ class HeatMapInference:
         self.heat_map_transform=A.Compose([
             A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
 
-            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT),
+            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT,value=0),
     
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             
@@ -550,6 +550,7 @@ if __name__=="__main__":
     
     # Initialize the Inference class
     inference = HeatMapInference()
+    print("Basma")
 
     # --------------------------------------------------------------------------------Inference--------------------------------------------------------------------------------
     # Inference
@@ -559,61 +560,61 @@ if __name__=="__main__":
     print("confidence",confidence)
     print("heat_maps",heat_maps.shape)
 
-    # Save Heat Maps (7x7)
-    if save_path:
-        for i,heat_map in enumerate(heat_maps):
-            cv2.imwrite(f"{save_path}/heat_map_{CLASSES[i]}.png",heat_map)
-            print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heat_map_{CLASSES[i]}.png")
+    # # Save Heat Maps (7x7)
+    # if save_path:
+    #     for i,heat_map in enumerate(heat_maps):
+    #         cv2.imwrite(f"{save_path}/heat_map_{CLASSES[i]}.png",heat_map)
+    #         print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heat_map_{CLASSES[i]}.png")
 
 
-    # --------------------------------------------------------------------------------Project Heat Maps--------------------------------------------------------------------------------
-    # Project Heat Map on the Original Image
-    image_resized,heatmap_resized_plts,blended_images=inference.project_heat_maps(image_path,heat_maps)
-    print("image_resized",image_resized.shape)
-    print("heatmap_resized_plts",heatmap_resized_plts.shape)
-    print("blended_images",blended_images.shape)
+    # # --------------------------------------------------------------------------------Project Heat Maps--------------------------------------------------------------------------------
+    # # Project Heat Map on the Original Image
+    # image_resized,heatmap_resized_plts,blended_images=inference.project_heat_maps(image_path,heat_maps)
+    # print("image_resized",image_resized.shape)
+    # print("heatmap_resized_plts",heatmap_resized_plts.shape)
+    # print("blended_images",blended_images.shape)
 
-    # Save resized image
-    if save_path:
-        cv2.imwrite(f"{save_path}/image_resized.png",image_resized)
-        print(f"Saved Resized Image at {save_path}/image_resized.png")
+    # # Save resized image
+    # if save_path:
+    #     cv2.imwrite(f"{save_path}/image_resized.png",image_resized)
+    #     print(f"Saved Resized Image at {save_path}/image_resized.png")
 
-    # Save Heat Maps & Blended Images
-    if save_path:
-        for i,heatmap_resized_plt,blended_image in enumerate(zip(heatmap_resized_plts,blended_images)):
-            cv2.imwrite(f"{save_path}/heatmap_resized_plt_{CLASSES[i]}.png",heatmap_resized_plt)
-            print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heatmap_resized_plt_{CLASSES[i]}.png")
+    # # Save Heat Maps & Blended Images
+    # if save_path:
+    #     for i,heatmap_resized_plt,blended_image in enumerate(zip(heatmap_resized_plts,blended_images)):
+    #         cv2.imwrite(f"{save_path}/heatmap_resized_plt_{CLASSES[i]}.png",heatmap_resized_plt)
+    #         print(f"Saved Heat Map for {CLASSES[i]} at {save_path}/heatmap_resized_plt_{CLASSES[i]}.png")
 
-            cv2.imwrite(f"{save_path}/blended_image_{CLASSES[i]}.png",blended_image)
-            print(f"Saved Blended Image for {CLASSES[i]} at {save_path}/blended_image_{CLASSES[i]}.png")
+    #         cv2.imwrite(f"{save_path}/blended_image_{CLASSES[i]}.png",blended_image)
+    #         print(f"Saved Blended Image for {CLASSES[i]} at {save_path}/blended_image_{CLASSES[i]}.png")
 
-    # ---------------------------------------------------------------------Locate Heat Map Region--------------------------------------------------------------------------------
-    # Locate Heat Map Region
-    for i,heat_map in enumerate(heat_maps):
-        region=inference.heatmap_region(heatmap=heat_map,regions=None,region_boxes=None)
-        print(f"Region for {CLASSES[i]}:",region)
+    # # ---------------------------------------------------------------------Locate Heat Map Region--------------------------------------------------------------------------------
+    # # Locate Heat Map Region
+    # for i,heat_map in enumerate(heat_maps):
+    #     region=inference.heatmap_region(heatmap=heat_map,regions=None,region_boxes=None)
+    #     print(f"Region for {CLASSES[i]}:",region)
 
-    # # Compute Severity
-    # severity=inference.compute_severity(labels=labels,confidence=confidence)
-    # print("Severity",severity)
+    # # # Compute Severity
+    # # severity=inference.compute_severity(labels=labels,confidence=confidence)
+    # # print("Severity",severity)
 
-    # # Generate Template Based Report
-    # template_based_report=inference.generate_template_based_report(labels=labels,confidence=confidence)
-    # print("Report:",template_based_report)
+    # # # Generate Template Based Report
+    # # template_based_report=inference.generate_template_based_report(labels=labels,confidence=confidence)
+    # # print("Report:",template_based_report)
 
 
-    # Generate Template Based Report & Heat Map
-    # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
-    # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="grad-cam")
+    # # Generate Template Based Report & Heat Map
+    # # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="cam")
+    # # image, heatmap_result,labels,confidence,severity,template_based_report=inference.infer(image_path,heatmap_type="grad-cam")
     
-    # print("image",image.shape)
+    # # print("image",image.shape)
 
-    # print("severity",severity)
-    # print("Report:",template_based_report)
+    # # print("severity",severity)
+    # # print("Report:",template_based_report)
 
-    # Destruct heat map returns
-    # heatmaps,image_resized,heatmap_resized_plts,blended_images=heatmap_result
-    # print("heatmaps",heatmaps.shape)
+    # # Destruct heat map returns
+    # # heatmaps,image_resized,heatmap_resized_plts,blended_images=heatmap_result
+    # # print("heatmaps",heatmaps.shape)
     
     
 # python -m src.inference.main "./datasets/images/00000001_000.png"

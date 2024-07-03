@@ -1,0 +1,53 @@
+# Ignore git repository
+.git
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore virtual environments
+venv/
+env/
+
+# Ignore large data files and models not needed for the build
+data_preprocessing/
+datasets/
+detector/
+gans paper/
+note_books/
+tensor_boards/
+test_dataset/
+
+
+# Ignore logs and temporary files
+logs/
+*.log
+*.tmp
+
+
+# Ignore specific files and directories that are not needed
+app.py
+assets/
+check_points/
+kept_cases.txt
+load_datasets.py
+log_file_dataset_creation.txt
+logger_setup.py
+Logo.jpg
+notebooks/
+Papers/
+preprocessing.sh
+README.md
+requirements-server.txt
+requirements.txt
+results/
+routers/
+scripts/
+server_backup.txt
+test.ipynb
+weights.npy
+
+
+# Ignore everything else in the models directory
+models/heat_map_4
+models/server

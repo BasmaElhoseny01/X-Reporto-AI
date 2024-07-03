@@ -1,0 +1,13 @@
+opencv-python
+albumentations
+evaluate
+matplotlib
+tensorflow
+transformers
+torchsummary
+# opencv-python-headless
+# spacy
+# spacy-transformers
+# imagesize
+# mlflow
+# bert_score
