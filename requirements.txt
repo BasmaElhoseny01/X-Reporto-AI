@@ -23,11 +23,8 @@ torchvision @ https://download.pytorch.org/whl/cu121/torchvision-0.17.1%2Bcu121-
 tornado==6.3.3
 tqdm==4.66.4
 transformers
-
 pandas
 matplotlib
-
-
 spacy
 spacy-transformers
 albumentations
@@ -37,3 +34,6 @@ pycocoevalcap
 evaluate
 mlflow
 bert_score
+fastapi
+pydantic
+uvicorn
