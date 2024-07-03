@@ -351,3 +351,4 @@ ydata-profiling==4.6.3
 ypy-websocket==0.12.4
 zipp==1.0.0
 zope.interface==5.4.0
+bert_score
