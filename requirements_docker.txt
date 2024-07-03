@@ -5,9 +5,9 @@ matplotlib
 tensorflow
 transformers
 torchsummary
+bert_score
 # opencv-python-headless
 # spacy
 # spacy-transformers
 # imagesize
 # mlflow
-# bert_score

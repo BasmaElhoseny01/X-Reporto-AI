@@ -218,6 +218,8 @@ class Inference:
 
 
 if __name__=="__main__":
+    print("Basma")
+    print("DEVICE",DEVICE)
     # Take image path from command line
     if OperationMode.INFERENCE.value!=OPERATION_MODE :
         raise Exception("Operation Mode is not Inference Mode")
