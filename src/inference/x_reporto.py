@@ -17,6 +17,7 @@ from transformers import GPT2Tokenizer
 from config import *
 from src.denoiser.config import*
 import numpy as np
+# import asyncio
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 DEBUG = False
@@ -55,21 +56,25 @@ class XReporto:
     x_reporto = None
     tokenizer = None
     bertScore = None
+    # _lock = asyncio.Lock()
     def __init__(self):
 
         # check if the model is already loaded
         if XReporto.x_reporto is not None:
+            print("Model Already Loaded")
             return
+        print("Loading Model for first time")
         # Read the model
-        XReporto.x_reporto = XReportoV1(object_detector_path="models/object_detector.pth",
-                                abnormal_classifier_path="models/binary_classifier_region_abnormal.pth",
-                                region_classifier_path="models/binary_classifier_selection_region.pth",
-                                language_model_path="models/LM.pth")
+        XReporto.x_reporto = XReportoV1(object_detector_path="models/object_detector_best.pth",
+                                abnormal_classifier_path="models/abnormal_classifier_best.pth",
+                                region_classifier_path="models/region_classifier_best.pth",
+                                language_model_path="models/LM_best.pth")
         
         XReporto.x_reporto.to(DEVICE)
         XReporto.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
         XReporto.bertScore = evaluate.load("bertscore")
 
+        print("Device: ", DEVICE)
         print("Model Loaded Successfully")
 
     def generate_image_report(self,image_path):
@@ -119,27 +124,13 @@ class XReporto:
             image=image[0].to('cpu')
             bounding_boxes=bounding_boxes.to('cpu')
             
-            # Bounding Boxes
-            plot_single_image(img = image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
-
-            # Report
-            report_path='report.txt'
-            with open(report_path, "w") as file:
-                # Iterate over each sentence in the list
-                for sentence in lm_sentences_decoded:
-                    file.write(sentence + "\n")
-                print("Report Saved Successfully at: ",report_path)
-
-        
-        # Input is Image
-        # Output is Image with bounding box
-        # Selected Regions / Abnormal Region
-        # Report
+            # # Bounding Boxes
+            # plot_single_image(img = image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
 
         # generate the report text
         generated_sentences, report_text = self.fix_sentences(generated_sentences=lm_sentences_decoded)
 
-        return image, bounding_boxes, abnormal_region, generated_sentences, report_text
+        return bounding_boxes, generated_sentences, report_text
 
 
     def fix_sentences(self,generated_sentences: List[str]):
@@ -214,7 +205,7 @@ class XReporto:
         # generate the report text
         report_text = ""
         for sentence in final_sentences:
-            report_text += sentence + "\n"
+            report_text += sentence + '\n'
 
         if DEBUG:
             print("Report Text: ", report_text)

@@ -75,6 +75,7 @@ class XReportoV1(nn.Module):
             config.pretrained_model = "gpt2"
             config.max_seq_len = 1024
             config.ignore_index = -100
+            config.use_checkpointing = False
             image_config = Config()
             image_config.d_model = 1024
             image_config.d_ff1 = 1024
