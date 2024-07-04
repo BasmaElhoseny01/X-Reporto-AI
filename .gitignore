@@ -23,7 +23,7 @@ assets/*
 # Except for text files
 !assets/empty.txt
 *.png
-*.jpg
+# *.jpg
 
 # Tests
 test.py
