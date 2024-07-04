@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.post("/inference")
+@router.post("/report")
 async def inference(
     image: UploadFile = File(...)
 ):

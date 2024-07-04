@@ -68,7 +68,7 @@ class CustomGPT2(nn.Module):
         # define fully connected layer
         self.fc = nn.Linear(self.d_model, self.vocab_size)
         self.init_weights()
-        self.load_pretrained_weights()
+        # self.load_pretrained_weights()
         self.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
         
     def init_weights(self):

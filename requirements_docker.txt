@@ -6,6 +6,9 @@ tensorflow
 transformers
 torchsummary
 bert_score
+fastapi
+pydantic
+uvicorn
 # opencv-python-headless
 # spacy
 # spacy-transformers
