@@ -35,7 +35,7 @@ ADD models/heat_map_best.pth /ai_app/models/heat_map_best.pth
 
 # Copy example
 # Add datasets/mimic-cxr-jpg/files/p11/p11001469/s54076811/d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg images/d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg
-Add dataset_volume images/
+ADD dataset_volume images/
 
 # # Make port 8000 available to the world outside this container
 # CMD ["python", "-m", "src.inference.heat_map_inference","/ai_app/images/d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"]
