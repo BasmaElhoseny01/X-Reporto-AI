@@ -1,7 +1,7 @@
 import sys
 from torch import nn
 import torch
-from torchvision.models import ResNet50_Weights
+# from torchvision.models import ResNet50_Weights
 from torchvision import models
 
 import torch.nn.functional as F
@@ -12,7 +12,8 @@ import numpy as np
 class HeatMap(nn.Module):
     def __init__(self):
         super(HeatMap, self).__init__()
-        self.model = models.densenet121(pretrained=True)
+        # self.model = models.densenet121(pretrained=True)
+        self.model = models.densenet121(pretrained=False)
         # self.model = models.densenet121(pretrained=False)
         self.model.classifier = nn.Linear(self.model.classifier.in_features, len(CLASSES))
         
