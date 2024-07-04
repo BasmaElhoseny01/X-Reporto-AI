@@ -51,18 +51,24 @@ def CustomDataset(img_path: str):
             image /= 255.0
             return image
 
-class Inference:
+class XReporto:
+    x_reporto = None
+    tokenizer = None
+    bertScore = None
     def __init__(self):
 
+        # check if the model is already loaded
+        if XReporto.x_reporto is not None:
+            return
         # Read the model
-        self.x_reporto = XReportoV1(object_detector_path="models/object_detector.pth",
+        XReporto.x_reporto = XReportoV1(object_detector_path="models/object_detector.pth",
                                 abnormal_classifier_path="models/binary_classifier_region_abnormal.pth",
                                 region_classifier_path="models/binary_classifier_selection_region.pth",
                                 language_model_path="models/LM.pth")
         
-        self.x_reporto.to(DEVICE)
-        self.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
-        self.bertScore = evaluate.load("bertscore")
+        XReporto.x_reporto.to(DEVICE)
+        XReporto.tokenizer = GPT2Tokenizer.from_pretrained("healx/gpt-2-pubmed-medium")
+        XReporto.bertScore = evaluate.load("bertscore")
 
         print("Model Loaded Successfully")
 
@@ -101,13 +107,13 @@ class Inference:
         image = torch.tensor(image).to(DEVICE)
 
         # Inference Pass
-        self.x_reporto.eval()
+        XReporto.x_reporto.eval()
         with torch.no_grad():
             # Inference Pass
-            denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded =  self.x_reporto(images=image,use_beam_search=True)  
+            denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded =  XReporto.x_reporto(images=image,use_beam_search=True)  
 
             # Decode the sentences
-            lm_sentences_decoded=self.tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
+            lm_sentences_decoded=XReporto.tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
             
             # Results
             image=image[0].to('cpu')
@@ -171,7 +177,7 @@ class Inference:
             i = 0
             for group in similar_sentences:
                 for similar_sentence in group:
-                    results = self.bertScore.compute(
+                    results = XReporto.bertScore.compute(
                             predictions=[sentence], 
                             references= [similar_sentence], 
                             lang="en", 
@@ -234,12 +240,11 @@ if __name__=="__main__":
 
     
     # Initialize the Inference class
-    inference = Inference()
+    inference = XReporto()
 
     # Generate the report
     inference.generate_image_report(image_path=image_path)
 
-          
     
     
     

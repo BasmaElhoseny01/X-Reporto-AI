@@ -93,7 +93,7 @@ class HeatMapInference:
 
         return image_org,image
  
-    def infer(self,image_path,heatmap_type:str):
+    def infer(self,image_path,heatmap_type:str = "cam"):
         '''
         Generate Heat Map for the given image path + Template Based Report
         heatmap_type: cam or grid_cam
