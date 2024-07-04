@@ -17,7 +17,9 @@ class HeatMapInference:
     heat_map_model=None
     optimal_thresholds=None
     weights=None
-    heat_map_transform=None
+    resize_and_pad_transform=None
+    normalize_transform=None
+    # heat_map_transform=None
     def __init__(self):
 
         # Create the model
@@ -39,17 +41,27 @@ class HeatMapInference:
         # Weights for Last Layer
         HeatMapInference.weights = list(self.heat_map_model.model.classifier.parameters())[-2] #torch.Size([8, 1024])
 
-        print("Model Loaded")
 
-        HeatMapInference.heat_map_transform=A.Compose([
+        HeatMapInference.resize_and_pad_transform = A.Compose([
             A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
+            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT, value=0)
+        ])
 
-            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT,value=0),
-    
+        HeatMapInference.normalize_transform = A.Compose([
             A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            
             ToTensorV2(p=1.0)
         ])
+
+
+        # HeatMapInference.heat_map_transform=A.Compose([
+        #     A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
+
+        #     A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT,value=0),
+    
+        #     A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            
+        #     ToTensorV2(p=1.0)
+        # ])
 
     def read_image(self, img_path):
         # Getting image path  with parent path of current folder + image path
@@ -91,7 +103,9 @@ class HeatMapInference:
         image=np.array(image).astype("float32")
 
         # Apply Transformations
-        image=HeatMapInference.heat_map_transform(image=image)["image"]
+        # image=HeatMapInference.heat_map_transform(image=image)["image"]
+        resized_and_padded_image=HeatMapInference.resize_and_pad_transform(image=image)["image"]
+        image=HeatMapInference.normalize_transform(image=resized_and_padded_image)["image"]
               
         # Add batch dimension
         image = image.unsqueeze(0)
@@ -349,10 +363,12 @@ class HeatMapInference:
             The blended image of size (224, 224, 3) in BGR format, which is a weighted sum of the resized image and the heatmap.
         '''
         # Resize Image to be HEAT_MAP_IMAGE_SIZExHEAT_MAP_IMAGE_SIZEx3 (224x224x3)
-        image_resized = cv2.resize(image, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+        # image_resized = cv2.resize(image, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+        image_resized=HeatMapInference.resize_and_pad_transform(image=image)["image"]
 
         # Resize Heat Map to be same size as the image (224x224x3)
-        heatmap_resized = cv2.resize(heat_map, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+        # heatmap_resized = cv2.resize(heat_map, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+        heatmap_resized=HeatMapInference.resize_and_pad_transform(image=heat_map)["image"]
 
         # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
         heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
@@ -360,9 +376,9 @@ class HeatMapInference:
         # Weighted Sum 1*img + 0.25*heatmap (224x224x3)
         blended_image = cv2.addWeighted(image_resized,1,heatmap_resized,0.35,0)
 
-        # cv2.imwrite('./img.png',image_resized)
-        # cv2.imwrite('./heat.png',heatmap_resized)
-        # cv2.imwrite('./blend.png',blended_image)
+        cv2.imwrite('./img.png',image_resized)
+        cv2.imwrite('./heat.png',heatmap_resized)
+        cv2.imwrite('./blend.png',blended_image)
 
         return image_resized,heatmap_resized,blended_image
     
@@ -382,6 +398,7 @@ class HeatMapInference:
           str: Description of the primary region.
       """
       # Resize the heatmap to the original image size
+      # #FIX Basma
       heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
 
       # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
