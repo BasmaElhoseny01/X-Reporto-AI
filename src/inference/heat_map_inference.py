@@ -14,29 +14,34 @@ from src.heat_map_U_ones.models.heat_map import HeatMap
 
 
 class HeatMapInference:
+    heat_map_model=None
+    optimal_thresholds=None
+    weights=None
+    heat_map_transform=None
     def __init__(self):
 
         # Create the model
-        self.heat_map_model=HeatMap()
+        # self.heat_map_model=HeatMap()
+        HeatMapInference.heat_map_model=HeatMap()
 
         # Load the model
-        self.heat_map_model.load_state_dict(torch.load('models/heat_map.pth'))
+        HeatMapInference.heat_map_model.load_state_dict(torch.load('models/heat_map_best.pth'))
 
         # Move to Device
-        self.heat_map_model.to(DEVICE)
+        HeatMapInference.heat_map_model.to(DEVICE)
         
         # Evaluation Mode
-        self.heat_map_model.eval()
+        HeatMapInference.heat_map_model.eval()
 
         # Optimal Thrsholds
-        self.optimal_thresholds=self.heat_map_model.optimal_thresholds
+        HeatMapInference.optimal_thresholds=self.heat_map_model.optimal_thresholds
 
         # Weights for Last Layer
-        self.weights = list(self.heat_map_model.model.classifier.parameters())[-2] #torch.Size([8, 1024])
+        HeatMapInference.weights = list(self.heat_map_model.model.classifier.parameters())[-2] #torch.Size([8, 1024])
 
         print("Model Loaded")
 
-        self.heat_map_transform=A.Compose([
+        HeatMapInference.heat_map_transform=A.Compose([
             A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
 
             A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT,value=0),
@@ -86,7 +91,7 @@ class HeatMapInference:
         image=np.array(image).astype("float32")
 
         # Apply Transformations
-        image=self.heat_map_transform(image=image)["image"]
+        image=HeatMapInference.heat_map_transform(image=image)["image"]
               
         # Add batch dimension
         image = image.unsqueeze(0)
@@ -112,7 +117,7 @@ class HeatMapInference:
             image=image.to(DEVICE)
 
             # Forward Pass
-            _,y_scores,features=self.heat_map_model(image)
+            _,y_scores,features=HeatMapInference.heat_map_model(image)
 
             # Results
             image = image.to("cpu") # Won't Be used :D
@@ -121,7 +126,7 @@ class HeatMapInference:
 
             labels=[]
             for i,class_confidence in enumerate(confidence):
-              label=1*(class_confidence>self.optimal_thresholds[i])
+              label=1*(class_confidence>HeatMapInference.optimal_thresholds[i])
               labels.append(label)
 
             # heatmaps,image_resized,heatmap_resized_plts,blended_images=self.generate_heat_maps(image=image_org,features=features,heatmap_type=heatmap_type)
@@ -238,7 +243,7 @@ class HeatMapInference:
         if heatmap_type=="cam":
             for class_index in range(len(CLASSES)):
                 # Last layer Weights for this class
-                weights = self.weights[class_index].view(1, -1).to("cpu") # 1, 1024
+                weights = HeatMapInference.weights[class_index].view(1, -1).to("cpu") # 1, 1024
 
                 heatmap=self.cam_heat_map(weights,features) # 7x7
 

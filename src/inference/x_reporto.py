@@ -19,7 +19,7 @@ from src.denoiser.config import*
 import numpy as np
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-DEBUG = False
+DEBUG = True
 
 
 transform =  A.Compose(
