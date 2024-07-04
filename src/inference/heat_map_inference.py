@@ -375,9 +375,9 @@ class HeatMapInference:
         # Weighted Sum 1*img + 0.25*heatmap (224x224x3)
         blended_image = cv2.addWeighted(image_resized,1,heatmap_resized,0.35,0)
 
-        cv2.imwrite('./img.png',image_resized)
-        cv2.imwrite('./heat.png',heatmap_resized)
-        cv2.imwrite('./blend.png',blended_image)
+        # cv2.imwrite('./img.png',image_resized)
+        # cv2.imwrite('./heat.png',heatmap_resized)
+        # cv2.imwrite('./blend.png',blended_image)
 
         return image_resized,heatmap_resized,blended_image
     
