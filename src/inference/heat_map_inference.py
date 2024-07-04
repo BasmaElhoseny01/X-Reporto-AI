@@ -367,8 +367,7 @@ class HeatMapInference:
         image_resized=HeatMapInference.resize_and_pad_transform(image=image)["image"]
 
         # Resize Heat Map to be same size as the image (224x224x3)
-        # heatmap_resized = cv2.resize(heat_map, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
-        heatmap_resized=HeatMapInference.resize_and_pad_transform(image=heat_map)["image"]
+        heatmap_resized = cv2.resize(heat_map, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
 
         # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
         heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
