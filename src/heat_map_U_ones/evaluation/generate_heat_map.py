@@ -29,9 +29,10 @@ import torch
 from torch import nn
 import torch.optim as optim
 from torch.utils.data import  DataLoader
-import torchvision
+import albumentations as A
 
-from PIL import Image
+
+# from PIL import Image
 
 # Modules
 from src.heat_map_U_ones.models.heat_map import HeatMap
@@ -40,6 +41,12 @@ from src.utils import load_model,plot_to_image
 
 # Utils 
 from config import *
+
+
+resize_and_pad_transform = A.Compose([
+            A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
+            A.PadIfNeeded(min_height=HEAT_MAP_IMAGE_SIZE, min_width=HEAT_MAP_IMAGE_SIZE, border_mode=cv2.BORDER_CONSTANT, value=0)
+        ])
 
 class HeatMapGeneration():
         def __init__(self, model:HeatMap,evaluation_csv_path:str = heat_map_evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
@@ -102,7 +109,7 @@ class HeatMapGeneration():
                           if (True): 
                             # Define the path for saving the heat map image
                             image_filename = f'{image_title}_{class_finding}.png'
-                            image_path = os.path.join('./', image_filename)
+                            image_path = os.path.join('/content/heat_map_imgs/', image_filename)
                         
                             # Save the heat map image
                             cv2.imwrite(image_path, cv2.cvtColor(image_class_heat_map, cv2.COLOR_RGB2BGR))         
@@ -209,7 +216,8 @@ class HeatMapGeneration():
             # imgOriginal = image
 
 
-            imgOriginal = cv2.resize(imgOriginal, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+            # imgOriginal = cv2.resize(imgOriginal, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3) # Wrong Resize:(
+            imgOriginal=resize_and_pad_transform(image=imgOriginal)["image"] # (224, 224, 3)
 
             cam = npHeatmap
             cam = cv2.resize(cam, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
@@ -297,7 +305,9 @@ class HeatMapGeneration():
             #---- Blend original and heatmap
             imgOriginal = cv2.imread(image_path, 1)
 
-            imgOriginal = cv2.resize(imgOriginal, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
+            # imgOriginal = cv2.resize(imgOriginal, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3) # Wrong Resize:(
+            imgOriginal=resize_and_pad_transform(image=imgOriginal)["image"] # (224, 224, 3)
+
 
             cam = grad_cam
             cam = cv2.resize(cam.cpu().data.numpy(), (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))

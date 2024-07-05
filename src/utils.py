@@ -10,13 +10,7 @@ import subprocess
 import matplotlib.pyplot as plt
 from matplotlib import patches
 import io
-# import tensorflow as tf
-
-import io
-import matplotlib.pyplot as plt
-import torch
-from PIL import Image
-import numpy as np
+import tensorflow as tf
 
 from config import *
 
@@ -55,37 +49,37 @@ def ROC_AUC(y_true,y_scores):
     return fpr, tpr,auc,optimal_threshold
 
 
-# def plot_to_image():
-#     """
-#     Convert a matplotlib plot to a TensorFlow tensor image.
+def plot_to_image():
+    """
+    Convert a matplotlib plot to a TensorFlow tensor image.
 
-#     Returns:
-#         image (numpy.ndarray): NumPy array representing the image.
-#     """
-#     # Create a buffer to store the plot
-#     buf = io.BytesIO()
+    Returns:
+        image (numpy.ndarray): NumPy array representing the image.
+    """
+    # Create a buffer to store the plot
+    buf = io.BytesIO()
     
-#     # Save the plot to the buffer
-#     plt.savefig(buf, format='png')
+    # Save the plot to the buffer
+    plt.savefig(buf, format='png')
     
-#     # Close the plot to avoid memory leaks
-#     plt.close()
+    # Close the plot to avoid memory leaks
+    plt.close()
     
-#     # Convert the buffer to a numpy array
-#     buf.seek(0)
-#     image = tf.image.decode_png(buf.getvalue(), channels=4)
+    # Convert the buffer to a numpy array
+    buf.seek(0)
+    image = tf.image.decode_png(buf.getvalue(), channels=4)
     
-#     # Expand the dimensions of the image tensor
-#     image = tf.expand_dims(image, 0)
+    # Expand the dimensions of the image tensor
+    image = tf.expand_dims(image, 0)
 
-#     image = tf.squeeze(image, axis=0)  # Remove the first dimension (batch size)
+    image = tf.squeeze(image, axis=0)  # Remove the first dimension (batch size)
 
-#     # Convert the TensorFlow EagerTensor image to a NumPy array
-#     image = image.numpy()
+    # Convert the TensorFlow EagerTensor image to a NumPy array
+    image = image.numpy()
 
-#     image=image[:, :, :3]  # Take only the first three channels (RGB)
+    image=image[:, :, :3]  # Take only the first three channels (RGB)
 
-#     return image
+    return image
 
 def boolean_to_indices(boolean_tensor: torch.Tensor) -> List[List[int]]:
     """
@@ -335,47 +329,6 @@ def plot_image(img: np.ndarray,img_idx:int, labels: List[int], boxes: List[List[
 
         # # Display the image
         # ax.imshow(img[0])
-
-
-def plot_to_image():
-    """
-    Convert a matplotlib plot to a PyTorch tensor image.
-
-    Returns:
-        image (numpy.ndarray): NumPy array representing the image.
-    """
-    # Create a buffer to store the plot
-    buf = io.BytesIO()
-    
-    # Save the plot to the buffer
-    plt.savefig(buf, format='png')
-    
-    # Close the plot to avoid memory leaks
-    plt.close()
-    
-    # Convert the buffer to a PIL Image
-    buf.seek(0)
-    image = Image.open(buf)
-    
-    # Convert the PIL Image to a NumPy array
-    image = np.array(image)
-    
-    # Convert the NumPy array to a PyTorch tensor
-    image = torch.tensor(image)
-    
-    # Remove the alpha channel if it exists
-    if image.shape[2] == 4:
-        image = image[:, :, :3]
-    
-    # Permute the dimensions to match PyTorch's expected format (C, H, W)
-    image = image.permute(2, 0, 1)
-    
-    return image
-
-# Example usage:
-# plt.plot([1, 2, 3], [4, 5, 6])
-# image_tensor = plot_to_image()
-# print(image_tensor.shape)
 
 def plot_single_image(img: np.ndarray, boxes: List[List[float]],grayscale:bool=False ,save_path: str = None):
     """
