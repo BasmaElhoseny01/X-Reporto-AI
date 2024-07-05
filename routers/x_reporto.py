@@ -22,7 +22,7 @@ router = APIRouter(
 @router.post("/report")
 async def inference(
     image: UploadFile = File(...)
-)-> x_reporto_schema.xReporto:
+)-> x_reporto_schema.XReporto:
     # Read the image
     image = await image.read()
     image = cv2.imdecode(np.frombuffer(image, np.uint8), cv2.IMREAD_UNCHANGED)
@@ -53,4 +53,31 @@ async def inference(
         "report_text": report_text
     }
 
+@router.get("/denoise")
+async def denoise(
+    image: UploadFile = File(...)
+)-> StreamingResponse:
+    # Read the image
+    image = await image.read()
+    image = cv2.imdecode(np.frombuffer(image, np.uint8), cv2.IMREAD_UNCHANGED)
+    
+    # Generate unique filename
+    unique_filename = str(uuid.uuid4()) + ".jpg"
 
+    image_path = f"{unique_filename}"
+
+    # Save the image
+    cv2.imwrite(image_path, image)
+
+    # Initialize the Inference class
+    inference = XReporto()
+
+    # Perform denoising
+    #TODO: Implement the denoise_image method in the Inference class
+    denoised_image = inference.denoise_image(image_path) 
+
+    # delete the image
+    os.remove(image_path)
+
+    # Return the denoised image
+    return StreamingResponse(io.BytesIO(cv2.imencode('.jpg', denoised_image)[1].tobytes()), media_type="image/jpeg")

@@ -22,6 +22,8 @@ class HeatMapInference:
     # heat_map_transform=None
     def __init__(self):
 
+        if HeatMapInference.heat_map_model is not None:
+            return
         # Create the model
         # self.heat_map_model=HeatMap()
         HeatMapInference.heat_map_model=HeatMap()
@@ -106,7 +108,7 @@ class HeatMapInference:
         # image=HeatMapInference.heat_map_transform(image=image)["image"]
         resized_and_padded_image=HeatMapInference.resize_and_pad_transform(image=image)["image"]
         image=HeatMapInference.normalize_transform(image=resized_and_padded_image)["image"]
-              
+        
         # Add batch dimension
         image = image.unsqueeze(0)
 
