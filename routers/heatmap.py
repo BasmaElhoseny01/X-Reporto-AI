@@ -48,7 +48,7 @@ async def generate_heatmap(
     print(f"detected_classes: {detected_classes}")
 
     # Perform inference
-    heatmap, labels, confidence = heatmap.infer(image_path)
+    heatmap, labels, confidence, severity, report = heatmap.infer(image_path, bounding_boxes, detected_classes)
 
     # delete the image
     os.remove(image_path)
@@ -62,5 +62,7 @@ async def generate_heatmap(
     return {
         "heatmap": heatmap,
         "labels": labels,
-        "confidence": confidence
+        "confidence": confidence,
+        "severity": severity,
+        "report": report
     }

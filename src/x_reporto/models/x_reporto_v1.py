@@ -393,8 +393,8 @@ class XReportoV1(nn.Module):
                     if classes[i]:
                         boxes_labels.append(i)
 
-                boxes_labels = torch.squeeze(boxes_labels)
-                return bounding_boxes, boxes_labels.cpu()
+                bounding_boxes = torch.squeeze(bounding_boxes)
+                return bounding_boxes, boxes_labels
             # Abnormal Classifier
             _,abnormal_regions =self.binary_classifier_region_abnormal(object_detector_features,detected_classes)
             # Binary Classifier
