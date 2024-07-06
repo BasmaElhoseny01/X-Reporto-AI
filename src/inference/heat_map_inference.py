@@ -12,6 +12,41 @@ from config import *
 # Models
 from src.heat_map_U_ones.models.heat_map import HeatMap
 
+# Constants
+ANATOMICAL_REGIONS = {
+    "right lung": 0,
+    "right upper lung zone": 1,
+    "right mid lung zone": 2,
+    "right lower lung zone": 3,
+    "right hilar structures": 4,
+    "right apical zone": 5,
+    "right costophrenic angle": 6,
+    "right hemidiaphragm": 7,
+    "left lung": 8,
+    "left upper lung zone": 9,
+    "left mid lung zone": 10,
+    "left lower lung zone": 11,
+    "left hilar structures": 12,
+    "left apical zone": 13,
+    "left costophrenic angle": 14,
+    "left hemidiaphragm": 15,
+    "trachea": 16,
+    "spine": 17,
+    "right clavicle": 18,
+    "left clavicle": 19,
+    "aortic arch": 20,
+    "mediastinum": 21,
+    "upper mediastinum": 22,
+    "svc": 23,
+    "cardiac silhouette": 24,
+    "cavoatrial junction": 25,
+    "right atrium": 26,
+    "carina": 27,
+    "abdomen": 28
+}
+REGION_LABELS = {v: k for k, v in ANATOMICAL_REGIONS.items()}
+
+
 
 class HeatMapInference:
     heat_map_model=None
@@ -25,7 +60,6 @@ class HeatMapInference:
         if HeatMapInference.heat_map_model is not None:
             return
         # Create the model
-        # self.heat_map_model=HeatMap()
         HeatMapInference.heat_map_model=HeatMap()
 
         # Load the model
@@ -149,7 +183,6 @@ class HeatMapInference:
             heat_maps=self.generate_heat_maps(features=features,heatmap_type=heatmap_type)
             
             # Compute Severity
-            # severity=self.compute_severity(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
             severity=self.compute_severity(labels=labels,confidence=confidence)
 
             # Generate generate_template_based_report
@@ -169,12 +202,12 @@ class HeatMapInference:
         Returns:
             list: A list of strings containing the report statements.
         """
+        print("Generate Template Based Report")
         report=[]
         # TODO Add Info About the Grey Area
         # template_positive = "The patient has {condition}."
         # template_negative = "The patient does not have {condition}."
 
-        report = []
 
         # template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. " \
         #                     "The findings are primarily located in the {region}. " \
@@ -273,20 +306,6 @@ class HeatMapInference:
             # We need to perform another forward pass to compute the grad
             # Forward Pass
         return heatmaps
-
-
-        # heatmap_resized_plts=np.zeros((len(CLASSES), 224, 224,3))
-        # blended_images=np.zeros((len(CLASSES), 224, 224,3))
-        # # Project Heat Map on the Original Image
-        # for class_index in range(len(CLASSES)):
-        #     image_resized,heatmap_resized,blended_image=self.project_heat_map(image=image,heatmap=heatmaps[class_index])
-
-        #     heatmap_resized_plts[class_index]=heatmap_resized
-        #     blended_images[class_index]=blended_image
-
-
-        # return heatmaps,image_resized,heatmap_resized_plts,blended_images
-
           
     def cam_heat_map(self,weights,features):
         """
@@ -410,154 +429,28 @@ class HeatMapInference:
         
         # Average the activation values across the three color channels
         heatmap_gray = np.mean(heatmap_resized, axis=2)
+        print("heatmap_gray",heatmap_gray.shape)
+
+        # Resize BB
+        for i,box in enumerate(region_boxes):
+            # print("Region Box:",box)
+            region_boxes[i]=list(map(lambda x: int(x*224/512),box))
+            # print("Region Box:",region_boxes[i])
         
         max_activation = 0
         primary_region = None
-
-
-        ANATOMICAL_REGIONS = {
-        "right lung": 0,
-        "right upper lung zone": 1,
-        "right mid lung zone": 2,
-        "right lower lung zone": 3,
-        "right hilar structures": 4,
-        "right apical zone": 5,
-        "right costophrenic angle": 6,
-        "right hemidiaphragm": 7,
-        "left lung": 8,
-        "left upper lung zone": 9,
-        "left mid lung zone": 10,
-        "left lower lung zone": 11,
-        "left hilar structures": 12,
-        "left apical zone": 13,
-        "left costophrenic angle": 14,
-        "left hemidiaphragm": 15,
-        "trachea": 16,
-        "spine": 17,
-        "right clavicle": 18,
-        "left clavicle": 19,
-        "aortic arch": 20,
-        "mediastinum": 21,
-        "upper mediastinum": 22,
-        "svc": 23,
-        "cardiac silhouette": 24,
-        "cavoatrial junction": 25,
-        "right atrium": 26,
-        "carina": 27,
-        "abdomen": 28
-        }
-        REGION_LABELS = {v: k for k, v in ANATOMICAL_REGIONS.items()}
-
+        
 
 
         for region, (x1, y1, x2, y2) in zip(regions,region_boxes):
+            # print("Region:",region)
+            # print("x1,y1,x2,y2",x1,y1,x2,y2)
+
             region_activation = heatmap_gray[y1:y2, x1:x2].mean()
             if region_activation > max_activation:
                 max_activation = region_activation
                 primary_region = region
         return REGION_LABELS[primary_region]
-
-
-
-    # Option(1) 4 Simple regions
-    #   # Divide the heatmap into quadrants
-    #   upper_left = heatmap_gray[:112, :112].mean()
-    #   upper_right = heatmap_gray[:112, 112:].mean()
-    #   lower_left = heatmap_gray[112:, :112].mean()
-    #   lower_right = heatmap_gray[112:, 112:].mean()
-
-    #   # Regions dictionary
-    #   regions = {
-    #       "upper left lung": upper_left,
-    #       "upper right lung": upper_right,
-    #       "lower left lung": lower_left,
-    #       "lower right lung": lower_right
-    #   }
-
-    #   # Find the region with the highest mean activation
-    #   primary_region = max(regions, key=regions.get)
-
-
-      # Option(2)
-      # # Assuming the heatmap is divided into more detailed regions
-      # # You can adjust these regions based on your specific heatmap analysis
-      # regions = {
-      #     "upper left lung": heatmap[:112, :112].mean(),
-      #     "upper right lung": heatmap[:112, 112:].mean(),
-      #     "lower left lung": heatmap[112:, :112].mean(),
-      #     "lower right lung": heatmap[112:, 112:].mean(),
-      #     "left upper lobe": heatmap[:80, 30:90].mean(),
-      #     "right upper lobe": heatmap[:80, 110:170].mean(),
-      #     "left middle lobe": heatmap[70:110, 30:90].mean(),
-      #     "right middle lobe": heatmap[70:110, 110:170].mean(),
-      #     "left lower lobe": heatmap[110:, 30:90].mean(),
-      #     "right lower lobe": heatmap[110:, 110:170].mean(),
-      #     "cardiac region": heatmap[80:150, 70:130].mean(),
-      #     "mediastinum": heatmap[60:120, 50:150].mean(),
-      #     "pleural space": heatmap[150:200, 0:200].mean(),
-      #     # Add more regions as per your specific analysis or anatomical understanding
-      # }
-
-      # # Find the region with the highest mean activation
-      # primary_region = max(regions, key=regions.get)
-
-
-    #   # Option(3) 29 Region
-    #   # TODO
-    #   # Normalize the orientation of the image
-    #   # image = normalize_orientation(image)
-    #   NATOMICAL_REGIONS_COORDS = {
-    #     "right lung": (112, 0, 224, 224),
-    #     "right upper lung zone": (112, 0, 224, 74),
-    #     "right mid lung zone": (112, 75, 224, 149),
-    #     "right lower lung zone": (112, 150, 224, 224),
-    #     "right hilar structures": (150, 75, 224, 149),
-    #     "right apical zone": (112, 0, 224, 37),
-    #     "right costophrenic angle": (187, 187, 224, 224),
-    #     "right hemidiaphragm": (187, 150, 224, 187),
-    #     "left lung": (0, 0, 112, 224),
-    #     "left upper lung zone": (0, 0, 112, 74),
-    #     "left mid lung zone": (0, 75, 112, 149),
-    #     "left lower lung zone": (0, 150, 112, 224),
-    #     "left hilar structures": (0, 75, 74, 149),
-    #     "left apical zone": (0, 0, 112, 37),
-    #     "left costophrenic angle": (37, 187, 112, 224),
-    #     "left hemidiaphragm": (37, 150, 112, 187),
-    #     "trachea": (37, 37, 112, 74),
-    #     "spine": (56, 112, 112, 224),
-    #     "right clavicle": (112, 0, 149, 37),
-    #     "left clavicle": (0, 0, 37, 37),
-    #     "aortic arch": (37, 37, 74, 74),
-    #     "mediastinum": (37, 74, 112, 149),
-    #     "upper mediastinum": (37, 37, 112, 74),
-    #     "svc": (37, 74, 74, 112),
-    #     "cardiac silhouette": (112, 150, 168, 224),
-    #     "cavoatrial junction": (112, 150, 168, 224),
-    #     "right atrium": (112, 150, 168, 224),
-    #     "carina": (56, 112, 112, 149),
-    #     "abdomen": (187, 150, 224, 224)
-    #   }
-
-    #   # Average the activation values across the three color channels
-    #   heatmap_gray = np.mean(heatmap, axis=2)
-
-    #   max_activation = 0
-    #   primary_region = None
-
-    #   for region, (x1, y1, x2, y2) in NATOMICAL_REGIONS_COORDS.items():
-    #       region_activation = heatmap_gray[y1:y2, x1:x2].mean()
-    #       if region_activation > max_activation:
-    #           max_activation = region_activation
-    #           primary_region = region
-
-    #   import random
-
-    #   # Assuming 'heatmap' and 'primary_region' are defined
-    #   random_number = random.randint(1000, 9999)  # Generate a random number between 1000 and 9999
-    #   filename = f"./_{random_number}_{primary_region}.png"
-    #   cv2.imwrite(filename, heatmap)
-
-    #   return primary_region
 
     
     def heat_map_severity(self,heatmap, significant_threshold=0.7, mild_threshold=0.3):
@@ -617,7 +510,11 @@ if __name__=="__main__":
 
     # --------------------------------------------------------------------------------Inference--------------------------------------------------------------------------------
     # Inference
-    heat_maps,labels,confidence,severity,template_based_report=inference.infer(image_path,bounding_boxes=[],detected_classes=[],heatmap_type="cam")
+    # bounding_boxes=[[349, 80, 1570, 1591], [627, 245, 1514, 750], [600, 750, 1459, 900], [559, 900, 1459, 1159], [1023, 709, 1487, 927], [709, 191, 1514, 586], [422, 968, 695, 1241], [559, 900, 1678, 1214], [1623, 204, 2660, 1337], [1691, 259, 2564, 750], [1623, 750, 2633, 955], [1664, 955, 2660, 1337], [1623, 709, 2128, 995], [1719, 204, 2510, 586], [2428, 1173, 2701, 1446], [1623, 968, 2660, 1337], [1323, 136, 1705, 873], [1459, 0, 1787, 2544], [736, 27, 1418, 600], [1787, 109, 2564, 545], [1623, 586, 1869, 750], [995, 276, 2431, 1550], [1227, 422, 1991, 804], [1227, 586, 1623, 804], [1118, 818, 2128, 1214], [1118, 818, 1609, 941], [1118, 941, 1609, 1214], [1459, 750, 1582, 873], [559, 968,2660,2544]]
+    bounding_boxes=[[0, 0, 255, 255]]
+    # detected_classes=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,26,27,28,29]
+    detected_classes=[1]
+    heat_maps,labels,confidence,severity,template_based_report=inference.infer(image_path,bounding_boxes=bounding_boxes,detected_classes=detected_classes,heatmap_type="cam")
 
     print("Labels:",labels)
     print("confidence",confidence)
