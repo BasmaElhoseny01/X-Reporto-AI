@@ -20,7 +20,7 @@ import numpy as np
 # import asyncio
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-DEBUG = True
+DEBUG = False
 
 
 transform =  A.Compose(
