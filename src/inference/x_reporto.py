@@ -91,7 +91,7 @@ class XReporto:
             bounding_boxes, deteced_classes =  XReporto.x_reporto(images=image, selected_models = [True,True,False,False])  
 
             # move the bounding boxes to cpu
-            bounding_boxes = bounding_boxes.to('cpu')
+            bounding_boxes = bounding_boxes.to('cpu').numpy()
         
         return bounding_boxes, deteced_classes
 

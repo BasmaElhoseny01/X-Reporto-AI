@@ -229,6 +229,8 @@ class HeatMapInference:
             else:
                 report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
 
+        # make report as a single string with new lines
+        report = "\n".join(report)
         return report
 
     def compute_severity(self, labels, confidence):
@@ -432,9 +434,14 @@ class HeatMapInference:
         print("heatmap_gray",heatmap_gray.shape)
 
         # Resize BB
-        for i,box in enumerate(region_boxes):
+        new_boxes=[]
+        # copy the boxes
+        for box in region_boxes:
+            new_boxes.append(box.copy())
+
+        for i,box in enumerate(new_boxes):
             # print("Region Box:",box)
-            region_boxes[i]=list(map(lambda x: int(x*224/512),box))
+            new_boxes[i]=list(map(lambda x: int(x*224/512),box))
             # print("Region Box:",region_boxes[i])
         
         max_activation = 0
@@ -442,10 +449,13 @@ class HeatMapInference:
         
 
 
-        for region, (x1, y1, x2, y2) in zip(regions,region_boxes):
+        for region, (x1, y1, x2, y2) in zip(regions,new_boxes):
             # print("Region:",region)
             # print("x1,y1,x2,y2",x1,y1,x2,y2)
-
+            x1 = int(x1)
+            y1 = int(y1)
+            x2 = int(x2)
+            y2 = int(y2)
             region_activation = heatmap_gray[y1:y2, x1:x2].mean()
             if region_activation > max_activation:
                 max_activation = region_activation
