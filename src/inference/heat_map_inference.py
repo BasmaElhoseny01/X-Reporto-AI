@@ -114,7 +114,7 @@ class HeatMapInference:
 
         return image_org,image
  
-    def infer(self,image_path,heatmap_type:str = "cam"):
+    def infer(self,image_path,bounding_boxes,detected_classes,heatmap_type:str = "cam"):
         '''
         Generate Heat Map for the given image path + Template Based Report
         heatmap_type: cam or grid_cam
@@ -145,20 +145,20 @@ class HeatMapInference:
               label=1*(class_confidence>HeatMapInference.optimal_thresholds[i])
               labels.append(label)
 
-            # heatmaps,image_resized,heatmap_resized_plts,blended_images=self.generate_heat_maps(image=image_org,features=features,heatmap_type=heatmap_type)
+            # Generate Heat Maps
             heat_maps=self.generate_heat_maps(features=features,heatmap_type=heatmap_type)
-            # heatmap_result=(heatmaps,image_resized,heatmap_resized_plts,blended_images)
-
+            
+            # Compute Severity
             # severity=self.compute_severity(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
+            severity=self.compute_severity(labels=labels,confidence=confidence)
 
-            # template_based_report=self.generate_template_based_report(labels=labels,confidence=confidence,heatmaps=heatmap_resized_plts)
+            # Generate generate_template_based_report
+            report=self.generate_template_based_report(labels=labels,confidence=confidence,bounding_boxes=bounding_boxes,regions=detected_classes,heat_maps=heat_maps)
 
-            # return image_org,heatmap_result,labels,confidence,severity,template_based_report
-            return heat_maps,labels,confidence
+            return heat_maps,labels,confidence,severity,report
 
 
-    # def generate_template_based_report(self,labels,confidence,heat_maps):   
-    def generate_template_based_report(self,labels,confidence):   
+    def generate_template_based_report(self,labels,confidence,bounding_boxes,regions,heat_maps):   
         """
         Generates a report based on labels and confidence scores.
 
@@ -176,19 +176,22 @@ class HeatMapInference:
 
         report = []
 
+        # template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. " \
+        #                     "The findings are primarily located in the {region}. " \
+        #                     "Severity: {severity}."
+        
         template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. " \
-                            "The findings are primarily located in the {location}. " \
-                            "Severity: {severity}."
+                            "The findings are primarily located in the {region}. "
         template_negative = "The patient does not have {condition} with a confidence of {confidence:.2f}%. "
 
         for i, label in enumerate(labels):
             confidence_percent = confidence[i] * 100
             if label == 1:
                 # severity_level, severity_score = self.heat_map_severity(heat_maps[i])
-                # location = self.heatmap_region(heat_maps[i], image=None)  # Assuming you have a method for this
+                region = self.heatmap_region(heat_maps[i],regions=regions,region_boxes=bounding_boxes)  # Assuming you have a method for this
                 report.append(template_positive.format(condition=CLASSES[i],
-                                                      confidence=confidence_percent))
-                                                    #   location=location))
+                                                      confidence=confidence_percent,
+                                                      region=region))
                                                     #   severity=severity_level))
             else:
                 report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
@@ -266,7 +269,7 @@ class HeatMapInference:
                 heatmaps[class_index]=heatmap
 
         elif heatmap_type=="grad-cam":
-            print("grid-cam (Not Implemeneted)")
+            print("grid-cam (Not Implemented)")
             # We need to perform another forward pass to compute the grad
             # Forward Pass
         return heatmaps
@@ -311,21 +314,21 @@ class HeatMapInference:
         return heatmap
     
 
-    def grad_cam_heat_map(self):
-      '''
-      weights:[1, 1024]
-      features:[1024, 7, 7]
+    # def grad_cam_heat_map(self):
+    #   '''
+    #   weights:[1, 1024]
+    #   features:[1024, 7, 7]
 
-      y_scores: [1] [0-1]
+    #   y_scores: [1] [0-1]
 
-      heatmap:[7,7]
-      '''  
-      # To be completed  https://chatgpt.com/share/f5cd2d35-d96f-48ba-8807-91809eca1ca6
-      # print("y_score",y_score)
-      # # Backward pass to get gradients of target class with respect to the feature maps
-      # self.heat_map_model.zero_grad()
-      # y_score.backward(retain_graph=True)
-      pass
+    #   heatmap:[7,7]
+    #   '''  
+    #   # To be completed  https://chatgpt.com/share/f5cd2d35-d96f-48ba-8807-91809eca1ca6
+    #   # print("y_score",y_score)
+    #   # # Backward pass to get gradients of target class with respect to the feature maps
+    #   # self.heat_map_model.zero_grad()
+    #   # y_score.backward(retain_graph=True)
+    #   pass
 
 
     def project_heat_maps(self,image_path,heat_maps):
@@ -386,37 +389,73 @@ class HeatMapInference:
 
 
     def heatmap_region(self, heatmap,regions,region_boxes):
-      """
-      Determines the primary region of activation in the heatmap.
+        """
+        Determines the primary region of activation in the heatmap.
 
-      Args:
-        heatmap (numpy.ndarray): The heatmap array of shape (224, 224, 3).
+        Args:
+        heatmap (numpy.ndarray): The heatmap array of shape (7, 7).
         - regions: list of regions
         - boxes (List[List[float]]): List of bounding boxes.
             Format: [N, 4] => N times [xmin, ymin, xmax, ymax].
 
-      Returns:
-          str: Description of the primary region.
-      """
-      # Resize the heatmap to the original image size
-      # #FIX Basma
-      heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
+        Returns:
+            str: Description of the primary region.
+        """
+        # Resize the heatmap to the original image size
+        # #FIX Basma
+        heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
 
-      # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
-      heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
-      
-      # Average the activation values across the three color channels
-      heatmap_gray = np.mean(heatmap_resized, axis=2)
-      
-      max_activation = 0
-      primary_region = None
+        # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
+        heatmap_resized=cv2.applyColorMap(np.uint8(255*heatmap_resized), cv2.COLORMAP_JET) 
+        
+        # Average the activation values across the three color channels
+        heatmap_gray = np.mean(heatmap_resized, axis=2)
+        
+        max_activation = 0
+        primary_region = None
 
-      for region, (x1, y1, x2, y2) in zip(regions,region_boxes):
-        region_activation = heatmap_gray[y1:y2, x1:x2].mean()
-        if region_activation > max_activation:
-            max_activation = region_activation
-            primary_region = region
-      return primary_region,heatmap_resized
+
+        ANATOMICAL_REGIONS = {
+        "right lung": 0,
+        "right upper lung zone": 1,
+        "right mid lung zone": 2,
+        "right lower lung zone": 3,
+        "right hilar structures": 4,
+        "right apical zone": 5,
+        "right costophrenic angle": 6,
+        "right hemidiaphragm": 7,
+        "left lung": 8,
+        "left upper lung zone": 9,
+        "left mid lung zone": 10,
+        "left lower lung zone": 11,
+        "left hilar structures": 12,
+        "left apical zone": 13,
+        "left costophrenic angle": 14,
+        "left hemidiaphragm": 15,
+        "trachea": 16,
+        "spine": 17,
+        "right clavicle": 18,
+        "left clavicle": 19,
+        "aortic arch": 20,
+        "mediastinum": 21,
+        "upper mediastinum": 22,
+        "svc": 23,
+        "cardiac silhouette": 24,
+        "cavoatrial junction": 25,
+        "right atrium": 26,
+        "carina": 27,
+        "abdomen": 28
+        }
+        REGION_LABELS = {v: k for k, v in ANATOMICAL_REGIONS.items()}
+
+
+
+        for region, (x1, y1, x2, y2) in zip(regions,region_boxes):
+            region_activation = heatmap_gray[y1:y2, x1:x2].mean()
+            if region_activation > max_activation:
+                max_activation = region_activation
+                primary_region = region
+        return REGION_LABELS[primary_region]
 
 
 
@@ -578,11 +617,15 @@ if __name__=="__main__":
 
     # --------------------------------------------------------------------------------Inference--------------------------------------------------------------------------------
     # Inference
-    heat_maps,labels,confidence=inference.infer(image_path,heatmap_type="cam")
+    heat_maps,labels,confidence,severity,template_based_report=inference.infer(image_path,bounding_boxes=[],detected_classes=[],heatmap_type="cam")
 
     print("Labels:",labels)
     print("confidence",confidence)
     print("heat_maps",heat_maps.shape)
+
+    print("Severity",severity)
+    print("Report:",template_based_report)
+
 
     # Save Heat Maps (7x7)
     if save_path:
@@ -641,5 +684,5 @@ if __name__=="__main__":
     # # print("heatmaps",heatmaps.shape)
     
     
-# python -m src.inference.main "./datasets/images/00000001_000.png"
-# python -m src.inference.main "datasets\mimic-cxr-jpg\files\p11\p11001469\s54076811\d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"
+# python -m src.inference.heat_map_inference "./datasets/images/00000001_000.png"
+# python -m src.inference.heat_map_inference "datasets\mimic-cxr-jpg\files\p11\p11001469\s54076811\d0d2bd0c-8bc50aa2-a9ab3ca1-cf9c9404-543a10b7.jpg"
