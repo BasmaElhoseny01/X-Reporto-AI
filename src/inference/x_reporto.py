@@ -166,8 +166,8 @@ class XReporto:
             
             # Results
             image=image[0].to('cpu')
-            bounding_boxes=bounding_boxes.to('cpu')
-
+            bounding_boxes=bounding_boxes.to('cpu').numpy()
+        
             # detected_classes = self.convert_boolean_classes_to_list(detected_classes)
             # # Bounding Boxes
             # plot_single_image(img = image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')

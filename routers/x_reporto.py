@@ -42,6 +42,8 @@ async def inference(
     # Perform inference
     bounding_boxes, detected_classes, generated_sentences, report_text = inference.generate_image_report(image_path)
     
+    print(f"bounding_boxes: {bounding_boxes}")
+    print(f"detected_classes: {detected_classes}")
     # print shapes
 
     # delete the image
