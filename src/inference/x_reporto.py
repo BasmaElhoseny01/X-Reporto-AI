@@ -77,6 +77,51 @@ class XReporto:
         print("Device: ", DEVICE)
         print("Model Loaded Successfully")
 
+    def object_detection(self,image_path):
+
+        image = CustomDataset(img_path=image_path)        
+        # Move the image to GPU
+        # image = image.to(DEVICE) 
+        image = torch.tensor(image).to(DEVICE)
+
+        # Inference Pass
+        XReporto.x_reporto.eval()
+        with torch.no_grad():
+            # Inference Pass
+            bounding_boxes, deteced_classes =  XReporto.x_reporto(images=image, selected_models = [True,True,False,False])  
+
+            # move the bounding boxes to cpu
+            bounding_boxes = bounding_boxes.to('cpu')
+            deteced_classes = deteced_classes.to('cpu')
+        
+        return bounding_boxes, deteced_classes
+
+    def denoise_image(self,image_path):
+        """
+        Denoise the image
+
+        Args:
+        image_path (str): Path to the image file
+
+        Returns:
+        image: after denoising
+        """
+        image = CustomDataset(img_path=image_path)        
+        # Move the image to GPU
+        # image = image.to(DEVICE) 
+        image = torch.tensor(image).to(DEVICE)
+
+        # Inference Pass
+        XReporto.x_reporto.eval()
+        with torch.no_grad():
+            # Inference Pass
+            denoised_image =  XReporto.x_reporto(images=image, selected_models = [True,False,False,False])
+
+            # squeeze the image from (1,1,w,h) to (w,h)
+            denoised_image = np.squeeze(denoised_image)
+            
+        return denoised_image
+        
     def generate_image_report(self,image_path):
         """
         Generate the report for the given image
@@ -115,7 +160,7 @@ class XReporto:
         XReporto.x_reporto.eval()
         with torch.no_grad():
             # Inference Pass
-            denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded =  XReporto.x_reporto(images=image,use_beam_search=True)  
+            denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded, _ =  XReporto.x_reporto(images=image,use_beam_search=True)  
 
             # Decode the sentences
             lm_sentences_decoded=XReporto.tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)

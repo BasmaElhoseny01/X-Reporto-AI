@@ -9,6 +9,7 @@ import cv2
 import io
 import uuid
 from src.inference.heat_map_inference import HeatMapInference
+from src.inference.x_reporto import XReporto
 from schemas import heatmap as heatmap_schema
 # define the router
 router = APIRouter(
@@ -34,11 +35,20 @@ async def generate_heatmap(
     # Save the image
     cv2.imwrite(image_path, image)
 
-    # Initialize the Inference class
-    inference = HeatMapInference()
+    # initialize the Inference class of xreporto
+    xreporto = XReporto()
+
+    # Initialize the Inference class of heatmao
+    heatmap = HeatMapInference()
+
+    # Perform inference of xreporto
+    bounding_boxes, detected_classes = xreporto.object_detection(image_path)
+
+    print(f"bounding_boxes: {bounding_boxes}")
+    print(f"detected_classes: {detected_classes}")
 
     # Perform inference
-    heatmap, labels, confidence = inference.infer(image_path)
+    heatmap, labels, confidence = heatmap.infer(image_path)
 
     # delete the image
     os.remove(image_path)

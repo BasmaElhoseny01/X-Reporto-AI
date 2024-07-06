@@ -223,7 +223,8 @@ class XReportoV1(nn.Module):
 
             
 
-    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch:Optional[int]=None,index:Optional[int]=None,delete:Optional[bool]= False,generate_sentence :Optional[bool]=False,use_beam_search :Optional[bool] = False,validate_during_training:Optional[bool]=False):
+    def forward(self,images: Tensor ,input_ids=None,attention_mask=None, object_detector_targets: Optional[List[Dict[str, Tensor]]] = None, selection_classifier_targets: Tensor=None,abnormal_classifier_targets: Tensor = None,language_model_targets: Tensor= None,batch:Optional[int]=None,index:Optional[int]=None,delete:Optional[bool]= False,generate_sentence :Optional[bool]=False,use_beam_search :Optional[bool] = False,validate_during_training:Optional[bool]=False,
+                selected_models: List[bool] = [True,True,True,True]):
         '''
         Forward pass through the X-ReportoV1 model.
 
@@ -352,7 +353,9 @@ class XReportoV1(nn.Module):
         stop=False
         if OPERATION_MODE==OperationMode.INFERENCE.value:
             print("Inference Mode Forward Pass")
-
+            sum =  np.sum(selected_models)
+            if sum==0:
+                raise ValueError("At least one model must be selected for inference")
             # Denoiser 
             self.denoiser.set_input(images)
             self.denoiser.forward()
@@ -360,7 +363,10 @@ class XReportoV1(nn.Module):
             images = (images - images.min()) / (images.max() -images.min())
             images=images.detach().cpu().numpy()
             images = images * 255
-            images = images.astype(np.uint8)           
+            images = images.astype(np.uint8)
+
+            if sum == 1:
+                return images        
             # Convert the batch to a list of individual images
             images_list = [images[i, 0, :, :] for i in range(images.shape[0])]
 
@@ -377,6 +383,8 @@ class XReportoV1(nn.Module):
             #print("detected_classes",detected_classes.shape) #[batch_size x 29]
             #print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
 
+            if sum == 2:
+                return bounding_boxes, detected_classes
             # Abnormal Classifier
             _,abnormal_regions =self.binary_classifier_region_abnormal(object_detector_features,detected_classes)
             # Binary Classifier
@@ -399,10 +407,8 @@ class XReportoV1(nn.Module):
                 LM_sentences.extend(LM_sentences_batch)
             # print("LM_sentences",len(LM_sentences))# [num_regions_selected_in_batch,]
 
-
-
             # return denoised images, bounding boxes, selected regions, abnormal regions, and generated sentences
-            return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences
+            return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences, detected_classes
         
         elif OPERATION_MODE==OperationMode.TRAINING.value and self.training:
             # Training

@@ -53,7 +53,7 @@ async def inference(
         "report_text": report_text
     }
 
-@router.get("/denoise")
+@router.post("/denoise")
 async def denoise(
     image: UploadFile = File(...)
 )-> StreamingResponse:
