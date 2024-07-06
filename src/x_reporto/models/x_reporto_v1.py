@@ -379,17 +379,27 @@ class XReportoV1(nn.Module):
             # Object Detector
             self.object_detector(images=images)
             _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)
+
+
             #print("bounding_boxes",bounding_boxes.shape) #[batch_size x 29 x 4]
             #print("detected_classes",detected_classes.shape) #[batch_size x 29]
             #print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
 
             if sum == 2:
-                return bounding_boxes, detected_classes
+                    # squeeze the classes
+                classes = torch.squeeze(detected_classes)
+                boxes_labels = []
+                for i in range(classes.shape[0]):
+                    if classes[i]:
+                        boxes_labels.append(i)
+
+                boxes_labels = torch.squeeze(boxes_labels)
+                return bounding_boxes, boxes_labels.cpu()
             # Abnormal Classifier
             _,abnormal_regions =self.binary_classifier_region_abnormal(object_detector_features,detected_classes)
             # Binary Classifier
             _,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,detected_classes)
-            #print(selected_regions.shape)  #[batch_size x 29] 
+            # print("selected_regions: ",selected_regions.shape)  #[batch_size x 29] 
             #print(selected_region_features.shape) #[num_regions_selected_in_batch,1024]
 
             # _,abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
@@ -407,8 +417,17 @@ class XReportoV1(nn.Module):
                 LM_sentences.extend(LM_sentences_batch)
             # print("LM_sentences",len(LM_sentences))# [num_regions_selected_in_batch,]
 
+            # squeeze the classes
+            # detected_classes = detected_classes[selected_regions]
+            # classes = torch.squeeze(detected_classes)
+            selected_regions_squeezed = torch.squeeze(selected_regions)
+            boxes_labels = []
+            for i in range(len(selected_regions_squeezed)):
+                if selected_regions_squeezed[i]:
+                    boxes_labels.append(i)
+
             # return denoised images, bounding boxes, selected regions, abnormal regions, and generated sentences
-            return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences, detected_classes
+            return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences, boxes_labels
         
         elif OPERATION_MODE==OperationMode.TRAINING.value and self.training:
             # Training

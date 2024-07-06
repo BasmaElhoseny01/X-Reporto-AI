@@ -92,7 +92,6 @@ class XReporto:
 
             # move the bounding boxes to cpu
             bounding_boxes = bounding_boxes.to('cpu')
-            deteced_classes = deteced_classes.to('cpu')
         
         return bounding_boxes, deteced_classes
 
@@ -119,7 +118,7 @@ class XReporto:
 
             # squeeze the image from (1,1,w,h) to (w,h)
             denoised_image = np.squeeze(denoised_image)
-            
+
         return denoised_image
         
     def generate_image_report(self,image_path):
@@ -160,7 +159,7 @@ class XReporto:
         XReporto.x_reporto.eval()
         with torch.no_grad():
             # Inference Pass
-            denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded, _ =  XReporto.x_reporto(images=image,use_beam_search=True)  
+            denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded, detected_classes =  XReporto.x_reporto(images=image,use_beam_search=True)  
 
             # Decode the sentences
             lm_sentences_decoded=XReporto.tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
@@ -168,14 +167,15 @@ class XReporto:
             # Results
             image=image[0].to('cpu')
             bounding_boxes=bounding_boxes.to('cpu')
-            
+
+            # detected_classes = self.convert_boolean_classes_to_list(detected_classes)
             # # Bounding Boxes
             # plot_single_image(img = image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
 
         # generate the report text
         generated_sentences, report_text = self.fix_sentences(generated_sentences=lm_sentences_decoded)
 
-        return bounding_boxes, generated_sentences, report_text
+        return bounding_boxes,detected_classes, generated_sentences, report_text
 
 
     def fix_sentences(self,generated_sentences: List[str]):
@@ -257,6 +257,25 @@ class XReporto:
 
         return final_sentences, report_text
 
+    def convert_boolean_classes_to_list(self,classes):
+        """
+        Convert the boolean classes to list of classes
+
+        Args:
+        classes (torch.Tensor): Boolean tensor of classes
+
+        Returns:
+        List[int]: List of classes
+        """
+
+        # squeeze the classes
+        classes = torch.squeeze(classes)
+        detected_classes = []
+        for i in range(classes.shape[0]):
+            if classes[i]:
+                detected_classes.append(i)
+
+        return detected_classes
 
 
 if __name__=="__main__":

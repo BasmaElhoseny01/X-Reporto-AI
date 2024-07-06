@@ -40,7 +40,10 @@ async def inference(
     inference = XReporto()
 
     # Perform inference
-    bounding_boxes, generated_sentences, report_text = inference.generate_image_report(image_path)
+    bounding_boxes, detected_classes, generated_sentences, report_text = inference.generate_image_report(image_path)
+    
+    # print shapes
+
     # delete the image
     os.remove(image_path)
     end = time.time()
@@ -50,7 +53,8 @@ async def inference(
     return {
         "bounding_boxes": bounding_boxes,
         "lm_sentences_decoded": generated_sentences,
-        "report_text": report_text
+        "report_text": report_text,
+        "detected_classes": detected_classes
     }
 
 @router.post("/denoise")
