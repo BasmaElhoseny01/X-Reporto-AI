@@ -17,6 +17,8 @@ from transformers import GPT2Tokenizer
 from config import *
 from src.denoiser.config import*
 import numpy as np
+import re
+
 # import asyncio
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -175,7 +177,7 @@ class XReporto:
         # generate the report text
         generated_sentences, report_text = self.fix_sentences(generated_sentences=lm_sentences_decoded)
 
-        return bounding_boxes,detected_classes, generated_sentences, report_text
+        return bounding_boxes,detected_classes, lm_sentences_decoded, report_text
 
 
     def fix_sentences(self,generated_sentences: List[str]):
@@ -245,8 +247,23 @@ class XReporto:
                     print(sentence)
                 print("Final Sentence: ", final_sentences[i])
         # Remove garbage sentences with random characters that has no meaning
-        
-    
+        # make regex thst detect if there is repeated char 3 times or more
+        # pattern = r"(.)\1{2,}"
+
+        # # List of specific long words to exclude
+        # excluded_words = [
+        #     "pneumonoultramicroscopicsilicovolcanoconiosis",
+        #     "antidisestablishmentarianism",
+        #     "floccinaucinihilipilification"
+        # ]
+
+        # max_length = 20
+
+        # final_sentences = [sentence for sentence in final_sentences if not re.search(pattern, sentence)]
+
+        # # remove the sentences with long words than 20 characters and not in the excluded words
+        # final_sentences = [sentence for sentence in final_sentences if all([len(word) < max_length or word in excluded_words  for word in sentence.split()])]
+
         # generate the report text
         report_text = ""
         for sentence in final_sentences:

@@ -406,7 +406,6 @@ class HeatMapInference:
         # cv2.imwrite('./blend.png',blended_image)
 
         return image_resized,heatmap_resized,blended_image
-    
 
 
     def heatmap_region(self, heatmap,regions,region_boxes):
