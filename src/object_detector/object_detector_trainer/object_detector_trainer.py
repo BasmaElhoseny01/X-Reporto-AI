@@ -55,7 +55,6 @@ class Object_detector_trainer:
         self.dataset_val = CustomDataset(dataset_path= validation_csv_path, transform_type='val')
         
         # create data loader
-        # TODO @Ahmed Hosny suffle Training Loaders
         self.data_loader_train = DataLoader(dataset=self.dataset_train, collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
         self.data_loader_val = DataLoader(dataset=self.dataset_val, collate_fn=collate_fn, batch_size=BATCH_SIZE, shuffle=False, num_workers=4)
 
