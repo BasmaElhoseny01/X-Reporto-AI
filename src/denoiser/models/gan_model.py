@@ -3,49 +3,45 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import os
-
+# Custom imports from your project
 from config import OUTPUT_DIR,BATCH_OUTPUT_DIR,OPERATION_MODE,OperationMode
-
 from src.denoiser.models.unet_parts import OutConv, DoubleConv, Down, Up
 from src.denoiser.models.base_model import BaseModel
 from src.denoiser.models.loss_functions import GANLoss, PixelLoss
 import torchvision.models as models
 from torchvision.models import VGG19_Weights
-from torchvision.models import resnet50, ResNet50_Weights
 from src.denoiser.options.train_option import TrainOptions
 
-
-class FeatureNetwork(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.model = None
-        self.feature_extractor = None
-        self.out_channels = None
-        self.image_size = None
-        self.device = None
-        self.model = None
-        self.feature_extractor = None
-        self.feature_extractor = resnet50(weights=ResNet50_Weights.DEFAULT)
-        self.feature_extractor.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        self.out_channels = self.feature_extractor.layer4[-1].conv3.out_channels
-        self.feature_extractor = nn.Sequential(*list(self.feature_extractor.children())[:-2])
-        # self.feature_extractor.out_channels = self.feature_extractor.layer4[-1].conv3.out_channels
-        self.image_size = 512
-    
-    def __call__(self, x):
-        return self.feature_extractor(x)
-    
-
+# Calculate the output size of the feature map
 def calculate_feature_output_size(img_size, kernel_size, padding, stride):
+    """
+    Calculates the output size of a feature map after applying a convolution layer.
+
+    Args:
+        img_size (int): Size of the input image.
+        kernel_size (int): Size of the convolution kernel.
+        padding (int): Padding applied to the input.
+        stride (int): Stride of the convolution.
+
+    Returns:
+        int: Size of the output feature map.
+    """
     return int((img_size - kernel_size + 2*padding)/stride) + 1
 
-
+ # Define the UNet model
 class UNet(nn.Module):
     def __init__(self, channels_in, channels_out):
+        """
+        Initializes the UNet model for image-to-image translation.
+
+        Args:
+            channels_in (int): Number of input channels.
+            channels_out (int): Number of output channels.
+        """
         super(UNet, self).__init__()
         self.channels_in = channels_in
         self.channels_out = channels_out
-
+        # Encoder
         self.inc = OutConv(channels_in, out_channels=8, relu=True)
         self.conv1 = DoubleConv(8, 32)
         self.down1 = Down(32, 64)
@@ -57,7 +53,7 @@ class UNet(nn.Module):
             nn.Conv2d(kernel_size=3, in_channels=512, out_channels=512, padding=1),
             nn.ReLU()
         )
-
+        # Decoder
         self.up01 = Up(512, 256)
         self.up10 = Up(256, 128)
         self.up1 = Up(128, 64)
@@ -65,9 +61,17 @@ class UNet(nn.Module):
         self.up3 = Up(32, 32)
         self.conv2 = OutConv(32, 16, relu=True)
         self.conv3 = OutConv(16, channels_out, relu=False)
-        self.tanh = nn.Tanh()
-    
+    # Define the forward pass
     def forward(self, x):
+        """
+        Forward pass through the UNet model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, channels_in, height, width).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, channels_out, height, width).
+        """
         x1 = self.inc(x)
         x2 = self.conv1(x1)
         x3 = self.down1(x2)
@@ -83,22 +87,21 @@ class UNet(nn.Module):
         x = self.up3(x, x2)
         x = self.conv2(x)
         x = self.conv3(x)
-        
-        # TODO: 
-        # add tach layer the output from -1 to 1
-        # add 1 then devide by 2 to normalize
-        # the output should be gray scale
-        # no one make this rubish and calc loss on linear space
-        # x = self.tanh(x)
-        # x = (x + 1) / 2
-
         return x
 
-        
-
+# Define the discriminator model
 class Discriminator(nn.Module):
     def __init__(self, img_size):
         super(Discriminator, self).__init__()
+        """
+        Forward pass through the UNet model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, channels_in, height, width).
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, channels_out, height, width).
+        """
         N = calculate_feature_output_size(img_size, 3, 0, 1)
         N = calculate_feature_output_size(N, 3, 0, 2)
         N = calculate_feature_output_size(N, 3, 0, 1)
@@ -108,7 +111,6 @@ class Discriminator(nn.Module):
         self.image_to_features = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3),
             nn.LeakyReLU(),
-            # in the paper the output channels is 64 in this conv2d 
             nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2),
             nn.LeakyReLU(),
             
@@ -128,16 +130,34 @@ class Discriminator(nn.Module):
             nn.Linear(4*self.feature_size*self.feature_size, 64),
             nn.LeakyReLU(0.2),
             nn.Linear(64,1))
-    
+    # Define the forward pass
     def forward(self, x):
+        """
+        Forward pass through the Discriminator model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, 1, height, width).
+
+        Returns:
+            torch.Tensor: Output tensor indicating the likelihood of the input being a real image.
+        """
         x = self.image_to_features(x)
         x = x.contiguous().view((x.shape[0], -1))
         x = self.features_to_score(x)
         return x
 
-class TomoGAN(BaseModel):
+class DenoiserGan(BaseModel):
     def __init__(self, opt):
         BaseModel.__init__(self, opt)
+        """
+        Forward pass through the Discriminator model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, 1, height, width).
+
+        Returns:
+            torch.Tensor: Output tensor indicating the likelihood of the input being a real image.
+        """
         self.loss_names = ['G_GAN', 'G_L1', 'D_real', 'D_fake']
         self.visual_names = ['real_B', 'fake_C', 'real_C']
         if self.isTrain :
@@ -156,22 +176,19 @@ class TomoGAN(BaseModel):
         self.depth = opt.depth
 
         if self.isTrain:
-            #TODO: we can use resnet50 as feature extractor / vgg19 first 16 layer pretrained on imagenet or loadt the model  
-
-            # vgg19 = FeatureNetwork()
-            # vgg19.load_state_dict(torch.load(opt.resnet_path))
-
+            # Get the vgg19 model
             vgg19 = models.vgg19(weights=VGG19_Weights.DEFAULT)
             vgg19= vgg19.features
-            # vgg19.load_state_dict(torch.load(opt.vgg_path))
-
-            # vgg19.load_state_dict(vgg19_dict)
             if torch.cuda.is_available():
                 vgg19.cuda()
+            # Define the loss functions
+            # GAN loss (adversarial loss)
             self.criterionGAN = GANLoss(self.device, gan_mode='vanilla')
+            # MSE loss
             self.criterionMSE = torch.nn.MSELoss()
+            # Pixel loss (perceptual loss)
             self.criterionPixel = PixelLoss(vgg19, self.device)
-
+            # Define the optimizers
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=opt.lr, betas=(0.5, 0.999))
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=opt.lr, betas=(0.5, 0.999))
             self.optimizers.append(self.optimizer_G)
@@ -183,43 +200,47 @@ class TomoGAN(BaseModel):
             self.image_paths = ['{}/images/{}.png'.format(web_dir, 'reconstructed'),
                             '{}/images/gtruth.png'.format(web_dir),
                             '{}/images/blurred.png'.format(web_dir)]
-    
+    # Set the input for the model
     def set_input(self, input):
+        """
+        Sets the input data for the model.
+
+        Args:
+            input (tuple): A tuple containing the input tensors (real_B, real_C).
+        """
         if OPERATION_MODE==OperationMode.INFERENCE.value or OPERATION_MODE==OperationMode.TESTING.value or OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.EVALUATION.value:
           X_mb = input
-          #X_mb = np.transpose(X_mb, (0, 3, 1, 2))
-          #y_mb = np.transpose(y_mb, (0, 3, 1, 2))
           self.real_B = X_mb.to(self.device)
         else:
           X_mb, y_mb = input[0], input[1]
-          #X_mb = np.transpose(X_mb, (0, 3, 1, 2))
-          #y_mb = np.transpose(y_mb, (0, 3, 1, 2))
           self.real_B = X_mb.to(self.device)
           self.real_C = y_mb.to(self.device)
         
-    
+    # Forward pass
     def forward(self):
-        self.fake_C = self.netG(self.real_B)
-        # standrize the output to be between 0 and 1
-        # self.fake_C = (self.fake_C + 1) / 2
-        # self.fake_C = (self.fake_C - self.fake_C.min()) / (self.fake_C.max() - self.fake_C.min())
-            
-    
+        """
+        Performs a forward pass through the generator to produce fake images.
+        """
+        self.fake_C = self.netG(self.real_B)    
+
     def compute_visuals(self):
         self.fake_C = self.fake_C[0,0,:,:]
         self.real_C = self.real_C[0,0,:,:]
         self.real_B = self.real_B[0,0:self.depth//2,:,:].squeeze(0)
-        #save2image(self.fake_C[0,0,:,:].detach().cpu().numpy(), self.image_paths[0])
-        #save2image(self.real_C[0,0,:,:].detach().cpu().numpy(), self.image_paths[1])
-        #save2image(self.real_B[0,0:self.depth//2,:,:], self.image_paths[2])
-    
-    
+       
+    # backward pass for the discriminator
     def backward_D(self):
+        """
+        Calculates the loss for the discriminator and performs a backward pass to update the discriminator's weights.
+        """
+        # set requires_grad to True for Discriminator
         self.set_requires_grad(self.netD, True)
+        # set requires_grad to False for Generator
         self.set_requires_grad(self.netG, False)
         self.optimizer_D.zero_grad()
         gen_C = self.netG(self.real_B)
         pred_fake = self.netD(gen_C)
+        # Calculate the loss for the fake images
         self.loss_D_fake = self.criterionGAN(pred_fake, False)
 
         pred_real = self.netD(self.real_C)
@@ -230,47 +251,65 @@ class TomoGAN(BaseModel):
         self.optimizer_D.step()
         for p in self.netD.parameters():
             p.data.clamp_(-0.01, 0.01)
-    
+
+    # backward pass for the generator
     def backward_G(self):
+        """
+        Calculates the loss for the generator and performs a backward pass to update the generator's weights.
+        """
+        # set requires_grad to False for Discriminator
         self.set_requires_grad(self.netD, False)
+        # set requires_grad to True for Generator
         self.set_requires_grad(self.netG, True)
         self.optimizer_G.zero_grad()
-        # print("zero grad")
         gen_C = self.netG(self.real_B)
         pred_fake = self.netD(gen_C)
+        # Calculate the loss for the fake images
         self.loss_G_GAN = self.criterionGAN(pred_fake, True) * self.opt.ladv
-        # print("loss_G_GAN", self.loss_G_GAN)
         self.loss_G_MSE = self.criterionMSE(gen_C, self.real_C) * self.opt.lmse
-        # print("loss_G_MSE", self.loss_G_MSE)
         self.loss_G_Perc = self.criterionPixel(gen_C, self.real_C) * self.opt.lperc
-        # print("loss_G_Perc", self.loss_G_Perc)
         self.loss_G = self.loss_G_GAN + self.loss_G_MSE + self.loss_G_Perc
-        # print("loss_G", self.loss_G)
-        # print("before backward")
         self.loss_G.backward()
-        # print("after backward")
         self.optimizer_G.step()
-        # print("after step")
-    
+
+    # save the model
     def save_models(self):
+        """
+        Saves the current state of the generator and discriminator models.
+        """
         torch.save(self.netG.state_dict(), os.path.join(OUTPUT_DIR, 'netG.pth'))
         if self.isTrain:
           torch.save(self.netD.state_dict(), os.path.join(OUTPUT_DIR, 'netD.pth'))
     
+    # load the model
     def load_models(self):
+        """
+        Loads the state of the generator and discriminator models.
+        """
         self.netG.load_state_dict(torch.load(os.path.join(OUTPUT_DIR, 'netG.pth')))
         if self.isTrain:
           self.netD.load_state_dict(torch.load(os.path.join(OUTPUT_DIR, 'netD.pth')))
 
     def save_every_batch(self):
+        """
+        Saves the current state of the generator and discriminator models after each batch.
+        """
         torch.save(self.netG.state_dict(), os.path.join(BATCH_OUTPUT_DIR, 'batch_netG.pth'))
         torch.save(self.netD.state_dict(), os.path.join(BATCH_OUTPUT_DIR, 'batch_netD.pth'))
         
     def load_every_batch(self):
+        """
+        Loads the state of the generator and discriminator models after each batch.
+        """
+
         self.netG.load_state_dict(torch.load(os.path.join(BATCH_OUTPUT_DIR, 'batch_netG.pth')))
         self.netD.load_state_dict(torch.load(os.path.join(BATCH_OUTPUT_DIR, 'batch_netD.pth')))
-        
+
+    # optimize the parameters    
     def optimize_parameters(self):
+        """
+        Optimizes the parameters of the generator and discriminator models.
+        """
         self.forward()                   # compute fake images: G(A)
         # update D
         self.set_requires_grad(self.netD, True)  # enable backprop for D
@@ -287,20 +326,8 @@ class TomoGAN(BaseModel):
 
 if __name__ == "__main__":
     
-    # Test the model unet
-    # model = UNet(1, 1)
-    # x = torch.randn((1,1,512,512))
-    # y = model(x)
-    # print(y.shape)
-    # print(y.max(), y.min())
-    # # Test the discriminator
-    # model = Discriminator(512)
-    # x = torch.randn((1,1,512,512))
-    # y = model(x)
-    # print(y.shape)
-    # print(y.max(), y.min())
     opt=TrainOptions()
-    model = TomoGAN(opt=opt)
+    model = DenoiserGan(opt=opt)
     x = torch.randn((1,1,512,389))
     y = torch.randn((1,1,512,389))
     model.set_input((x, y))

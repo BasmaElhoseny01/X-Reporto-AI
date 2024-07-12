@@ -1,14 +1,19 @@
-import math
 import torch
-import torch.nn.functional as F
 from torch import nn
-from torchvision import models
-import functools
 from torch.optim import lr_scheduler
 
-
+# Define the loss functions (adversarial and pixel-wise loss)
 class GANLoss(nn.Module):
     def __init__(self, device, gan_mode='wgangp', target_real_label=1.0, target_fake_label=0.0):
+        """
+        Define the GAN loss for different GAN modes.
+
+        Args:
+            device (torch.device): Device to run the computations on.
+            gan_mode (str): Type of GAN loss. Options: 'wgangp', 'lsgan', 'vanilla'.
+            target_real_label (float): Label for real images.
+            target_fake_label (float): Label for fake images.
+        """
         super(GANLoss, self).__init__()
         self.register_buffer('real_label', torch.tensor(target_real_label))
         self.register_buffer('fake_label', torch.tensor(target_fake_label))
@@ -24,7 +29,16 @@ class GANLoss(nn.Module):
             raise NotImplementedError('gan mode {} not implemented'.format(gan_mode))
     
     def get_target_tensor(self, prediction, target_is_real):
+        """
+        Get the target tensor for the given prediction.
 
+        Args:
+            prediction (torch.Tensor): The prediction from the discriminator.
+            target_is_real (bool): Whether the target is real or fake.
+
+        Returns:
+            torch.Tensor: The target tensor expanded to the size of the prediction.
+        """
         if target_is_real:
             target_tensor = self.real_label
         else:
@@ -45,32 +59,49 @@ class GANLoss(nn.Module):
 
 class PixelLoss(nn.Module):
     def __init__(self, feature_extractor, device):
+        """
+        Calculate the GAN loss.
+
+        Args:
+            prediction (torch.Tensor): The prediction from the discriminator.
+            target_is_real (bool): Whether the target is real or fake.
+
+        Returns:
+            torch.Tensor: The calculated loss.
+        """
         super(PixelLoss, self).__init__()
         self.feature_extractor = feature_extractor
         self.device = device
         
     
     def __call__(self, prediction, target):
+        """
+        Calculate the pixel-wise loss.
+
+        Args:
+            prediction (torch.Tensor): The predicted image.
+            target (torch.Tensor): The target image.
+
+        Returns:
+            torch.Tensor: The calculated loss.
+        """
         vggf_gt = self.feature_extractor(torch.cat([target, target, target], 1)).to(self.device)
         vggf_gen = self.feature_extractor(torch.cat([prediction, prediction, prediction], 1)).to(self.device)
-        # vggf_gt = self.feature_extractor(target).to(self.device)
-        # vggf_gen = self.feature_extractor(prediction).to(self.device)
         loss = nn.MSELoss()
         return loss(vggf_gt, vggf_gen)
 
-
+# Define the scheduler
 def get_scheduler(optimizer, opt):
-    """Return a learning rate scheduler
+    """
+    Get the learning rate scheduler.
 
-    Parameters:
-        optimizer          -- the optimizer of the network
-        opt (option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions．　
-                              opt.lr_policy is the name of learning rate policy: linear | step | plateau | cosine
+    Args:
+        optimizer (torch.optim.Optimizer): The optimizer for which to schedule the learning rate.
+        opt: Options including lr_policy (str), epoch_count (int), n_epochs (int),
+             n_epochs_decay (int), lr_decay_iters (int).
 
-    For 'linear', we keep the same learning rate for the first <opt.n_epochs> epochs
-    and linearly decay the rate to zero over the next <opt.n_epochs_decay> epochs.
-    For other schedulers (step, plateau, and cosine), we use the default PyTorch schedulers.
-    See https://pytorch.org/docs/stable/optim.html for more details.
+    Returns:
+        lr_scheduler._LRScheduler: The learning rate scheduler.
     """
     if opt.lr_policy == 'linear':
         def lambda_rule(epoch):

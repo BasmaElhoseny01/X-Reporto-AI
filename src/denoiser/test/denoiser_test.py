@@ -2,23 +2,28 @@
 # from src.denoiser.data_loader.custom_dataset_paper import *
 from src.denoiser.config import *
 import torch
-import torch.nn as nn
-import torch.optim as optim
-import numpy as np
-import sys, os, time, argparse, shutil, scipy, h5py, glob
-import torchvision.models as models
+import sys, os, shutil
 import mlflow
 from src.denoiser.utils import *
-from src.denoiser.models.gan_model import TomoGAN
-from src.denoiser.options.test_options import TestOptions
+from src.denoiser.models.gan_model import DenoiserGan
+from src.denoiser.options.train_option import TrainOptions
 from src.denoiser.data_loader.custom_dataset import CustomDataset
-from src.denoiser.config import *
 
-class DenoiserTrainer():
+class DenoiserTester():
     def __init__(self):
-        self.arg=TestOptions()
-        self.model = TomoGAN(self.arg)
-        # self.data_genrator = bkgdGen(data_generator=gen_train_batch_bg(data_file_h5="datasets/train_noise.h5", mb_size=BATCH_SIZE, in_depth=DEPTH, img_size=IMAGE_SIZE), max_prefetch=16)
+        """
+        Tester class for the Denoiser GAN model.
+
+        Attributes:
+            arg (TrainOptions): Training options.
+            model (DenoiserGan): GAN model for denoising.
+            test_dataset (CustomDataset): Testing dataset.
+            test_dataloader (torch.utils.data.DataLoader): DataLoader for testing data.
+            itr_out_dir (str): Directory for iteration outputs.
+        """
+        self.arg=TrainOptions()
+        self.model = DenoiserGan(self.arg)
+        # load data
         self.test_dataset = CustomDataset(csv_file_path=TEST_DATA)
         self.test_dataloader = torch.utils.data.DataLoader(self.test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=NUM_THREADS)
         
@@ -31,11 +36,16 @@ class DenoiserTrainer():
         self.load_model()
     
     def load_model(self):
+        """ Load the model."""
         self.model.load_models()
+    # save model
     def save_model(self):
+        """ Save the model."""
         self.model.save_models()
-
+    # test model
     def test(self):
+        """ Test the model."""
+        # set to eval mode
         with mlflow.start_run() as run:
           mlflow.log_param("batch_size", BATCH_SIZE)
           mlflow.log_param("depth", DEPTH)
@@ -53,8 +63,10 @@ class DenoiserTrainer():
                       # move to gpu
                       X_test = X_test.to(self.model.device)
                       y_test = y_test.to(self.model.device)
-                      self.model.set_input((X_test, y_test))
+                      # forward
+                      self.model.set_input(X_test)
                       self.model.forward()
+                      # get loss
                       pred_img = self.model.fake_C
                       lossMSE = self.model.criterionMSE(pred_img, y_test)
                       lossPerc = self.model.criterionPixel(pred_img, y_test)
@@ -69,10 +81,10 @@ class DenoiserTrainer():
                           y_test = y_test.cpu()
                           pred_img = pred_img.cpu()
                           X_test=X_test.cpu()
-
-                        #   save2image(y_test[i,0,:,:], '%s/gtruth_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
-                        #   save2image(X_test[i,DEPTH//2,:,:], '%s/noisy_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
-                        #   save2image(pred_img[i,0,:,:].detach().cpu().numpy(), '%s/pred_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                            # save images
+                          save2image(y_test[i,0,:,:], '%s/gtruth_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                          save2image(X_test[i,DEPTH//2,:,:], '%s/noisy_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
+                          save2image(pred_img[i,0,:,:].detach().cpu().numpy(), '%s/pred_%d.png' % (self.itr_out_dir,batch_idx*X_test.shape[0]+ i))
 
                           mlflow.log_artifacts(self.itr_out_dir)
                           (ssim, psnr) = eval_metrics(y_test[i,0,:,:], pred_img[i,0,:,:].detach().cpu().numpy())
@@ -83,7 +95,7 @@ class DenoiserTrainer():
         sys.stdout.flush()
 
 if __name__ == "__main__":
-  model= DenoiserTrainer()
+  model= DenoiserTester()
   model.test()
 
 # python -m src.denoiser.test.denoiser_test

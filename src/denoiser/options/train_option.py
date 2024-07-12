@@ -1,6 +1,6 @@
 from src.denoiser.options.base_option import BaseOptions
-import yaml
 from src.denoiser.config import*
+# We will define the train options for the denoiser here.
 class TrainOptions(BaseOptions):
 
     def __init__(self):

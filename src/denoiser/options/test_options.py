@@ -1,6 +1,6 @@
 from src.denoiser.options.base_option import BaseOptions
-import yaml
 from src.denoiser.config import*
+# We will define the test options for the denoiser here.    
 class TestOptions(BaseOptions):
 
     def __init__(self):

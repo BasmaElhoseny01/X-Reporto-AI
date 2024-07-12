@@ -1,9 +1,5 @@
-import argparse
-import os
-import torch
-import yaml
+# We will define the base options for the denoiser here.
 from src.denoiser.config import *
-
 class BaseOptions():
 
     def __init__(self):
