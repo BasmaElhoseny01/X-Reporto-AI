@@ -42,27 +42,15 @@ class FrcnnObjectDetectorV1(nn.Module):
         # No of Classes 29 Anatomical Region + Back Ground
         self.num_classes = 30
 
-        # # Loading pre-trained resnet50
-        # resnet = resnet50(weights=ResNet50_Weights.DEFAULT)
-        # # Modifying first Conv Layer to take Grey Scale image instead of rgb
-        # resnet.conv1 = torch.nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        # # Removing Last 2 layers (avgpool,fc) for the Resnet to use as feature extractor without classification
-        # self.backbone=nn.Sequential(*list(resnet.children())[:-2])
-        # # # Defining the out_channel for the backbone = out for the last conv layer in Layer(4) (2048)
-        # self.backbone.out_channels=resnet.layer4[-1].conv3.out_channels
-
         self.backbone = FeatureNetwork("resnet50")
         # Anchor Aspect Ratios and Size since the input image size is 512 x 512, we choose the sizes accordingly
         # Suiting 29 Anatomical Region
-        
         anchor_generator = AnchorGenerator(
             sizes=((20, 40, 60, 80, 100, 120, 140, 160, 180, 300),),
             aspect_ratios=((0.2, 0.25, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.3, 1.5, 2.1, 2.6, 3.0, 5.0, 8.0),),
         )
         rpn_head = RPNHead(self.backbone.out_channels, anchor_generator.num_anchors_per_location()[0])
         self.rpn=Rpn(rpn_head,anchor_generator)
-
-        # @Basma Elhoseny TODO Check ROI
         # size of feature maps after roi pooling layer 8*8
         feature_map_output_size = 8
 
@@ -189,9 +177,6 @@ class FrcnnObjectDetectorV1(nn.Module):
                 "top_region_features"
             }
         """
-        # if targets is not None:
-        #     self._check_targets(targets)
-
         # Features extracted from backbone feature map is 16*16 depth is 2048 [batch_size x 2048 x 16 x 16]
         features=self.backbone(images)
         # Transform images and features from tensors to types that the rpn and roi_heads expect in the current PyTorch implementation.
@@ -201,8 +186,6 @@ class FrcnnObjectDetectorV1(nn.Module):
         images = ImageList(images,image_sizes=[tuple(image_sizes) for _ in range(batch_size)])
         # Features have to be a dict where the str "0" maps to the features.
         features = OrderedDict([("0", features)])
-        # images, features = self._transform_inputs_for_rpn_and_roi(images, features)
-
         # Getting Proposals of RPN Bounding Boxes
         # In case of Training proposal_losses is Dictionary {"loss_objectness","loss_rpn_box_reg"} else it is None
         proposals, proposal_losses = self.rpn(images, features, targets)
@@ -230,11 +213,6 @@ class FrcnnObjectDetectorV1(nn.Module):
             if self.features:
                 outputs["class_detected"] = detections["class_detected"]
                 outputs["features"]=detections["top_region_features"]
-            # print("detections",detections)
-            # sys.exit()
-            # print("proposals",proposals)
-            # print("targets",targets)
-            # print("")
 
         if TRAIN_ROI:
             proposal_losses = {}

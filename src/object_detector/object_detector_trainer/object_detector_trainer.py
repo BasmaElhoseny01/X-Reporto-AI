@@ -108,7 +108,6 @@ class Object_detector_trainer:
                 if DEBUG :
                     print(f'epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} Loss: {loss_value:.4f}')
                     
-            # self.lr_scheduler.step()
             # save the best model
             if(total_loss<self.bestloss):
                 self.bestloss=total_loss
@@ -126,7 +125,6 @@ class Object_detector_trainer:
         self.model.eval()
         for batch_idx, (images, targets) in enumerate(self.data_loader_val):
             # add new dimension to images after batch size
-            # images = images.unsqueeze(1)
             images = torch.stack([image.to(self.device) for image in images])
             # convert targets from dic with keys: boxes, labels Only to list[Dict[str, Tensor]]
             targetdata=[]

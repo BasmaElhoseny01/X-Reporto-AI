@@ -34,10 +34,7 @@ class CustomDataset(Dataset):
                     )
         self.transform2 =  A.Compose(
                         [
-                            # A.LongestMaxSize(max_size=IMAGE_INPUT_SIZE, interpolation=cv2.INTER_AREA),
                             A.PadIfNeeded(min_height=IMAGE_INPUT_SIZE, min_width=IMAGE_INPUT_SIZE,border_mode= cv2.BORDER_CONSTANT,value=0),
-                            # A.Normalize(mean=MEAN, std=STD),
-                            # ToTensorV2(),
                         ]
                     )
         
@@ -121,13 +118,6 @@ class CustomDataset(Dataset):
             bbox_phrase_exists = self.data_info.iloc[idx, 7]
             # get the bbox_labels
             bbox_is_abnormal = self.data_info.iloc[idx, 8]
-            # try:
-            #     # convert the string representation of labels into list
-            #     bbox_phrases = eval(bbox_phrases)
-            # except Exception as e:
-            #     # create a list of empty strings of size 29
-            #     bbox_phrases = [""] * 29
-
             # Safely evaluate the string and convert it to a Python list
             bbox_phrase_exists = ast.literal_eval(bbox_phrase_exists)
 
