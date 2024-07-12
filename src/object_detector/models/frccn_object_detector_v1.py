@@ -69,7 +69,7 @@ class FrcnnObjectDetectorV1(nn.Module):
             features=self.features,
             feature_size=feature_map_output_size,
         )
-        # freez RPN and Backbone layers if train_roi
+        # freeze RPN and Backbone layers if train_roi
         if TRAIN_ROI:
             for param in self.rpn.parameters():
                 param.requires_grad = False
