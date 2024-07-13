@@ -21,6 +21,5 @@ class TrainOptions(BaseOptions):
         self.test_data =TEST_DATA
         self.lr_policy = LR_POLICY
         self.continue_train = CONTINUE_TRAIN 
-        self.resnet_path = RESNET_PATH
         self.isTrain = True
         
