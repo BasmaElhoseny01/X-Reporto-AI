@@ -55,7 +55,6 @@ class Roi(RoIHeads):
             keypoint_predictor,
         )
         self.features=features
-        # set kernel_size = feature_map_output_size, such that we average over the whole feature maps
         self.avg_pool = nn.AvgPool2d(kernel_size=feature_size)
         self.dim_reduction = nn.Linear(2048, 1024)   
 

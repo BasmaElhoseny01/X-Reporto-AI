@@ -26,10 +26,7 @@ class CustomDataset(Dataset):
         self.transform = CustomAugmentation(transform_type=self.transform_type)
         self.checkpoint=checkpoint
         self.tokenizer = Tokenizer(self.checkpoint)
-        self.data_info = pd.read_csv(dataset_path, header=None)
-        # self.data_info = pd.read_csv(dataset_path, header=None,nrows= 500)
-        # limit number of rows to 10
-        
+        self.data_info = pd.read_csv(dataset_path, header=None)       
         # remove the first row (column names)
         self.data_info = self.data_info.iloc[1:]
 
@@ -50,10 +47,7 @@ class CustomDataset(Dataset):
             img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
 
             assert img is not None, f"Image at {img_path} is None"
-
-            # # print image size
-            # print("image: "+str(idx),img.shape)
-            # print("image: "+str(idx),img_path)  
+ 
             # get the bounding boxes
             bboxes = self.data_info.iloc[idx, 4]
 
@@ -119,9 +113,6 @@ class CustomDataset(Dataset):
                 tokenize_phrase = self.tokenizer(bbox_phrases)
             except Exception as e:
                 tokenize_phrase = self.tokenizer([""] * 29)
-            # print(tokenize_phrase)
-            # sys.exit()
-            # print("start Tokenize")
             # get max sequence length in tokenized phrase
             max_seq_len = max([len(tokenize_phrase_lst) for tokenize_phrase_lst in tokenize_phrase["input_ids"]])
             language_model_sample["bbox_phrase"]=bbox_phrases
@@ -179,7 +170,6 @@ class CustomDataset(Dataset):
             # pad phrases to the same length 
             # input_ids is list of tensors
             max_seq_len = max([len(tokenize_phrase_lst[0]) for tokenize_phrase_lst in input_ids])
-            # print("max_seq_len",max_seq_len)
             # each tensor in list input_ids is padded to max_seq_len
             new_input_ids=[]
             new_attention_mask=[]
@@ -211,7 +201,6 @@ class CustomDataset(Dataset):
         LM_targets=torch.stack(LM_targets)
         LM_inputs['input_ids']=torch.stack(input_ids)
         LM_inputs['attention_mask']=torch.stack(attention_mask)
-        print("inside Custon dataset")
         return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
 if __name__ == "__main__":
@@ -224,8 +213,6 @@ if __name__ == "__main__":
         print(object_detector_sample["image"].shape )
         break
     # display the first image
-    # image = image.numpy()
-    # label = label.numpy()
     print(object_detector_sample["image"].max(), object_detector_sample["image"].min())
     plb.imshow(object_detector_sample["image"][0][0],cmap="gray")
     plb.show()

@@ -63,9 +63,6 @@ class XReportoEvaluation():
         # calculating a score based on the n-gram overlap between them.
         self.bleu_score = Bleu(4)
         self.rouge = Rouge() 
-        # self.bleu_score.weights = [1/4, 1/4, 1/4, 1/4]
-        # calculating a score based on the harmonic mean of precision and recall.
-        # self.meteor = Meteor()
 
     def evaluate(self):
         logging.info("Start Evaluation")
@@ -175,11 +172,8 @@ class XReportoEvaluation():
                 
                 selected_regions = selected_regions.to("cpu")
 
-                # print("len(LM_inputs['input_ids'][0])",len(LM_inputs['input_ids'][0]))
-                # print("lm_sentences_encoded_selected", len(lm_sentences_encoded_selected))
                 reference_sentences_encoded=LM_inputs['input_ids']
                 reference_sentences_encoded=reference_sentences_encoded[selected_regions]
-                # print("len(reference_sentences_encoded)",len(reference_sentences_encoded))
                 # reference_sentences_encoded=LM_inputs['input_ids'][0].tolist()
                 reference_sents=tokenizer.batch_decode(reference_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
                 reference_sents = np.asarray(reference_sents)
@@ -202,9 +196,6 @@ class XReportoEvaluation():
                 LM_sentances_generated_reference["reference_sentences_abnormal_selected_regions"].extend(ref_sents_for_abnormal_selected_regions)
 
                 for l in range(len(reference_sents)):
-                    # print("reference_sents[l]",reference_sents[l])
-                    # print("generated_sents_for_selected_regions[l]",generated_sents_for_selected_regions[l])
-                    # print("------------------------------------------------------------------------------------------------------------------------------------")
                     if reference_sents[l] != "":
                         logging.info(f"Reference Sentence: {reference_sents[l]}")
                         logging.info(f"Generated Sentence: {generated_sents_for_selected_regions[l]}")
@@ -237,7 +228,6 @@ class XReportoEvaluation():
         LM_scores[name]["BLEU3-Sentence"] = Bleu_score[0][2]
         LM_scores[name]["BLEU4-Sentence"] = Bleu_score[0][3]
         LM_scores[name]["ROUGE-Sentence"] = self.rouge.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
-        # LM_scores[name]["METEOR-Sentence"] = self.meteor.compute_score(generated_sentences_converted, reference_sentences_converted)[0]
 
     def convert_for_pycoco_scorer(self,sents):
         '''
@@ -268,7 +258,6 @@ class XReportoEvaluation():
 
         obj_detector_scores , region_selection_scores , region_abnormal_scores = self.initialize_scores()
 
-        # TODO Add inside initialize_scores
         obj_detector_scores["true_positive"] = 0
         obj_detector_scores["false_positive"] = 0
         obj_detector_scores["false_negative"] = 0
@@ -300,7 +289,6 @@ class XReportoEvaluation():
             validation_total_loss=0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,_,_) in enumerate(self.data_loader_val):
                 # Move inputs to Device
-                # images = images.to(DEVICE)
                 images = torch.tensor(images).to(DEVICE)
 
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
@@ -329,7 +317,6 @@ class XReportoEvaluation():
                     "predicted":predicted_abnormal_regions
                 }
                 # [Tensor Board] Draw the Predictions of this batch
-                #TODO: uncomment
                 # self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
 
                 validation_total_loss+=Total_loss
