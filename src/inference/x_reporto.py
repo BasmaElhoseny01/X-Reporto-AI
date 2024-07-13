@@ -22,7 +22,7 @@ import re
 # import asyncio
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-DEBUG = False
+DEBUG = True
 
 
 transform =  A.Compose(
@@ -245,31 +245,42 @@ class XReporto:
                 print("Group: ", i)
                 for sentence in group:
                     print(sentence)
+                print("----------------------------------------------")
                 print("Final Sentence: ", final_sentences[i])
+                print("------------------------------------------------------------------------------------")
+            
         # Remove garbage sentences with random characters that has no meaning
         # make regex thst detect if there is repeated char 3 times or more
-        # pattern = r"(.)\1{2,}"
+        pattern = r"(.)\1{4,}"
 
-        # # List of specific long words to exclude
-        # excluded_words = [
-        #     "pneumonoultramicroscopicsilicovolcanoconiosis",
-        #     "antidisestablishmentarianism",
-        #     "floccinaucinihilipilification"
-        # ]
+        # List of specific long words to exclude
+        excluded_words = [
+            "pneumonoultramicroscopicsilicovolcanoconiosis",
+            "antidisestablishmentarianism",
+            "floccinaucinihilipilification"
+        ]
 
-        # max_length = 20
+        max_length = 20
 
-        # final_sentences = [sentence for sentence in final_sentences if not re.search(pattern, sentence)]
+        final_sentences = [sentence for sentence in final_sentences if not re.search(pattern, sentence)]
 
-        # # remove the sentences with long words than 20 characters and not in the excluded words
-        # final_sentences = [sentence for sentence in final_sentences if all([len(word) < max_length or word in excluded_words  for word in sentence.split()])]
+        if DEBUG:
+            print("------------------------------------------------------------------------------------")
+            print("After removing garbage sentences: ", final_sentences)
+        
+        # remove the sentences with long words than 20 characters and not in the excluded words
+        final_sentences = [sentence for sentence in final_sentences if all([len(word) < max_length or word in excluded_words  for word in sentence.split()])]
 
+        if DEBUG:
+            print("------------------------------------------------------------------------------------")
+            print("After removing long words: ", final_sentences)
         # generate the report text
         report_text = ""
         for sentence in final_sentences:
             report_text += sentence + '\n'
 
         if DEBUG:
+            print("------------------------------------------------------------------------------------")
             print("Report Text: ", report_text)
 
         return final_sentences, report_text

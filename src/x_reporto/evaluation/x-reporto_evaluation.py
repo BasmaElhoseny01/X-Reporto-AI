@@ -157,7 +157,7 @@ class XReportoEvaluation():
                 
                 # Check GPU memory usage
                 images = images.to(DEVICE)
-     
+    
                 # Move images to Device
                 images = torch.stack([torch.tensor(image).to(DEVICE) for image in images])
                 abnormal_classifier_targets=abnormal_classifier_targets.to("cpu")
