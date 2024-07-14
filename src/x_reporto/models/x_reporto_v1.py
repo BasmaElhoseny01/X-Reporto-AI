@@ -394,6 +394,8 @@ class XReportoV1(nn.Module):
                         boxes_labels.append(i)
 
                 bounding_boxes = torch.squeeze(bounding_boxes)
+                del detected_classes
+                del object_detector_features
                 return bounding_boxes, boxes_labels
             # Abnormal Classifier
             _,abnormal_regions =self.binary_classifier_region_abnormal(object_detector_features,detected_classes)
@@ -411,9 +413,9 @@ class XReportoV1(nn.Module):
             object_detector_features = object_detector_features[selected_regions]
             for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
                 if use_beam_search:
-                    LM_sentences_batch=self.language_model.beam_search(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
+                    LM_sentences_batch=self.language_model.beam_search(max_length=100,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =6,device=DEVICE,debug=False)
                 else:
-                    LM_sentences_batch=self.language_model.generate(max_length=50,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                    LM_sentences_batch=self.language_model.generate(max_length=100,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
                 LM_sentences.extend(LM_sentences_batch)
             # print("LM_sentences",len(LM_sentences))# [num_regions_selected_in_batch,]
 
@@ -426,6 +428,9 @@ class XReportoV1(nn.Module):
                 if selected_regions_squeezed[i]:
                     boxes_labels.append(i)
 
+            del detected_classes
+            del object_detector_features
+            gc.collect()
             # return denoised images, bounding boxes, selected regions, abnormal regions, and generated sentences
             return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences, boxes_labels
         
@@ -605,9 +610,9 @@ class XReportoV1(nn.Module):
                 object_detector_features = object_detector_features[selected_regions]
                 for lm_index in range(0,len(object_detector_features),LM_Batch_Size):
                     if use_beam_search:
-                        LM_sentences_batch=self.language_model.beam_search(max_length=100,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =8,device=DEVICE,debug=False)
+                        LM_sentences_batch=self.language_model.beam_search(max_length=150,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],beam_size =8,device=DEVICE,debug=False)
                     else:
-                        LM_sentences_batch=self.language_model.generate(max_length=100,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
+                        LM_sentences_batch=self.language_model.generate(max_length=150,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
                     LM_sentences.extend(LM_sentences_batch)
                 if delete:
                     # Free GPU memory

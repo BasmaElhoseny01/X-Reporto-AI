@@ -32,7 +32,6 @@ class CustomDataset(Dataset):
         img_path = self.data_info.iloc[idx, 3]
 
         # read the image with parent path of current folder + image path
-        # img_path = os.path.join("datasets/", img_path)
         img_path = os.path.join(os.getcwd(), img_path)
         img = cv2.imread(img_path,cv2.IMREAD_UNCHANGED)
         assert img is not None, f"Image at {img_path} is None"
@@ -123,31 +122,16 @@ if __name__ == '__main__':
 
     # convert the string representation of bounding boxes into list of list
     bboxes = eval(bboxes)
-    plot_image(img, bboxes)
-
-    # plot the image with the bounding boxes
-    # plot_example_with_boxes(img, bboxes,name = "before.jpg")
-    
+    plot_image(img, bboxes)    
     # create the dataset
     dataset = CustomDataset(dataset_path=os.getcwd()+'/datasets/train-200.csv', transform_type = 'custom_train')
-
     # get the image and the target
-
     for i in range(1):
         img, target = dataset[i]
         # img = img.numpy()[0]
         img = img.numpy().transpose(1, 2, 0)
-        # convert img to uint8
-        # img = img*85
-        # img = img.astype(np.uint8)
         bboxes = target['boxes']
-        # convert image to uint8
-        # img = img*85
-        # img = img.astype(np.uint8)
         # convert imafe to numpy array
         img = np.array(img)
         # plot the image with the bounding boxes
-        # print("bboxes",bboxes)
-        # print("img",img)
-        # plot_example_with_boxes(img, bboxes,name = "after.jpg")
         plot_image(img, bboxes)
