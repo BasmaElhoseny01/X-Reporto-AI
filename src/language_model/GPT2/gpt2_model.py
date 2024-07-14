@@ -503,8 +503,26 @@ class CustomGPT2(nn.Module):
             max_length=max_length+1,
         )
         # print("sequence_outputs: ",sequence_outputs)
+
+        # delete unused variables
+        del beam_scores
+        del beam_outputs
+        del beam_next_tokens
+        del beam_idx
+        del next_tokens
+        del next_indices
+        del next_token_scores
+        del logits
+        del presents
+        del model_inputs
+        del input_ids
+        del attention_mask
+        del model_kwargs
+        del beam_scorer
+        del beam_size
+        del batch_size
         return  sequence_outputs["sequences"]
-        return input_ids
+        # return input_ids
 
 if __name__ == "__main__":
     config = Config()

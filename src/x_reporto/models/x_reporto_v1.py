@@ -394,6 +394,8 @@ class XReportoV1(nn.Module):
                         boxes_labels.append(i)
 
                 bounding_boxes = torch.squeeze(bounding_boxes)
+                del detected_classes
+                del object_detector_features
                 return bounding_boxes, boxes_labels
             # Abnormal Classifier
             _,abnormal_regions =self.binary_classifier_region_abnormal(object_detector_features,detected_classes)
@@ -426,6 +428,8 @@ class XReportoV1(nn.Module):
                 if selected_regions_squeezed[i]:
                     boxes_labels.append(i)
 
+            del detected_classes
+            del object_detector_features
             # return denoised images, bounding boxes, selected regions, abnormal regions, and generated sentences
             return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences, boxes_labels
         
