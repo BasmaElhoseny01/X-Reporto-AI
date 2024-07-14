@@ -253,6 +253,9 @@ class HeatMapInference:
 
         # # Score = sum(Confidence * heat_map_Severity*weight) #[0-1]
 
+
+        Score = sum(Confidence * heat_map_Severity) 
+
         # # Compute severity score based on heatmap intensity and confidence
         # for i, label in enumerate(labels):
         #     # Calculate severity score based on heatmap intensity (you can adjust this part)
@@ -283,7 +286,7 @@ class HeatMapInference:
 
         Args:
             image (numpy.ndarray): The original image array.
-            features (torch.Tensor): The features extracted from the model.
+            features (torch.Tensor): The features extracted from the model. #7x7
             heatmap_type (str): Type of heat map to generate ('cam' or 'grad-cam').
 
         Returns:
@@ -325,7 +328,7 @@ class HeatMapInference:
         heatmap = torch.matmul(weights, features.view(features.size(0), -1)).view(features.size(1), features.size(2)) # 7, 7
         heatmap = heatmap.cpu().data.numpy() #torch.Size([7, 7])
 
-        # Apply relu
+        # Apply relu (Only +ve Values contribute to the heatmap)
         heatmap = np.maximum(heatmap, 0)
 
         # Apply normalization (If the maximum value is zero, normalization would lead to division by zero)
@@ -422,7 +425,6 @@ class HeatMapInference:
             str: Description of the primary region.
         """
         # Resize the heatmap to the original image size
-        # #FIX Basma
         heatmap_resized = cv2.resize(heatmap, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
 
         # Define Color Map [generates a heatmap image from the input cam data, where different intensity values in cam are mapped to corresponding colors in the "jet" colormap.]
@@ -430,24 +432,23 @@ class HeatMapInference:
         
         # Average the activation values across the three color channels
         heatmap_gray = np.mean(heatmap_resized, axis=2)
-        print("heatmap_gray",heatmap_gray.shape)
+        # print("heatmap_gray",heatmap_gray.shape)
 
-        # Resize BB
+        # Resizing Bounding boxes to be relative to the heatmap size :D
         new_boxes=[]
-        # copy the boxes
         for box in region_boxes:
             new_boxes.append(box.copy())
 
         for i,box in enumerate(new_boxes):
             # print("Region Box:",box)
-            new_boxes[i]=list(map(lambda x: int(x*224/512),box))
             # print("Region Box:",region_boxes[i])
+            new_boxes[i]=list(map(lambda x: int(x*224/512),box))
         
         max_activation = 0
         primary_region = None
-        
 
 
+        # Looping over regions and boxes to find the primary region :D
         for region, (x1, y1, x2, y2) in zip(regions,new_boxes):
             # print("Region:",region)
             # print("x1,y1,x2,y2",x1,y1,x2,y2)
@@ -459,6 +460,7 @@ class HeatMapInference:
             if region_activation > max_activation:
                 max_activation = region_activation
                 primary_region = region
+                
         return REGION_LABELS[primary_region]
 
     

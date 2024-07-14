@@ -42,7 +42,7 @@ class HeatMapTrainer:
         # Move to device
         self.model.to(DEVICE)
 
-        # Optimizer
+        # Adam Optimizer
         self.optimizer = optim.Adam(self.model.parameters(), lr=LEARNING_RATE, betas=(LR_BETA_1, LR_BETA_2))
         
         # Create learning rate scheduler
@@ -237,7 +237,7 @@ class HeatMapTrainer:
         # targets shape is [batch_size, num_labels]
         # y_pred shape is [batch_size, num_labels]
         # create mask for the targets if the target is -1 then it is 0 else 1
-        mask = (targets != -1).float()
+        mask = (targets != -1).float() # NOT useful in case of nan --> -1
 
         # apply mask to the targets
         targets = targets * mask
