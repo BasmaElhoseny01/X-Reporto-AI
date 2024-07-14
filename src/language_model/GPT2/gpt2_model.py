@@ -1,3 +1,4 @@
+import gc
 from typing import Any, Optional, Tuple
 import torch
 from torch import Tensor
@@ -505,22 +506,23 @@ class CustomGPT2(nn.Module):
         # print("sequence_outputs: ",sequence_outputs)
 
         # delete unused variables
-        del beam_scores
-        del beam_outputs
-        del beam_next_tokens
-        del beam_idx
-        del next_tokens
-        del next_indices
-        del next_token_scores
-        del logits
-        del presents
-        del model_inputs
-        del input_ids
-        del attention_mask
-        del model_kwargs
-        del beam_scorer
-        del beam_size
-        del batch_size
+        # del beam_scores
+        # del beam_outputs
+        # del beam_next_tokens
+        # del beam_idx
+        # del next_tokens
+        # del next_indices
+        # del next_token_scores
+        # del logits
+        # del presents
+        # del model_inputs
+        # del input_ids
+        # del attention_mask
+        # del model_kwargs
+        # del beam_scorer
+        # del beam_size
+        # del batch_size
+        # gc.collect()
         return  sequence_outputs["sequences"]
         # return input_ids
 

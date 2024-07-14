@@ -430,6 +430,7 @@ class XReportoV1(nn.Module):
 
             del detected_classes
             del object_detector_features
+            gc.collect()
             # return denoised images, bounding boxes, selected regions, abnormal regions, and generated sentences
             return images, bounding_boxes[selected_regions],selected_regions,abnormal_regions,  LM_sentences, boxes_labels
         

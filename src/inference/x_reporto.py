@@ -1,4 +1,5 @@
 import argparse
+import gc
 import cv2
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -170,10 +171,9 @@ class XReporto:
             # Inference Pass
             denoised_image, bounding_boxes, selected_region, abnormal_region, lm_sentences_encoded, detected_classes =  XReporto.x_reporto(images=image,use_beam_search=True)  
 
-        
+            print("finished inference")
             # Decode the sentences
             lm_sentences_decoded=XReporto.tokenizer.batch_decode(lm_sentences_encoded,skip_special_tokens=True,clean_up_tokenization_spaces=True)
-            
             # print device of lm_sentences_encoded
             # Results
             # image=image[0].detach().cpu().numpy()
@@ -182,13 +182,18 @@ class XReporto:
             del abnormal_region
             del denoised_image
             del image
-        
+            torch.cuda.empty_cache()
+            gc.collect()
+
             # detected_classes = self.convert_boolean_classes_to_list(detected_classes)
             # # Bounding Boxes
             # plot_single_image(img = image.permute(1,2,0),boxes=bounding_boxes,grayscale=True,save_path='region.jpg')
 
         # generate the report text
         report_text = self.fix_sentences(generated_sentences=lm_sentences_decoded)
+
+        torch.cuda.empty_cache()
+        gc.collect()
 
         return bounding_boxes,detected_classes, lm_sentences_decoded, report_text
 
