@@ -86,11 +86,7 @@ class XReportoTrainer():
 
         # create adam optimizer
         self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE, weight_decay=0.0005)
-        # self.optimizer = optim.AdamW(self.model.parameters(), lr= LEARNING_RATE)
 
-        # create learning rate scheduler
-        # self.lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="min", factor=SCHEDULAR_GAMMA, patience=SCHEDULAR_STEP_SIZE, threshold=THRESHOLD_LR_SCHEDULER, cooldown=COOLDOWN_LR_SCHEDULER)
-        # self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
         if Linear_Schedular:
             self.lr_scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=SCHEDULAR_STEP_SIZE, gamma=SCHEDULAR_GAMMA)
         else:
@@ -147,13 +143,7 @@ class XReportoTrainer():
                 epoch_loss = 0
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_train):
                 if batch_idx < start_batch:
-                    continue  # Skip batches until reaching the desired starting batch number
-                # Test Recovery
-                # if epoch==3 and batch_idx==1:
-                    # print("Start Next time from")
-                    # print(object_detector_targets[1])
-                    # print(batch_idx)
-                    # raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
+                    continue  # Skip batches until reaching the desired starting batch number       
                 # Move inputs to Device
                 images = images.to(DEVICE)
                 object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
@@ -174,14 +164,12 @@ class XReportoTrainer():
                     input_ids = input_ids.to(DEVICE)
                     attention_mask = attention_mask.to(DEVICE)
                     loopLength= input_ids.shape[1]
-                    # Total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size)
                     try:
                         self.optimizer.zero_grad()
                         Total_loss=self.language_model_forward_pass(images=images,input_ids=input_ids,attention_mask=attention_mask,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets,LM_targets=LM_targets,epoch=epoch,batch_idx=batch_idx,loopLength=loopLength,LM_Batch_Size=LM_Batch_Size,validate_during_training=False)
                     except Exception as e:
                         logging.error(f"Error in Language Model Forward Pass: {e}")
                         print(f"Error in Language Model Forward Pass: {e}")
-                        # raise Exception("CRASSSSSSSSSSSS
                         continue
                 else:
                     Total_loss=self.object_detector_and_classifier_forward_pass(epoch=epoch,batch_idx=batch_idx,images=images,object_detector_targets=object_detector_targets,selection_classifier_targets=selection_classifier_targets,abnormal_classifier_targets=abnormal_classifier_targets)
@@ -222,7 +210,6 @@ class XReportoTrainer():
                     self.optimizer.step()
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
-                    # logging.debug(f'[Accumlative Learning after {batch_idx+1} steps ] Update Weights at  epoch: {epoch+1}, Batch {batch_idx + 1}/{len(self.data_loader_train)} ')
                     # Free GPU memory from any thing after the update
                     del images
                     del object_detector_targets
@@ -483,7 +470,6 @@ def collate_fn(batch):
         # pad phrases to the same length 
         # input_ids is list of tensors
         max_seq_len = max([len(tokenize_phrase_lst[0]) for tokenize_phrase_lst in input_ids])
-        # print("max_seq_len",max_seq_len)
         # each tensor in list input_ids is padded to max_seq_len
         new_input_ids=[]
         new_attention_mask=[]
@@ -514,8 +500,7 @@ def collate_fn(batch):
     LM_targets=torch.stack(LM_targets)
     LM_inputs['input_ids']=torch.stack(input_ids)
     LM_inputs['attention_mask']=torch.stack(attention_mask)
-    # print("inside Custon dataset")
-    # print("length of each phrase in the batch", LM_inputs['input_ids'].shape)
+   
     return images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets
 
 
@@ -608,18 +593,12 @@ def main():
         # return
         #######################################################################
 
-        # trainer.test_data_loader()
         # Start Train form checkpoint ends
         trainer.train(start_epoch=checkpoint['epoch'],epoch_loss_init=checkpoint['epoch_loss'].item(),start_batch=start_batch)
 
     else:
-        # No check point
         # Start New Training
         trainer.train()
-        # trainer.
-
-        # TODO Remove
-        #sys.exit()
             
 if __name__ == '__main__':
     # Call the setup_logging function at the beginning of your script

@@ -90,13 +90,6 @@ class Inference:
                     file.write(sentence + "\n")
                 print("Report Saved Successfully at: ",report_path)
 
-        
-        # Input is Image
-        # Output is Image with bounding box
-        # Selected Regions / Abnormal Region
-        # Report
-
-    #     pass
 
 if __name__=="__main__":
     # Take image path from command line

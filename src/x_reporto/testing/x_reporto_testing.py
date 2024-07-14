@@ -58,17 +58,9 @@ class XReportoTesting():
             for batch_idx,(images,object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_inputs,LM_targets) in enumerate(self.data_loader_test):                
                 # Move inputs to Device
                 images = images.to(DEVICE)
-                # object_detector_targets = [{k: v.to(DEVICE) for k, v in t.items()} for t in object_detector_targets]
-                #   
-                # if MODEL_STAGE==ModelStage.CLASSIFIER.value or MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value :
-                    # Selection Classifier
-                    # Moving Selection Classifier Targets to Device
-                    # selection_classifier_targets = selection_classifier_targets.to(DEVICE)
-                    # abnormal_classifier_targets = abnormal_classifier_targets.to(DEVICE)
                 if MODEL_STAGE==ModelStage.LANGUAGE_MODEL.value:
                     # Language Model
                     # Moving Language Model Targets to Device
-                    # LM_targets = LM_targets.to(DEVICE)
                     input_ids = LM_inputs['input_ids'].to(DEVICE)
                     attention_mask = LM_inputs['attention_mask'].to(DEVICE)
                     loopLength= input_ids.shape[1]
@@ -92,33 +84,33 @@ class XReportoTesting():
     def language_model_forward_pass(self,images:torch.Tensor,input_ids:torch.Tensor,attention_mask:torch.Tensor,object_detector_targets:torch.Tensor,selection_classifier_targets:torch.Tensor,abnormal_classifier_targets:torch.Tensor,LM_targets:torch.Tensor,batch_idx:int,loopLength:int,LM_Batch_Size:int):
         logging.error("language_model_forward_pass() Not implemented Yet")
         
-        # for batch in range(BATCH_SIZE):
-        #     total_LM_losses=0
-        #     for i in range(0,loopLength,LM_Batch_Size):
+        for batch in range(BATCH_SIZE):
+            total_LM_losses=0
+            for i in range(0,loopLength,LM_Batch_Size):
                 
-        #         # Forward Pass
-        #         object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
+                # Forward Pass
+                object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,stop= self.model(images,input_ids,attention_mask, object_detector_targets,selection_classifier_targets,abnormal_classifier_targets,LM_targets,batch,i)
 
-        #         if stop:
-        #             break
-        #         # Backward pass
-        #         Total_loss=None
-        #         object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
-        #         Total_loss=object_detector_losses_summation.clone()
-        #         Total_loss+=selection_classifier_losses
-        #         Total_loss+=abnormal_binary_classifier_losses
-        #         Total_loss+=LM_losses
-        #         total_LM_losses+=LM_losses
+                if stop:
+                    break
+                # Backward pass
+                Total_loss=None
+                object_detector_losses_summation = sum(loss for loss in object_detector_losses.values())
+                Total_loss=object_detector_losses_summation.clone()
+                Total_loss+=selection_classifier_losses
+                Total_loss+=abnormal_binary_classifier_losses
+                Total_loss+=LM_losses
+                total_LM_losses+=LM_losses
 
-        #     logging.debug(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
-        #     # Free GPU memory
-        #     del LM_losses
-        #     del object_detector_losses
-        #     del selection_classifier_losses
-        #     del abnormal_binary_classifier_losses
-        #     torch.cuda.empty_cache()
-        #     gc.collect()
-        # return Total_loss
+            logging.debug(f'Batch {batch_idx + 1}/{len(self.data_loader_val)} object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f} LM_losses: {total_LM_losses:.4f} total_Loss: {object_detector_losses_summation+selection_classifier_losses+abnormal_binary_classifier_losses+total_LM_losses:.4f}')
+            # Free GPU memory
+            del LM_losses
+            del object_detector_losses
+            del selection_classifier_losses
+            del abnormal_binary_classifier_losses
+            torch.cuda.empty_cache()
+            gc.collect()
+        return Total_loss
 
     def  object_detector_and_classifier_forward_pass(self,images:torch.Tensor):
 
@@ -137,14 +129,7 @@ class XReportoTesting():
                 Total_loss+=selection_classifier_losses
                 Total_loss+=abnormal_binary_classifier_losses
            
-            logging.debug(f'object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')            
-           #TODO plot image in tensor board
-            # plot_single_image(images=images, boxes=object_detector_boxes) [CHECK Function] edited
-            # # [Tensor Board]: Object Detector Avg Batch Loss
-            # self.tensor_board_writer.add_scalar('Object Detector Avg Batch Loss',object_detector_losses_summation,batch_idx)
-            # # [Tensor Board]: Total Batch Loss
-            # self.tensor_board_writer.add_scalar('Avg Batch Total Losses',Total_loss,batch_idx)
-
+            logging.debug(f'object_detector_Loss: {object_detector_losses_summation:.4f} selection_classifier_Loss: {selection_classifier_losses:.4f} abnormal_classifier_Loss: {abnormal_binary_classifier_losses:.4f}  total_Loss: {Total_loss:.4f}')                       
 
             # Free GPU memory
             del object_detector_losses

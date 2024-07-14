@@ -80,15 +80,11 @@ class XReportoV1(nn.Module):
             image_config.d_model = 1024
             image_config.d_ff1 = 1024
             image_config.d_ff2 = 1024
-            # image_config.d_ff2 = 768
             image_config.d_ff3 = 768
             image_config.num_heads = 16
             image_config.num_layers = 24
             image_config.vocab_size = 50257
             self.language_model = CustomGPT2(config,image_config)
-            # convert the model to half precision
-            # self.language_model.half()
-            # self.language_model.convert_to_half()
 
         if OPERATION_MODE==OperationMode.INFERENCE.value:
             # Load the models
@@ -194,8 +190,6 @@ class XReportoV1(nn.Module):
                         # Freezing Abnormal Region Binary Classifier
                         for param in self.binary_classifier_region_abnormal.abnormal_binary_classifier.parameters():
                             param.requires_grad = False
-                            # if  GENERATE_REPORT:
-                            #     load_model(model=self.language_model,name='LM_best')
 
         elif OPERATION_MODE==OperationMode.VALIDATION.value or OPERATION_MODE==OperationMode.EVALUATION.value:
             self.denoiser.load_models()
@@ -380,11 +374,6 @@ class XReportoV1(nn.Module):
             self.object_detector(images=images)
             _,bounding_boxes,detected_classes,object_detector_features = self.object_detector(images=images)
 
-
-            #print("bounding_boxes",bounding_boxes.shape) #[batch_size x 29 x 4]
-            #print("detected_classes",detected_classes.shape) #[batch_size x 29]
-            #print("object_detector_features",object_detector_features.shape) # [batch_size x 29 x 1024]
-
             if sum == 2:
                     # squeeze the classes
                 classes = torch.squeeze(detected_classes)
@@ -401,12 +390,6 @@ class XReportoV1(nn.Module):
             _,abnormal_regions =self.binary_classifier_region_abnormal(object_detector_features,detected_classes)
             # Binary Classifier
             _,selected_regions,selected_region_features=self.binary_classifier_selection_region(object_detector_features,detected_classes)
-            # print("selected_regions: ",selected_regions.shape)  #[batch_size x 29] 
-            #print(selected_region_features.shape) #[num_regions_selected_in_batch,1024]
-
-            # _,abnormal_regions=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
-            # print(abnormal_regions) # Boolean Tensor of shape [batch_size x 29] 
-
 
             # Language Model
             LM_sentences=[]
@@ -417,11 +400,7 @@ class XReportoV1(nn.Module):
                 else:
                     LM_sentences_batch=self.language_model.generate(max_length=100,image_hidden_states=object_detector_features[lm_index:lm_index+LM_Batch_Size,:],greedy=True,device=DEVICE)
                 LM_sentences.extend(LM_sentences_batch)
-            # print("LM_sentences",len(LM_sentences))# [num_regions_selected_in_batch,]
 
-            # squeeze the classes
-            # detected_classes = detected_classes[selected_regions]
-            # classes = torch.squeeze(detected_classes)
             selected_regions_squeezed = torch.squeeze(selected_regions)
             boxes_labels = []
             for i in range(len(selected_regions_squeezed)):
@@ -441,15 +420,6 @@ class XReportoV1(nn.Module):
             
             if delete:
                 # Free GPU memory 
-                # images=images.to('cpu')
-                # # move object_detector_targets to cpu
-                # for i in range(len(object_detector_targets)):
-                #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
-                #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
-                # delete boxes and labels in object_detector_targets
-                # for i in range(len(object_detector_targets)):
-                #     del object_detector_targets[i]['boxes']
-                #     del object_detector_targets[i]['labels']
                 del images
                 del object_detector_targets
                 del object_detector_boxes
@@ -464,9 +434,6 @@ class XReportoV1(nn.Module):
             abnormal_binary_classifier_losses,_=self.binary_classifier_region_abnormal(object_detector_features,object_detector_detected_classes,abnormal_classifier_targets)
             
             if delete:
-                # free gpu memory
-                # abnormal_classifier_targets=abnormal_classifier_targets.to('cpu')
-                # object_detector_detected_classes=object_detector_detected_classes.to('cpu')
                 del abnormal_classifier_targets
                 del object_detector_detected_classes
                 torch.cuda.empty_cache()
@@ -476,7 +443,6 @@ class XReportoV1(nn.Module):
             # Stage(3) Language Model
             valid_input_ids, valid_attention_mask, valid_object_detector_features ,valid_labels= self.filter_inputs_to_language_model(selection_classifier_targets, input_ids, attention_mask, object_detector_features,language_model_targets)
             if delete or True:
-                # selection_classifier_targets=selection_classifier_targets.to('cpu')
                 del selection_classifier_targets
                 del object_detector_features
                 del input_ids
@@ -492,8 +458,6 @@ class XReportoV1(nn.Module):
                 LM_losses= torch.tensor(0.0,requires_grad=True).to(DEVICE)
                 return object_detector_losses,selection_classifier_losses,abnormal_binary_classifier_losses,LM_losses,True
             
-            # if (index+LM_Batch_Size) >= len(valid_input_ids):
-            #     stop=True
             # loop on all the valid_input_ids using LM_Batch_Size
             LM_losses=0
             for lm_index in range(0,len(valid_input_ids),LM_Batch_Size):
@@ -501,7 +465,6 @@ class XReportoV1(nn.Module):
                 LM_losses=LM_losses+LM_output[0]
                 logging.debug(f"Current LM_losses: {LM_output[0]}")
                 logging.debug(f"LM_losses: {LM_losses}")
-            # LM_output=self.language_model(input_ids=valid_input_ids[index:index+LM_Batch_Size,:],image_hidden_states=valid_object_detector_features[index:index+LM_Batch_Size,:],attention_mask=valid_attention_mask[index:index+LM_Batch_Size,:],labels=valid_labels[index:index+LM_Batch_Size,:])
             
             if delete:
 
@@ -539,13 +502,7 @@ class XReportoV1(nn.Module):
             if delete:
                 # Free GPU memory 
                 images=images.to('cpu')
-                # move object_detector_targets to cpu
-                # for i in range(len(object_detector_targets)):
-                #     object_detector_targets[i]['boxes']=object_detector_targets[i]['boxes'].to('cpu')
-                #     object_detector_targets[i]['labels']=object_detector_targets[i]['labels'].to('cpu')
                 del images
-                #TODO: should be removed ?
-                # del object_detector_targets
                 torch.cuda.empty_cache()
             
             if MODEL_STAGE == ModelStage.OBJECT_DETECTOR.value:
@@ -644,19 +601,4 @@ class XReportoV1(nn.Module):
         valid_region_features = object_detector_features[selection_classifier_targets]
         valid_labels=language_model_targets[selection_classifier_targets]
         return valid_input_ids, valid_attention_mask, valid_region_features,valid_labels
-    
-    # def post_processing(self,images,bboxes,bbox_labels):
-    #     transform = CustomAugmentation(transform_type='test')
-    #     for i in range(images.shape[0]):
-    #         transformed = transform(image=images[i], bboxes=bboxes[i], class_labels=bbox_labels[i])
-    #         transformed_image = transformed["image"]
-    #         transformed_bboxes = transformed["bboxes"]
-    #         transformed_bbox_labels = transformed["class_labels"]
-    #         transformed_bboxes = torch.as_tensor(transformed_bboxes, dtype=torch.float32)
-    #         transformed_bbox_labels = torch.as_tensor(transformed_bbox_labels, dtype=torch.int64)
-    #         object_detector_sample = {}
-    #         object_detector_sample["image"]=transformed_image
-    #         object_detector_sample["bboxes"] = transformed_bboxes
-    #         object_detector_sample["bbox_labels"] = transformed_bbox_labels
-
         

@@ -116,10 +116,8 @@ class XReportoEvaluation():
         "BLEU2-Sentence": 0,
         "BLEU3-Sentence": 0,
         "BLEU4-Sentence": 0,
-        # "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
         "BLEU-report":0,
-        # "METEOR-report":0,
         "ROUGE-report":0,
         },
         "normal": {
@@ -127,10 +125,8 @@ class XReportoEvaluation():
         "BLEU2-Sentence": 0,
         "BLEU3-Sentence": 0,
         "BLEU4-Sentence": 0,
-        # "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
         "BLEU-report":0,
-        # "METEOR-report":0,
         "ROUGE-report":0,
         },
         "abnormal": {
@@ -138,10 +134,8 @@ class XReportoEvaluation():
         "BLEU2-Sentence": 0,
         "BLEU3-Sentence": 0,
         "BLEU4-Sentence": 0,
-        # "METEOR-Sentence": 0,
         "ROUGE-Sentence": 0,
         "BLEU-report":0,
-        # "METEOR-report":0,
         "ROUGE-report":0,
         },
         }
@@ -316,13 +310,8 @@ class XReportoEvaluation():
                     "targets":abnormal_classifier_targets,
                     "predicted":predicted_abnormal_regions
                 }
-                # [Tensor Board] Draw the Predictions of this batch
-                # self.draw_tensor_board(batch_idx,images,object_detector,region_selection_classifier,abnormal_region_classifier)
-
                 validation_total_loss+=Total_loss
                 
-                # update scores for object detector metrics
-                # self.update_object_detector_metrics(obj_detector_scores, object_detector_boxes, object_detector_targets, object_detector_detected_classes)
                 # compute the confusion metric
                 # log batch index
                 logging.debug(f"Batch {batch_idx + 1}/{len(self.data_loader_val)}")
@@ -845,15 +834,8 @@ class XReportoEvaluation():
         
             if MODEL_STAGE==ModelStage.CLASSIFIER.value :
                 # TODO Check
-                # Region Selection Classifier
                 region_selection_classifier_targets=region_selection_classifier['targets']
                 region_selection_classifier_prediction=region_selection_classifier['predicted']
-
-                # logging.info(region_selection_classifier_targets[i].cpu().tolist())
-                # logging.info(region_selection_classifier_prediction[i].cpu().tolist())
-
-                # logging.info(object_detector_gold[i]['boxes'].cpu().tolist())
-                # logging.info(object_detector_boxes[i].tolist())
 
                 region_selection_plot=plot_image(image,None,
                                             labels=object_detector_gold[i]['labels'].cpu().tolist(),
