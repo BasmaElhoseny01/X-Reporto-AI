@@ -19,16 +19,61 @@ from config import HEAT_MAP_IMAGE_SIZE
 ANGLE=2
 
 class CustomAugmentation(object):
-    def __init__(self, transform_type):
-            self.transform=TransformLibrary(transform_type)
+    """
+    Custom augmentation class using Albumentations for image transformations.
+
+    Args:
+        transform_type (str): Type of transformation ('train' or 'test').
+
+    Attributes:
+        transform (TransformLibrary): Instance of TransformLibrary based on transform_type.
+
+    Methods:
+        __call__(image): Applies transformations on the input image.
+    """
+    def __init__(self, transform_type):    
+        """
+        Initializes CustomAugmentation with specified transformation type.
+
+        Args:
+            transform_type (str): Type of transformation ('train' or 'test').
+        """
+        self.transform=TransformLibrary(transform_type)
         
     def __call__(self,image):
+        """
+        Applies transformations on the input image.
+
+        Args:
+            image (numpy.ndarray): Input image as numpy array.
+
+        Returns:
+            dict: Transformed image as a dictionary with 'image' key.
+        """
         return self.transform(image=image)
 
     
 class TransformLibrary(object):
+    """
+    Transformation library using Albumentations for image preprocessing.
+
+    Args:
+        transform_type (str): Type of transformation ('train' or 'test').
+
+    Attributes:
+        transform (albumentations.Compose): Albumentations composition based on transform_type.
+
+    Methods:
+        __call__(image): Applies transformations on the input image.
+    """
     
     def __init__(self, transform_type:str ='train'):
+        """
+        Initializes TransformLibrary with specified transformation type.
+
+        Args:
+            transform_type (str, optional): Type of transformation ('train' or 'test'). Default is 'train'.
+        """
         if (transform_type == 'train'):
             self.transform =A.Compose([
             A.LongestMaxSize(max_size=HEAT_MAP_IMAGE_SIZE, interpolation=cv2.INTER_AREA),
@@ -58,4 +103,13 @@ class TransformLibrary(object):
             ToTensorV2(p=1.0),])
             
     def __call__(self,image):
+        """
+        Applies transformations on the input image.
+
+        Args:
+            image (numpy.ndarray): Input image as numpy array.
+
+        Returns:
+            dict: Transformed image as a dictionary with 'image' key.
+        """
         return self.transform(image=image)

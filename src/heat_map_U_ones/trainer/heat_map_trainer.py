@@ -30,7 +30,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 class HeatMapTrainer:
+    """
+    Class to train a heat map model using PyTorch and manage training and validation processes.
+
+    Attributes:
+        model (torch.nn.Module): The PyTorch model to be trained.
+        tensor_board_writer (SummaryWriter): TensorBoard SummaryWriter for logging.
+        training_csv_path (str): Path to the training CSV file.
+        validation_csv_path (str): Path to the validation CSV file.
+    """
+
     def __init__(self, model:None,tensor_board_writer:SummaryWriter,training_csv_path: str =heat_map_training_csv_path,validation_csv_path:str = heat_map_validating_csv_path):
+        """
+        Initialize the HeatMapTrainer instance.
+
+        Args:
+            model (torch.nn.Module): The PyTorch model to be trained.
+            tensor_board_writer (SummaryWriter): TensorBoard SummaryWriter for logging.
+            training_csv_path (str, optional): Path to the training CSV file. Defaults to heat_map_training_csv_path.
+            validation_csv_path (str, optional): Path to the validation CSV file. Defaults to heat_map_validating_csv_path.
+        """
         self.tensor_board_writer=tensor_board_writer
         
         self.model = model
@@ -75,6 +94,14 @@ class HeatMapTrainer:
 
     
     def train(self,start_epoch=0,epoch_loss_init=0,start_batch=0):
+        """
+        Train the model over multiple epochs.
+
+        Args:
+            start_epoch (int, optional): Starting epoch for training. Defaults to 0.
+            epoch_loss_init (int, optional): Initial epoch loss. Defaults to 0.
+            start_batch (int, optional): Starting batch index. Defaults to 0.
+        """
         logging.info("Start Training")
         
         # make model in training mode
@@ -97,7 +124,7 @@ class HeatMapTrainer:
                     # print("Start Next time from")
                     # print(object_detector_targets[1])
                     # print(batch_idx)
-                    # raise Exception("CRASSSSSSSSSSSSHHHHHHHHHHHHHHHHHHHHHHH")         
+                    # raise Exception("CRASH")         
  
                 # Move inputs to Device
                 images = images.to(DEVICE)
@@ -191,46 +218,71 @@ class HeatMapTrainer:
         logging.info("Training Done")
         
     def compute_training_ROC(self,epoch):
-      logging.info("Computing ROC for Training [0.5]*10.....")
-      optimal_thresholds=0.5*np.ones(len(CLASSES))  # [STOP]    
-      return optimal_thresholds
+        """
+        Compute ROC thresholds for training data.
 
-      all_preds= np.zeros((1, len(CLASSES)))
-      all_targets= np.zeros((1, len(CLASSES)))
-          
-      with torch.no_grad():
-        for batch_idx, (images, targets,_) in enumerate(self.data_loader_val):
-            if batch_idx % 10 == 0:
-                logging.info(f"[Every 10 batches]Computing ROC for Training Batch {batch_idx + 1}/{len(self.data_loader_train)}")
-            # Move inputs to Device
-            images = images.to(DEVICE)
-            targets=targets.to(DEVICE)
+        Args:
+            epoch (int): Current epoch number.
 
-            # Forward Pass
-            _,y_scores,_=self.model(images)  # Return is y_pred,y_scores
+        Returns:
+            list: List of optimal thresholds for each class.
+        """
 
-            mask = (targets != -1).float()
-
-            # apply mask to the targets
-            targets = targets * mask
-
-            # y_pred = y_pred * mask
+        # Option(1) Use 0.5 as threshold for all classes for faster computation in training
+        logging.info("Computing ROC for Training [0.5]*10.....")
+        optimal_thresholds=0.5*np.ones(len(CLASSES))  # [STOP]    
+        return optimal_thresholds
+    
+        # Option(2) Compute ROC for Training
+        all_preds= np.zeros((1, len(CLASSES)))
+        all_targets= np.zeros((1, len(CLASSES)))
             
-            # Cumulate all predictions ans labels
-            all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
-            all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+        with torch.no_grad():
+            for batch_idx, (images, targets,_) in enumerate(self.data_loader_val):
+                if batch_idx % 10 == 0:
+                    logging.info(f"[Every 10 batches]Computing ROC for Training Batch {batch_idx + 1}/{len(self.data_loader_train)}")
+                # Move inputs to Device
+                images = images.to(DEVICE)
+                targets=targets.to(DEVICE)
 
-            del images
-            del targets
-            del mask
-            torch.cuda.empty_cache()
-            gc.collect()
+                # Forward Pass
+                _,y_scores,_=self.model(images)  # Return is y_pred,y_scores
 
-      optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:],tensor_board_card="Training")
-      return optimal_thresholds
+                mask = (targets != -1).float()
+
+                # apply mask to the targets
+                targets = targets * mask
+
+                # y_pred = y_pred * mask
+                
+                # Cumulate all predictions ans labels
+                all_preds = np.concatenate((all_preds, y_scores.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+                all_targets = np.concatenate((all_targets, targets.to("cpu").detach().view(-1, len(CLASSES)).numpy()), 0)
+
+                del images
+                del targets
+                del mask
+                torch.cuda.empty_cache()
+                gc.collect()
+
+        optimal_thresholds=self.Validation_ROC_AUC(epoch=epoch,y_true=all_targets[1:,:],y_scores=all_preds[1:,:],tensor_board_card="Training")
+        return optimal_thresholds
                 
 
     def forward_pass(self,epoch:int,batch_idx:int,images:torch.Tensor,targets:torch.Tensor,validate_during_training=False):
+        """
+        Perform a forward pass through the model and calculate loss.
+
+        Args:
+            epoch (int): Current epoch number.
+            batch_idx (int): Current batch index.
+            images (torch.Tensor): Input images.
+            targets (torch.Tensor): Target labels.
+            validate_during_training (bool, optional): Whether validating during training. Defaults to False.
+
+        Returns:
+            torch.Tensor: Total loss.
+        """
         # Forward Pass
         y_pred,y_scores,_=self.model(images)  # Return is y_pred,y_scores
 
@@ -249,6 +301,7 @@ class HeatMapTrainer:
 
         if(Total_loss>100000):
             Total_loss=0.0
+
         # del 
         del y_pred
         torch.cuda.empty_cache()
@@ -270,10 +323,16 @@ class HeatMapTrainer:
 
     
     def validate_during_training(self,epoch):
-        '''
-        Validate the model during training
-        '''
+        """
+        Validate the model on the validation set during training.
 
+        Args:
+            epoch (int): Current epoch number.
+
+        Returns:
+            tuple: Tuple containing optimal thresholds and validation average loss.
+        """
+        
         all_preds= np.zeros((1, len(CLASSES)))
         all_targets= np.zeros((1, len(CLASSES)))
 
@@ -313,9 +372,18 @@ class HeatMapTrainer:
             return optimal_thresholds,validation_total_loss
 
     def Validation_ROC_AUC(self,epoch,y_true,y_scores,tensor_board_card="Validation"):
-        '''
-        ROC_AUC for Validation Pass :D
-        '''
+        """
+        Compute ROC AUC for validation.
+
+        Args:
+            epoch (int): Current epoch number.
+            y_true (np.array): True labels.
+            y_scores (np.array): Predicted scores.
+            tensor_board_card (str): TensorBoard card name.
+
+        Returns:
+            list: List of optimal thresholds for each class.
+        """
 
         plt.figure(figsize=(10, 8))  # Adjust figure size
 
@@ -360,9 +428,15 @@ class HeatMapTrainer:
         return optimal_thresholds
         
     def save_model(self,model:torch.nn.Module,name:str,epoch:int,validation_loss:float):
-        '''
-        Save the current state of model.
-        '''     
+        """
+        Save the model's state and optimizer's state.
+
+        Args:
+            model (torch.nn.Module): Model to be saved.
+            name (str): Name of the model.
+            epoch (int): Current epoch number.
+            validation_loss (float, optional): Validation loss. Defaults to 0.0.
+        """
         logging.info("Saving "+name+"_epoch "+str(epoch+1))
         save_model(model=model,name=name+"_epoch_"+str(epoch+1))
         self.check_best_model(epoch,validation_loss,name,model)  
@@ -406,6 +480,9 @@ def init_working_space():
     return models_folder_path,ck_folder_path,tensor_board_folder_path
 
 def main():
+    """
+    Main training function to start the training process.
+    """
     logging.info("Training Heat Map Started")
     # Logging Configurations
     log_config()

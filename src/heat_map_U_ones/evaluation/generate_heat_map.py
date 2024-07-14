@@ -49,7 +49,40 @@ resize_and_pad_transform = A.Compose([
         ])
 
 class HeatMapGeneration():
+        """
+        Main class for generating heatmaps for multi-class classification using the HeatMap model.
+
+        Methods:
+        - __init__(model: HeatMap, evaluation_csv_path: str, tensor_board_writer: SummaryWriter = None):
+            Initializes the HeatMapGeneration instance with the model, evaluation data, and TensorBoard writer.
+
+        - generate() -> None:
+            Generates heatmaps for the evaluation dataset and logs results to TensorBoard and image files.
+
+        - generate_heat_map_per_class(image_path: str, features: torch.Tensor, class_index: int, class_name: str, gold_label: float, pred_label: float, class_threshold: float) -> Tuple[np.ndarray, str]:
+            Generates a heatmap for a specific class and returns the heatmap image and title.
+
+        - get_gradients(module, grad_input, grad_output) -> None:
+            Hook to capture gradients during backpropagation.
+
+        - generate_heatmap_gradCam_per_class(image_path: str, features: torch.Tensor, predictions: torch.Tensor, class_index: int, class_name: str) -> Tuple[np.ndarray, str]:
+            Generates a Grad-CAM heatmap for a specific class and returns the heatmap image and title.
+
+        Example:
+        >>> heatmap_model = HeatMap(classes=['Class1', 'Class2', 'Class3'])
+        >>> generator = HeatMapGeneration(model=heatmap_model, evaluation_csv_path='path/to/csv')
+        >>> generator.generate()
+        """
+        
         def __init__(self, model:HeatMap,evaluation_csv_path:str = heat_map_evaluation_csv_path,tensor_board_writer:SummaryWriter=None):
+            """
+            Initializes the HeatMapGeneration class.
+
+            Args:
+                model (HeatMap): The heatmap model to be used for generating heatmaps.
+                evaluation_csv_path (str): Path to the CSV file containing evaluation data.
+                tensor_board_writer (SummaryWriter, optional): TensorBoard writer for logging. Defaults to None.
+            """
             self.tensor_board_writer=tensor_board_writer
             
             # Model
@@ -58,9 +91,8 @@ class HeatMapGeneration():
             # Model in evaluation Mode Only
             self.model.eval()
             
-            #---- Initialize the weights
-            #print(list(self.model.model.features.parameters())[-2].shape) # 1024 Features for the dense net
-            # self.weights = list(self.model.model.features.parameters())[-2]
+            ### Initialize the weights
+
             # get weights of prediction layer
             self.weights = list(self.model.model.classifier.parameters())[-2] #torch.Size([8, 1024])
                                
@@ -76,15 +108,15 @@ class HeatMapGeneration():
             
             
         def generate(self):
-
+            """
+            Generates heatmaps for each image in the evaluation dataset.
+            """
             # Option(1) Explicit Set the optimal threshold from the training (Computed from evaluation on the training data :D)
             # self.model.optimal_thresholds=[ 0.2785722315311432,0.24235820770263672, 0.2138664722442627,
             # 0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
 
 
             # Option(3) Use the optimal thresholds Saved in the model :D [Default]
-
-            
             with torch.no_grad():
                 logging.info(f"Generating Heat Maps")
                 for batch_idx,(images,targets,images_path) in enumerate(self.data_loader_eval):
@@ -117,90 +149,31 @@ class HeatMapGeneration():
                 logging.info("Done Generation")
                 return 
             
-        # def generate_one_heat_map(self,image_path,features,gold_labels,pred_labels,thresholds):
-        # '''
-        # Old Heat Map Generation Function Incorrect
-        # '''
-        #     #---- Generate heatmap
-        #     #print(features.shape) #torch.Size([1024, 7, 7])
-                        
-        #     heatmap = None
-        #     for i in range (0, len(self.weights)): # 1024
-        #         map = features[i,:,:] # torch.Size([7, 7])
-        #         if i == 0: heatmap = self.weights[i] * map #torch.Size([7, 7]) 
-        #         else: heatmap += self.weights[i] * map
-        #         npHeatmap = heatmap.cpu().data.numpy() #torch.Size([7, 7])
-            
-            
-            
-        #     #---- Blend original and heatmap 
-        #     imgOriginal = cv2.imread(image_path, 1)
-        #     imgOriginal = cv2.resize(imgOriginal, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE)) #(224, 224, 3)
-
-        #     cam = npHeatmap / np.max(npHeatmap)
-        #     cam = cv2.resize(cam, (HEAT_MAP_IMAGE_SIZE, HEAT_MAP_IMAGE_SIZE))
-        #     heatmap = cv2.applyColorMap(np.uint8(255*cam), cv2.COLORMAP_JET)
-            
-        #     img = cv2.addWeighted(imgOriginal,1,heatmap,0.35,0)            
-        #     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            
-        #     # Construct the legend
-        #     legend_text = "Results:\n"
-        #     for index, (class_name, gold_label, pred_label) in enumerate(zip(CLASSES, gold_labels, pred_labels)):
-        #         legend_text += f"{class_name}: *{gold_label}, {pred_label:.2f},{1*(pred_label>thresholds[index])}\n"
-
-        #     # Heat Map Name
-        #     # Split the file path by the directory separator '/'
-        #     parts = image_path.split('/')
-
-        #     # Get the last two directory names and the file name
-        #     last_two_directories = '_'.join(parts[-3:-1])
-        #     file_name = parts[-1]
-
-        #     # Construct the desired string
-        #     desired_string = f"{last_two_directories}_{file_name}"
-
-        #     # Create subplot
-        #     fig = plt.figure(figsize=(12, 5))
-        #     gs = GridSpec(1, 3, width_ratios=[2, 2, 1], wspace=0.1)  # Set wspace to adjust space between subplots
-
-
-        #     # Plot original image
-        #     ax_original = fig.add_subplot(gs[0])
-        #     ax_original.imshow(imgOriginal)
-        #     ax_original.axis('off')
-
-        #     # Plot heatmap
-        #     ax_heatmap = fig.add_subplot(gs[1])
-        #     ax_heatmap.imshow(img)
-        #     ax_heatmap.axis('off')
-
-        #     # Plot legend
-        #     ax_legend = fig.add_subplot(gs[2])
-        #     ax_legend.text(0, 0, legend_text, fontsize=10, color='black', bbox=dict(facecolor='lightgrey', alpha=0.5))
-        #     ax_legend.axis('off')
-
-        #     # Convert plot to image
-        #     image = plot_to_image()
-
-        #     # if SAVE_IMAGES:
-        #     #   plt.savefig(f"./tensor_boards/heat_maps/{RUN}/{desired_string}")
-        #     # plt.show()
-
-        #     return image,desired_string
         
         def generate_heat_map_per_class(self,image_path,features,class_index:int,class_name:str,gold_label,pred_label,class_threshold):
+            """
+            Generates a heatmap for a specific class.
+
+            Args:
+                image_path (str): Path to the input image.
+                features (torch.Tensor): Features from the model.
+                class_index (int): Index of the class.
+                class_name (str): Name of the class.
+                gold_label (int): Ground truth label for the class.
+                pred_label (float): Predicted score for the class.
+                class_threshold (float): Threshold for the class prediction.
+
+            Returns:
+                np.ndarray: The generated heatmap image.
+                str: The title of the heatmap image.
+            """
+
             # Get the heatmap for the class
-
-            #---- Generate heatmap
-            #print(features.shape) #torch.Size([1024, 7, 7])
-
             heatmap = None
             weights = self.weights[class_index].view(1, -1) # 1, 1024
             
             # apply matrix multiplication to get the heatmap
             # weights: 1024, features: 1024, 7, 7 -> 1, 7, 7
-
             heatmap = torch.matmul(weights, features.view(features.size(0), -1)).view(features.size(1), features.size(2)) # 7, 7
             npHeatmap = heatmap.cpu().data.numpy() #torch.Size([7, 7])
 
@@ -273,10 +246,20 @@ class HeatMapGeneration():
             self.gradients = grad_input
 
         def generate_heatmap_gradCam_per_class(self, image_path, features, predictions, class_index, class_name):
-            '''
-            Generate the gradCAM heatmap for the class
-            '''
+            """
+            Generates the gradCAM heatmap for a specific class.
 
+            Args:
+                image_path (str): Path to the input image.
+                features (torch.Tensor): Features from the model.
+                predictions (torch.Tensor): Predictions from the model.
+                class_index (int): Index of the class.
+                class_name (str): Name of the class.
+
+            Returns:
+                np.ndarray: The generated gradCAM heatmap image.
+                str: The title of the heatmap image.
+            """
             pred = predictions[class_index]
 
             # register the hook
@@ -398,9 +381,6 @@ def main():
     
     # Start Generation
     generator.generate()
-    
-
- 
     
 
 if __name__ == '__main__':

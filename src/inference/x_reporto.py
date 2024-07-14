@@ -107,7 +107,7 @@ class XReporto:
 
     def denoise_image(self,image_path):
         """
-        Denoise the image
+        De-noise the image
 
         Args:
         image_path (str): Path to the image file

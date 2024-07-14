@@ -11,9 +11,29 @@ from config import CLASSES
 from src.heat_map_U_ones.data_loader.custom_augmentation import CustomAugmentation
 
 class HeatMapDataset(Dataset):
+    """
+    Dataset class for HeatMap model training/validation.
+
+    Args:
+        dataset_path (str): Path to the dataset CSV file.
+        transform_type (str, optional): Type of data transformation (default: 'train').
+
+    Attributes:
+        data_info (DataFrame): Loaded dataset information from CSV.
+        image_paths (Series): Paths to images from the dataset.
+        headers (list): List of column headers (class labels).
+        transform (CustomAugmentation): Instance of CustomAugmentation for data transformation.
+
+    Methods:
+        __len__(): Returns the number of samples in the dataset.
+        __getitem__(idx): Retrieves and processes a sample from the dataset by index.
+    """
     def __init__(self, dataset_path, transform_type:str ='train'):
+        """
+        Initializes the HeatMapDataset with the given dataset and transformation type.
+        """
         # Read CSV
-        # self.data_info = pd.read_csv(dataset_path,nrows=100)
+        # self.data_info = pd.read_csv(dataset_path,nrows=100)  # For Testing read only 100 rows
         self.data_info = pd.read_csv(dataset_path)
 
         self.image_pathes=self.data_info.iloc[:,3]
@@ -21,13 +41,12 @@ class HeatMapDataset(Dataset):
         # Select Columns of Class
         self.data_info = self.data_info.loc[:, self.data_info.columns.isin(CLASSES)]
         
-        # if (transform_type != 'train'):
         # Make sure CLASSES is a list of valid column names in self.data_info
         valid_columns = [col for col in CLASSES if col in self.data_info.columns]
 
         # Replace -1.0 with 1.0 in specified columns
-        self.data_info[valid_columns] = self.data_info[valid_columns].replace(-1.0, 0.0) #[OLd NAns]
-        # self.data_info[valid_columns] = self.data_info[valid_columns].replace(np.nan, -1.0)
+        self.data_info[valid_columns] = self.data_info[valid_columns].replace(-1.0, 0.0) #[OLd NANs in the last approach]
+        # self.data_info[valid_columns] = self.data_info[valid_columns].replace(np.nan, -1.0)  # failed approach
         
         # Get the headers
         self.headers = self.data_info.columns.tolist()
@@ -36,9 +55,21 @@ class HeatMapDataset(Dataset):
         self.transform = CustomAugmentation(transform_type=transform_type)
 
     def __len__(self):
+        """
+        Returns the number of samples in the dataset.
+        """
         return len(self.data_info)
 
     def __getitem__(self, idx):
+        """
+        Retrieves and processes a sample from the dataset by index.
+
+        Args:
+            idx (int): Index of the sample to retrieve.
+
+        Returns:
+            tuple: A tuple containing the transformed image tensor, labels tensor, and image path.
+        """
         img_path=self.image_pathes[idx]
         
         # Getting image path  with parent path of current folder + image path
@@ -54,11 +85,11 @@ class HeatMapDataset(Dataset):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  #(3056, 2544, 3) [0-255]
         
         # get the labels and if column is 1 then it is true if empty then false
-        # use Values bec this is a series [Drop Headers] + Covert dtyoe to ve float32 not obj
+        # use Values bec this is a series [Drop Headers] + Covert dtype to ve float32 not obj
         labels=self.data_info.values[idx,:].astype('float32')
         labels = torch.FloatTensor(labels) #Tensor([13])
         
-        # tranform image
+        # transform image
         # 3channel 224x224 Normalized 0-1
         transformed_image = self.transform(image=img)["image"] #([3, 224, 224])
         return transformed_image, labels,img_path

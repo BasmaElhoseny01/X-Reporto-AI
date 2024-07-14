@@ -59,6 +59,9 @@ class HeatMapEvaluation():
                
         
     def evaluate(self):
+        """
+        Evaluate the model and log metrics.
+        """
         #Evaluate the model
         logging.info("Evaluating the model")
 
@@ -81,6 +84,15 @@ class HeatMapEvaluation():
         
 
     def evaluate_heat_map(self):
+        """
+        Evaluate the heat map predictions and calculate the loss.
+        
+        Returns:
+        evaluation_total_loss: Total evaluation loss
+        all_preds: All predictions
+        all_targets: All target values
+        """
+
         # Init The Scores
         all_preds= np.zeros((1, len(CLASSES)))
         all_targets= np.zeros((1, len(CLASSES)))
@@ -115,9 +127,18 @@ class HeatMapEvaluation():
     
     
     def forward_pass(self,images,targets):
-        '''
-        y: Prob not classes
-        '''
+        """
+        Perform a forward pass through the model and calculate the loss.
+        
+        Args:
+        images: Batch of images
+        targets: Corresponding targets
+        
+        Returns:
+        features: Model features (if any)
+        Total_loss: Computed loss
+        scores: Model scores
+        """
         # Forward Pass
         y_pred,scores,_=self.model(images)
         mask = (targets != 0).float()
@@ -134,6 +155,17 @@ class HeatMapEvaluation():
         return features,Total_loss,scores
 
     def compute_AUC(self,y_true,y_scores):
+        """
+        Compute the AUC for each class and plot ROC curves.
+        
+        Args:
+        y_true: True labels
+        y_scores: Predicted scores
+        
+        Returns:
+        AUCs: Dictionary of AUC values for each class
+        """
+
         AUCs={}
         plt.figure(figsize=(10, 8))  # Adjust figure size
 
@@ -161,7 +193,6 @@ class HeatMapEvaluation():
             # 0.2095205932855606,0.35408109426498413,0.22779232263565063,0.13535451889038086,0.3065055310726166]
 
             # Option(3) Use the optimal thresholds Saved in the model :D [Default]
-
             # Plotting
             # Plot Line with optimal threshold in legend
             plt.plot(fpr, tpr, label=CLASSES[i] + ' (AUC = %0.2f, Optimal Threshold = %0.2f)' % (auc, self.model.optimal_thresholds[i]), linewidth=2)
@@ -202,88 +233,106 @@ class HeatMapEvaluation():
 
 
     def compute_classification_metrics(self, y_true, y_pred, thresholds):
-      '''
-      Calculate classification metrics
-      '''
-      metrics={
-        "false_positive":{},
-        "false_negative":{},
-        "true_positive":{},
-        "true_negative":{},
-        "precision":{},
-        "recall":{},
-        "f1":{},
-      }
+        """
+        Calculate classification metrics for each class.
+        
+        Args:
+        y_true: True labels
+        y_pred: Predicted scores
+        thresholds: Optimal thresholds for each class
+        
+        Returns:
+        metrics: Dictionary containing various classification metrics
+        """
+        metrics={
+            "false_positive":{},
+            "false_negative":{},
+            "true_positive":{},
+            "true_negative":{},
+            "precision":{},
+            "recall":{},
+            "f1":{},
+        }
 
-      best_thresholds=thresholds
-
-
-      # # Find the best threshold for each class [Fine Tuning the threshold for each class]
-      # thresholds=np.array(np.arange(0, 1.1, 0.1))
-      # threshold_best=None
-      # best_thresholds=[]
-   
-
-      # for i in range(len(CLASSES)):
-      #   f1_best=-1
-      #   for threshold in thresholds:
-      #     fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= threshold))
-      #     fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < threshold))
-      #     tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= threshold))
-      #     tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < threshold))
-
-      #     precision = tp / (tp + fp)
-      #     recall = tp / (tp + fn)
-      #     f1 = 2 * (precision * recall) / (precision + recall)
-
-      #     if f1>f1_best:
-      #       threshold_best=threshold
-      #       f1_best=f1
-      #       print("f1_best",f1_best,"at threshold",threshold_best)
-       
-      #   best_thresholds.append(threshold_best)
+        best_thresholds=thresholds
 
 
-      for i in range(len(CLASSES)):
-          x = y_true[:, i]
-          x[x<0] = 0
-          x[x>1] =1
-          y_true[:, i] = x 
-          fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= best_thresholds[i]))
-          fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < best_thresholds[i]))
-          tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= best_thresholds[i]))
-          tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < best_thresholds[i]))
 
-          precision = tp / (tp + fp)
-          recall = tp / (tp + fn)
-          f1 = 2 * (precision * recall) / (precision + recall)
+        # Brute Force Approach to find the best threshold for each class based on F1 Score
+        # # Find the best threshold for each class [Fine Tuning the threshold for each class]
+        # thresholds=np.array(np.arange(0, 1.1, 0.1))
+        # threshold_best=None
+        # best_thresholds=[]
 
-          metrics["false_positive"][CLASSES[i]]=fp
-          metrics["false_negative"][CLASSES[i]]=fn
-          metrics["true_positive"][CLASSES[i]]=tp
-          metrics["true_negative"][CLASSES[i]]=tn
+        # for i in range(len(CLASSES)):
+        #   f1_best=-1
+        #   for threshold in thresholds:
+        #     fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= threshold))
+        #     fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < threshold))
+        #     tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= threshold))
+        #     tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < threshold))
 
-          metrics["precision"][CLASSES[i]]=precision
-          metrics["recall"][CLASSES[i]]=recall
-          metrics["f1"][CLASSES[i]]=f1
-          
-      return metrics
+        #     precision = tp / (tp + fp)
+        #     recall = tp / (tp + fn)
+        #     f1 = 2 * (precision * recall) / (precision + recall)
 
-    def save_result_to_tensor_board(self,evaluation_loss,aucs,classification_metrics):
-      # Loss
-      self.tensor_board_writer.add_scalar('Evaluation_Metrics/evaluation_loss', evaluation_loss)
+        #     if f1>f1_best:
+        #       threshold_best=threshold
+        #       f1_best=f1
+        #       print("f1_best",f1_best,"at threshold",threshold_best)
+        
+        #   best_thresholds.append(threshold_best)
 
-      # AUC
-      self.tensor_board_writer.add_scalars('Evaluation_Metrics/auc', aucs)
 
-      # classification metrics
-      for metric,values in classification_metrics.items():
-        self.tensor_board_writer.add_scalars(f'Evaluation_Metrics/{metric}', values)
+        for i in range(len(CLASSES)):
+            x = y_true[:, i]
+            x[x<0] = 0
+            x[x>1] =1
+            y_true[:, i] = x 
+            fp = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] >= best_thresholds[i]))
+            fn = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] < best_thresholds[i]))
+            tp = np.sum(np.logical_and(y_true[:, i] == 1, y_pred[:, i] >= best_thresholds[i]))
+            tn = np.sum(np.logical_and(y_true[:, i] == 0, y_pred[:, i] < best_thresholds[i]))
+
+            precision = tp / (tp + fp)
+            recall = tp / (tp + fn)
+            f1 = 2 * (precision * recall) / (precision + recall)
+
+            metrics["false_positive"][CLASSES[i]]=fp
+            metrics["false_negative"][CLASSES[i]]=fn
+            metrics["true_positive"][CLASSES[i]]=tp
+            metrics["true_negative"][CLASSES[i]]=tn
+
+            metrics["precision"][CLASSES[i]]=precision
+            metrics["recall"][CLASSES[i]]=recall
+            metrics["f1"][CLASSES[i]]=f1
+            
+        return metrics
+
+    def save_result_to_tensor_board(self,evaluation_loss,aucs,classification_metrics):  
+        """
+        Save evaluation results to TensorBoard.
+        
+        Args:
+        evaluation_loss: Evaluation loss
+        aucs: AUC values for each class
+        classification_metrics: Classification metrics
+        """
+        # Loss
+        self.tensor_board_writer.add_scalar('Evaluation_Metrics/evaluation_loss', evaluation_loss)
+
+        # AUC
+        self.tensor_board_writer.add_scalars('Evaluation_Metrics/auc', aucs)
+
+        # classification metrics
+        for metric,values in classification_metrics.items():
+            self.tensor_board_writer.add_scalars(f'Evaluation_Metrics/{metric}', values)
+
 
     def error_analysis(self):
-        '''
-        Error Analysis
-        '''
+        """
+        Perform error analysis by identifying the best and worst examples.
+        """
         # get best examples with lowest loss and worst examples with highest loss
 
         losses=[]
@@ -335,7 +384,6 @@ class HeatMapEvaluation():
         
 
 def init_working_space():
-
     # Creating tensorboard folder
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     tensor_board_folder_path="./tensor_boards/" + str(RUN)+ f"/eval_{current_datetime}"
@@ -346,6 +394,7 @@ def init_working_space():
         logging.info(f"Folder '{tensor_board_folder_path}' already exists.")
 
     return tensor_board_folder_path
+
 
 def main():
     logging.info(" Heat Map Evaluation Started")

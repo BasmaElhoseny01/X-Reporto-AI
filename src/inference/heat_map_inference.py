@@ -204,15 +204,7 @@ class HeatMapInference:
         """
         print("Generate Template Based Report")
         report=[]
-        # TODO Add Info About the Grey Area
-        # template_positive = "The patient has {condition}."
-        # template_negative = "The patient does not have {condition}."
-
-
-        # template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. " \
-        #                     "The findings are primarily located in the {region}. " \
-        #                     "Severity: {severity}."
-        
+        # TODO Add Info About the Grey Area        
         template_positive = "The patient has {condition} with a confidence of {confidence:.2f}%. " \
                             "The findings are primarily located in the {region}. "
         template_negative = "The patient does not have {condition} with a confidence of {confidence:.2f}%. "
@@ -245,7 +237,9 @@ class HeatMapInference:
     
         print("Severity",severity)
         return severity
-        
+    
+
+        # Another Approach to Compute Severity
         # # Weights per findings
         # importance_scores = {
         #     'Atelectasis': 0.2,
@@ -530,9 +524,11 @@ if __name__=="__main__":
 
     # --------------------------------------------------------------------------------Inference--------------------------------------------------------------------------------
     # Inference
+    # For Testing Purpose
     # bounding_boxes=[[349, 80, 1570, 1591], [627, 245, 1514, 750], [600, 750, 1459, 900], [559, 900, 1459, 1159], [1023, 709, 1487, 927], [709, 191, 1514, 586], [422, 968, 695, 1241], [559, 900, 1678, 1214], [1623, 204, 2660, 1337], [1691, 259, 2564, 750], [1623, 750, 2633, 955], [1664, 955, 2660, 1337], [1623, 709, 2128, 995], [1719, 204, 2510, 586], [2428, 1173, 2701, 1446], [1623, 968, 2660, 1337], [1323, 136, 1705, 873], [1459, 0, 1787, 2544], [736, 27, 1418, 600], [1787, 109, 2564, 545], [1623, 586, 1869, 750], [995, 276, 2431, 1550], [1227, 422, 1991, 804], [1227, 586, 1623, 804], [1118, 818, 2128, 1214], [1118, 818, 1609, 941], [1118, 941, 1609, 1214], [1459, 750, 1582, 873], [559, 968,2660,2544]]
-    bounding_boxes=[[0, 0, 255, 255]]
     # detected_classes=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,26,27,28,29]
+    
+    bounding_boxes=[[0, 0, 255, 255]]
     detected_classes=[1]
     heat_maps,labels,confidence,severity,template_based_report=inference.infer(image_path,bounding_boxes=bounding_boxes,detected_classes=detected_classes,heatmap_type="cam")
 
