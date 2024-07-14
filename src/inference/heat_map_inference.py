@@ -234,8 +234,17 @@ class HeatMapInference:
         return report
 
     def compute_severity(self, labels, confidence):
-        print("Compute Severity")
-        return -1
+        
+        severity = 0
+        
+        # calculate severity based on the confidence and labels
+        for i, label in enumerate(labels):
+            # if the label is positive (1), increase the severity by the confidence score
+            if label == 1 and i != 4 and i != 7:  # Skip "No Finding" class
+                severity += (confidence[i] - HeatMapInference.optimal_thresholds[i]) /(1 - HeatMapInference.optimal_thresholds[i]) 
+    
+        print("Severity",severity)
+        return severity
         
         # # Weights per findings
         # importance_scores = {
