@@ -66,7 +66,6 @@ class CustomDataset(Dataset):
             transformed_bbox_labels = transformed["class_labels"]
 
             choice= np.random.choice([0,1,2,3,4,5])
-            # image=self.transform(image=image)["image"]
             if choice == 0:
                 image,label= add_block_pixel_noise(image, probability=0.05)
             elif choice == 1:
