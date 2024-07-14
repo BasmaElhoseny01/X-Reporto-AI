@@ -77,8 +77,8 @@ class DenoiserTrainer():
                     X_mb, y_mb = image, lable
 
                     # loop for generator
+                    self.model.set_input((X_mb, y_mb))
                     for _ge in range(ITG):
-                        self.model.set_input((X_mb, y_mb))
                         self.model.backward_G()
 
                     itr_prints_gen = ' Epoch: %i,batch %i, gloss: %.2f (mse%.3f, adv%.3f, perc:%.3f)' % (\
@@ -89,7 +89,6 @@ class DenoiserTrainer():
                     
                     # loop for discriminator
                     for _de in range(ITD):
-                        self.model.set_input((X_mb, y_mb))
                         self.model.backward_D()
                   # print every batch
                     with open("src/denoiser/outputs/iter_logs.txt", "w") as f:
