@@ -1,11 +1,4 @@
-"""
-Copied directly from https://github.com/MIT-LCP/mimic-cxr/blob/master/txt/section_parser.py
-
-The section_text is used in create_dataset.py to extract the findings section of the MIMIC-CXR reports,
-which serve as the reference reports during evaluation.
-"""
 import re
-
 
 def section_text(text):
     """Splits text into sections.
