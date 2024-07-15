@@ -218,8 +218,10 @@ class HeatMapInference:
         template_negative = "The patient does not have {condition} with a confidence of {confidence:.2f}%. "
 
         for i, label in enumerate(labels):
-            confidence_percent = confidence[i] * 100
+            # confidence_percent = confidence[i] * 100
             if label == 1:
+                new_confidence = (confidence[i] - HeatMapInference.optimal_thresholds[i]) /(1 - HeatMapInference.optimal_thresholds[i])
+                confidence_percent = new_confidence * 100
                 # severity_level, severity_score = self.heat_map_severity(heat_maps[i])
                 region = self.heatmap_region(heat_maps[i],regions=regions,region_boxes=bounding_boxes)  # Assuming you have a method for this
                 report.append(template_positive.format(condition=CLASSES[i],
@@ -227,6 +229,8 @@ class HeatMapInference:
                                                       region=region))
                                                     #   severity=severity_level))
             else:
+                new_confidence = (HeatMapInference.optimal_thresholds[i] - confidence[i]) /(HeatMapInference.optimal_thresholds[i] - 0)
+                confidence_percent = new_confidence * 100
                 report.append(template_negative.format(condition=CLASSES[i], confidence=confidence_percent))
 
         # make report as a single string with new lines
