@@ -6,11 +6,14 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from nltk.tokenize import RegexpTokenizer
 import re
+
+# Function to load a CSV file and return the DataFrame excluding the header row
 def load_csv(path):
     df = pd.read_csv(path, header=None)
     print("number of examples: ",len(df)-1)
     return df.iloc[1:]
 
+# Function to get the general statistics from the DataFrame
 def get_general_stats(data_frame):
     # loop over the dataframe
     dataset_size = len(data_frame)
@@ -18,6 +21,8 @@ def get_general_stats(data_frame):
     count_normal = 0
     count_bbox_phrase_exists = 0
     count_bbox_phrase_not_exists = 0
+
+    # Arrays to hold counts for different conditions
     abnormal_array = [0]*29
     normal_array = [0]*29
     bbox_phrase_exists_array = [0]*29
@@ -28,6 +33,7 @@ def get_general_stats(data_frame):
     normal_phrase_exists_array = [0]*29
     normal_phrase_not_exists_array = [0]*29
 
+    # Loop over the DataFrame to accumulate statistics
     for i in range(dataset_size):
         bboxes = data_frame.iloc[i, 4]
         # convert the string representation of bounding boxes into list of list
@@ -55,6 +61,8 @@ def get_general_stats(data_frame):
 
         count_bbox_phrase_exists += sum(bbox_phrase_exists)
         count_bbox_phrase_not_exists += len(bbox_phrase_exists) - sum(bbox_phrase_exists)
+        
+        # Update arrays based on conditions
         for i in range(len(bbox_is_abnormal)):
             if bbox_is_abnormal[i] == 1:
                 abnormal_array[i] += 1
@@ -80,7 +88,7 @@ def get_general_stats(data_frame):
     print("abnormal_array: ",abnormal_array)
     print("normal_array: ",normal_array)
 
-    # print normalized array
+    # normalized array
     abnormal_array = np.array(abnormal_array)
     normal_array = np.array(normal_array)
     abnormal_array = abnormal_array/(abnormal_array+normal_array)
@@ -126,6 +134,7 @@ def get_general_stats(data_frame):
     pos_phrase_weight = count_bbox_phrase_not_exists/count_bbox_phrase_exists
     return count_abnormal/(count_abnormal+count_normal), count_bbox_phrase_exists/(count_bbox_phrase_exists+count_bbox_phrase_not_exists), pos_weight,pos_phrase_weight
 
+# Function to get the bounding box statistics from the DataFrame
 def get_bboxes_stats(data_frame):
     # loop over the dataframe
     dataset_size = len(data_frame)
@@ -141,8 +150,6 @@ def get_bboxes_stats(data_frame):
             # get the width and height of the bbox
             width = bbox[2] - bbox[0]
             height = bbox[3] - bbox[1]
-            # get the label of the bbox
-
             # update the histogram
             bboxes_histogram_width[label][width] += 1
             bboxes_histogram_height[label][height] += 1
