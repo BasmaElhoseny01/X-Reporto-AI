@@ -165,6 +165,7 @@ def get_bboxes_stats(data_frame):
         plt.show()
     return bboxes_histogram_width,bboxes_histogram_height
 
+# Function to get the phrase statistics
 def get_phrase_stats(data_frame):
     # loop over the dataframe
     dataset_size = len(data_frame)
@@ -188,7 +189,7 @@ def get_phrase_stats(data_frame):
     return max_phrase_length,min_phrase_length
 
 
-
+# Function to get the histogram of phrase counts per image
 def get_phrase_stats_boxes_histogram(data_frame):
     # loop over the dataframe
     dataset_size = len(data_frame)

@@ -29,8 +29,9 @@ log = logging.getLogger(__name__)
 # NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = None
 NUM_ROWS_TO_CREATE_IN_NEW_CSV_FILES = 20000
 
-
+# Class to preprocess the data
 class DataPreprocessing:
+    # Constructor
     def __init__(self,train_only = False,valid_only = False,test_only = False,valid_test_only = False,fix_bboxes = True):
         self.path_chest_imagenome = path_chest_imagenome
         self.path_mimic_cxr = path_mimic_cxr
@@ -523,7 +524,6 @@ class DataPreprocessing:
                 # read the image
                 # image = cv2.imread(mimic_image_file_path, cv2.IMREAD_UNCHANGED)
                 width,height = get_image_dimensions(mimic_image_file_path)
-                # height, width = image.shape
 
                 # calculate the scaling factors
                 scaling_factor_height = height / old_height
@@ -556,7 +556,6 @@ class DataPreprocessing:
 
 
                     bbox = [x1, y1, x2, y2]
-                    # bbox = np.array(bbox)
                     new_bbox_coordinates.append(bbox)
                 
                 if is_faulty:
